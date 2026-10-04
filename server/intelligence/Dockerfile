@@ -1,0 +1,25 @@
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+
+WORKDIR /app
+
+RUN useradd -m -u 1000 appuser
+
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+
+COPY src ./src
+RUN uv sync --frozen --no-dev
+
+RUN chown -R appuser:appuser /app
+USER appuser
+ENV PYTHONPATH="/app"
+ENV PATH="/app/.venv/bin:$PATH"
+ENV INTELLIGENCE_PORT=8001
+ENV INTELLIGENCE_HOST=0.0.0.0
+
+EXPOSE 8001
+
+CMD ["python", "-m", "src.main"]
