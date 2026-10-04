@@ -1,0 +1,1738 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "mensetsu-api",
+    "description": "",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/auth/2fa/disable": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "disable_2fa",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyTotpRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Disable 2FA",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid code"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/2fa/setup": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "setup_2fa",
+        "responses": {
+          "200": {
+            "description": "Initiate 2FA setup and get QR code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpSetupResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/2fa/verify": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "verify_2fa",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyTotpRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Verify code and activate 2FA",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid code"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Login response or 2FA challenge",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials or account suspended"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login-2fa": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "login_2fa",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login2faRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated with 2FA",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired 2FA code"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "description": "Logged out successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout-all": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "logout_all",
+        "responses": {
+          "200": {
+            "description": "Logged out from all sessions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "Current authenticated user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "refresh",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RefreshTokenRequestDto"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token refreshed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired refresh token"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Registration successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "409": {
+            "description": "Email already registered"
+          }
+        }
+      }
+    },
+    "/api/v1/settings/llm": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "operationId": "get_llm_settings",
+        "responses": {
+          "200": {
+            "description": "List of configured LLM providers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LlmConfigItemDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "settings"
+        ],
+        "operationId": "upsert_llm_setting",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertLlmConfigRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "LLM provider settings updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmConfigItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload"
+          },
+          "403": {
+            "description": "Forbidden to share configuration"
+          }
+        }
+      }
+    },
+    "/api/v1/settings/llm/{provider}": {
+      "delete": {
+        "tags": [
+          "settings"
+        ],
+        "operationId": "delete_llm_setting",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "LLM provider setting removed"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/settings/profile": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "operationId": "get_profile",
+        "responses": {
+          "200": {
+            "description": "Current user profile with role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "operationId": "list_workspaces",
+        "responses": {
+          "200": {
+            "description": "List workspaces",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "operationId": "create_workspace",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkspaceRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Workspace created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{id}": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "operationId": "get_workspace",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{id}/learning/{lesson_id}/toggle": {
+      "put": {
+        "tags": [
+          "workspaces"
+        ],
+        "operationId": "toggle_learning_unit_completed",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lesson_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Learning unit completion toggled",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Learning unit not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthResponseDto": {
+        "type": "object",
+        "required": [
+          "user",
+          "access_token",
+          "refresh_token"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponseDto"
+          }
+        }
+      },
+      "CompanyClaim": {
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "statement",
+          "claim_type",
+          "confidence",
+          "source_id"
+        ],
+        "properties": {
+          "claim_type": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number",
+            "format": "float"
+          },
+          "id": {
+            "type": "string"
+          },
+          "source_id": {
+            "type": "string"
+          },
+          "statement": {
+            "type": "string"
+          },
+          "workspace_id": {
+            "$ref": "#/components/schemas/WorkspaceId"
+          }
+        }
+      },
+      "CompanyResearch": {
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "company_name",
+          "overview",
+          "business_model",
+          "engineering_culture",
+          "technology_stack",
+          "recent_developments",
+          "interview_process_insights",
+          "sources"
+        ],
+        "properties": {
+          "business_model": {
+            "type": "string"
+          },
+          "company_name": {
+            "type": "string"
+          },
+          "engineering_culture": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "interview_process_insights": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "overview": {
+            "type": "string"
+          },
+          "recent_developments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceCitation"
+            }
+          },
+          "technology_stack": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "workspace_id": {
+            "$ref": "#/components/schemas/WorkspaceId"
+          }
+        }
+      },
+      "CreateWorkspaceRequestDto": {
+        "type": "object",
+        "required": [
+          "company_name",
+          "role_title",
+          "company_urls"
+        ],
+        "properties": {
+          "company_name": {
+            "type": "string"
+          },
+          "company_urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "jd_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "job_description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prep_time_weeks": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "resume_filename": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resume_pdf_base64": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resume_text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role_title": {
+            "type": "string"
+          },
+          "seniority": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SeniorityLevel"
+              }
+            ]
+          },
+          "target_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "GapEvidence": {
+        "type": "object",
+        "required": [
+          "skill",
+          "requirement_quote",
+          "importance",
+          "recommended_focus"
+        ],
+        "properties": {
+          "importance": {
+            "type": "string"
+          },
+          "recommended_focus": {
+            "type": "string"
+          },
+          "requirement_quote": {
+            "type": "string"
+          },
+          "skill": {
+            "type": "string"
+          }
+        }
+      },
+      "InterviewQuestion": {
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "category",
+          "question",
+          "difficulty",
+          "skills_tested",
+          "interviewer_intent",
+          "answer_outline",
+          "strong_answer_rubric",
+          "common_weaknesses",
+          "follow_up_questions",
+          "created_at"
+        ],
+        "properties": {
+          "answer_outline": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "category": {
+            "$ref": "#/components/schemas/QuestionCategory"
+          },
+          "common_weaknesses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "difficulty": {
+            "$ref": "#/components/schemas/QuestionDifficulty"
+          },
+          "follow_up_questions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "interviewer_intent": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "skills_tested": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "strong_answer_rubric": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "workspace_id": {
+            "$ref": "#/components/schemas/WorkspaceId"
+          }
+        }
+      },
+      "KnowledgeEdge": {
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "relation"
+        ],
+        "properties": {
+          "relation": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          }
+        }
+      },
+      "KnowledgeGraphResponse": {
+        "type": "object",
+        "required": [
+          "nodes",
+          "edges"
+        ],
+        "properties": {
+          "edges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeEdge"
+            }
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeSkillNode"
+            }
+          }
+        }
+      },
+      "KnowledgeSkillNode": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "category",
+          "candidate_status",
+          "importance"
+        ],
+        "properties": {
+          "candidate_status": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "importance": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
+      "LearningUnit": {
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "skill",
+          "title",
+          "prerequisites",
+          "estimated_minutes",
+          "summary",
+          "content_markdown",
+          "created_at"
+        ],
+        "properties": {
+          "chapters": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LessonChapter"
+            }
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "content_markdown": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "diagram": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/VisualDiagram"
+              }
+            ]
+          },
+          "estimated_minutes": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "id": {
+            "type": "string"
+          },
+          "prerequisites": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "skill": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "video_title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "video_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "workspace_id": {
+            "$ref": "#/components/schemas/WorkspaceId"
+          }
+        }
+      },
+      "LessonChapter": {
+        "type": "object",
+        "required": [
+          "timestamp",
+          "title"
+        ],
+        "properties": {
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "LlmConfigItemDto": {
+        "type": "object",
+        "required": [
+          "provider",
+          "is_shared",
+          "has_key",
+          "is_inherited"
+        ],
+        "properties": {
+          "base_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "has_key": {
+            "type": "boolean"
+          },
+          "is_inherited": {
+            "type": "boolean"
+          },
+          "is_shared": {
+            "type": "boolean"
+          },
+          "masked_key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model_chat": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model_embed": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model_search": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "type": "string"
+          }
+        }
+      },
+      "Login2faRequestDto": {
+        "type": "object",
+        "required": [
+          "temp_token",
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "temp_token": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginRequestDto": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "refresh_token": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requires_2fa": {
+            "type": "boolean"
+          },
+          "temp_token": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "user": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UserResponseDto"
+              }
+            ]
+          }
+        }
+      },
+      "MatchAnalysis": {
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "overall_match_ratio",
+          "strengths",
+          "gaps",
+          "risks",
+          "wording_improvements"
+        ],
+        "properties": {
+          "gaps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GapEvidence"
+            }
+          },
+          "overall_match_ratio": {
+            "type": "number",
+            "format": "float"
+          },
+          "risks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "strengths": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StrengthEvidence"
+            }
+          },
+          "wording_improvements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WordingImprovement"
+            }
+          },
+          "workspace_id": {
+            "$ref": "#/components/schemas/WorkspaceId"
+          }
+        }
+      },
+      "MessageResponseDto": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PipelinePhase": {
+        "type": "string",
+        "enum": [
+          "preparing_input",
+          "analyzing_resume",
+          "reading_job_description",
+          "researching_company",
+          "researching_engineering_environment",
+          "extracting_role_requirements",
+          "mapping_resume_evidence",
+          "constructing_knowledge_graph",
+          "building_learning_plan",
+          "generating_lessons",
+          "building_interview_question_book",
+          "final_validation",
+          "ready",
+          "failed"
+        ]
+      },
+      "QuestionCategory": {
+        "type": "string",
+        "enum": [
+          "resume_deep_dive",
+          "project_deep_dive",
+          "technical_fundamentals",
+          "target_stack",
+          "system_design",
+          "debugging",
+          "behavioral"
+        ]
+      },
+      "QuestionDifficulty": {
+        "type": "string",
+        "enum": [
+          "easy",
+          "medium",
+          "hard"
+        ]
+      },
+      "RefreshTokenRequestDto": {
+        "type": "object",
+        "properties": {
+          "refresh_token": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "RegisterRequestDto": {
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "name"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "SeniorityLevel": {
+        "type": "string",
+        "enum": [
+          "junior",
+          "mid",
+          "senior",
+          "staff",
+          "principal",
+          "lead"
+        ]
+      },
+      "SessionId": {
+        "type": "string"
+      },
+      "SourceCitation": {
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "url",
+          "title",
+          "domain",
+          "snippet",
+          "source_type",
+          "confidence",
+          "retrieved_at"
+        ],
+        "properties": {
+          "confidence": {
+            "type": "number",
+            "format": "float"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "snippet": {
+            "type": "string"
+          },
+          "source_type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "workspace_id": {
+            "$ref": "#/components/schemas/WorkspaceId"
+          }
+        }
+      },
+      "StrengthEvidence": {
+        "type": "object",
+        "required": [
+          "skill",
+          "evidence_quote",
+          "relevance"
+        ],
+        "properties": {
+          "evidence_quote": {
+            "type": "string"
+          },
+          "relevance": {
+            "type": "string"
+          },
+          "skill": {
+            "type": "string"
+          }
+        }
+      },
+      "TokenResponseDto": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          }
+        }
+      },
+      "TotpSetupResponseDto": {
+        "type": "object",
+        "required": [
+          "secret",
+          "qr_code_data_url",
+          "otpauth_url"
+        ],
+        "properties": {
+          "otpauth_url": {
+            "type": "string"
+          },
+          "qr_code_data_url": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "string"
+          }
+        }
+      },
+      "UpsertLlmConfigRequestDto": {
+        "type": "object",
+        "required": [
+          "provider"
+        ],
+        "properties": {
+          "api_key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "base_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_shared": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "model_chat": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model_embed": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model_search": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "type": "string"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "name",
+          "status",
+          "role",
+          "totp_enabled",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "$ref": "#/components/schemas/UserId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "status": {
+            "$ref": "#/components/schemas/UserStatus"
+          },
+          "totp_enabled": {
+            "type": "boolean"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserId": {
+        "type": "string"
+      },
+      "UserProfileResponseDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "name",
+          "role"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          }
+        }
+      },
+      "UserResponseDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "name",
+          "status",
+          "role",
+          "totp_enabled",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "status": {
+            "$ref": "#/components/schemas/UserStatus"
+          },
+          "totp_enabled": {
+            "type": "boolean"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "admin",
+          "member"
+        ]
+      },
+      "UserStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "suspended"
+        ]
+      },
+      "VerifyTotpRequestDto": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "VisualDiagram": {
+        "type": "object",
+        "required": [
+          "type",
+          "caption",
+          "data"
+        ],
+        "properties": {
+          "caption": {
+            "type": "string"
+          },
+          "data": {},
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "WordingImprovement": {
+        "type": "object",
+        "required": [
+          "original_text",
+          "suggested_revision",
+          "rationale"
+        ],
+        "properties": {
+          "original_text": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "suggested_revision": {
+            "type": "string"
+          }
+        }
+      },
+      "Workspace": {
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "company_name",
+          "role_title",
+          "status",
+          "current_phase",
+          "progress_percent",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "company_name": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "current_phase": {
+            "$ref": "#/components/schemas/PipelinePhase"
+          },
+          "id": {
+            "$ref": "#/components/schemas/WorkspaceId"
+          },
+          "prep_time_weeks": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "progress_percent": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "role_title": {
+            "type": "string"
+          },
+          "seniority": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SeniorityLevel"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/WorkspaceStatus"
+          },
+          "target_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user_id": {
+            "$ref": "#/components/schemas/UserId"
+          }
+        }
+      },
+      "WorkspaceId": {
+        "type": "string"
+      },
+      "WorkspaceProgressEventDto": {
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "phase",
+          "percent",
+          "message",
+          "timestamp"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "percent": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "phase": {
+            "$ref": "#/components/schemas/PipelinePhase"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "workspace_id": {
+            "type": "string"
+          }
+        }
+      },
+      "WorkspaceResponseDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "company_name",
+          "role_title",
+          "status",
+          "current_phase",
+          "progress_percent",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "company_name": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "current_phase": {
+            "$ref": "#/components/schemas/PipelinePhase"
+          },
+          "id": {
+            "type": "string"
+          },
+          "progress_percent": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "role_title": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WorkspaceStatus"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        }
+      },
+      "WorkspaceStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "processing",
+          "ready",
+          "failed"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "workspaces",
+      "description": "Interview workspace endpoints"
+    }
+  ]
+}
