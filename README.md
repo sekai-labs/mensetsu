@@ -1,147 +1,106 @@
 # Mensetsu (面接)
 
-An AI-powered, evidence-backed interview preparation platform. Mensetsu replaces generic chatbot interactions with a structured, durable, research-backed workspace tailored to a candidate's actual resume, target role, and target company.
+AI-driven, evidence-backed technical interview preparation platform. Mensetsu pairs candidate resumes with job descriptions to perform verifiable web research, gap analysis, knowledge graph construction, and personalized curriculum assembly.
 
 ---
 
-## 1. System Overview & Architecture
+## Architecture
 
-```
-                    +------------------------------------+
-                    |              Clients               |
-                    |  - Nuxt 3 Web (Vue Flow, SSR/SPA)  |
-                    |  - Flutter Adaptive Mobile/Desktop |
-                    +-----------------+------------------+
-                                      |
-                              HTTPS / SSE (OpenAPI 3.1)
-                                      |
-                    +-----------------v------------------+
-                    |        server/api (Rust)           |
-                    |  - Axum & Tokio Runtime            |
-                    |  - Domain-Driven Design (DDD)      |
-                    |  - Native SurrealDB v3 Driver      |
-                    +-----------------+------------------+
-                                      |
-                               HTTP Trigger
-                                      |
-                    +-----------------v------------------+
-                    |   server/intelligence (Python)     |
-                    |  - uv Workspace & Pydantic AI      |
-                    |  - Temporal Durable Workflows      |
-                    |  - SSRF-Safe Research Fetcher      |
-                    |  - Prompt Injection Defense Layer  |
-                    +-----------------+------------------+
-                                      |
-             +------------------------+------------------------+
-             |                                                 |
-+------------v------------+                       +------------v------------+
-|  SurrealDB v3 (Docker)  |                       |     Temporal Server     |
-| - Relational & Graph    |                       | - Durable Workflow Exec |
-| - Vectors & Schemas     |                       | - Event History Store   |
-+-------------------------+                       +-------------------------+
-```
+- **Web Client (`app/web`)**: Nuxt 4, Vue 3, Tailwind CSS, Vue Flow. Uses a Backend-For-Frontend (BFF) proxy with Redis-mapped session tokens and RFC 6238 TOTP 2FA.
+- **Core API (`server/api`)**: Rust (Axum, Tokio, SurrealDB, Utoipa OpenAPI 3.1).
+- **Intelligence Engine (`server/intelligence`)**: Python 3.12 (`uv`), Temporal workflows, SSRF-guarded research scraper, semantic LLM routing.
+- **Mobile & Desktop Client (`app/mobile`)**: Flutter 3+ adaptive client.
+- **Data & Cache**: SurrealDB (relational, vector, graph) and Redis 7 (BFF session mapping).
 
 ---
 
-## 2. Key Features
-
-- **Asynchronous Durable Workflow**: Uploading a resume and role description immediately returns a workspace ID while research executes in the background across resilient activities.
-- **Server-Sent Events (SSE)**: Live streaming pipeline progress updates from `preparing_input` to `ready`.
-- **Explainable Match & Gap Analysis**: Transparent decomposition of mandatory vs preferred requirements, candidate strengths, evidence quotes, and targeted gap remediation.
-- **SSRF & Injection Defense**: Automated DNS hostname resolution with strict denylist checking (RFC1918, link-local, cloud metadata IP blocking) and prompt containment wrappers.
-- **Interactive Knowledge Graph**: Rendered with `@vue-flow/core` showing concept dependencies, required technologies, and candidate mastery levels.
-- **Curated Learning Units**: Prerequisite-ordered technical syllabus with structured architecture and flow diagrams.
-- **Targeted Question Book**: Questions mapped to real company pillars with answer outlines, senior evaluation rubrics, and common candidate pitfalls.
-
----
-
-## 3. Monorepo Layout
-
-```
-mensetsu/
-├── app/
-│   ├── web/               # Nuxt 3 TypeScript web client
-│   └── mobile/            # Flutter 3+ adaptive mobile & desktop client
-├── server/
-│   ├── api/               # Rust Axum backend with SurrealDB & OpenAPI
-│   │   └── contracts/     # Generated OpenAPI spec and type definitions
-│   └── intelligence/      # Python uv research engine with Temporal
-├── infra/
-│   ├── docker-compose.yml # SurrealDB & Temporal compose definitions
-│   ├── migrations/        # SurrealQL schema definitions
-│   └── verify_e2e.sh      # End-to-end integration verification script
-└── fixtures/              # Synthetic test profiles and job descriptions
-
----
-
-## 4. Local Development Quickstart
+## Quickstart
 
 ### Prerequisites
 - Docker & Docker Compose
-- Rust 1.80+ (`cargo`)
+- Bun (`curl -fsSL https://bun.sh/install | bash`)
+- Rust (`rustup default stable`)
 - Python 3.12+ (`uv`)
-- Node.js 20+ (`npm`)
-- Flutter 3.20+ (for mobile/desktop client)
 
-### Setup & Run
+### Run with Docker Compose
+```bash
+# Start SurrealDB, Redis, Temporal, and core services
+docker compose up -d
 
-1. **Start Local Dependencies (SurrealDB)**:
-   ```bash
-   make infra-up
-   ./infra/verify_and_migrate.sh
-   ```
+# Services will be available at:
+# - Web Application:  http://localhost:3001
+# - Temporal Web UI:  http://localhost:8088
+# - Redis Server:     localhost:6379
+```
 
-2. **Run Rust Core API Service**:
+### Local Development
+
+1. **Backend (Rust)**:
    ```bash
    cd server/api
    cargo run --bin mensetsu-api
-   # API listening at http://127.0.0.1:3000
-   # Swagger UI at http://127.0.0.1:3000/swagger-ui
    ```
 
-3. **Run Python Intelligence Engine**:
-   ```bash
-   cd server/intelligence
-   uv run uvicorn src.service:app --port 8001 --host 127.0.0.1
-   ```
-
-4. **Run Nuxt Web Client**:
+2. **Web Client (Nuxt + Bun)**:
    ```bash
    cd app/web
+   bun install
    bun run dev
-   # Web workspace accessible at http://localhost:3000 (or http://localhost:3001)
    ```
 
-5. **Run Flutter Mobile & Desktop Client**:
+3. **Intelligence Engine (Python)**:
    ```bash
-   cd app/mobile
-   flutter run -d linux # or macos / windows / chrome
+   cd server/intelligence
+   uv sync
+   uv run uvicorn src.service:app --port 8001
    ```
 
 ---
 
-## 5. Testing & Verification
-
-Run all test suites across the stack:
+## Testing
 
 ```bash
-# Rust Unit and Integration Tests
+# Web tests (Vitest via Bun)
+cd app/web && bun run test
+
+# Rust backend tests
 cd server/api && cargo test
 
-# Python Unit, Activity, SSRF & Eval Tests
+# Python intelligence tests
 cd server/intelligence && uv run pytest
-
-# Web Client Vitest Tests
-cd app/web && bun x vitest run
-
-# Flutter Model & Unit Tests
-cd app/mobile && flutter test
-
-# End-to-End Automated Pipeline Verification
-./infra/verify_e2e.sh
 ```
 
 ---
 
-## 6. License
+## Contributor Rules & Guidelines
+
+All contributors and coding agents must follow these guidelines:
+
+### 1. Package Management & Tooling
+- **Web**: Always use **Bun** (`bun install`, `bun add`, `bun run test`). Do not use `npm` or commit `package-lock.json`.
+- **Rust**: Use standard `cargo` toolchain.
+- **Python**: Use `uv` for dependency management.
+
+### 2. TypeScript & Code Standards
+- **No `any`**: Strictly forbid `: any` or `as any`. Use typed interfaces, generics, or type guards.
+- **Modular Feature Architecture**: Group web features in `app/web/features/<feature>/` with:
+  - `pages/`, `services/`, `utils/`, `models/`, `components/`
+  - Public shared UI components belong in `app/web/components/ui/`.
+  - Public shared utilities belong in `app/web/utils/`.
+- **No Trivial Wrappers**: Avoid one-line wrapper functions that only rename existing functions without domain behavior.
+
+### 3. Security Invariants
+- **BFF Token Isolation**: Client JavaScript must never receive or store raw JWT access or refresh tokens. All client traffic flows through the server proxy using HttpOnly session ID cookies mapped in Redis.
+- **SSRF Guardrails**: All external URLs fetched by scrapers or intelligence activities must pass IP validation (block loopback, link-local, RFC1918, and cloud metadata IPs).
+- **Prompt Injection Defense**: User-supplied resumes and job descriptions must be contained and treated as untrusted data.
+
+### 4. Git & Commits
+- Use conventional commit messages (`feat(...)`, `fix(...)`, `chore(...)`, `test(...)`).
+- Keep commits atomic and scoped by domain (`web`, `api`, `intelligence`, `infra`, `mobile`).
+- Do not commit sensitive keys, `.env` files with real credentials, temporary test output, or debug artifacts.
+
+---
+
+## License
+
 MIT
