@@ -1,0 +1,28 @@
+{
+  "candidate": {
+    "name": "Alex Mercer",
+    "title": "Principal Systems Engineer",
+    "summary": "10+ years engineering high-throughput distributed databases and storage engines using Rust, Linux, and Kubernetes.",
+    "skills": ["Rust", "Distributed Systems", "Linux", "Kubernetes", "PostgreSQL", "Consensus (Raft)", "eBPF", "gRPC"],
+    "experience": [
+      {
+        "company": "Nexus Scale",
+        "role": "Lead Infrastructure Architect",
+        "duration": "2021 - Present",
+        "highlights": [
+          "Architected geo-distributed storage layer in Rust with Raft consensus, achieving 100k writes/sec with p99 < 12ms.",
+          "Designed multi-region failover and lease expiration recovery with zero data loss."
+        ]
+      }
+    ]
+  },
+  "target_job": {
+    "company": "ScaleVector",
+    "role": "Staff Distributed Systems Engineer",
+    "urls": [
+      "https://scalevector.example.com",
+      "https://blog.scalevector.example.com"
+    ],
+    "description": "We are looking for a Staff Distributed Systems Engineer to scale our transactional state engine. Requirements: Proficient in Rust, Linux kernel internals, Distributed Systems, Raft consensus, and Temporal durable workflows."
+  }
+}

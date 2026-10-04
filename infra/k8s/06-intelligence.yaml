@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: intelligence
+  namespace: mensetsu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: intelligence
+  template:
+    metadata:
+      labels:
+        app: intelligence
+    spec:
+      containers:
+        - name: intelligence
+          image: mensetsu/intelligence:latest
+          ports:
+            - containerPort: 8001
+              name: http
+          envFrom:
+            - configMapRef:
+                name: mensetsu-config
+            - secretRef:
+                name: mensetsu-secrets
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: intelligence
+  namespace: mensetsu
+spec:
+  ports:
+    - port: 8001
+      targetPort: 8001
+      name: http
+  selector:
+    app: intelligence

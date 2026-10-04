@@ -1,0 +1,26 @@
+# Rust build artifacts
+target/
+
+# Node.js & Nuxt artifacts
+node_modules/
+.nuxt/
+.output/
+dist/
+
+# Python & UV artifacts
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Flutter & Dart artifacts
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# Local environment & secrets
+.env
+.env.local
+*.log

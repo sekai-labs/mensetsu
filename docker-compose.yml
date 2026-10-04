@@ -1,0 +1,117 @@
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:v3.2.4
+    container_name: mensetsu-surrealdb
+    command: start --log debug --user root --pass root surrealkv:/data/surreal.db
+    user: "0:0"
+    expose:
+      - "8000"
+    volumes:
+      - surreal_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/surreal", "is-ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  redis:
+    image: redis:7-alpine
+    container_name: mensetsu-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+
+  temporal-server:
+    image: temporalio/admin-tools:latest
+    container_name: mensetsu-temporal
+    command: ["temporal", "server", "start-dev", "--ip", "0.0.0.0"]
+    ports:
+      - "7233:7233"
+    restart: unless-stopped
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    container_name: mensetsu-temporal-ui
+    ports:
+      - "8088:8080"
+    environment:
+      - TEMPORAL_ADDRESS=temporal-server:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:8088
+    depends_on:
+      - temporal-server
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./server/api
+      dockerfile: Dockerfile
+    container_name: mensetsu-api
+    expose:
+      - "3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - SURREAL_URL=ws://surrealdb:8000
+      - SURREAL_USER=root
+      - SURREAL_PASS=root
+      - SURREAL_NS=mensetsu
+      - SURREAL_DB=production
+      - INTELLIGENCE_URL=http://intelligence:8001
+      - CORS_ORIGIN=http://localhost:3000,http://localhost:3001
+      - ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      - JWT_SECRET=mensetsu_dev_super_secret_jwt_key_at_least_32_bytes!
+    depends_on:
+      surrealdb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  intelligence:
+    build:
+      context: ./server/intelligence
+      dockerfile: Dockerfile
+    container_name: mensetsu-intelligence
+    ports:
+      - "8001:8001"
+    environment:
+      - INTELLIGENCE_PORT=8001
+      - INTELLIGENCE_HOST=0.0.0.0
+      - TEMPORAL_HOST=temporal-server:7233
+      - TEMPORAL_QUEUE=mensetsu-research-queue
+      - SURREAL_ENDPOINT=http://surrealdb:8000
+      - ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    depends_on:
+      - temporal-server
+      - surrealdb
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./app/web
+      dockerfile: Dockerfile
+    container_name: mensetsu-web
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - NUXT_API_BASE_SERVER=http://api:3000
+    depends_on:
+      api:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  surreal_data:
+  temporal_data:
+  redis_data:

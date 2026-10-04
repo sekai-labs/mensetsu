@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mensetsu-config
+  namespace: mensetsu
+data:
+  PORT: "3000"
+  HOST: "0.0.0.0"
+  SURREAL_URL: "ws://surrealdb:8000"
+  SURREAL_NS: "mensetsu"
+  SURREAL_DB: "production"
+  INTELLIGENCE_URL: "http://intelligence:8001"
+  CORS_ORIGIN: "https://mensetsu.local,http://localhost:3000"
+  TEMPORAL_HOST: "temporal:7233"
+  TEMPORAL_QUEUE: "mensetsu-research-queue"
+  SURREAL_ENDPOINT: "http://surrealdb:8000"
+  NUXT_PUBLIC_API_BASE: "https://mensetsu.local"
+  NUXT_API_BASE_SERVER: "http://api:3000"

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mensetsu
+  labels:
+    app.kubernetes.io/name: mensetsu
+    app.kubernetes.io/part-of: mensetsu-platform
