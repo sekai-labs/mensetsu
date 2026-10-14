@@ -5,7 +5,7 @@ describe('Server BFF Session & Redis Token Mapping Manager', () => {
   it('generates high-entropy token IDs', () => {
     const id1 = sessionManager.generateTokenId()
     const id2 = sessionManager.generateTokenId()
-    expect(id1).toHaveLength(64) // 32 bytes hex
+    expect(id1).toHaveLength(64)
     expect(id2).toHaveLength(64)
     expect(id1).not.toBe(id2)
   })

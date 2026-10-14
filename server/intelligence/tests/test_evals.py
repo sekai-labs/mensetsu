@@ -12,6 +12,7 @@ def test_citation_provenance_validation():
     res_invalid = ResearchEvaluationHarness.evaluate_citation_provenance(sources, invalid_claims)
     assert res_invalid.passed is False
 
+
 def test_prerequisite_cycle_detection():
     valid_edges = [
         {"source": "A", "target": "B"},

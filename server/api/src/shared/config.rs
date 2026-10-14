@@ -15,6 +15,7 @@ pub struct AppConfig {
     pub access_token_ttl_seconds: i64,
     pub refresh_token_ttl_seconds: i64,
     pub encryption_key: String,
+    pub internal_service_token: String,
 }
 
 impl AppConfig {
@@ -47,6 +48,16 @@ impl AppConfig {
                 .unwrap_or(2_592_000), 
             encryption_key: env::var("ENCRYPTION_KEY")
                 .unwrap_or_else(|_| "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string()),
+            internal_service_token: env::var("INTERNAL_SERVICE_TOKEN")
+                .map(|t| t.trim().to_string())
+                .unwrap_or_default(),
         }
+    }
+
+    pub fn validate(&self) -> Result<(), String> {
+        if self.internal_service_token.is_empty() {
+            return Err("INTERNAL_SERVICE_TOKEN is unset or empty; refusing to start".into());
+        }
+        Ok(())
     }
 }

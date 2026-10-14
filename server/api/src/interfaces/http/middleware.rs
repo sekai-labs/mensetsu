@@ -3,7 +3,7 @@ use axum::{
     http::{Request, Response},
     middleware::Next,
 };
-use tracing::info_span;
+use tracing::{info_span, Instrument};
 use uuid::Uuid;
 
 pub async fn correlation_id_middleware(
@@ -18,9 +18,7 @@ pub async fn correlation_id_middleware(
         .unwrap_or_else(|| Uuid::new_v4().to_string());
 
     let span = info_span!("request", correlation_id = %correlation_id);
-    let _guard = span.enter();
-
-    let mut res = next.run(req).await;
+    let mut res = next.run(req).instrument(span).await;
     if let Ok(val) = correlation_id.parse() {
         res.headers_mut().insert("x-correlation-id", val);
     }

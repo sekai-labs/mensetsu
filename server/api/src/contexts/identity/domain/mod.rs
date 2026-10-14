@@ -62,17 +62,12 @@ impl std::fmt::Display for Email {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, ToSchema)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum UserStatus {
+    #[default]
     Active,
     Suspended,
-}
-
-impl Default for UserStatus {
-    fn default() -> Self {
-        Self::Active
-    }
 }
 
 impl std::fmt::Display for UserStatus {
@@ -84,17 +79,12 @@ impl std::fmt::Display for UserStatus {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, ToSchema)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum UserRole {
     Admin,
+    #[default]
     Member,
-}
-
-impl Default for UserRole {
-    fn default() -> Self {
-        Self::Member
-    }
 }
 
 impl std::fmt::Display for UserRole {

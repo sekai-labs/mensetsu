@@ -1,552 +1,206 @@
 {
-  "openapi": "3.1.0",
-  "info": {
-    "title": "mensetsu-api",
-    "description": "",
-    "license": {
-      "name": ""
-    },
-    "version": "0.1.0"
-  },
-  "paths": {
-    "/api/v1/auth/2fa/disable": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "operationId": "disable_2fa",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyTotpRequestDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Disable 2FA",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Invalid code"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/2fa/setup": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "operationId": "setup_2fa",
-        "responses": {
-          "200": {
-            "description": "Initiate 2FA setup and get QR code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TotpSetupResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/2fa/verify": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "operationId": "verify_2fa",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyTotpRequestDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Verify code and activate 2FA",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Invalid code"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/login": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "operationId": "login",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequestDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Login response or 2FA challenge",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Invalid credentials or account suspended"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/login-2fa": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "operationId": "login_2fa",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Login2faRequestDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Authenticated with 2FA",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Invalid or expired 2FA code"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/logout": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "operationId": "logout",
-        "responses": {
-          "200": {
-            "description": "Logged out successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MessageResponseDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/auth/logout-all": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "operationId": "logout_all",
-        "responses": {
-          "200": {
-            "description": "Logged out from all sessions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MessageResponseDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/auth/me": {
-      "get": {
-        "tags": [
-          "auth"
-        ],
-        "operationId": "me",
-        "responses": {
-          "200": {
-            "description": "Current authenticated user profile",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/refresh": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "operationId": "refresh",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "oneOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/components/schemas/RefreshTokenRequestDto"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Token refreshed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Invalid or expired refresh token"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/register": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "operationId": "register",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequestDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Registration successful",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation error"
-          },
-          "409": {
-            "description": "Email already registered"
-          }
-        }
-      }
-    },
-    "/api/v1/settings/llm": {
-      "get": {
-        "tags": [
-          "settings"
-        ],
-        "operationId": "get_llm_settings",
-        "responses": {
-          "200": {
-            "description": "List of configured LLM providers",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LlmConfigItemDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "settings"
-        ],
-        "operationId": "upsert_llm_setting",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpsertLlmConfigRequestDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "LLM provider settings updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LlmConfigItemDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid payload"
-          },
-          "403": {
-            "description": "Forbidden to share configuration"
-          }
-        }
-      }
-    },
-    "/api/v1/settings/llm/{provider}": {
-      "delete": {
-        "tags": [
-          "settings"
-        ],
-        "operationId": "delete_llm_setting",
-        "parameters": [
-          {
-            "name": "provider",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "LLM provider setting removed"
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        }
-      }
-    },
-    "/api/v1/settings/profile": {
-      "get": {
-        "tags": [
-          "settings"
-        ],
-        "operationId": "get_profile",
-        "responses": {
-          "200": {
-            "description": "Current user profile with role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserProfileResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces": {
-      "get": {
-        "tags": [
-          "workspaces"
-        ],
-        "operationId": "list_workspaces",
-        "responses": {
-          "200": {
-            "description": "List workspaces",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WorkspaceResponseDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "workspaces"
-        ],
-        "operationId": "create_workspace",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateWorkspaceRequestDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Workspace created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkspaceResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid payload"
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{id}": {
-      "get": {
-        "tags": [
-          "workspaces"
-        ],
-        "operationId": "get_workspace",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Workspace details",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkspaceResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Workspace not found"
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{id}/learning/{lesson_id}/toggle": {
-      "put": {
-        "tags": [
-          "workspaces"
-        ],
-        "operationId": "toggle_learning_unit_completed",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "lesson_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Learning unit completion toggled",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "404": {
-            "description": "Learning unit not found"
-          }
-        }
-      }
-    }
-  },
   "components": {
     "schemas": {
-      "AuthResponseDto": {
-        "type": "object",
+      "AgentExecution": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_id": {
+            "type": "string"
+          },
+          "artifact_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "budgets": {
+            "$ref": "#/components/schemas/ExecutionBudgets"
+          },
+          "budgets_used": {
+            "$ref": "#/components/schemas/ExecutionBudgetsUsed"
+          },
+          "child_execution_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "current_activity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "delegation_depth": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "model_name": {
+            "type": "string"
+          },
+          "model_provider": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/ExecutionNote"
+            },
+            "type": "array"
+          },
+          "objective": {
+            "type": "string"
+          },
+          "parent_execution_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "public_summary": {
+            "type": "string"
+          },
+          "retries": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "started_at": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ExecutionStatus"
+          },
+          "task_id": {
+            "type": "string"
+          },
+          "tool_call_count": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
         "required": [
-          "user",
-          "access_token",
-          "refresh_token"
+          "id",
+          "run_id",
+          "task_id",
+          "agent_id",
+          "started_at"
         ],
+        "type": "object"
+      },
+      "Artifact": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_execution_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "content": {
+            "$ref": "#/components/schemas/ArtifactContent"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "evidence": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EvidenceProvenance"
+              }
+            ]
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "source_links": {
+            "items": {
+              "$ref": "#/components/schemas/SourceLink"
+            },
+            "type": "array"
+          },
+          "surreal_record_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "task_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ArtifactType"
+          },
+          "version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "type",
+          "title",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "ArtifactContent": {
+        "oneOf": [
+          {
+            "type": "object"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "ArtifactType": {
+        "enum": [
+          "research_report",
+          "finding",
+          "evidence",
+          "question_set",
+          "recommendation",
+          "validation_result"
+        ],
+        "type": "string"
+      },
+      "AuthResponseDto": {
         "properties": {
           "access_token": {
             "type": "string"
@@ -557,25 +211,22 @@
           "user": {
             "$ref": "#/components/schemas/UserResponseDto"
           }
-        }
+        },
+        "required": [
+          "user",
+          "access_token",
+          "refresh_token"
+        ],
+        "type": "object"
       },
       "CompanyClaim": {
-        "type": "object",
-        "required": [
-          "id",
-          "workspace_id",
-          "statement",
-          "claim_type",
-          "confidence",
-          "source_id"
-        ],
         "properties": {
           "claim_type": {
             "type": "string"
           },
           "confidence": {
-            "type": "number",
-            "format": "float"
+            "format": "float",
+            "type": "number"
           },
           "id": {
             "type": "string"
@@ -589,10 +240,62 @@
           "workspace_id": {
             "$ref": "#/components/schemas/WorkspaceId"
           }
-        }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "statement",
+          "claim_type",
+          "confidence",
+          "source_id"
+        ],
+        "type": "object"
       },
       "CompanyResearch": {
-        "type": "object",
+        "properties": {
+          "business_model": {
+            "type": "string"
+          },
+          "company_name": {
+            "type": "string"
+          },
+          "engineering_culture": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "interview_process_insights": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "overview": {
+            "type": "string"
+          },
+          "recent_developments": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceCitation"
+            },
+            "type": "array"
+          },
+          "technology_stack": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace_id": {
+            "$ref": "#/components/schemas/WorkspaceId"
+          }
+        },
         "required": [
           "workspace_id",
           "company_name",
@@ -604,67 +307,19 @@
           "interview_process_insights",
           "sources"
         ],
-        "properties": {
-          "business_model": {
-            "type": "string"
-          },
-          "company_name": {
-            "type": "string"
-          },
-          "engineering_culture": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "interview_process_insights": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "overview": {
-            "type": "string"
-          },
-          "recent_developments": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "sources": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SourceCitation"
-            }
-          },
-          "technology_stack": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "workspace_id": {
-            "$ref": "#/components/schemas/WorkspaceId"
-          }
-        }
+        "type": "object"
       },
       "CreateWorkspaceRequestDto": {
-        "type": "object",
-        "required": [
-          "company_name",
-          "role_title",
-          "company_urls"
-        ],
+        "additionalProperties": false,
         "properties": {
           "company_name": {
             "type": "string"
           },
           "company_urls": {
-            "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "type": "array"
           },
           "jd_url": {
             "type": [
@@ -679,12 +334,12 @@
             ]
           },
           "prep_time_weeks": {
+            "format": "int32",
+            "minimum": 0,
             "type": [
               "integer",
               "null"
-            ],
-            "format": "int32",
-            "minimum": 0
+            ]
           },
           "resume_filename": {
             "type": [
@@ -718,22 +373,524 @@
             ]
           },
           "target_date": {
+            "format": "date-time",
             "type": [
               "string",
               "null"
-            ],
-            "format": "date-time"
+            ]
           }
-        }
+        },
+        "required": [
+          "company_name",
+          "role_title",
+          "company_urls"
+        ],
+        "type": "object"
+      },
+      "Delegation": {
+        "additionalProperties": false,
+        "properties": {
+          "child_agent_id": {
+            "type": "string"
+          },
+          "child_execution_id": {
+            "type": "string"
+          },
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "delegation_task_id": {
+            "type": "string"
+          },
+          "depth": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "input_artifact_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "objective": {
+            "type": "string"
+          },
+          "output_artifact_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "parent_agent_id": {
+            "type": "string"
+          },
+          "parent_execution_id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DelegationStatus"
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "parent_execution_id",
+          "child_execution_id",
+          "parent_agent_id",
+          "child_agent_id",
+          "delegation_task_id",
+          "objective",
+          "reason",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "DelegationEdgeKind": {
+        "enum": [
+          "delegation"
+        ],
+        "type": "string"
+      },
+      "DelegationGraphEdge": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DelegationGraphEdgeData"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DelegationEdgeKind"
+          },
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "target",
+          "data"
+        ],
+        "type": "object"
+      },
+      "DelegationGraphEdgeData": {
+        "additionalProperties": false,
+        "properties": {
+          "child_agent_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "delegation_id": {
+            "type": "string"
+          },
+          "objective": {
+            "type": "string"
+          },
+          "parent_agent_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DelegationStatus"
+          }
+        },
+        "required": [
+          "delegation_id",
+          "objective",
+          "status",
+          "created_at",
+          "parent_agent_id",
+          "child_agent_id"
+        ],
+        "type": "object"
+      },
+      "DelegationGraphNode": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DelegationGraphNodeData"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "data"
+        ],
+        "type": "object"
+      },
+      "DelegationGraphNodeData": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ExecutionStatus"
+          },
+          "task_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "task_id",
+          "agent_id"
+        ],
+        "type": "object"
+      },
+      "DelegationGraphResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/DelegationGraphEdge"
+            },
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/DelegationGraphNode"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "nodes",
+          "edges"
+        ],
+        "type": "object"
+      },
+      "DelegationStatus": {
+        "enum": [
+          "requested",
+          "accepted",
+          "running",
+          "completed",
+          "failed",
+          "rejected"
+        ],
+        "type": "string"
+      },
+      "DependencyEdgeKind": {
+        "enum": [
+          "dependency"
+        ],
+        "type": "string"
+      },
+      "ErrorCategory": {
+        "enum": [
+          "network",
+          "rate_limit",
+          "budget_exceeded",
+          "llm_error",
+          "validation_error",
+          "internal_error"
+        ],
+        "type": "string"
+      },
+      "EventsHistoryPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ExecutionEvent"
+            },
+            "type": "array"
+          },
+          "last_seq": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "next_after_seq": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "events"
+        ],
+        "type": "object"
+      },
+      "EvidenceProvenance": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "format": "double",
+            "type": "number"
+          },
+          "retrieved_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "snippet": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_url",
+          "title",
+          "snippet",
+          "confidence"
+        ],
+        "type": "object"
+      },
+      "ExecutionBudgets": {
+        "additionalProperties": false,
+        "properties": {
+          "external_requests": {
+            "default": 25,
+            "format": "int64",
+            "type": "integer"
+          },
+          "model_calls": {
+            "default": 10,
+            "format": "int64",
+            "type": "integer"
+          },
+          "tokens_in": {
+            "default": 50000,
+            "format": "int64",
+            "type": "integer"
+          },
+          "tokens_out": {
+            "default": 10000,
+            "format": "int64",
+            "type": "integer"
+          },
+          "tool_calls": {
+            "default": 20,
+            "format": "int64",
+            "type": "integer"
+          },
+          "wall_time_ms": {
+            "default": 120000.0,
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "ExecutionBudgetsUsed": {
+        "additionalProperties": false,
+        "properties": {
+          "external_requests": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "model_calls": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "tokens_in": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "tokens_out": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "tool_calls": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "wall_time_ms": {
+            "default": 0.0,
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "ExecutionEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "correlation_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "event_id": {
+            "type": "string"
+          },
+          "execution_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_execution_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payload": {
+            "type": "object"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "schema_version": {
+            "type": "string"
+          },
+          "seq": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "task_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tool_invocation_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "trace_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ts": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ExecutionEventType"
+          }
+        },
+        "required": [
+          "event_id",
+          "run_id",
+          "seq",
+          "ts",
+          "type",
+          "payload"
+        ],
+        "type": "object"
+      },
+      "ExecutionEventType": {
+        "enum": [
+          "agent.activity",
+          "agent.completed",
+          "agent.failed",
+          "agent.started",
+          "artifact.created",
+          "checkpoint.created",
+          "delegation.accepted",
+          "delegation.completed",
+          "delegation.failed",
+          "delegation.requested",
+          "delegation.started",
+          "evidence.saved",
+          "execution.resumed",
+          "finding.saved",
+          "plan.created",
+          "plan.revised",
+          "task.added",
+          "task.blocked",
+          "task.completed",
+          "task.failed",
+          "task.queued",
+          "task.removed",
+          "task.retrying",
+          "task.started",
+          "tool.completed",
+          "tool.failed",
+          "tool.started",
+          "worker.recovered",
+          "workflow.cancelled",
+          "workflow.completed",
+          "workflow.created",
+          "workflow.failed",
+          "workflow.retrying",
+          "workflow.started"
+        ],
+        "type": "string"
+      },
+      "ExecutionNote": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "ts": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ts",
+          "text"
+        ],
+        "type": "object"
+      },
+      "ExecutionStatus": {
+        "enum": [
+          "pending",
+          "running",
+          "completed",
+          "failed",
+          "cancelled"
+        ],
+        "type": "string"
       },
       "GapEvidence": {
-        "type": "object",
-        "required": [
-          "skill",
-          "requirement_quote",
-          "importance",
-          "recommended_focus"
-        ],
         "properties": {
           "importance": {
             "type": "string"
@@ -747,10 +904,70 @@
           "skill": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "skill",
+          "requirement_quote",
+          "importance",
+          "recommended_focus"
+        ],
+        "type": "object"
       },
       "InterviewQuestion": {
-        "type": "object",
+        "properties": {
+          "answer_outline": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "category": {
+            "$ref": "#/components/schemas/QuestionCategory"
+          },
+          "common_weaknesses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "difficulty": {
+            "$ref": "#/components/schemas/QuestionDifficulty"
+          },
+          "follow_up_questions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "interviewer_intent": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "skills_tested": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "strong_answer_rubric": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace_id": {
+            "$ref": "#/components/schemas/WorkspaceId"
+          }
+        },
         "required": [
           "id",
           "workspace_id",
@@ -765,68 +982,9 @@
           "follow_up_questions",
           "created_at"
         ],
-        "properties": {
-          "answer_outline": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "category": {
-            "$ref": "#/components/schemas/QuestionCategory"
-          },
-          "common_weaknesses": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "difficulty": {
-            "$ref": "#/components/schemas/QuestionDifficulty"
-          },
-          "follow_up_questions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "id": {
-            "type": "string"
-          },
-          "interviewer_intent": {
-            "type": "string"
-          },
-          "question": {
-            "type": "string"
-          },
-          "skills_tested": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "strong_answer_rubric": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "workspace_id": {
-            "$ref": "#/components/schemas/WorkspaceId"
-          }
-        }
+        "type": "object"
       },
       "KnowledgeEdge": {
-        "type": "object",
-        "required": [
-          "source",
-          "target",
-          "relation"
-        ],
         "properties": {
           "relation": {
             "type": "string"
@@ -837,39 +995,36 @@
           "target": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "source",
+          "target",
+          "relation"
+        ],
+        "type": "object"
       },
       "KnowledgeGraphResponse": {
-        "type": "object",
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeEdge"
+            },
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeSkillNode"
+            },
+            "type": "array"
+          }
+        },
         "required": [
           "nodes",
           "edges"
         ],
-        "properties": {
-          "edges": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/KnowledgeEdge"
-            }
-          },
-          "nodes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/KnowledgeSkillNode"
-            }
-          }
-        }
+        "type": "object"
       },
       "KnowledgeSkillNode": {
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "slug",
-          "category",
-          "candidate_status",
-          "importance"
-        ],
         "properties": {
           "candidate_status": {
             "type": "string"
@@ -889,30 +1044,27 @@
           "slug": {
             "type": "string"
           }
-        }
-      },
-      "LearningUnit": {
-        "type": "object",
+        },
         "required": [
           "id",
-          "workspace_id",
-          "skill",
-          "title",
-          "prerequisites",
-          "estimated_minutes",
-          "summary",
-          "content_markdown",
-          "created_at"
+          "name",
+          "slug",
+          "category",
+          "candidate_status",
+          "importance"
         ],
+        "type": "object"
+      },
+      "LearningUnit": {
         "properties": {
           "chapters": {
+            "items": {
+              "$ref": "#/components/schemas/LessonChapter"
+            },
             "type": [
               "array",
               "null"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/LessonChapter"
-            }
+            ]
           },
           "completed": {
             "type": "boolean"
@@ -921,8 +1073,8 @@
             "type": "string"
           },
           "created_at": {
-            "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "type": "string"
           },
           "diagram": {
             "oneOf": [
@@ -935,18 +1087,18 @@
             ]
           },
           "estimated_minutes": {
-            "type": "integer",
             "format": "int32",
-            "minimum": 0
+            "minimum": 0,
+            "type": "integer"
           },
           "id": {
             "type": "string"
           },
           "prerequisites": {
-            "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "type": "array"
           },
           "skill": {
             "type": "string"
@@ -972,14 +1124,21 @@
           "workspace_id": {
             "$ref": "#/components/schemas/WorkspaceId"
           }
-        }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "skill",
+          "title",
+          "prerequisites",
+          "estimated_minutes",
+          "summary",
+          "content_markdown",
+          "created_at"
+        ],
+        "type": "object"
       },
       "LessonChapter": {
-        "type": "object",
-        "required": [
-          "timestamp",
-          "title"
-        ],
         "properties": {
           "summary": {
             "type": [
@@ -993,16 +1152,14 @@
           "title": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "timestamp",
+          "title"
+        ],
+        "type": "object"
       },
       "LlmConfigItemDto": {
-        "type": "object",
-        "required": [
-          "provider",
-          "is_shared",
-          "has_key",
-          "is_inherited"
-        ],
         "properties": {
           "base_url": {
             "type": [
@@ -1046,14 +1203,107 @@
           "provider": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "provider",
+          "is_shared",
+          "has_key",
+          "is_inherited"
+        ],
+        "type": "object"
+      },
+      "LogEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "type": "object"
+          },
+          "component": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "error_category": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ErrorCategory"
+              }
+            ]
+          },
+          "execution_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "seq": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "severity": {
+            "$ref": "#/components/schemas/LogSeverity"
+          },
+          "task_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tool_invocation_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "trace_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ts": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "message",
+          "ts"
+        ],
+        "type": "object"
+      },
+      "LogSeverity": {
+        "enum": [
+          "debug",
+          "info",
+          "warn",
+          "error"
+        ],
+        "type": "string"
       },
       "Login2faRequestDto": {
-        "type": "object",
-        "required": [
-          "temp_token",
-          "code"
-        ],
+        "additionalProperties": false,
         "properties": {
           "code": {
             "type": "string"
@@ -1061,14 +1311,15 @@
           "temp_token": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "temp_token",
+          "code"
+        ],
+        "type": "object"
       },
       "LoginRequestDto": {
-        "type": "object",
-        "required": [
-          "email",
-          "password"
-        ],
+        "additionalProperties": false,
         "properties": {
           "email": {
             "type": "string"
@@ -1076,10 +1327,14 @@
           "password": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object"
       },
       "LoginResponseDto": {
-        "type": "object",
         "properties": {
           "access_token": {
             "type": [
@@ -1112,10 +1367,64 @@
               }
             ]
           }
-        }
+        },
+        "type": "object"
+      },
+      "LogsPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LogEntry"
+            },
+            "type": "array"
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
       },
       "MatchAnalysis": {
-        "type": "object",
+        "properties": {
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/GapEvidence"
+            },
+            "type": "array"
+          },
+          "overall_match_ratio": {
+            "format": "float",
+            "type": "number"
+          },
+          "risks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "strengths": {
+            "items": {
+              "$ref": "#/components/schemas/StrengthEvidence"
+            },
+            "type": "array"
+          },
+          "wording_improvements": {
+            "items": {
+              "$ref": "#/components/schemas/WordingImprovement"
+            },
+            "type": "array"
+          },
+          "workspace_id": {
+            "$ref": "#/components/schemas/WorkspaceId"
+          }
+        },
         "required": [
           "workspace_id",
           "overall_match_ratio",
@@ -1124,53 +1433,20 @@
           "risks",
           "wording_improvements"
         ],
-        "properties": {
-          "gaps": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GapEvidence"
-            }
-          },
-          "overall_match_ratio": {
-            "type": "number",
-            "format": "float"
-          },
-          "risks": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "strengths": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StrengthEvidence"
-            }
-          },
-          "wording_improvements": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WordingImprovement"
-            }
-          },
-          "workspace_id": {
-            "$ref": "#/components/schemas/WorkspaceId"
-          }
-        }
+        "type": "object"
       },
       "MessageResponseDto": {
-        "type": "object",
-        "required": [
-          "message"
-        ],
         "properties": {
           "message": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
       },
       "PipelinePhase": {
-        "type": "string",
         "enum": [
           "preparing_input",
           "analyzing_resume",
@@ -1186,10 +1462,10 @@
           "final_validation",
           "ready",
           "failed"
-        ]
+        ],
+        "type": "string"
       },
       "QuestionCategory": {
-        "type": "string",
         "enum": [
           "resume_deep_dive",
           "project_deep_dive",
@@ -1198,18 +1474,19 @@
           "system_design",
           "debugging",
           "behavioral"
-        ]
+        ],
+        "type": "string"
       },
       "QuestionDifficulty": {
-        "type": "string",
         "enum": [
           "easy",
           "medium",
           "hard"
-        ]
+        ],
+        "type": "string"
       },
       "RefreshTokenRequestDto": {
-        "type": "object",
+        "additionalProperties": false,
         "properties": {
           "refresh_token": {
             "type": [
@@ -1217,15 +1494,11 @@
               "null"
             ]
           }
-        }
+        },
+        "type": "object"
       },
       "RegisterRequestDto": {
-        "type": "object",
-        "required": [
-          "email",
-          "password",
-          "name"
-        ],
+        "additionalProperties": false,
         "properties": {
           "email": {
             "type": "string"
@@ -1236,10 +1509,46 @@
           "password": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "email",
+          "password",
+          "name"
+        ],
+        "type": "object"
+      },
+      "RunStatus": {
+        "enum": [
+          "pending",
+          "running",
+          "completed",
+          "failed",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "RunsPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WorkflowRun"
+            },
+            "type": "array"
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
       },
       "SeniorityLevel": {
-        "type": "string",
         "enum": [
           "junior",
           "mid",
@@ -1247,28 +1556,17 @@
           "staff",
           "principal",
           "lead"
-        ]
+        ],
+        "type": "string"
       },
       "SessionId": {
         "type": "string"
       },
       "SourceCitation": {
-        "type": "object",
-        "required": [
-          "id",
-          "workspace_id",
-          "url",
-          "title",
-          "domain",
-          "snippet",
-          "source_type",
-          "confidence",
-          "retrieved_at"
-        ],
         "properties": {
           "confidence": {
-            "type": "number",
-            "format": "float"
+            "format": "float",
+            "type": "number"
           },
           "domain": {
             "type": "string"
@@ -1277,8 +1575,8 @@
             "type": "string"
           },
           "retrieved_at": {
-            "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "type": "string"
           },
           "snippet": {
             "type": "string"
@@ -1295,15 +1593,37 @@
           "workspace_id": {
             "$ref": "#/components/schemas/WorkspaceId"
           }
-        }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "url",
+          "title",
+          "domain",
+          "snippet",
+          "source_type",
+          "confidence",
+          "retrieved_at"
+        ],
+        "type": "object"
+      },
+      "SourceLink": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "url"
+        ],
+        "type": "object"
       },
       "StrengthEvidence": {
-        "type": "object",
-        "required": [
-          "skill",
-          "evidence_quote",
-          "relevance"
-        ],
         "properties": {
           "evidence_quote": {
             "type": "string"
@@ -1314,14 +1634,140 @@
           "skill": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "skill",
+          "evidence_quote",
+          "relevance"
+        ],
+        "type": "object"
+      },
+      "TaskGraphEdge": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DependencyEdgeKind"
+          },
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "target"
+        ],
+        "type": "object"
+      },
+      "TaskGraphNode": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TaskGraphNodeData"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "data"
+        ],
+        "type": "object"
+      },
+      "TaskGraphNodeData": {
+        "additionalProperties": false,
+        "properties": {
+          "added_in_revision": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "assigned_agent": {
+            "type": "string"
+          },
+          "attempt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "execution_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "group": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "task_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "assigned_agent",
+          "attempt",
+          "task_type",
+          "required",
+          "added_in_revision"
+        ],
+        "type": "object"
+      },
+      "TaskGraphResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/TaskGraphEdge"
+            },
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/TaskGraphNode"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "nodes",
+          "edges"
+        ],
+        "type": "object"
+      },
+      "TaskStatus": {
+        "enum": [
+          "pending",
+          "queued",
+          "running",
+          "completed",
+          "failed",
+          "retrying",
+          "blocked",
+          "cancelled",
+          "skipped"
+        ],
+        "type": "string"
       },
       "TokenResponseDto": {
-        "type": "object",
-        "required": [
-          "access_token",
-          "refresh_token"
-        ],
         "properties": {
           "access_token": {
             "type": "string"
@@ -1329,15 +1775,134 @@
           "refresh_token": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "access_token",
+          "refresh_token"
+        ],
+        "type": "object"
+      },
+      "ToolInvocation": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "duration_ms": {
+            "format": "double",
+            "type": "number"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "output_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "output_summary": {
+            "type": "string"
+          },
+          "sanitized_input": {
+            "type": "object"
+          },
+          "started_at": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ToolStatus"
+          },
+          "tool_name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "execution_id",
+          "tool_name",
+          "started_at"
+        ],
+        "type": "object"
+      },
+      "ToolInvocationsPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ToolInvocation"
+            },
+            "type": "array"
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "ToolOutputResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "offset": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "tool_invocation_id": {
+            "type": "string"
+          },
+          "total_bytes": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tool_invocation_id",
+          "offset",
+          "limit",
+          "total_bytes",
+          "has_more",
+          "content"
+        ],
+        "type": "object"
+      },
+      "ToolStatus": {
+        "enum": [
+          "pending",
+          "running",
+          "completed",
+          "failed"
+        ],
+        "type": "string"
       },
       "TotpSetupResponseDto": {
-        "type": "object",
-        "required": [
-          "secret",
-          "qr_code_data_url",
-          "otpauth_url"
-        ],
         "properties": {
           "otpauth_url": {
             "type": "string"
@@ -1348,13 +1913,32 @@
           "secret": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "secret",
+          "qr_code_data_url",
+          "otpauth_url"
+        ],
+        "type": "object"
+      },
+      "TriggerWorkflowRunRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "workflow_id": {
+            "type": "string"
+          },
+          "workspace_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_id",
+          "workspace_id"
+        ],
+        "type": "object"
       },
       "UpsertLlmConfigRequestDto": {
-        "type": "object",
-        "required": [
-          "provider"
-        ],
+        "additionalProperties": false,
         "properties": {
           "api_key": {
             "type": [
@@ -1395,24 +1979,17 @@
           "provider": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "provider"
+        ],
+        "type": "object"
       },
       "User": {
-        "type": "object",
-        "required": [
-          "id",
-          "email",
-          "name",
-          "status",
-          "role",
-          "totp_enabled",
-          "created_at",
-          "updated_at"
-        ],
         "properties": {
           "created_at": {
-            "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "type": "string"
           },
           "email": {
             "type": "string"
@@ -1433,22 +2010,26 @@
             "type": "boolean"
           },
           "updated_at": {
-            "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "type": "string"
           }
-        }
+        },
+        "required": [
+          "id",
+          "email",
+          "name",
+          "status",
+          "role",
+          "totp_enabled",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
       },
       "UserId": {
         "type": "string"
       },
       "UserProfileResponseDto": {
-        "type": "object",
-        "required": [
-          "id",
-          "email",
-          "name",
-          "role"
-        ],
         "properties": {
           "email": {
             "type": "string"
@@ -1462,24 +2043,20 @@
           "role": {
             "$ref": "#/components/schemas/UserRole"
           }
-        }
-      },
-      "UserResponseDto": {
-        "type": "object",
+        },
         "required": [
           "id",
           "email",
           "name",
-          "status",
-          "role",
-          "totp_enabled",
-          "created_at",
-          "updated_at"
+          "role"
         ],
+        "type": "object"
+      },
+      "UserResponseDto": {
         "properties": {
           "created_at": {
-            "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "type": "string"
           },
           "email": {
             "type": "string"
@@ -1500,43 +2077,49 @@
             "type": "boolean"
           },
           "updated_at": {
-            "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "type": "string"
           }
-        }
+        },
+        "required": [
+          "id",
+          "email",
+          "name",
+          "status",
+          "role",
+          "totp_enabled",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
       },
       "UserRole": {
-        "type": "string",
         "enum": [
           "admin",
           "member"
-        ]
+        ],
+        "type": "string"
       },
       "UserStatus": {
-        "type": "string",
         "enum": [
           "active",
           "suspended"
-        ]
+        ],
+        "type": "string"
       },
       "VerifyTotpRequestDto": {
-        "type": "object",
-        "required": [
-          "code"
-        ],
+        "additionalProperties": false,
         "properties": {
           "code": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
       },
       "VisualDiagram": {
-        "type": "object",
-        "required": [
-          "type",
-          "caption",
-          "data"
-        ],
         "properties": {
           "caption": {
             "type": "string"
@@ -1545,15 +2128,15 @@
           "type": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "type",
+          "caption",
+          "data"
+        ],
+        "type": "object"
       },
       "WordingImprovement": {
-        "type": "object",
-        "required": [
-          "original_text",
-          "suggested_revision",
-          "rationale"
-        ],
         "properties": {
           "original_text": {
             "type": "string"
@@ -1564,28 +2147,343 @@
           "suggested_revision": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "original_text",
+          "suggested_revision",
+          "rationale"
+        ],
+        "type": "object"
       },
-      "Workspace": {
-        "type": "object",
+      "WorkflowDefinition": {
+        "additionalProperties": false,
+        "properties": {
+          "default_max_retries": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "supported_agents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "type": {
+            "$ref": "#/components/schemas/WorkflowType"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
         "required": [
           "id",
+          "name",
+          "type",
+          "description"
+        ],
+        "type": "object"
+      },
+      "WorkflowProgress": {
+        "additionalProperties": false,
+        "properties": {
+          "blocked": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "cancelled": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "completed": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "estimate": {
+            "default": false,
+            "type": "boolean"
+          },
+          "failed": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "pending": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "percentage": {
+            "default": null,
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "phase_count": {
+            "default": null,
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "phase_index": {
+            "default": null,
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "queued": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "retrying": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "running": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "skipped": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "total_tasks": {
+            "default": 0,
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "WorkflowRetryingPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "delay_ms": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "error_category": {
+            "type": "string"
+          },
+          "next_attempt": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "attempt",
+          "next_attempt",
+          "delay_ms",
+          "error_category"
+        ],
+        "type": "object"
+      },
+      "WorkflowRun": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "current_phase": {
+            "type": "string"
+          },
+          "degraded": {
+            "type": "boolean"
+          },
+          "degraded_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "duration_ms": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "error_message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "last_seq": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "plan_revision": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/WorkflowProgress"
+          },
+          "started_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "type": {
+            "$ref": "#/components/schemas/WorkflowType"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "workflow_id": {
+            "type": "string"
+          },
+          "workflow_name": {
+            "type": "string"
+          },
+          "workspace_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workflow_id",
+          "workflow_name",
+          "workspace_id",
           "user_id",
-          "company_name",
-          "role_title",
+          "type",
           "status",
-          "current_phase",
-          "progress_percent",
           "created_at",
           "updated_at"
         ],
+        "type": "object"
+      },
+      "WorkflowTask": {
+        "additionalProperties": false,
+        "properties": {
+          "added_in_revision": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "assigned_agent": {
+            "type": "string"
+          },
+          "attempt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "dependencies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "execution_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "input_data": {
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          },
+          "output_data": {
+            "type": "object"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "task_type": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "task_type",
+          "name",
+          "assigned_agent",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "WorkflowType": {
+        "enum": [
+          "static",
+          "dynamic"
+        ],
+        "type": "string"
+      },
+      "Workspace": {
         "properties": {
           "company_name": {
             "type": "string"
           },
           "created_at": {
-            "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "type": "string"
           },
           "current_phase": {
             "$ref": "#/components/schemas/PipelinePhase"
@@ -1594,17 +2492,17 @@
             "$ref": "#/components/schemas/WorkspaceId"
           },
           "prep_time_weeks": {
+            "format": "int32",
+            "minimum": 0,
             "type": [
               "integer",
               "null"
-            ],
-            "format": "int32",
-            "minimum": 0
+            ]
           },
           "progress_percent": {
-            "type": "integer",
             "format": "int32",
-            "minimum": 0
+            "minimum": 0,
+            "type": "integer"
           },
           "role_title": {
             "type": "string"
@@ -1623,56 +2521,20 @@
             "$ref": "#/components/schemas/WorkspaceStatus"
           },
           "target_date": {
+            "format": "date-time",
             "type": [
               "string",
               "null"
-            ],
-            "format": "date-time"
+            ]
           },
           "updated_at": {
-            "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "type": "string"
           },
           "user_id": {
             "$ref": "#/components/schemas/UserId"
           }
-        }
-      },
-      "WorkspaceId": {
-        "type": "string"
-      },
-      "WorkspaceProgressEventDto": {
-        "type": "object",
-        "required": [
-          "workspace_id",
-          "phase",
-          "percent",
-          "message",
-          "timestamp"
-        ],
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "percent": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "phase": {
-            "$ref": "#/components/schemas/PipelinePhase"
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "workspace_id": {
-            "type": "string"
-          }
-        }
-      },
-      "WorkspaceResponseDto": {
-        "type": "object",
+        },
         "required": [
           "id",
           "user_id",
@@ -1684,13 +2546,49 @@
           "created_at",
           "updated_at"
         ],
+        "type": "object"
+      },
+      "WorkspaceId": {
+        "type": "string"
+      },
+      "WorkspaceProgressEventDto": {
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "percent": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "phase": {
+            "$ref": "#/components/schemas/PipelinePhase"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "workspace_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "phase",
+          "percent",
+          "message",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "WorkspaceResponseDto": {
         "properties": {
           "company_name": {
             "type": "string"
           },
           "created_at": {
-            "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "type": "string"
           },
           "current_phase": {
             "$ref": "#/components/schemas/PipelinePhase"
@@ -1699,9 +2597,9 @@
             "type": "string"
           },
           "progress_percent": {
-            "type": "integer",
             "format": "int32",
-            "minimum": 0
+            "minimum": 0,
+            "type": "integer"
           },
           "role_title": {
             "type": "string"
@@ -1710,29 +2608,1403 @@
             "$ref": "#/components/schemas/WorkspaceStatus"
           },
           "updated_at": {
-            "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "type": "string"
           },
           "user_id": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "company_name",
+          "role_title",
+          "status",
+          "current_phase",
+          "progress_percent",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
       },
       "WorkspaceStatus": {
-        "type": "string",
         "enum": [
           "pending",
           "processing",
           "ready",
           "failed"
+        ],
+        "type": "string"
+      }
+    }
+  },
+  "info": {
+    "description": "",
+    "license": {
+      "name": ""
+    },
+    "title": "mensetsu-api",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/auth/2fa/disable": {
+      "post": {
+        "operationId": "disable_2fa",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyTotpRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            },
+            "description": "Disable 2FA"
+          },
+          "401": {
+            "description": "Invalid code"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/2fa/setup": {
+      "post": {
+        "operationId": "setup_2fa",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpSetupResponseDto"
+                }
+              }
+            },
+            "description": "Initiate 2FA setup and get QR code"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/2fa/verify": {
+      "post": {
+        "operationId": "verify_2fa",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyTotpRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            },
+            "description": "Verify code and activate 2FA"
+          },
+          "401": {
+            "description": "Invalid code"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            },
+            "description": "Login response or 2FA challenge"
+          },
+          "401": {
+            "description": "Invalid credentials or account suspended"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/login-2fa": {
+      "post": {
+        "operationId": "login_2fa",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login2faRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            },
+            "description": "Authenticated with 2FA"
+          },
+          "401": {
+            "description": "Invalid or expired 2FA code"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            },
+            "description": "Logged out successfully"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout-all": {
+      "post": {
+        "operationId": "logout_all",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            },
+            "description": "Logged out from all sessions"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            },
+            "description": "Current authenticated user profile"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "operationId": "refresh",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RefreshTokenRequestDto"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponseDto"
+                }
+              }
+            },
+            "description": "Token refreshed"
+          },
+          "401": {
+            "description": "Invalid or expired refresh token"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            },
+            "description": "Registration successful"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "409": {
+            "description": "Email already registered"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/settings/llm": {
+      "get": {
+        "operationId": "get_llm_settings",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LlmConfigItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "List of configured LLM providers"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "settings"
+        ]
+      },
+      "put": {
+        "operationId": "upsert_llm_setting",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertLlmConfigRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmConfigItemDto"
+                }
+              }
+            },
+            "description": "LLM provider settings updated"
+          },
+          "400": {
+            "description": "Invalid payload"
+          },
+          "403": {
+            "description": "Forbidden to share configuration"
+          }
+        },
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/settings/llm/{provider}": {
+      "delete": {
+        "operationId": "delete_llm_setting",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "LLM provider setting removed"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/settings/profile": {
+      "get": {
+        "operationId": "get_profile",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponseDto"
+                }
+              }
+            },
+            "description": "Current user profile with role"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/workflows": {
+      "get": {
+        "operationId": "list_workflows",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WorkflowDefinition"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Workflow definitions"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs": {
+      "get": {
+        "operationId": "list_workflow_runs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/WorkflowType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunsPageResponse"
+                }
+              }
+            },
+            "description": "Page of the caller's workflow runs"
+          },
+          "400": {
+            "description": "Invalid cursor or limit"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "workspace_id not owned by caller"
+          },
+          "404": {
+            "description": "workspace_id not found"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      },
+      "post": {
+        "operationId": "trigger_workflow_run",
+        "parameters": [
+          {
+            "description": "Forwarded to intelligence to dedupe retries",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerWorkflowRunRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowRun"
+                }
+              }
+            },
+            "description": "Workflow run created"
+          },
+          "400": {
+            "description": "Unknown workflow_id"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Workspace not owned by caller"
+          },
+          "404": {
+            "description": "Workspace not found"
+          },
+          "422": {
+            "description": "Invalid body (including unknown fields such as user_id)"
+          },
+          "502": {
+            "description": "Intelligence error or contract mismatch"
+          },
+          "503": {
+            "description": "Intelligence unavailable"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}": {
+      "get": {
+        "operationId": "get_workflow_run",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowRun"
+                }
+              }
+            },
+            "description": "Workflow run snapshot"
+          },
+          "404": {
+            "description": "Unknown run or not owned by caller"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/agents": {
+      "get": {
+        "operationId": "list_workflow_run_agents",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AgentExecution"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Agent executions in this run"
+          },
+          "404": {
+            "description": "Unknown run or not owned by caller"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/agents/{execution_id}": {
+      "get": {
+        "operationId": "get_workflow_run_agent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "execution_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentExecution"
+                }
+              }
+            },
+            "description": "Agent execution details"
+          },
+          "404": {
+            "description": "Unknown run/execution or run not owned by caller"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/agents/{execution_id}/tools": {
+      "get": {
+        "operationId": "list_workflow_run_agent_tools",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "execution_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolInvocationsPageResponse"
+                }
+              }
+            },
+            "description": "Tool invocations for this agent execution"
+          },
+          "404": {
+            "description": "Unknown run/execution or not owned by caller"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/artifacts": {
+      "get": {
+        "operationId": "get_workflow_run_artifacts",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Artifact"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Artifacts produced by this run"
+          },
+          "404": {
+            "description": "Unknown run or not owned by caller"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/cancel": {
+      "post": {
+        "operationId": "cancel_workflow_run",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowRun"
+                }
+              }
+            },
+            "description": "Run after cancellation (idempotent)"
+          },
+          "404": {
+            "description": "Unknown run or not owned by caller; nothing is forwarded upstream"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/delegations": {
+      "get": {
+        "operationId": "get_workflow_run_delegations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Delegation"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Delegations in this run"
+          },
+          "404": {
+            "description": "Unknown run or not owned by caller"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/delegations/graph": {
+      "get": {
+        "operationId": "get_workflow_run_delegation_graph",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DelegationGraphResponse"
+                }
+              }
+            },
+            "description": "Agent delegation graph"
+          },
+          "404": {
+            "description": "Unknown run or not owned by caller"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/events": {
+      "get": {
+        "operationId": "workflow_run_events",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after_seq",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Resume cursor, used only when after_seq is absent",
+            "in": "header",
+            "name": "Last-Event-ID",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {}
+            },
+            "description": "text/event-stream of ExecutionEvent frames (id: seq, event: type, data: ExecutionEvent JSON)"
+          },
+          "404": {
+            "description": "Unknown run or not owned by caller"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/events/history": {
+      "get": {
+        "operationId": "get_workflow_run_events_history",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after_seq",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventsHistoryPageResponse"
+                }
+              }
+            },
+            "description": "Historical execution events"
+          },
+          "404": {
+            "description": "Unknown run or not owned by caller"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/graph": {
+      "get": {
+        "operationId": "get_workflow_run_graph",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskGraphResponse"
+                }
+              }
+            },
+            "description": "Task dependency graph"
+          },
+          "404": {
+            "description": "Unknown run or not owned by caller"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/logs": {
+      "get": {
+        "operationId": "get_workflow_run_logs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "task_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogsPageResponse"
+                }
+              }
+            },
+            "description": "Page of execution logs"
+          },
+          "404": {
+            "description": "Unknown run or not owned by caller"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/tasks/{task_id}": {
+      "get": {
+        "operationId": "get_workflow_run_task",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowTask"
+                }
+              }
+            },
+            "description": "Task details"
+          },
+          "404": {
+            "description": "Unknown run/task or run not owned by caller"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/runs/{run_id}/tools/{tool_invocation_id}/output": {
+      "get": {
+        "operationId": "get_workflow_run_tool_output",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tool_invocation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolOutputResponse"
+                }
+              }
+            },
+            "description": "Chunked tool invocation output"
+          },
+          "404": {
+            "description": "Unknown run/tool or not owned by caller"
+          },
+          "502": {
+            "description": "Intelligence response did not match contract"
+          }
+        },
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workspaces": {
+      "get": {
+        "operationId": "list_workspaces",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "List workspaces"
+          }
+        },
+        "tags": [
+          "workspaces"
+        ]
+      },
+      "post": {
+        "operationId": "create_workspace",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkspaceRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceResponseDto"
+                }
+              }
+            },
+            "description": "Workspace created"
+          },
+          "400": {
+            "description": "Invalid payload"
+          }
+        },
+        "tags": [
+          "workspaces"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{id}": {
+      "get": {
+        "operationId": "get_workspace",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceResponseDto"
+                }
+              }
+            },
+            "description": "Workspace details"
+          },
+          "404": {
+            "description": "Workspace not found"
+          }
+        },
+        "tags": [
+          "workspaces"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{id}/learning/{lesson_id}/toggle": {
+      "put": {
+        "operationId": "toggle_learning_unit_completed",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lesson_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Learning unit completion toggled"
+          },
+          "404": {
+            "description": "Learning unit not found"
+          }
+        },
+        "tags": [
+          "workspaces"
         ]
       }
     }
   },
   "tags": [
     {
-      "name": "workspaces",
-      "description": "Interview workspace endpoints"
+      "description": "Interview workspace endpoints",
+      "name": "workspaces"
+    },
+    {
+      "description": "Multi-agent workflow runs (authorized per run, proxied to intelligence)",
+      "name": "workflows"
     }
   ]
 }

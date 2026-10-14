@@ -9,12 +9,9 @@ import type {
   KnowledgeGraphResponse,
   WorkspaceRoleResponse,
   ToggleLessonResponse,
+  SourceCitation,
 } from '../models/interview.model'
 
-/**
- * Service for interview workspaces, match analysis, company dossiers,
- * role expectations, knowledge graphs, learning units, and question banks.
- */
 export const useInterviewService = () => {
   const { request } = useApiClient()
 
@@ -82,6 +79,49 @@ export const useInterviewService = () => {
     return await request<InterviewQuestionResponse[]>(`/api/v1/workspaces/${cleanId}/questions`)
   }
 
+  const askWorkspaceKnowledgeQa = async (
+    id: string,
+    query: string
+  ): Promise<{
+    query: string
+    answer: string
+    cited_sources: SourceCitation[]
+    cited_claims: Record<string, unknown>[]
+    has_sufficient_evidence: boolean
+  }> => {
+    const cleanId = cleanWorkspaceId(id)
+    return await request(`/api/v1/workspaces/${cleanId}/qa`, {
+      method: 'POST',
+      body: { query },
+    })
+  }
+
+  const importJobDescriptionUrl = async (
+    id: string,
+    url: string,
+    customTitle?: string
+  ): Promise<{ workspace_id: string; status: string; source_url: string }> => {
+    const cleanId = cleanWorkspaceId(id)
+    return await request(`/api/v1/workspaces/${cleanId}/import-jd`, {
+      method: 'POST',
+      body: { url, custom_title: customTitle },
+    })
+  }
+
+  const getWorkspaceSources = async (
+    id: string
+  ): Promise<{ workspace_id: string; sources: SourceCitation[] }> => {
+    const cleanId = cleanWorkspaceId(id)
+    return await request(`/api/v1/workspaces/${cleanId}/sources`)
+  }
+
+  const getWorkspaceClaims = async (
+    id: string
+  ): Promise<{ workspace_id: string; claims: Record<string, unknown>[] }> => {
+    const cleanId = cleanWorkspaceId(id)
+    return await request(`/api/v1/workspaces/${cleanId}/claims`)
+  }
+
   return {
     cleanWorkspaceId,
     createWorkspace,
@@ -94,5 +134,9 @@ export const useInterviewService = () => {
     getWorkspaceLearning,
     toggleLearningUnitCompleted,
     getWorkspaceQuestions,
+    askWorkspaceKnowledgeQa,
+    importJobDescriptionUrl,
+    getWorkspaceSources,
+    getWorkspaceClaims,
   }
 }

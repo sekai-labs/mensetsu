@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
   } catch (err: unknown) {
     const errorObj = err as { statusCode?: number }
     if (errorObj.statusCode === 401) {
-      // Try refresh
+
       try {
         const refreshRes = await $fetch<{
           access_token: string

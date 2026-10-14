@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
           },
         })
       } catch {
-        // Continue even if backend call fails
+
       }
     }
     await sessionManager.deleteSession(tokenId)

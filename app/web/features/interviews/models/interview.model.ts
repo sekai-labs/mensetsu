@@ -1,35 +1,25 @@
 import type {
+  CreateWorkspaceRequest as ContractCreateWorkspaceRequest,
+} from '@mensetsu/contracts'
+import type {
   WorkspaceStatus,
   PipelinePhase,
   SeniorityLevel,
 } from '~/models/common.model'
 
 export type { WorkspaceStatus, PipelinePhase, SeniorityLevel }
-
-export interface CreateWorkspaceRequest {
-  company_name: string
-  role_title: string
-  job_description?: string
-  jd_url?: string
-  company_urls: string[]
-  seniority?: SeniorityLevel
-  target_date?: string
-  prep_time_weeks?: number
-  resume_text?: string
-  resume_pdf_base64?: string
-  resume_filename?: string
-}
+export type CreateWorkspaceRequest = ContractCreateWorkspaceRequest
 
 export interface WorkspaceResponse {
   id: string
   user_id: string
   company_name: string
   role_title: string
+  seniority?: SeniorityLevel
+  target_interview_date?: string
   status: WorkspaceStatus
   current_phase: PipelinePhase
   progress_percent: number
-  prep_time_weeks?: number
-  target_date?: string
   created_at: string
   updated_at: string
 }
@@ -43,13 +33,13 @@ export interface StrengthEvidence {
 export interface GapEvidence {
   skill: string
   requirement_quote: string
-  importance: 'mandatory' | 'preferred' | string
+  importance: 'required' | 'preferred' | 'optional'
   recommended_focus: string
 }
 
 export interface WordingImprovement {
-  original_text: string
-  suggested_revision: string
+  original_bullet: string
+  improved_bullet: string
   rationale: string
 }
 
@@ -64,31 +54,30 @@ export interface MatchAnalysisResponse {
 
 export interface SourceCitation {
   id: string
-  url: string
+  source_url: string
   title: string
-  domain: string
   retrieved_at: string
   snippet: string
   confidence: number
-  source_type?: string
 }
 
 export interface TechnologyEvidenceItem {
-  domain: string
-  tool_or_tech: string
-  evidence_tier: string
-  production_role: string
+  name: string
+  category: string
+  verified: boolean
+  source_citation_id?: string
+  notes?: string
 }
 
 export interface ArchitectureTopology {
-  edge_and_ingress?: string
-  compute_and_orchestration?: string
-  storage_and_consensus?: string
-  observability_and_resilience?: string
+  system_type: string
+  components: string[]
+  data_stores: string[]
+  consensus_or_sync_mechanism?: string
 }
 
 export interface EvidenceMatrixItem {
-  tier: 'FACT' | 'INFERENCE' | 'CANDIDATE' | string
+  tier: 'FACT' | 'INFERENCE' | 'CANDIDATE'
   domain: string
   statement: string
   architectural_role?: string
@@ -100,26 +89,22 @@ export interface CompanyResearchResponse {
   overview: string
   business_model: string
   engineering_culture: string[]
-  technology_stack: string[]
-  recent_developments: string[]
-  interview_process_insights: string[]
-  bar_raiser_focus_areas?: string[]
-  compliance_and_governance?: string[]
   operational_realities?: string[]
-  evidence_matrix?: EvidenceMatrixItem[]
+  tech_stack: TechnologyEvidenceItem[]
   architecture_topology?: ArchitectureTopology
-  technology_evidence_map?: TechnologyEvidenceItem[]
+  interview_process_notes: string[]
   sources: SourceCitation[]
+  evidence_matrix?: EvidenceMatrixItem[]
 }
 
 export interface LessonChapter {
-  timestamp: string
+  id: string
   title: string
-  summary?: string
+  content: string
 }
 
 export interface VisualDiagram {
-  type: 'dependency_graph' | 'architecture_diagram' | 'data_flow' | 'comparison_matrix' | string
+  diagram_type: 'dependency_graph' | 'architecture_diagram' | 'data_flow' | 'comparison_matrix'
   caption: string
   data: Record<string, unknown>
 }
@@ -127,18 +112,20 @@ export interface VisualDiagram {
 export interface LearningUnitResponse {
   id: string
   workspace_id: string
-  skill: string
+  skill?: string
   title: string
+  summary?: string
+  order_index?: number
   prerequisites: string[]
   estimated_minutes: number
-  summary: string
-  content_markdown: string
-  diagram?: VisualDiagram
-  video_url?: string
-  video_title?: string
+  core_concepts?: string[]
+  deep_dive_markdown?: string
+  content_markdown?: string
   chapters?: LessonChapter[]
+  visual_diagram?: VisualDiagram
+  is_completed?: boolean
   completed?: boolean
-  created_at: string
+  created_at?: string
 }
 
 export type QuestionCategory =
@@ -155,65 +142,64 @@ export type QuestionDifficulty = 'easy' | 'medium' | 'hard'
 export interface InterviewQuestionResponse {
   id: string
   workspace_id: string
-  category: QuestionCategory | string
+  category: QuestionCategory
+  difficulty: QuestionDifficulty
   question: string
-  difficulty: QuestionDifficulty | string
-  skills_tested: string[]
-  skill_tested?: string
-  interviewer_intent: string
-  answer_outline: string[]
-  strong_answer_rubric: string[]
-  common_weaknesses: string[]
-  follow_up_questions: string[]
-  created_at: string
+  context_or_trigger?: string
+  skills_tested?: string[]
+  interviewer_intent?: string
+  answer_outline?: string | string[]
+  strong_answer_rubric?: string[]
+  common_weaknesses?: string[]
+  common_pitfalls?: string[]
+  evaluation_rubric?: string[]
+  follow_up_questions?: string[]
+  source_citation_id?: string
+  created_at?: string
 }
 
 export interface KnowledgeSkillNode {
   id: string
-  name: string
-  slug: string
-  category: string
-  candidate_status: 'mastered' | 'in_progress' | 'gap' | string
-  importance: 'mandatory' | 'preferred' | string
+  label: string
+  category: 'language' | 'framework' | 'distributed_system' | 'database' | 'cloud' | 'architecture'
+  importance: 'core' | 'supporting' | 'peripheral'
+  is_matched: boolean
 }
 
 export interface KnowledgeEdge {
   source: string
   target: string
-  relation: string
+  relationship: 'requires' | 'implements' | 'runs_on' | 'complements'
 }
 
 export interface KnowledgeGraphResponse {
+  workspace_id: string
   nodes: KnowledgeSkillNode[]
   edges: KnowledgeEdge[]
 }
 
 export interface RoleRequirement {
-  skill: string
-  requirement_quote: string
-  importance: 'mandatory' | 'preferred' | string
+  category: string
+  description: string
+  is_mandatory: boolean
 }
 
 export interface WorkspaceRoleResponse {
   workspace_id: string
   title: string
-  company_name: string
-  role_summary: string
-  raw_text?: string
-  requirements?: RoleRequirement[]
-  responsibilities?: string[]
+  seniority: SeniorityLevel
+  responsibilities: string[]
+  requirements: RoleRequirement[]
 }
 
 export interface ProgressEventPayload {
   workspace_id: string
-  phase: PipelinePhase | string
-  percent: number
-  status: WorkspaceStatus | string
-  message: string
-  timestamp: string
+  phase: PipelinePhase
+  progress_percent: number
+  message?: string
 }
 
 export interface ToggleLessonResponse {
   lesson_id: string
-  completed: boolean
+  is_completed: boolean
 }

@@ -1,20 +1,16 @@
-import { isPublicAuthRoute, resolvePostAuthRedirect } from '~/features/auth/utils/auth.util'
+import { resolvePostAuthRedirect } from '~/features/auth/utils/auth.util'
 import { useAuthService } from '~/features/auth/services/auth.service'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { user, fetchMe } = useAuthService()
+  const { isAuthenticated, isInitialized, fetchCurrentUser } = useAuthService()
 
-  if (!user.value) {
-    try {
-      await fetchMe()
-    } catch {
-      // Session cookie check failed or expired
-    }
+  if (!isInitialized.value) {
+    await fetchCurrentUser()
   }
 
-  const isAuthenticated = !!user.value
-  const redirectPath = resolvePostAuthRedirect(isAuthenticated, to.path, to.query.redirect as string | null)
-  if (redirectPath) {
-    return navigateTo(redirectPath)
+  const redirectTarget = resolvePostAuthRedirect(isAuthenticated.value, to.path, to.query.redirect as string | undefined)
+
+  if (redirectTarget) {
+    return navigateTo(redirectTarget)
   }
 })

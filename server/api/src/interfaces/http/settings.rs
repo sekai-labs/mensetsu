@@ -39,6 +39,7 @@ pub struct LlmConfigItemDto {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct UpsertLlmConfigRequestDto {
     pub provider: String,
     pub api_key: Option<String>,
@@ -52,7 +53,7 @@ pub struct UpsertLlmConfigRequestDto {
 pub fn settings_routes(state: AppState) -> Router {
     Router::new()
         .route("/api/v1/settings/profile", get(get_profile))
-        .route("/api/v1/settings/llm", get(get_llm_settings).put(upsert_llm_setting))
+        .route("/api/v1/settings/llm", get(get_llm_settings).put(upsert_llm_setting).post(upsert_llm_setting))
         .route("/api/v1/settings/llm/{provider}", delete(delete_llm_setting))
         .with_state(state)
 }
@@ -234,10 +235,6 @@ pub async fn upsert_llm_setting(
     let valid_providers = ["openai", "anthropic", "openrouter", "ollama", "custom"];
     if !valid_providers.contains(&provider.as_str()) {
         return Err(AppError::Validation(format!("Unsupported provider '{provider}'")));
-    }
-
-    if payload.is_shared == Some(true) && user.role != UserRole::Admin {
-        return Err(AppError::Forbidden("Only administrators can share LLM configurations organization-wide".into()));
     }
 
     let db = &state.db.client;

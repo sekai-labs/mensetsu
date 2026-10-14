@@ -1,47 +1,12 @@
 import pytest
 
-from src.activities.curriculum import generate_learning_units_activity
-from src.activities.graph import construct_knowledge_graph_activity
-from src.activities.job_description import (
-    parse_job_description_activity,
-)
-from src.activities.matching import (
-    CandidateGap,
-    CandidateStrength,
-    calculate_deterministic_readiness,
-    calculate_match_analysis_activity,
-)
-from src.activities.questions import (
-    InterviewQuestionSpec,
-    deduplicate_questions,
-)
-from src.activities.research import research_company_activity
-from src.activities.resume import (
-    parse_resume_activity,
-)
-from src.llm import ModelRole, telemetry
+from src.agents.runtime import agent_runtime
+from src.db.client import SurrealDirectClient
+from src.fetcher.reader import MarkdownReader
+from src.generation.resume import ResumeExtractionError, parse_resume_activity
+from tests.resume_double import ResumeDoubleModel
 
-
-@pytest.mark.asyncio
-async def test_llm_router_and_telemetry():
-    telemetry.clear()
-    record = telemetry.record_usage(
-        role=ModelRole.EXTRACTION,
-        provider="openai",
-        model="gpt-4o-mini",
-        prompt_tokens=100,
-        completion_tokens=50,
-        latency_ms=120.5,
-    )
-    assert record.role == ModelRole.EXTRACTION
-    assert record.prompt_tokens == 100
-    assert record.completion_tokens == 50
-    assert record.cost_estimate_usd > 0.0
-
-    summary = telemetry.get_summary()
-    assert summary["total_calls"] == 1
-    assert summary["total_tokens"] == 150
-    assert "extraction" in summary["by_role"]
+pytestmark = pytest.mark.usefixtures("resume_model")
 
 
 @pytest.mark.asyncio
@@ -66,130 +31,44 @@ async def test_synthetic_resume_dynamic_extraction():
     assert "Distributed Systems" in skills
     assert "Kubernetes" in skills
 
-                                
     rust_skill = next(s for s in res["extracted_skills"] if s["name"] == "Rust")
     assert len(rust_skill["evidence"]) > 0
     assert "Rust" in rust_skill["evidence"][0]["skill_or_topic"]
 
 
 @pytest.mark.asyncio
-async def test_synthetic_jd_dynamic_extraction():
-    synthetic_jd = """
-    Staff Distributed Systems Engineer - Sekai Labs
-
-    About the Role:
-    We are seeking an experienced Systems Engineer to build resilient distributed state machines.
-
-    Requirements:
-    - Deep expertise in Distributed Systems and consensus algorithms (mandatory)
-    - Production Rust experience building mission-critical services (mandatory)
-    - Hands-on proficiency with Kubernetes and cloud-native deployments (mandatory)
-    - Familiarity with Temporal workflow orchestration (preferred)
+async def test_resume_quotes_must_be_verbatim_and_missing_identity_stays_none():
+    model = ResumeDoubleModel(fabricated_attempts=1)
+    agent_runtime.set_model_factory(lambda: model)
+    cv = """
+    Built a consensus-backed storage engine in Rust serving 100k QPS.
+    Operated Kubernetes clusters for payment services.
     """
-    res = await parse_job_description_activity("test_ws_synth_jd", synthetic_jd)
-    requirements = res.get("requirements", [])
-    skill_names = [r["skill_or_concept"] for r in requirements]
+    res = await parse_resume_activity("test_ws_verbatim", cv, db_client=SurrealDirectClient())
 
-    assert "Distributed Systems" in skill_names
-    assert "Rust" in skill_names
-    assert "Kubernetes" in skill_names
+    assert model.calls == 2
+    assert any("copied verbatim" in err for err in model.seen_errors)
+    flat_cv = " ".join(cv.split())
+    for skill in res["extracted_skills"]:
+        for ev in skill["evidence"]:
+            assert " ".join(ev["quote"].split()) in flat_cv
+    assert res["candidate_name"] is None
+    assert res["summary"] is None
 
-    dist_sys = next(r for r in requirements if r["skill_or_concept"] == "Distributed Systems")
-    assert dist_sys["importance"] == "mandatory"
-
-
-@pytest.mark.asyncio
-async def test_deterministic_readiness_calculation():
-    strengths = [
-        CandidateStrength(skill="Rust", evidence_quote="Built engines", relevance="Core"),
-        CandidateStrength(skill="Distributed Systems", evidence_quote="Built consensus", relevance="Core"),
-    ]
-    gaps = [
-        CandidateGap(skill="Temporal", requirement_quote="Temporal workflow", importance="preferred", recommended_focus="Study Temporal"),
-        CandidateGap(skill="GraphQL", requirement_quote="GraphQL API", importance="mandatory", recommended_focus="Study GraphQL"),
-    ]
-    score = calculate_deterministic_readiness(strengths, gaps)
-    assert 0.0 <= score <= 1.0
-    assert score > 0.4
+    rows = await SurrealDirectClient().execute_query(
+        "SELECT candidate_name, summary FROM type::record('resume', $rid);",
+        vars={"rid": "res_test_ws_verbatim"},
+    )
+    row = rows[-1]["result"][0]
+    assert row.get("candidate_name") is None
+    assert row.get("summary") is None
 
 
 @pytest.mark.asyncio
-async def test_match_analysis_activity():
-    ws_id = "test_ws_matching"
-    resume_skills = ["Rust", "Distributed Systems", "Kubernetes"]
-    required_skills = [
-        {"skill_or_concept": "Rust", "importance": "mandatory", "raw_requirement_text": "Production Rust"},
-        {"skill_or_concept": "Temporal", "importance": "preferred", "raw_requirement_text": "Temporal orchestrator"},
-    ]
-    res = await calculate_match_analysis_activity(ws_id, resume_skills, required_skills)
-    assert "overall_match_ratio" in res
-    assert res["overall_match_ratio"] > 0.0
-    strength_names = [s["skill"] for s in res["strengths"]]
-    gap_names = [g["skill"] for g in res["gaps"]]
-    assert "Rust" in strength_names
-    assert "Temporal" in gap_names
-
-
-@pytest.mark.asyncio
-async def test_research_activity_provenance_and_chunks():
-    ws_id = "test_ws_research"
-    company_name = "Acme Corp"
-    res = await research_company_activity(ws_id, company_name, [])
-    assert len(res["sources"]) > 0
-    assert len(res["claims"]) > 0
-                                              
-    source_urls = {s["url"] for s in res["sources"]}
-    for claim in res["claims"]:
-        assert claim["source_url"] in source_urls
-        assert len(claim["evidence_snippet"]) > 0
-
-
-@pytest.mark.asyncio
-async def test_knowledge_graph_and_curriculum():
-    ws_id = "test_ws_graph_curr"
-    skills = ["Rust", "Distributed Systems", "Temporal"]
-    graph_res = await construct_knowledge_graph_activity(ws_id, "Acme Corp", skills)
-    assert len(graph_res["nodes"]) >= 3
-
-    gaps = [{"skill": "Temporal", "importance": "preferred"}]
-    curr_res = await generate_learning_units_activity(ws_id, gaps)
-    assert len(curr_res) >= 1
-    unit = curr_res[0]
-    assert unit["skill"] == "Temporal"
-    assert unit["diagram"] is not None
-    assert "type" in unit["diagram"] or "diagram_type" in unit["diagram"]
-
-
-@pytest.mark.asyncio
-async def test_question_deduplication():
-    questions = [
-        InterviewQuestionSpec(
-            category="system_design",
-            question="How would you design a distributed cache?",
-            difficulty="hard",
-            skills_tested=["Caching"],
-            interviewer_intent="Scale test",
-            answer_outline=["Consistent hashing"],
-        ),
-        InterviewQuestionSpec(
-            category="system_design",
-            question="  how would you design a distributed cache?  ",                                  
-            difficulty="hard",
-            skills_tested=["Caching"],
-            interviewer_intent="Scale test",
-            answer_outline=["Consistent hashing"],
-        ),
-        InterviewQuestionSpec(
-            category="technical_fundamentals",
-            question="What is the difference between TCP and UDP?",
-            difficulty="medium",
-            skills_tested=["Networking"],
-            interviewer_intent="Protocol test",
-            answer_outline=["Handshake"],
-        ),
-    ]
-    deduped = deduplicate_questions(questions)
-    assert len(deduped) == 2
+async def test_resume_extraction_fails_closed_when_quotes_never_ground():
+    agent_runtime.set_model_factory(lambda: ResumeDoubleModel(fabricated_attempts=99))
+    with pytest.raises(ResumeExtractionError):
+        await parse_resume_activity("test_ws_never_grounded", "Wrote Go services for billing.")
 
 
 @pytest.mark.asyncio
@@ -205,12 +84,9 @@ async def test_prompt_injection_containment_in_resume():
     assert "Rust" in skills or "Python" in skills
     assert "SYSTEM OVERRIDE" not in [s["name"] for s in res["extracted_skills"]]
 
+
 @pytest.mark.asyncio
 async def test_search_engine_and_reader_scraping():
-    from src.fetcher.reader import MarkdownReader
-    from src.fetcher.search_engine import AgentSearchEngine
-
-                                          
     html = """
     <html>
         <head><title>Stripe Engineering Invariants</title></head>
@@ -225,26 +101,8 @@ async def test_search_engine_and_reader_scraping():
         </body>
     </html>
     """
-    title, md = MarkdownReader.html_to_markdown(html)
+    title, md, _ = MarkdownReader.html_to_markdown(html)
     assert title == "Stripe Engineering Invariants"
     assert "# Idempotency Keys in Distributed APIs" in md
     assert "```" in md
-    assert "Home" not in md                
-
-                                                       
-    engine = AgentSearchEngine()
-    results = await engine._search_duckduckgo("stripe engineering architecture", limit=2)
-    assert isinstance(results, list)
-
-
-@pytest.mark.asyncio
-async def test_rich_curriculum_video_and_chapters():
-    from src.activities.curriculum import heuristic_curriculum_fallback
-
-    output = heuristic_curriculum_fallback([{"skill": "Distributed Tracing", "importance": "mandatory"}])
-    assert len(output.units) > 0
-    first = output.units[0]
-    assert first.skill == "Distributed Tracing"
-    assert first.video_url is not None
-    assert len(first.chapters) >= 2
-    assert first.diagram is not None
+    assert "Home" not in md

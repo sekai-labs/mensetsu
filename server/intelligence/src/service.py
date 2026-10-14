@@ -1,105 +1,72 @@
-import asyncio
+import os
 
-from fastapi import BackgroundTasks, FastAPI
-from pydantic import BaseModel
+import redis.asyncio as aioredis
+from fastapi import FastAPI, Header, HTTPException, status
 
-from src.activities.progress import log_pipeline_step, update_workspace_progress
-from src.activities.research_activities import (
-    calculate_match_analysis_activity,
-    construct_knowledge_graph_activity,
-    generate_interview_questions_activity,
-    generate_learning_units_activity,
-    parse_job_description_activity,
-    parse_resume_activity,
-    research_company_activity,
-)
+from src.db.client import SurrealDirectClient
+from src.orchestration.auth import get_internal_token, verify_internal_auth
+from src.orchestration.redis_queue import REDIS_CLIENT_OPTIONS
+from src.orchestration.router import router as internal_workflow_router
+
+get_internal_token()
 
 app = FastAPI(title="Mensetsu Intelligence Service")
 
-class TriggerWorkflowRequest(BaseModel):
-    workspace_id: str
-    company_name: str
-    role_title: str
-    company_urls: list[str] = []
-    resume_text: str = ""
-    resume_pdf_base64: str | None = None
-    resume_filename: str | None = None
-    job_description: str = ""
-    jd_url: str | None = None
-    seniority: str | None = None
-    llm_config: dict | None = None
-async def execute_pipeline_background(req: TriggerWorkflowRequest):
-    ws_id = req.workspace_id
+
+app.include_router(internal_workflow_router)
+
+
+@app.get("/health/live")
+async def health_live():
+    return {"status": "alive"}
+
+
+@app.get("/health/ready")
+async def health_ready(authorization: str | None = Header(None)):
+    surreal_ok = False
+    redis_ok = False
+    details = {}
+
     try:
-        await log_pipeline_step(ws_id, "preparing_input", "info", "Starting pipeline execution and input preparation")
-        await update_workspace_progress(ws_id, "preparing_input", 5)
-        await asyncio.sleep(0.1)
-
-        await log_pipeline_step(ws_id, "analyzing_resume", "info", f"Extracting candidate competencies from resume (PDF: {req.resume_filename or 'text'})")
-        await update_workspace_progress(ws_id, "analyzing_resume", 15)
-        cv_res = await parse_resume_activity(
-            ws_id,
-            resume_text=req.resume_text,
-            resume_pdf_base64=req.resume_pdf_base64,
-            resume_filename=req.resume_filename,
-        )
-        await log_pipeline_step(ws_id, "analyzing_resume", "info", f"Extracted {len(cv_res.get('extracted_skills', []))} candidate skills")
-        await asyncio.sleep(0.1)
-
-        await log_pipeline_step(ws_id, "reading_job_description", "info", f"Parsing job requirements (URL: {req.jd_url or 'raw text'})")
-        await update_workspace_progress(ws_id, "reading_job_description", 30)
-        jd_res = await parse_job_description_activity(
-            ws_id,
-            jd_text=req.job_description,
-            jd_url=req.jd_url,
-        )
-        await log_pipeline_step(ws_id, "reading_job_description", "info", f"Parsed {len(jd_res.get('requirements', []))} role requirements")
-        await asyncio.sleep(0.1)
-
-        await log_pipeline_step(ws_id, "researching_company", "info", f"Researching {req.company_name} engineering profile, architecture topology, and sources")
-        await update_workspace_progress(ws_id, "researching_company", 45)
-        company_res = await research_company_activity(ws_id, req.company_name, req.company_urls)
-        await log_pipeline_step(ws_id, "researching_company", "info", f"Indexed {len(company_res.get('sources', []))} sources and {len(company_res.get('claims', []))} claims")
-        await asyncio.sleep(0.1)
-
-        await log_pipeline_step(ws_id, "mapping_resume_evidence", "info", "Computing deterministic match analysis and gap matrix")
-        await update_workspace_progress(ws_id, "mapping_resume_evidence", 60)
-        resume_skill_names = [s["name"] for s in cv_res.get("extracted_skills", [])]
-        match_res = await calculate_match_analysis_activity(ws_id, resume_skill_names, jd_res.get("requirements", []))
-        await log_pipeline_step(ws_id, "mapping_resume_evidence", "info", f"Match score: {match_res.get('overall_match_ratio', 0.0) * 100:.0f}%, {len(match_res.get('gaps', []))} gaps identified")
-        await asyncio.sleep(0.1)
-
-        await log_pipeline_step(ws_id, "constructing_knowledge_graph", "info", "Assembling isolated workspace competency DAG")
-        await update_workspace_progress(ws_id, "constructing_knowledge_graph", 75)
-        graph_res = await construct_knowledge_graph_activity(ws_id, req.company_name, resume_skill_names)
-        await log_pipeline_step(ws_id, "constructing_knowledge_graph", "info", f"Persisted {len(graph_res.get('nodes', []))} nodes and {len(graph_res.get('edges', []))} edges")
-        await asyncio.sleep(0.1)
-
-        await log_pipeline_step(ws_id, "generating_lessons", "info", "Building tailored curriculum lessons for identified gaps")
-        await update_workspace_progress(ws_id, "generating_lessons", 85)
-        await generate_learning_units_activity(ws_id, match_res.get("gaps", []))
-        await log_pipeline_step(ws_id, "generating_lessons", "info", "Curriculum lessons successfully persisted")
-        await asyncio.sleep(0.1)
-
-        await log_pipeline_step(ws_id, "building_interview_question_book", "info", "Generating targeted 5-tier question book with rubrics and pitfalls")
-        await update_workspace_progress(ws_id, "building_interview_question_book", 95)
-        q_res = await generate_interview_questions_activity(ws_id, req.company_name, req.role_title)
-        await log_pipeline_step(ws_id, "building_interview_question_book", "info", f"Generated {len(q_res)} interview questions")
-        await asyncio.sleep(0.1)
-
-        await log_pipeline_step(ws_id, "ready", "info", "Workspace pipeline completed successfully")
-        await update_workspace_progress(ws_id, "ready", 100)
+        surreal_client = SurrealDirectClient()
+        await surreal_client.execute_query("INFO FOR DB;")
+        surreal_ok = True
     except Exception as e:
-        err_msg = str(e)
-        print(f"Error executing pipeline for {ws_id}: {err_msg}")
-        await log_pipeline_step(ws_id, "failed", "error", f"Pipeline failed: {err_msg}", details={"error": err_msg})
-        await update_workspace_progress(ws_id, "failed", 0, error_message=err_msg)
+        details["surrealdb_error"] = str(e)
 
-@app.post("/api/v1/workflows/trigger")
-async def trigger_workflow(req: TriggerWorkflowRequest, background_tasks: BackgroundTasks):
-    background_tasks.add_task(execute_pipeline_background, req)
-    return {"status": "triggered", "workspace_id": req.workspace_id}
+    live_workers_count = 0
+    try:
+        redis_url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379")
+        r = aioredis.from_url(redis_url, **REDIS_CLIENT_OPTIONS)
+        await r.ping()
+        worker_keys = await r.keys("mensetsu:worker:*:alive")
+        live_workers_count = len(worker_keys)
+        await r.aclose()
+        redis_ok = True
+    except Exception as e:
+        details["redis_error"] = str(e)
+    details["live_workers"] = live_workers_count
+    is_ready = surreal_ok and redis_ok
 
-@app.get("/health")
-async def health():
-    return {"status": "healthy"}
+    if not authorization:
+        if is_ready:
+            return {"status": "ready"}
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"status": "unhealthy"},
+        )
+
+    try:
+        await verify_internal_auth(authorization)
+    except HTTPException:
+        if is_ready:
+            return {"status": "ready"}
+        raise HTTPException(status_code=503, detail={"status": "unhealthy"})
+
+    if is_ready:
+        return {"status": "ready", "surrealdb": "connected", "redis": "connected"}
+
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail={"status": "unhealthy", "diagnostics": details},
+    )

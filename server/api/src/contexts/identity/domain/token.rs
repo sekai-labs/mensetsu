@@ -62,7 +62,7 @@ impl TokenService {
     }
     pub fn generate_temp_2fa_token(&self, user_id: &UserId) -> Result<String> {
         let now = Utc::now();
-        let exp = now + Duration::seconds(300); // 5 minutes validity
+        let exp = now + Duration::seconds(300);
         let claims = Temp2faClaims {
             sub: user_id.0.clone(),
             purpose: "2fa_challenge".to_string(),
@@ -103,10 +103,6 @@ impl TokenService {
 
     pub fn refresh_ttl_seconds(&self) -> i64 {
         self.refresh_ttl
-    }
-
-    pub fn access_ttl_seconds(&self) -> i64 {
-        self.access_ttl
     }
 }
 

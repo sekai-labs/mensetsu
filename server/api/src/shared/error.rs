@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Debug, Clone, Error)]
 pub enum AppError {
     #[error("Not found: {0}")]
     NotFound(String),
@@ -21,6 +21,9 @@ pub enum AppError {
 
     #[error("External service error: {0}")]
     ExternalService(String),
+
+    #[error("Service unavailable: {0}")]
+    ServiceUnavailable(String),
 
     #[error("Internal server error: {0}")]
     Internal(String),

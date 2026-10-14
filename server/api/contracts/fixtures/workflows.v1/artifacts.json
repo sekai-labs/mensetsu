@@ -1,0 +1,2577 @@
+[
+  {
+    "id": "art_00df5f46f7de",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_58312045b7b1",
+    "type": "evidence",
+    "title": "Careers at Acme Part 3",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 3",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 3",
+      "retrieved_at": "2026-10-14 15:33:11.506926+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:26.975071+00:00"
+  },
+  {
+    "id": "art_039fae84b5c7",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_tech_run_49cb",
+    "agent_execution_id": "exec_400f6b3e4980",
+    "type": "validation_result",
+    "title": "Evidence & Rubric Auditor Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_b86535c3e005"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "claim_verdicts": [
+        {
+          "claim_statement": "Acme uses Rust",
+          "confidence": 0.95,
+          "evidence_ids": [],
+          "verdict_explanation": "Verified in blog",
+          "verified": true
+        }
+      ],
+      "gaps": [
+        {
+          "importance": "required",
+          "recommended_focus": "Kubernetes operators",
+          "requirement_quote": "Kubernetes operations",
+          "skill": "Kubernetes 0"
+        },
+        {
+          "importance": "required",
+          "recommended_focus": "Kubernetes operators",
+          "requirement_quote": "Kubernetes operations",
+          "skill": "Kubernetes 1"
+        },
+        {
+          "importance": "required",
+          "recommended_focus": "Kubernetes operators",
+          "requirement_quote": "Kubernetes operations",
+          "skill": "Kubernetes 2"
+        }
+      ],
+      "overall_match_ratio": 0.92,
+      "risks": [
+        "Scaling limits"
+      ],
+      "strengths": [
+        {
+          "evidence_quote": "Production Rust architect",
+          "relevance": "high",
+          "skill": "Rust 0"
+        },
+        {
+          "evidence_quote": "Production Rust architect",
+          "relevance": "high",
+          "skill": "Rust 1"
+        },
+        {
+          "evidence_quote": "Production Rust architect",
+          "relevance": "high",
+          "skill": "Rust 2"
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+      "wording_improvements": []
+    },
+    "created_at": "2026-10-14 15:32:18.200411+00:00"
+  },
+  {
+    "id": "art_0489bd8ff90d",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_cbe199f75baf",
+    "type": "evidence",
+    "title": "Careers at Acme Part 3",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 3",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 3",
+      "retrieved_at": "2026-10-14 15:33:11.689728+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:26.596975+00:00"
+  },
+  {
+    "id": "art_0c1172f14f2e",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_2fb38b0fbe85",
+    "type": "evidence",
+    "title": "Careers at Acme Part 1",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 1",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 1",
+      "retrieved_at": "2026-10-14 15:33:11.413017+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:18.390425+00:00"
+  },
+  {
+    "id": "art_0df347b964ea",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_job_run_49cb",
+    "agent_execution_id": "exec_3fb4d9604c48",
+    "type": "evidence",
+    "title": "Careers at Acme Part 3",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 3",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 3",
+      "retrieved_at": "2026-10-14 15:32:10.619786+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:27.199967+00:00"
+  },
+  {
+    "id": "art_0e8290b78140",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_qgen_run_49cb",
+    "agent_execution_id": "exec_c4a86b381697",
+    "type": "question_set",
+    "title": "Interview Curriculum Specialist Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_00df5f46f7de",
+      "art_abd32c8bc45b",
+      "art_2bac96c7291c",
+      "art_c317b604d31a",
+      "art_0df347b964ea",
+      "art_ad11b8d54efc",
+      "art_b86535c3e005",
+      "art_eab530f843e8",
+      "art_d02195d4017b",
+      "art_0c1172f14f2e",
+      "art_47effb6718ae",
+      "art_a5c1a9d730a7",
+      "art_f3f0980c803c",
+      "art_a8d8d97d4fbe",
+      "art_b358207c2875",
+      "art_6630eb251ca1",
+      "art_cd64ccacf84e",
+      "art_b9ca00ce2f2f",
+      "art_4178f870dbb6",
+      "art_c7e68d539e18",
+      "art_221703a06426",
+      "art_4eeba7aa3334",
+      "art_e5d5f66cfbe1",
+      "art_2bf693c93671",
+      "art_81b9300f0555",
+      "art_28bebe661ff1",
+      "art_da7ebc2784c8",
+      "art_ade3454ef662",
+      "art_ca0a5c4e4276",
+      "art_a75c3e0137c6",
+      "art_dc89b09f9a88",
+      "art_0489bd8ff90d"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "questions": [
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 0?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        },
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 1?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:45.109566+00:00"
+  },
+  {
+    "id": "art_221703a06426",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_company_run_49cb",
+    "agent_execution_id": "exec_39d29c92e799",
+    "type": "evidence",
+    "title": "Careers at Acme Part 2",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 2",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 2",
+      "retrieved_at": "2026-10-14 15:32:10.500850+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:21.077100+00:00"
+  },
+  {
+    "id": "art_28bebe661ff1",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_2fb38b0fbe85",
+    "type": "evidence",
+    "title": "Careers at Acme Part 4",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 4",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 4",
+      "retrieved_at": "2026-10-14 15:33:11.413017+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:30.705200+00:00"
+  },
+  {
+    "id": "art_2bac96c7291c",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_043d9223868a",
+    "type": "evidence",
+    "title": "Careers at Acme Part 2",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 2",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 2",
+      "retrieved_at": "2026-10-14 15:32:52.860067+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:57.998392+00:00"
+  },
+  {
+    "id": "art_2bf693c93671",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_58312045b7b1",
+    "type": "evidence",
+    "title": "Careers at Acme Part 4",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 4",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 4",
+      "retrieved_at": "2026-10-14 15:33:11.506926+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:31.309486+00:00"
+  },
+  {
+    "id": "art_2c2983909e8f",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_qgen_run_49cb",
+    "agent_execution_id": "exec_9c17cd91a381",
+    "type": "question_set",
+    "title": "Interview Curriculum Specialist Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_00df5f46f7de",
+      "art_abd32c8bc45b",
+      "art_2bac96c7291c",
+      "art_c317b604d31a",
+      "art_0df347b964ea",
+      "art_ad11b8d54efc",
+      "art_b86535c3e005",
+      "art_eab530f843e8",
+      "art_d02195d4017b",
+      "art_0c1172f14f2e",
+      "art_47effb6718ae",
+      "art_a5c1a9d730a7",
+      "art_f3f0980c803c",
+      "art_a8d8d97d4fbe",
+      "art_b358207c2875",
+      "art_6630eb251ca1",
+      "art_cd64ccacf84e",
+      "art_b9ca00ce2f2f",
+      "art_4178f870dbb6",
+      "art_c7e68d539e18",
+      "art_221703a06426",
+      "art_4eeba7aa3334",
+      "art_e5d5f66cfbe1",
+      "art_2bf693c93671",
+      "art_81b9300f0555",
+      "art_28bebe661ff1",
+      "art_da7ebc2784c8",
+      "art_ade3454ef662",
+      "art_ca0a5c4e4276",
+      "art_a75c3e0137c6",
+      "art_dc89b09f9a88",
+      "art_0489bd8ff90d"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "questions": [
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 0?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        },
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 1?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:49.411017+00:00"
+  },
+  {
+    "id": "art_4178f870dbb6",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_company_run_49cb",
+    "agent_execution_id": "exec_39d29c92e799",
+    "type": "evidence",
+    "title": "Careers at Acme Part 1",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 1",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 1",
+      "retrieved_at": "2026-10-14 15:32:10.500850+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:16.492228+00:00"
+  },
+  {
+    "id": "art_47effb6718ae",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_company_run_49cb",
+    "agent_execution_id": "exec_39d29c92e799",
+    "type": "evidence",
+    "title": "Careers at Acme Part 3",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 3",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 3",
+      "retrieved_at": "2026-10-14 15:32:10.500850+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:24.972270+00:00"
+  },
+  {
+    "id": "art_4eeba7aa3334",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_58312045b7b1",
+    "type": "evidence",
+    "title": "Careers at Acme Part 1",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 1",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 1",
+      "retrieved_at": "2026-10-14 15:33:11.506926+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:18.911493+00:00"
+  },
+  {
+    "id": "art_55ee6b7a37aa",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_tech_run_49cb",
+    "agent_execution_id": "exec_f6823c699665",
+    "type": "research_report",
+    "title": "Technical Systems Specialist Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_cd64ccacf84e",
+      "art_b86535c3e005",
+      "art_da7ebc2784c8",
+      "art_4178f870dbb6",
+      "art_221703a06426",
+      "art_dc89b09f9a88",
+      "art_e5d5f66cfbe1"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "architecture_topology": {
+        "system_type": "distributed_ledger"
+      },
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+      "topics": [
+        {
+          "evidence_ids": [
+            "art_bc8df3ae2e09",
+            "art_cd64ccacf84e",
+            "art_b86535c3e005",
+            "art_da7ebc2784c8"
+          ],
+          "key_concepts": [
+            "Raft"
+          ],
+          "name": "Consensus",
+          "pitfalls": [
+            "Split brain"
+          ],
+          "why_it_matters": "Core consensus"
+        }
+      ]
+    },
+    "created_at": "2026-10-14 15:32:40.550896+00:00"
+  },
+  {
+    "id": "art_6630eb251ca1",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_2fb38b0fbe85",
+    "type": "evidence",
+    "title": "Careers at Acme Part 0",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 0",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 0",
+      "retrieved_at": "2026-10-14 15:33:11.413017+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:14.375718+00:00"
+  },
+  {
+    "id": "art_77357f604723",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_qgen_run_49cb",
+    "agent_execution_id": "exec_0d0e6bf8b5d5",
+    "type": "question_set",
+    "title": "Interview Curriculum Specialist Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_00df5f46f7de",
+      "art_abd32c8bc45b",
+      "art_2bac96c7291c",
+      "art_c317b604d31a",
+      "art_0df347b964ea",
+      "art_ad11b8d54efc",
+      "art_b86535c3e005",
+      "art_eab530f843e8",
+      "art_d02195d4017b",
+      "art_0c1172f14f2e",
+      "art_47effb6718ae",
+      "art_a5c1a9d730a7",
+      "art_f3f0980c803c",
+      "art_a8d8d97d4fbe",
+      "art_b358207c2875",
+      "art_6630eb251ca1",
+      "art_cd64ccacf84e",
+      "art_b9ca00ce2f2f",
+      "art_4178f870dbb6",
+      "art_c7e68d539e18",
+      "art_221703a06426",
+      "art_4eeba7aa3334",
+      "art_e5d5f66cfbe1",
+      "art_2bf693c93671",
+      "art_81b9300f0555",
+      "art_28bebe661ff1",
+      "art_da7ebc2784c8",
+      "art_ade3454ef662",
+      "art_ca0a5c4e4276",
+      "art_a75c3e0137c6",
+      "art_dc89b09f9a88",
+      "art_0489bd8ff90d"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "questions": [
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 0?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        },
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 1?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:49.086429+00:00"
+  },
+  {
+    "id": "art_81b9300f0555",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_company_run_49cb",
+    "agent_execution_id": "exec_39d29c92e799",
+    "type": "evidence",
+    "title": "Careers at Acme Part 4",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 4",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 4",
+      "retrieved_at": "2026-10-14 15:32:10.500850+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:29.201034+00:00"
+  },
+  {
+    "id": "art_91a7ed646454",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_043d9223868a",
+    "type": "research_report",
+    "title": "Curriculum & Knowledge Architect Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_c317b604d31a",
+      "art_cd64ccacf84e",
+      "art_81b9300f0555",
+      "art_abd32c8bc45b",
+      "art_0df347b964ea",
+      "art_2bac96c7291c",
+      "art_ad11b8d54efc",
+      "art_b86535c3e005",
+      "art_da7ebc2784c8",
+      "art_4178f870dbb6",
+      "art_ca0a5c4e4276",
+      "art_221703a06426",
+      "art_a75c3e0137c6",
+      "art_a5c1a9d730a7",
+      "art_dc89b09f9a88",
+      "art_47effb6718ae",
+      "art_e5d5f66cfbe1"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "relations": [
+        {
+          "relation": "prerequisite",
+          "source": "Skill 0",
+          "target": "Skill 1"
+        },
+        {
+          "relation": "prerequisite",
+          "source": "Skill 1",
+          "target": "Skill 2"
+        },
+        {
+          "relation": "prerequisite",
+          "source": "Skill 2",
+          "target": "Skill 3"
+        },
+        {
+          "relation": "prerequisite",
+          "source": "Skill 3",
+          "target": "Skill 4"
+        },
+        {
+          "relation": "prerequisite",
+          "source": "Skill 4",
+          "target": "Skill 5"
+        },
+        {
+          "relation": "prerequisite",
+          "source": "Skill 5",
+          "target": "Skill 6"
+        },
+        {
+          "relation": "prerequisite",
+          "source": "Skill 6",
+          "target": "Skill 7"
+        },
+        {
+          "relation": "prerequisite",
+          "source": "Skill 7",
+          "target": "Skill 8"
+        },
+        {
+          "relation": "prerequisite",
+          "source": "Skill 8",
+          "target": "Skill 9"
+        },
+        {
+          "relation": "prerequisite",
+          "source": "Skill 9",
+          "target": "Skill 10"
+        }
+      ],
+      "skills": [
+        {
+          "candidate_status": "in_progress",
+          "category": "Systems",
+          "importance": "mandatory",
+          "name": "Skill 0",
+          "slug": "skill-0"
+        },
+        {
+          "candidate_status": "in_progress",
+          "category": "Systems",
+          "importance": "mandatory",
+          "name": "Skill 1",
+          "slug": "skill-1"
+        },
+        {
+          "candidate_status": "in_progress",
+          "category": "Systems",
+          "importance": "mandatory",
+          "name": "Skill 2",
+          "slug": "skill-2"
+        },
+        {
+          "candidate_status": "in_progress",
+          "category": "Systems",
+          "importance": "mandatory",
+          "name": "Skill 3",
+          "slug": "skill-3"
+        },
+        {
+          "candidate_status": "in_progress",
+          "category": "Systems",
+          "importance": "mandatory",
+          "name": "Skill 4",
+          "slug": "skill-4"
+        },
+        {
+          "candidate_status": "in_progress",
+          "category": "Systems",
+          "importance": "mandatory",
+          "name": "Skill 5",
+          "slug": "skill-5"
+        },
+        {
+          "candidate_status": "in_progress",
+          "category": "Systems",
+          "importance": "mandatory",
+          "name": "Skill 6",
+          "slug": "skill-6"
+        },
+        {
+          "candidate_status": "in_progress",
+          "category": "Systems",
+          "importance": "mandatory",
+          "name": "Skill 7",
+          "slug": "skill-7"
+        },
+        {
+          "candidate_status": "in_progress",
+          "category": "Systems",
+          "importance": "mandatory",
+          "name": "Skill 8",
+          "slug": "skill-8"
+        },
+        {
+          "candidate_status": "in_progress",
+          "category": "Systems",
+          "importance": "mandatory",
+          "name": "Skill 9",
+          "slug": "skill-9"
+        },
+        {
+          "candidate_status": "in_progress",
+          "category": "Systems",
+          "importance": "mandatory",
+          "name": "Skill 10",
+          "slug": "skill-10"
+        },
+        {
+          "candidate_status": "in_progress",
+          "category": "Systems",
+          "importance": "mandatory",
+          "name": "Skill 11",
+          "slug": "skill-11"
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:04.585851+00:00"
+  },
+  {
+    "id": "art_9987df82c6c9",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_company_run_49cb",
+    "agent_execution_id": "exec_39d29c92e799",
+    "type": "research_report",
+    "title": "Company Research Specialist Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_221703a06426",
+      "art_81b9300f0555",
+      "art_4178f870dbb6",
+      "art_47effb6718ae"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "architecture_notes": [
+        "Event-driven distributed ledger"
+      ],
+      "business_model": "Enterprise SaaS and cloud orchestration.",
+      "claims": [
+        {
+          "category": "architecture",
+          "confidence": 0.95,
+          "evidence_ids": [
+            "art_221703a06426",
+            "art_81b9300f0555",
+            "art_4178f870dbb6",
+            "art_47effb6718ae"
+          ],
+          "statement": "Acme uses Rust 0"
+        },
+        {
+          "category": "architecture",
+          "confidence": 0.95,
+          "evidence_ids": [
+            "art_221703a06426",
+            "art_81b9300f0555",
+            "art_4178f870dbb6",
+            "art_47effb6718ae"
+          ],
+          "statement": "Acme uses Rust 1"
+        },
+        {
+          "category": "architecture",
+          "confidence": 0.95,
+          "evidence_ids": [
+            "art_221703a06426",
+            "art_81b9300f0555",
+            "art_4178f870dbb6",
+            "art_47effb6718ae"
+          ],
+          "statement": "Acme uses Rust 2"
+        },
+        {
+          "category": "architecture",
+          "confidence": 0.95,
+          "evidence_ids": [
+            "art_221703a06426",
+            "art_81b9300f0555",
+            "art_4178f870dbb6",
+            "art_47effb6718ae"
+          ],
+          "statement": "Acme uses Rust 3"
+        },
+        {
+          "category": "architecture",
+          "confidence": 0.95,
+          "evidence_ids": [
+            "art_221703a06426",
+            "art_81b9300f0555",
+            "art_4178f870dbb6",
+            "art_47effb6718ae"
+          ],
+          "statement": "Acme uses Rust 4"
+        },
+        {
+          "category": "architecture",
+          "confidence": 0.95,
+          "evidence_ids": [
+            "art_221703a06426",
+            "art_81b9300f0555",
+            "art_4178f870dbb6",
+            "art_47effb6718ae"
+          ],
+          "statement": "Acme uses Rust 5"
+        },
+        {
+          "category": "architecture",
+          "confidence": 0.95,
+          "evidence_ids": [
+            "art_221703a06426",
+            "art_81b9300f0555",
+            "art_4178f870dbb6",
+            "art_47effb6718ae"
+          ],
+          "statement": "Acme uses Rust 6"
+        },
+        {
+          "category": "architecture",
+          "confidence": 0.95,
+          "evidence_ids": [
+            "art_221703a06426",
+            "art_81b9300f0555",
+            "art_4178f870dbb6",
+            "art_47effb6718ae"
+          ],
+          "statement": "Acme uses Rust 7"
+        }
+      ],
+      "engineering_culture": [
+        "Ownership",
+        "High availability"
+      ],
+      "interview_process_notes": [
+        "Technical architecture round"
+      ],
+      "overview": "Acme is a global distributed systems engineering platform.",
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+      "tech_stack": [
+        {
+          "category": "Language",
+          "evidence_ids": [
+            "art_221703a06426",
+            "art_81b9300f0555",
+            "art_4178f870dbb6",
+            "art_47effb6718ae"
+          ],
+          "name": "Rust",
+          "notes": "Core engine",
+          "verified": true
+        }
+      ]
+    },
+    "created_at": "2026-10-14 15:32:33.673355+00:00"
+  },
+  {
+    "id": "art_a5c1a9d730a7",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_043d9223868a",
+    "type": "evidence",
+    "title": "Careers at Acme Part 0",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 0",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 0",
+      "retrieved_at": "2026-10-14 15:32:52.860067+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:54.240058+00:00"
+  },
+  {
+    "id": "art_a75c3e0137c6",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_job_run_49cb",
+    "agent_execution_id": "exec_3fb4d9604c48",
+    "type": "evidence",
+    "title": "Careers at Acme Part 2",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 2",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 2",
+      "retrieved_at": "2026-10-14 15:32:10.619786+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:22.899176+00:00"
+  },
+  {
+    "id": "art_a8d8d97d4fbe",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_cbe199f75baf",
+    "type": "evidence",
+    "title": "Careers at Acme Part 1",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 1",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 1",
+      "retrieved_at": "2026-10-14 15:33:11.689728+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:18.876438+00:00"
+  },
+  {
+    "id": "art_aba8872808fe",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_qgen_run_49cb",
+    "agent_execution_id": "exec_1b259da1932a",
+    "type": "question_set",
+    "title": "Interview Curriculum Specialist Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_00df5f46f7de",
+      "art_abd32c8bc45b",
+      "art_2bac96c7291c",
+      "art_c317b604d31a",
+      "art_0df347b964ea",
+      "art_ad11b8d54efc",
+      "art_b86535c3e005",
+      "art_eab530f843e8",
+      "art_d02195d4017b",
+      "art_0c1172f14f2e",
+      "art_47effb6718ae",
+      "art_a5c1a9d730a7",
+      "art_f3f0980c803c",
+      "art_a8d8d97d4fbe",
+      "art_b358207c2875",
+      "art_6630eb251ca1",
+      "art_cd64ccacf84e",
+      "art_b9ca00ce2f2f",
+      "art_4178f870dbb6",
+      "art_c7e68d539e18",
+      "art_221703a06426",
+      "art_4eeba7aa3334",
+      "art_e5d5f66cfbe1",
+      "art_2bf693c93671",
+      "art_81b9300f0555",
+      "art_28bebe661ff1",
+      "art_da7ebc2784c8",
+      "art_ade3454ef662",
+      "art_ca0a5c4e4276",
+      "art_a75c3e0137c6",
+      "art_dc89b09f9a88",
+      "art_0489bd8ff90d"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "questions": [
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 0?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        },
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 1?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:52.676102+00:00"
+  },
+  {
+    "id": "art_abd32c8bc45b",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_043d9223868a",
+    "type": "evidence",
+    "title": "Careers at Acme Part 1",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 1",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 1",
+      "retrieved_at": "2026-10-14 15:32:52.860067+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:55.911038+00:00"
+  },
+  {
+    "id": "art_ad11b8d54efc",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_043d9223868a",
+    "type": "evidence",
+    "title": "Careers at Acme Part 3",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 3",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 3",
+      "retrieved_at": "2026-10-14 15:32:52.860067+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:59.978323+00:00"
+  },
+  {
+    "id": "art_ade3454ef662",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_cbe199f75baf",
+    "type": "evidence",
+    "title": "Careers at Acme Part 4",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 4",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 4",
+      "retrieved_at": "2026-10-14 15:33:11.689728+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:30.876307+00:00"
+  },
+  {
+    "id": "art_b2e2960bb3f4",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_58312045b7b1",
+    "type": "research_report",
+    "title": "Curriculum & Knowledge Architect Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_c317b604d31a",
+      "art_abd32c8bc45b",
+      "art_2bac96c7291c",
+      "art_00df5f46f7de",
+      "art_0df347b964ea",
+      "art_ad11b8d54efc",
+      "art_b86535c3e005",
+      "art_eab530f843e8",
+      "art_47effb6718ae",
+      "art_a5c1a9d730a7",
+      "art_b358207c2875",
+      "art_cd64ccacf84e",
+      "art_4178f870dbb6",
+      "art_221703a06426",
+      "art_4eeba7aa3334",
+      "art_e5d5f66cfbe1",
+      "art_81b9300f0555",
+      "art_2bf693c93671",
+      "art_da7ebc2784c8",
+      "art_ca0a5c4e4276",
+      "art_a75c3e0137c6",
+      "art_dc89b09f9a88"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "learning_units": [
+        {
+          "deep_dive_markdown": "Deep dive on skill 0 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+          "estimated_minutes": 45,
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "prerequisites": [],
+          "skill": "Skill 0",
+          "summary": "Summary",
+          "title": "Unit 0"
+        },
+        {
+          "deep_dive_markdown": "Deep dive on skill 1 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+          "estimated_minutes": 45,
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "prerequisites": [],
+          "skill": "Skill 1",
+          "summary": "Summary",
+          "title": "Unit 1"
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:36.481831+00:00"
+  },
+  {
+    "id": "art_b358207c2875",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_58312045b7b1",
+    "type": "evidence",
+    "title": "Careers at Acme Part 2",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 2",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 2",
+      "retrieved_at": "2026-10-14 15:33:11.506926+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:23.479514+00:00"
+  },
+  {
+    "id": "art_b86535c3e005",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_job_run_49cb",
+    "agent_execution_id": "exec_3fb4d9604c48",
+    "type": "evidence",
+    "title": "Careers at Acme Part 0",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 0",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 0",
+      "retrieved_at": "2026-10-14 15:32:10.619786+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:13.805902+00:00"
+  },
+  {
+    "id": "art_b9ca00ce2f2f",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_2fb38b0fbe85",
+    "type": "evidence",
+    "title": "Careers at Acme Part 3",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 3",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 3",
+      "retrieved_at": "2026-10-14 15:33:11.413017+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:26.474066+00:00"
+  },
+  {
+    "id": "art_bc8df3ae2e09",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_tech_run_49cb",
+    "agent_execution_id": "exec_f6823c699665",
+    "type": "evidence",
+    "title": "Careers at Acme Part 3",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 3",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 3",
+      "retrieved_at": "2026-10-14 15:32:10.325828+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:34.580322+00:00"
+  },
+  {
+    "id": "art_c317b604d31a",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_job_run_49cb",
+    "agent_execution_id": "exec_3fb4d9604c48",
+    "type": "evidence",
+    "title": "Careers at Acme Part 4",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 4",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 4",
+      "retrieved_at": "2026-10-14 15:32:10.619786+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:31.592266+00:00"
+  },
+  {
+    "id": "art_c41493a7a318",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_2fb38b0fbe85",
+    "type": "research_report",
+    "title": "Curriculum & Knowledge Architect Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_c317b604d31a",
+      "art_abd32c8bc45b",
+      "art_2bac96c7291c",
+      "art_0df347b964ea",
+      "art_ad11b8d54efc",
+      "art_b86535c3e005",
+      "art_0c1172f14f2e",
+      "art_47effb6718ae",
+      "art_a5c1a9d730a7",
+      "art_f3f0980c803c",
+      "art_6630eb251ca1",
+      "art_cd64ccacf84e",
+      "art_b9ca00ce2f2f",
+      "art_4178f870dbb6",
+      "art_221703a06426",
+      "art_e5d5f66cfbe1",
+      "art_81b9300f0555",
+      "art_28bebe661ff1",
+      "art_da7ebc2784c8",
+      "art_ca0a5c4e4276",
+      "art_a75c3e0137c6",
+      "art_dc89b09f9a88"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "learning_units": [
+        {
+          "deep_dive_markdown": "Deep dive on skill 0 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+          "estimated_minutes": 45,
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "prerequisites": [],
+          "skill": "Skill 0",
+          "summary": "Summary",
+          "title": "Unit 0"
+        },
+        {
+          "deep_dive_markdown": "Deep dive on skill 1 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+          "estimated_minutes": 45,
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "prerequisites": [],
+          "skill": "Skill 1",
+          "summary": "Summary",
+          "title": "Unit 1"
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:34.386372+00:00"
+  },
+  {
+    "id": "art_c44b61e25834",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_cbe199f75baf",
+    "type": "research_report",
+    "title": "Curriculum & Knowledge Architect Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_c317b604d31a",
+      "art_abd32c8bc45b",
+      "art_2bac96c7291c",
+      "art_0df347b964ea",
+      "art_ad11b8d54efc",
+      "art_b86535c3e005",
+      "art_d02195d4017b",
+      "art_47effb6718ae",
+      "art_a5c1a9d730a7",
+      "art_a8d8d97d4fbe",
+      "art_cd64ccacf84e",
+      "art_4178f870dbb6",
+      "art_c7e68d539e18",
+      "art_221703a06426",
+      "art_e5d5f66cfbe1",
+      "art_81b9300f0555",
+      "art_da7ebc2784c8",
+      "art_ade3454ef662",
+      "art_ca0a5c4e4276",
+      "art_a75c3e0137c6",
+      "art_dc89b09f9a88",
+      "art_0489bd8ff90d"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "learning_units": [
+        {
+          "deep_dive_markdown": "Deep dive on skill 0 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+          "estimated_minutes": 45,
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "prerequisites": [],
+          "skill": "Skill 0",
+          "summary": "Summary",
+          "title": "Unit 0"
+        },
+        {
+          "deep_dive_markdown": "Deep dive on skill 1 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+          "estimated_minutes": 45,
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "prerequisites": [],
+          "skill": "Skill 1",
+          "summary": "Summary",
+          "title": "Unit 1"
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:34.881408+00:00"
+  },
+  {
+    "id": "art_c7e68d539e18",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_cbe199f75baf",
+    "type": "evidence",
+    "title": "Careers at Acme Part 0",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 0",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 0",
+      "retrieved_at": "2026-10-14 15:33:11.689728+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:14.875777+00:00"
+  },
+  {
+    "id": "art_ca0a5c4e4276",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_043d9223868a",
+    "type": "evidence",
+    "title": "Careers at Acme Part 4",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 4",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 4",
+      "retrieved_at": "2026-10-14 15:32:52.860067+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:02.016972+00:00"
+  },
+  {
+    "id": "art_ca4823cdc95b",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_qgen_run_49cb",
+    "agent_execution_id": "exec_29c25d5cda01",
+    "type": "question_set",
+    "title": "Interview Curriculum Specialist Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_00df5f46f7de",
+      "art_abd32c8bc45b",
+      "art_2bac96c7291c",
+      "art_c317b604d31a",
+      "art_0df347b964ea",
+      "art_ad11b8d54efc",
+      "art_b86535c3e005",
+      "art_eab530f843e8",
+      "art_d02195d4017b",
+      "art_0c1172f14f2e",
+      "art_47effb6718ae",
+      "art_a5c1a9d730a7",
+      "art_f3f0980c803c",
+      "art_a8d8d97d4fbe",
+      "art_b358207c2875",
+      "art_6630eb251ca1",
+      "art_cd64ccacf84e",
+      "art_b9ca00ce2f2f",
+      "art_4178f870dbb6",
+      "art_c7e68d539e18",
+      "art_221703a06426",
+      "art_4eeba7aa3334",
+      "art_e5d5f66cfbe1",
+      "art_2bf693c93671",
+      "art_81b9300f0555",
+      "art_28bebe661ff1",
+      "art_da7ebc2784c8",
+      "art_ade3454ef662",
+      "art_ca0a5c4e4276",
+      "art_a75c3e0137c6",
+      "art_dc89b09f9a88",
+      "art_0489bd8ff90d"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "questions": [
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 0?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        },
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 1?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:50.676022+00:00"
+  },
+  {
+    "id": "art_cd64ccacf84e",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_tech_run_49cb",
+    "agent_execution_id": "exec_f6823c699665",
+    "type": "evidence",
+    "title": "Careers at Acme Part 4",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 4",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 4",
+      "retrieved_at": "2026-10-14 15:32:10.325828+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:38.797973+00:00"
+  },
+  {
+    "id": "art_cfa07fb96009",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_qgen_run_49cb",
+    "agent_execution_id": "exec_4dd4d8fbddcb",
+    "type": "question_set",
+    "title": "Interview Curriculum Specialist Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_00df5f46f7de",
+      "art_abd32c8bc45b",
+      "art_2bac96c7291c",
+      "art_c317b604d31a",
+      "art_0df347b964ea",
+      "art_ad11b8d54efc",
+      "art_b86535c3e005",
+      "art_eab530f843e8",
+      "art_d02195d4017b",
+      "art_0c1172f14f2e",
+      "art_47effb6718ae",
+      "art_a5c1a9d730a7",
+      "art_f3f0980c803c",
+      "art_a8d8d97d4fbe",
+      "art_b358207c2875",
+      "art_6630eb251ca1",
+      "art_cd64ccacf84e",
+      "art_b9ca00ce2f2f",
+      "art_4178f870dbb6",
+      "art_c7e68d539e18",
+      "art_221703a06426",
+      "art_4eeba7aa3334",
+      "art_e5d5f66cfbe1",
+      "art_2bf693c93671",
+      "art_81b9300f0555",
+      "art_28bebe661ff1",
+      "art_da7ebc2784c8",
+      "art_ade3454ef662",
+      "art_ca0a5c4e4276",
+      "art_a75c3e0137c6",
+      "art_dc89b09f9a88",
+      "art_0489bd8ff90d"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "questions": [
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 0?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        },
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 1?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:45.002271+00:00"
+  },
+  {
+    "id": "art_d02195d4017b",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_cbe199f75baf",
+    "type": "evidence",
+    "title": "Careers at Acme Part 2",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 2",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 2",
+      "retrieved_at": "2026-10-14 15:33:11.689728+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:22.897314+00:00"
+  },
+  {
+    "id": "art_da7ebc2784c8",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_tech_run_49cb",
+    "agent_execution_id": "exec_f6823c699665",
+    "type": "evidence",
+    "title": "Careers at Acme Part 2",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 2",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 2",
+      "retrieved_at": "2026-10-14 15:32:10.325828+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:29.586360+00:00"
+  },
+  {
+    "id": "art_da850be3b59c",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_qgen_run_49cb",
+    "agent_execution_id": "exec_4903f3346684",
+    "type": "question_set",
+    "title": "Interview Curriculum Specialist Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_00df5f46f7de",
+      "art_abd32c8bc45b",
+      "art_2bac96c7291c",
+      "art_c317b604d31a",
+      "art_0df347b964ea",
+      "art_ad11b8d54efc",
+      "art_b86535c3e005",
+      "art_eab530f843e8",
+      "art_d02195d4017b",
+      "art_0c1172f14f2e",
+      "art_47effb6718ae",
+      "art_a5c1a9d730a7",
+      "art_f3f0980c803c",
+      "art_a8d8d97d4fbe",
+      "art_b358207c2875",
+      "art_6630eb251ca1",
+      "art_cd64ccacf84e",
+      "art_b9ca00ce2f2f",
+      "art_4178f870dbb6",
+      "art_c7e68d539e18",
+      "art_221703a06426",
+      "art_4eeba7aa3334",
+      "art_e5d5f66cfbe1",
+      "art_2bf693c93671",
+      "art_81b9300f0555",
+      "art_28bebe661ff1",
+      "art_da7ebc2784c8",
+      "art_ade3454ef662",
+      "art_ca0a5c4e4276",
+      "art_a75c3e0137c6",
+      "art_dc89b09f9a88",
+      "art_0489bd8ff90d"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "questions": [
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 0?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        },
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 1?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:45.977873+00:00"
+  },
+  {
+    "id": "art_dc89b09f9a88",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_job_run_49cb",
+    "agent_execution_id": "exec_3fb4d9604c48",
+    "type": "evidence",
+    "title": "Careers at Acme Part 1",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 1",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 1",
+      "retrieved_at": "2026-10-14 15:32:10.619786+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:18.679347+00:00"
+  },
+  {
+    "id": "art_e5d5f66cfbe1",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_tech_run_49cb",
+    "agent_execution_id": "exec_f6823c699665",
+    "type": "evidence",
+    "title": "Careers at Acme Part 1",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 1",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 1",
+      "retrieved_at": "2026-10-14 15:32:10.325828+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:25.272535+00:00"
+  },
+  {
+    "id": "art_eab530f843e8",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_58312045b7b1",
+    "type": "evidence",
+    "title": "Careers at Acme Part 0",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 0",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 0",
+      "retrieved_at": "2026-10-14 15:33:11.506926+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:14.673386+00:00"
+  },
+  {
+    "id": "art_ec6c0c38e386",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_qgen_run_49cb",
+    "agent_execution_id": "exec_84e45b81a528",
+    "type": "question_set",
+    "title": "Interview Curriculum Specialist Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_00df5f46f7de",
+      "art_abd32c8bc45b",
+      "art_2bac96c7291c",
+      "art_c317b604d31a",
+      "art_0df347b964ea",
+      "art_ad11b8d54efc",
+      "art_b86535c3e005",
+      "art_eab530f843e8",
+      "art_d02195d4017b",
+      "art_0c1172f14f2e",
+      "art_47effb6718ae",
+      "art_a5c1a9d730a7",
+      "art_f3f0980c803c",
+      "art_a8d8d97d4fbe",
+      "art_b358207c2875",
+      "art_6630eb251ca1",
+      "art_cd64ccacf84e",
+      "art_b9ca00ce2f2f",
+      "art_4178f870dbb6",
+      "art_c7e68d539e18",
+      "art_221703a06426",
+      "art_4eeba7aa3334",
+      "art_e5d5f66cfbe1",
+      "art_2bf693c93671",
+      "art_81b9300f0555",
+      "art_28bebe661ff1",
+      "art_da7ebc2784c8",
+      "art_ade3454ef662",
+      "art_ca0a5c4e4276",
+      "art_a75c3e0137c6",
+      "art_dc89b09f9a88",
+      "art_0489bd8ff90d"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "questions": [
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 0?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        },
+        {
+          "answer_outline": [
+            "Leader election",
+            "Log replication",
+            "Safety guarantees"
+          ],
+          "category": "system_design",
+          "difficulty": "medium",
+          "evidence_ids": [
+            "art_ev_0"
+          ],
+          "expected_signals": [
+            "Raft mechanics",
+            "Leader election"
+          ],
+          "follow_ups": [
+            "How to handle network partitions?",
+            "How does log compaction work?"
+          ],
+          "interviewer_intent": "Assess consensus knowledge",
+          "pitfalls": [
+            "Over-simplification",
+            "Ignoring partitions"
+          ],
+          "question": "Explain Raft consensus 1?",
+          "rationale": "Core stack",
+          "skills_tested": [
+            "Distributed Systems"
+          ]
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:52.589337+00:00"
+  },
+  {
+    "id": "art_efed5bac52f2",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_synth_run_49cb",
+    "agent_execution_id": "exec_79606088873b",
+    "type": "validation_result",
+    "title": "Evidence & Rubric Auditor Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_bc8df3ae2e09",
+      "art_c317b604d31a",
+      "art_cd64ccacf84e",
+      "art_81b9300f0555",
+      "art_0df347b964ea",
+      "art_b86535c3e005",
+      "art_da7ebc2784c8",
+      "art_4178f870dbb6",
+      "art_221703a06426",
+      "art_a75c3e0137c6",
+      "art_dc89b09f9a88",
+      "art_47effb6718ae",
+      "art_e5d5f66cfbe1"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "claim_verdicts": [
+        {
+          "claim_statement": "Acme uses Rust",
+          "confidence": 0.95,
+          "evidence_ids": [],
+          "verdict_explanation": "Verified in blog",
+          "verified": true
+        }
+      ],
+      "gaps": [
+        {
+          "importance": "required",
+          "recommended_focus": "Kubernetes operators",
+          "requirement_quote": "Kubernetes operations",
+          "skill": "Kubernetes 0"
+        },
+        {
+          "importance": "required",
+          "recommended_focus": "Kubernetes operators",
+          "requirement_quote": "Kubernetes operations",
+          "skill": "Kubernetes 1"
+        },
+        {
+          "importance": "required",
+          "recommended_focus": "Kubernetes operators",
+          "requirement_quote": "Kubernetes operations",
+          "skill": "Kubernetes 2"
+        }
+      ],
+      "overall_match_ratio": 0.92,
+      "risks": [
+        "Scaling limits"
+      ],
+      "strengths": [
+        {
+          "evidence_quote": "Production Rust architect",
+          "relevance": "high",
+          "skill": "Rust 0"
+        },
+        {
+          "evidence_quote": "Production Rust architect",
+          "relevance": "high",
+          "skill": "Rust 1"
+        },
+        {
+          "evidence_quote": "Production Rust architect",
+          "relevance": "high",
+          "skill": "Rust 2"
+        }
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+      "wording_improvements": []
+    },
+    "created_at": "2026-10-14 15:32:45.929386+00:00"
+  },
+  {
+    "id": "art_f3f0980c803c",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_curriculum_run_49cb",
+    "agent_execution_id": "exec_2fb38b0fbe85",
+    "type": "evidence",
+    "title": "Careers at Acme Part 2",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [],
+    "source_links": [
+      {
+        "title": "Careers at Acme Part 2",
+        "url": "https://www.python.org/about/"
+      }
+    ],
+    "evidence": {
+      "source_url": "https://www.python.org/about/",
+      "title": "Careers at Acme Part 2",
+      "retrieved_at": "2026-10-14 15:33:11.413017+00:00",
+      "snippet": "We build distributed systems in Python and Rust.",
+      "confidence": 0.95
+    },
+    "content": {
+      "snippet": "We build distributed systems in Python and Rust."
+    },
+    "created_at": "2026-10-14 15:33:22.694444+00:00"
+  },
+  {
+    "id": "art_f55db5a69281",
+    "run_id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+    "task_id": "task_job_run_49cb",
+    "agent_execution_id": "exec_3fb4d9604c48",
+    "type": "finding",
+    "title": "Job Requirement Analyst Deliverable",
+    "version": 1,
+    "surreal_record_id": null,
+    "evidence_ids": [
+      "art_c317b604d31a",
+      "art_0df347b964ea",
+      "art_b86535c3e005",
+      "art_a75c3e0137c6",
+      "art_dc89b09f9a88"
+    ],
+    "source_links": [],
+    "evidence": null,
+    "content": {
+      "evidence_ids": [
+        "art_c317b604d31a"
+      ],
+      "requirements": [
+        {
+          "level": "expert",
+          "quote": "Must have Rust experience",
+          "required": "required",
+          "skill": "Rust"
+        }
+      ],
+      "responsibilities": [
+        "Design distributed systems"
+      ],
+      "role_summary": "Platform architect role.",
+      "seniority_signals": [
+        "Staff level ownership"
+      ],
+      "summary": "Grounded research confirms Acme uses distributed Python and Rust."
+    },
+    "created_at": "2026-10-14 15:32:35.692862+00:00"
+  }
+]

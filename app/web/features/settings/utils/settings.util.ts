@@ -1,10 +1,10 @@
-import type { LlmProviderInfo, UpsertLlmConfigRequest } from '../models/settings.model'
+import type { LlmProviderInfo } from '../models/settings.model'
 
-export const KNOWN_LLM_PROVIDERS: readonly LlmProviderInfo[] = [
+export const KNOWN_LLM_PROVIDERS: LlmProviderInfo[] = [
   {
     id: 'openai',
     name: 'OpenAI',
-    description: 'Direct OpenAI API integration (GPT-4o, o1, embeddings)',
+    description: 'Direct access to GPT-4o, o1, and embeddings via official API.',
     defaultBaseUrl: 'https://api.openai.com/v1',
     defaultChatModel: 'gpt-4o',
     defaultSearchModel: 'gpt-4o-mini',
@@ -14,105 +14,44 @@ export const KNOWN_LLM_PROVIDERS: readonly LlmProviderInfo[] = [
   {
     id: 'anthropic',
     name: 'Anthropic',
-    description: 'Anthropic Claude model suite (Claude 3.7 Sonnet, Claude 3.5 Haiku)',
+    description: 'Claude 3.5 Sonnet and Haiku models with deep technical reasoning.',
     defaultBaseUrl: 'https://api.anthropic.com/v1',
-    defaultChatModel: 'claude-3-7-sonnet',
-    defaultSearchModel: 'claude-3-5-haiku',
+    defaultChatModel: 'claude-3-5-sonnet-latest',
+    defaultSearchModel: 'claude-3-5-haiku-latest',
     docsUrl: 'https://docs.anthropic.com',
   },
   {
-    id: 'openrouter',
-    name: 'OpenRouter',
-    description: 'Unified multi-provider API router with model fallback and unified billing',
-    defaultBaseUrl: 'https://openrouter.ai/api/v1',
-    defaultChatModel: 'openai/gpt-4o',
-    defaultSearchModel: 'anthropic/claude-3.5-haiku',
-    docsUrl: 'https://openrouter.ai/docs',
+    id: 'gemini',
+    name: 'Google Gemini',
+    description: 'Gemini 1.5 Pro and Flash with large context windows.',
+    defaultBaseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+    defaultChatModel: 'gemini-1.5-pro',
+    defaultSearchModel: 'gemini-1.5-flash',
+    docsUrl: 'https://ai.google.dev',
+  },
+  {
+    id: 'groq',
+    name: 'Groq',
+    description: 'Ultra-low-latency LPU inference for Llama 3 models.',
+    defaultBaseUrl: 'https://api.groq.com/openai/v1',
+    defaultChatModel: 'llama-3.3-70b-versatile',
+    defaultSearchModel: 'llama-3.1-8b-instant',
+    docsUrl: 'https://groq.com',
   },
   {
     id: 'ollama',
     name: 'Ollama (Local)',
-    description: 'Locally hosted open-weights models (Llama 3, Qwen 2.5, DeepSeek R1)',
+    description: 'Local models running on your machine or private network.',
     defaultBaseUrl: 'http://localhost:11434/v1',
-    defaultChatModel: 'llama3.3',
-    defaultSearchModel: 'llama3.2',
+    defaultChatModel: 'llama3.1:8b',
+    defaultSearchModel: 'llama3.1:8b',
     defaultEmbedModel: 'nomic-embed-text',
-    docsUrl: 'https://ollama.com',
+    docsUrl: 'https://ollama.ai',
   },
-  {
-    id: 'custom',
-    name: 'Custom OpenAI-Compatible',
-    description: 'Self-hosted vLLM, TGI, LocalAI, or custom inference proxy endpoints',
-    defaultBaseUrl: 'http://localhost:8000/v1',
-  },
-] as const
+]
 
-/**
- * Resolves metadata and defaults for a given provider id.
- */
-export const resolveProviderMetadata = (providerId: string): LlmProviderInfo => {
-  const normalized = (providerId || '').toLowerCase().trim()
-  const found = KNOWN_LLM_PROVIDERS.find(p => p.id === normalized)
-  if (found) return found
-
-  const formattedName = normalized
-    ? normalized.charAt(0).toUpperCase() + normalized.slice(1)
-    : 'Unknown'
-
-  return {
-    id: normalized,
-    name: formattedName,
-    description: `${formattedName} provider configuration`,
-  }
-}
-
-/**
- * Masks an API key for safe display, revealing only prefix and suffix.
- */
-export const maskApiKey = (rawKey: string): string => {
-  if (!rawKey || typeof rawKey !== 'string') return ''
-  const trimmed = rawKey.trim()
-  if (trimmed.length <= 8) {
-    return '••••••••'
-  }
-  const prefix = trimmed.slice(0, 4)
-  const suffix = trimmed.slice(-4)
-  return `${prefix}••••••••${suffix}`
-}
-
-export interface ValidationIssue {
-  field: string
-  message: string
-}
-
-export interface ConfigValidationResult {
-  valid: boolean
-  errors: ValidationIssue[]
-}
-
-/**
- * Validates LLM provider form input before dispatching update requests.
- */
-export const validateLlmConfigInput = (config: UpsertLlmConfigRequest): ConfigValidationResult => {
-  const errors: ValidationIssue[] = []
-
-  if (!config.provider || !config.provider.trim()) {
-    errors.push({ field: 'provider', message: 'Provider identifier is required' })
-  }
-
-  if (config.base_url && config.base_url.trim()) {
-    const url = config.base_url.trim()
-    const isValidHttp = /^https?:\/\/.+/i.test(url)
-    if (!isValidHttp) {
-      errors.push({
-        field: 'base_url',
-        message: 'Base URL must start with http:// or https://',
-      })
-    }
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors,
-  }
+export const maskApiKey = (key: string): string => {
+  if (!key) return ''
+  if (key.length <= 8) return '••••••••'
+  return `${key.slice(0, 4)}••••${key.slice(-4)}`
 }

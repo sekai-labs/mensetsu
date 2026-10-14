@@ -111,8 +111,7 @@ describe('Interview Feature Utilities', () => {
       category: 'all',
     })
     expect(rateLimiter).toHaveLength(1)
-    expect(rateLimiter[0].id).toBe('q_1')
-
+    expect(rateLimiter[0]!.id).toBe('q_1')
     const hardQuestions = filterQuestions(sampleQuestions, {
       difficulty: 'hard',
     })
@@ -122,7 +121,7 @@ describe('Interview Feature Utilities', () => {
       searchQuery: 'Rust',
     })
     expect(skillSearch).toHaveLength(1)
-    expect(skillSearch[0].id).toBe('q_2')
+    expect(skillSearch[0]!.id).toBe('q_2')
   })
 
   it('calculates learning unit progress correctly', () => {

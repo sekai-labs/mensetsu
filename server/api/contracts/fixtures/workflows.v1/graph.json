@@ -1,0 +1,223 @@
+{
+  "nodes": [
+    {
+      "id": "task_company_run_49cb",
+      "label": "Research Target Company",
+      "type": "task",
+      "data": {
+        "status": "completed",
+        "assigned_agent": "company-research",
+        "attempt": 1,
+        "task_type": "research",
+        "required": true,
+        "added_in_revision": 1,
+        "execution_ids": [
+          "exec_39d29c92e799"
+        ],
+        "group": "research"
+      }
+    },
+    {
+      "id": "task_curriculum_run_49cb",
+      "label": "Construct Knowledge Graph & Curriculum",
+      "type": "task",
+      "data": {
+        "status": "completed",
+        "assigned_agent": "curriculum",
+        "attempt": 1,
+        "task_type": "curriculum",
+        "required": true,
+        "added_in_revision": 1,
+        "execution_ids": [
+          "exec_043d9223868a",
+          "exec_2fb38b0fbe85",
+          "exec_cbe199f75baf",
+          "exec_58312045b7b1"
+        ],
+        "group": "curriculum"
+      }
+    },
+    {
+      "id": "task_job_run_49cb",
+      "label": "Analyze Job Description & Skills",
+      "type": "task",
+      "data": {
+        "status": "completed",
+        "assigned_agent": "job-analysis",
+        "attempt": 1,
+        "task_type": "research",
+        "required": true,
+        "added_in_revision": 1,
+        "execution_ids": [
+          "exec_3fb4d9604c48"
+        ],
+        "group": "research"
+      }
+    },
+    {
+      "id": "task_normalize_run_49cb",
+      "label": "Normalize CV and JD inputs",
+      "type": "task",
+      "data": {
+        "status": "completed",
+        "assigned_agent": "job-analysis",
+        "attempt": 1,
+        "task_type": "normalization",
+        "required": true,
+        "added_in_revision": 1,
+        "execution_ids": [],
+        "group": "normalization"
+      }
+    },
+    {
+      "id": "task_persist_run_49cb",
+      "label": "Persist Domain Entities to SurrealDB",
+      "type": "task",
+      "data": {
+        "status": "completed",
+        "assigned_agent": "curriculum",
+        "attempt": 1,
+        "task_type": "persistence",
+        "required": true,
+        "added_in_revision": 1,
+        "execution_ids": [],
+        "group": "persistence"
+      }
+    },
+    {
+      "id": "task_qgen_run_49cb",
+      "label": "Generate Question Book & Rubrics",
+      "type": "task",
+      "data": {
+        "status": "completed",
+        "assigned_agent": "interview-generation",
+        "attempt": 1,
+        "task_type": "generation",
+        "required": true,
+        "added_in_revision": 1,
+        "execution_ids": [
+          "exec_4dd4d8fbddcb",
+          "exec_4903f3346684",
+          "exec_c4a86b381697",
+          "exec_0d0e6bf8b5d5",
+          "exec_9c17cd91a381",
+          "exec_29c25d5cda01",
+          "exec_84e45b81a528",
+          "exec_1b259da1932a"
+        ],
+        "group": "generation"
+      }
+    },
+    {
+      "id": "task_qval_run_49cb",
+      "label": "Audit Question Book & Evaluation Rubrics",
+      "type": "task",
+      "data": {
+        "status": "completed",
+        "assigned_agent": "evidence-evaluator",
+        "attempt": 1,
+        "task_type": "validation",
+        "required": true,
+        "added_in_revision": 1,
+        "execution_ids": [],
+        "group": "validation"
+      }
+    },
+    {
+      "id": "task_synth_run_49cb",
+      "label": "Synthesize Match Analysis & Evidence Evaluation",
+      "type": "task",
+      "data": {
+        "status": "completed",
+        "assigned_agent": "evidence-evaluator",
+        "attempt": 1,
+        "task_type": "synthesis",
+        "required": true,
+        "added_in_revision": 1,
+        "execution_ids": [
+          "exec_79606088873b"
+        ],
+        "group": "synthesis"
+      }
+    },
+    {
+      "id": "task_tech_run_49cb",
+      "label": "Research Technical Stack & Architecture",
+      "type": "task",
+      "data": {
+        "status": "completed",
+        "assigned_agent": "technical-research",
+        "attempt": 1,
+        "task_type": "research",
+        "required": true,
+        "added_in_revision": 1,
+        "execution_ids": [
+          "exec_f6823c699665"
+        ],
+        "group": "research"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_task_normalize_run_49cb_to_task_company_run_49cb",
+      "source": "task_normalize_run_49cb",
+      "target": "task_company_run_49cb",
+      "kind": "dependency"
+    },
+    {
+      "id": "edge_task_synth_run_49cb_to_task_curriculum_run_49cb",
+      "source": "task_synth_run_49cb",
+      "target": "task_curriculum_run_49cb",
+      "kind": "dependency"
+    },
+    {
+      "id": "edge_task_normalize_run_49cb_to_task_job_run_49cb",
+      "source": "task_normalize_run_49cb",
+      "target": "task_job_run_49cb",
+      "kind": "dependency"
+    },
+    {
+      "id": "edge_task_qgen_run_49cb_to_task_persist_run_49cb",
+      "source": "task_qgen_run_49cb",
+      "target": "task_persist_run_49cb",
+      "kind": "dependency"
+    },
+    {
+      "id": "edge_task_curriculum_run_49cb_to_task_qgen_run_49cb",
+      "source": "task_curriculum_run_49cb",
+      "target": "task_qgen_run_49cb",
+      "kind": "dependency"
+    },
+    {
+      "id": "edge_task_qgen_run_49cb_to_task_qval_run_49cb",
+      "source": "task_qgen_run_49cb",
+      "target": "task_qval_run_49cb",
+      "kind": "dependency"
+    },
+    {
+      "id": "edge_task_company_run_49cb_to_task_synth_run_49cb",
+      "source": "task_company_run_49cb",
+      "target": "task_synth_run_49cb",
+      "kind": "dependency"
+    },
+    {
+      "id": "edge_task_job_run_49cb_to_task_synth_run_49cb",
+      "source": "task_job_run_49cb",
+      "target": "task_synth_run_49cb",
+      "kind": "dependency"
+    },
+    {
+      "id": "edge_task_tech_run_49cb_to_task_synth_run_49cb",
+      "source": "task_tech_run_49cb",
+      "target": "task_synth_run_49cb",
+      "kind": "dependency"
+    },
+    {
+      "id": "edge_task_normalize_run_49cb_to_task_tech_run_49cb",
+      "source": "task_normalize_run_49cb",
+      "target": "task_tech_run_49cb",
+      "kind": "dependency"
+    }
+  ]
+}

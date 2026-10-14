@@ -46,7 +46,7 @@ const getRedisClient = (): Redis | null => {
 }
 
 const SESSION_PREFIX = 'mensetsu:session:'
-const DEFAULT_TTL_SECONDS = 7 * 24 * 60 * 60 // 7 days (aligns with refresh token TTL)
+const DEFAULT_TTL_SECONDS = 7 * 24 * 60 * 60
 
 export const sessionManager = {
   generateTokenId(): string {
@@ -64,7 +64,7 @@ export const sessionManager = {
       }
     }
 
-    // In-memory fallback
+
     memoryStore.set(tokenId, {
       data,
       expiresAt: Date.now() + ttlSeconds * 1000,
@@ -85,7 +85,7 @@ export const sessionManager = {
       }
     }
 
-    // In-memory fallback
+
     const item = memoryStore.get(tokenId)
     if (!item) return null
     if (Date.now() > item.expiresAt) {

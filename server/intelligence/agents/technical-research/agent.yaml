@@ -1,0 +1,18 @@
+id: technical-research
+name: Technical Systems Specialist
+description: Sources architectural patterns, engineering blog posts, and domain system paradigms.
+allowed_tools:
+  - web_search
+  - read_source
+  - save_evidence
+  - save_finding
+  - update_notes
+  - delegate_task
+  - evaluate_findings
+delegation_permissions:
+  - systems-deep-dive
+  - evidence-evaluator
+tool_calls_budget: 40
+model_calls_budget: 40
+max_budget: 1.0
+wall_time_seconds: 480

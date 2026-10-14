@@ -1,162 +1,108 @@
-import type {
-  AdminPipelineLog,
-  AdminPipelinePhaseStep,
-  LogLevel,
-  StepState,
-} from '../models/admin.model'
+import type { AdminPipelineLog, AdminPipelinePhaseStep, StepState } from '../models/admin.model'
+import type { PipelinePhase, WorkspaceStatus } from '~/models/common.model'
 
-export const DEFAULT_PIPELINE_STEPS: readonly AdminPipelinePhaseStep[] = [
-  { id: 'preparing_input', name: 'Input Preparation' },
-  { id: 'analyzing_resume', name: 'Resume Entity Extraction' },
-  { id: 'reading_job_description', name: 'Job Description Parsing' },
-  { id: 'researching_company', name: 'Deep Company Research' },
-  { id: 'mapping_resume_evidence', name: 'Match & Gap Analysis' },
-  { id: 'constructing_knowledge_graph', name: 'Knowledge Graph DAG' },
-  { id: 'generating_lessons', name: 'Curriculum Generation' },
-  { id: 'building_interview_question_book', name: 'Question Book Generation' },
-] as const
+export const DEFAULT_PIPELINE_STEPS: AdminPipelinePhaseStep[] = [
+  { id: 'preparing_input', name: 'Preparing Input', description: 'Validating payload and extracting files' },
+  { id: 'analyzing_resume', name: 'Analyzing Resume', description: 'Parsing candidate experience and claims' },
+  { id: 'reading_job_description', name: 'Reading JD', description: 'Extracting role expectations' },
+  { id: 'researching_company', name: 'Researching Company', description: 'Gathering company architecture and data' },
+  { id: 'researching_engineering_environment', name: 'Engineering Env', description: 'Analyzing tech stack and practices' },
+  { id: 'extracting_role_requirements', name: 'Role Requirements', description: 'Mapping core competencies' },
+  { id: 'mapping_resume_evidence', name: 'Mapping Evidence', description: 'Aligning candidate proof points' },
+  { id: 'constructing_knowledge_graph', name: 'Knowledge Graph', description: 'Building semantic skill graph' },
+  { id: 'building_learning_plan', name: 'Learning Plan', description: 'Generating structured modules' },
+  { id: 'generating_lessons', name: 'Generating Lessons', description: 'Synthesizing technical lessons' },
+  { id: 'building_interview_question_book', name: 'Question Book', description: 'Creating targeted question bank' },
+  { id: 'final_validation', name: 'Final Validation', description: 'Verifying evidence consistency' },
+]
 
-/**
- * Returns Tailwind CSS classes for pipeline status representation.
- */
-export const getPipelineStatusStyle = (status: string): string => {
-  switch (status?.toLowerCase()) {
+export const getPipelineStatusStyle = (status: WorkspaceStatus | string): string => {
+  switch (status) {
     case 'ready':
-      return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800'
     case 'processing':
-      return 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 animate-pulse'
+      return 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-800'
     case 'failed':
-      return 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-800'
+      return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800'
+    case 'pending':
     default:
-      return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+      return 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-700'
   }
 }
 
-/**
- * Returns Tailwind CSS badge classes for log levels in terminal stream.
- */
-export const getLogLevelBadgeStyle = (level?: LogLevel | string): string => {
+export const getLogLevelBadgeStyle = (level: string): string => {
   switch (level?.toLowerCase()) {
     case 'error':
-      return 'bg-rose-950 text-rose-300 border-rose-800'
+      return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800'
     case 'warn':
-    case 'warning':
-      return 'bg-amber-950 text-amber-300 border-amber-800'
+      return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-800'
     case 'info':
-      return 'bg-blue-950 text-blue-300 border-blue-800'
+      return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-400 dark:border-blue-800'
     case 'debug':
-      return 'bg-slate-800 text-slate-400 border-slate-700'
     default:
-      return 'bg-slate-800 text-slate-400 border-slate-700'
+      return 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
   }
 }
 
-/**
- * Calculates execution state (completed, active, failed, pending) for a step in the pipeline.
- */
 export const calculateStepState = (
   stepId: string,
-  currentPhase: string,
-  status: string,
-  steps: readonly AdminPipelinePhaseStep[] = DEFAULT_PIPELINE_STEPS
+  currentPhase: PipelinePhase | string,
+  status: WorkspaceStatus | string,
+  steps: AdminPipelinePhaseStep[] = DEFAULT_PIPELINE_STEPS
 ): StepState => {
-  const normalizedStatus = status?.toLowerCase()
-  if (normalizedStatus === 'ready') {
-    return 'completed'
-  }
+  if (status === 'ready') return 'completed'
+  if (status === 'failed' && currentPhase === stepId) return 'failed'
 
-  if (normalizedStatus === 'failed' && currentPhase === stepId) {
-    return 'failed'
-  }
+  const currentIndex = steps.findIndex((s) => s.id === currentPhase)
+  const stepIndex = steps.findIndex((s) => s.id === stepId)
 
-  const stepIdx = steps.findIndex((s) => s.id === stepId)
-  const currentIdx = steps.findIndex((s) => s.id === currentPhase)
-
-  if (stepIdx === -1 || currentIdx === -1) {
-    return 'pending'
-  }
-
-  if (stepIdx < currentIdx) {
-    return 'completed'
-  }
-
-  if (stepIdx === currentIdx) {
-    return normalizedStatus === 'failed' ? 'failed' : 'active'
-  }
-
+  if (stepIndex < 0 || currentIndex < 0) return 'pending'
+  if (stepIndex < currentIndex) return 'completed'
+  if (stepIndex === currentIndex) return status === 'failed' ? 'failed' : 'active'
   return 'pending'
 }
 
-/**
- * Returns styling classes for a step card in the stepper based on its execution state.
- */
-export const getStepCardStyle = (state: StepState): string => {
-  switch (state) {
-    case 'completed':
-      return 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300'
-    case 'active':
-      return 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-bold ring-1 ring-indigo-500'
-    case 'failed':
-      return 'border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300'
-    case 'pending':
-    default:
-      return 'border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-850/40 text-slate-400'
-  }
-}
-
-/**
- * Formats ISO timestamp to HH:mm:ss.SSS for display in the terminal log stream.
- */
-export const formatLogTimestamp = (timestamp: string): string => {
-  if (!timestamp) return ''
-  const tIndex = timestamp.indexOf('T')
-  if (tIndex !== -1) {
-    return timestamp.slice(tIndex + 1).replace('Z', '')
-  }
-  return timestamp
-}
-
-/**
- * Filters a list of pipeline logs by keyword and log level.
- */
 export const filterPipelineLogs = (
-  logs: readonly AdminPipelineLog[],
-  search: string,
-  level: string
+  logs: AdminPipelineLog[],
+  query: string,
+  levelFilter: string
 ): AdminPipelineLog[] => {
-  const query = search.trim().toLowerCase()
-  const filterLevel = level.trim().toLowerCase()
-
   return logs.filter((log) => {
-    const matchesSearch =
+    const matchesLevel = !levelFilter || levelFilter === 'all' || log.level.toLowerCase() === levelFilter.toLowerCase()
+    const matchesQuery =
       !query ||
-      log.message.toLowerCase().includes(query) ||
-      log.step.toLowerCase().includes(query)
-
-    const matchesLevel =
-      filterLevel === 'all' ||
-      !filterLevel ||
-      log.level.toLowerCase() === filterLevel
-
-    return matchesSearch && matchesLevel
+      log.message.toLowerCase().includes(query.toLowerCase()) ||
+      log.step.toLowerCase().includes(query.toLowerCase())
+    return matchesLevel && matchesQuery
   })
 }
 
-/**
- * Serializes log collection into human-readable raw terminal text output for file export.
- */
-export const formatLogsForExport = (
-  logs: readonly AdminPipelineLog[],
-  workspaceId: string
-): string => {
-  const header = `# Pipeline Execution Log Export\n# Workspace ID: ${workspaceId}\n# Exported At: ${new Date().toISOString()}\n# Total Records: ${logs.length}\n${'='.repeat(80)}\n`
-  const body = logs
-    .map((log) => {
-      const lvl = (log.level || 'INFO').toUpperCase().padEnd(5)
-      const stp = log.step || 'general'
-      return `[${log.timestamp}] [${lvl}] [${stp}]: ${log.message}`
-    })
-    .join('\n')
+export const formatLogTimestamp = (iso: string): string => {
+  if (iso.includes('T') && iso.endsWith('Z')) {
+    const timePart = iso.split('T')[1]
+    return timePart ? timePart.replace('Z', '') : iso
+  }
+  return iso
+}
 
-  return `${header}\n${body}\n`
+export const formatLogsForExport = (logs: AdminPipelineLog[], workspaceId?: string): string => {
+  const header = workspaceId ? `Workspace ID: ${workspaceId}\n-----------------------------------\n` : ''
+  const body = logs
+    .map((l) => `[${l.timestamp}] [${l.level.toUpperCase()}] [${l.step}]: ${l.message}`)
+    .join('\n')
+  return header + body
+}
+
+export const getStepCardStyle = (state: StepState): string => {
+  switch (state) {
+    case 'completed':
+      return 'border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/10'
+    case 'active':
+      return 'border-indigo-500 bg-indigo-50/20 dark:bg-indigo-950/10 ring-1 ring-indigo-500'
+    case 'failed':
+      return 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/10'
+    case 'pending':
+    default:
+      return 'border-slate-200 dark:border-slate-800 opacity-60'
+  }
 }

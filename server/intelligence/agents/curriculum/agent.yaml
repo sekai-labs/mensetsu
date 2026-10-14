@@ -1,0 +1,14 @@
+id: curriculum
+name: Curriculum & Knowledge Architect
+description: Synthesizes job description requirements, candidate gaps, and technical research into an interconnected knowledge graph and prerequisite-ordered learning units.
+allowed_tools:
+  - web_search
+  - read_source
+  - save_evidence
+  - save_finding
+  - update_notes
+max_budget: 1.0
+tool_calls_budget: 10
+model_calls_budget: 15
+wall_time_seconds: 600
+llm_request_timeout_s: 180

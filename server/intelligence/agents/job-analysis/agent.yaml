@@ -1,0 +1,15 @@
+id: job-analysis
+name: Job Requirement Analyst
+description: Parses job descriptions and normalizes hard skills, seniority levels, and responsibilities.
+allowed_tools:
+  - web_search
+  - read_source
+  - save_evidence
+  - save_finding
+  - update_notes
+  - evaluate_findings
+delegation_permissions: []
+max_budget: 1.0
+tool_calls_budget: 30
+model_calls_budget: 30
+wall_time_seconds: 480

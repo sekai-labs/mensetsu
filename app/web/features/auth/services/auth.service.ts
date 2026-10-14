@@ -1,118 +1,88 @@
-import type { ComputedRef, Ref } from 'vue'
-import { computed } from 'vue'
-import { useApiClient } from '~/services/api.client'
 import type {
   User,
-  LoginCredentials,
-  RegisterCredentials,
-  LoginResult,
-  TotpSetupData,
+  LoginRequest,
+  RegisterRequest,
+  Login2faRequest,
+  AuthResponse,
+  TotpSetupResponse,
+  TotpVerifyRequest,
+  TotpDisableRequest,
 } from '../models/auth.model'
 
-export interface AuthService {
-  user: Ref<User | null>
-  loading: Ref<boolean>
-  isAuthenticated: ComputedRef<boolean>
-  fetchMe: () => Promise<User | null>
-  login: (credentials: LoginCredentials) => Promise<LoginResult>
-  login2fa: (tempToken: string, code: string) => Promise<User>
-  register: (credentials: RegisterCredentials) => Promise<User>
-  logout: () => Promise<void>
-  setupTotp: () => Promise<TotpSetupData>
-  verifyTotp: (code: string) => Promise<User>
-  disableTotp: (code: string) => Promise<User>
-}
-
-export const useAuthService = (): AuthService => {
-  const { request } = useApiClient()
-
+export const useAuthService = () => {
   const user = useState<User | null>('auth-user', () => null)
-  const loading = useState<boolean>('auth-loading', () => false)
-  const isAuthenticated: ComputedRef<boolean> = computed(() => !!user.value)
+  const isInitialized = useState<boolean>('auth-initialized', () => false)
+  const isAuthenticated = computed(() => !!user.value)
 
-  const fetchMe = async (): Promise<User | null> => {
-    loading.value = true
+  const fetchCurrentUser = async (): Promise<User | null> => {
     try {
-      const data = await request<{ user: User }>('/api/auth/me')
-      user.value = data.user
-      return data.user
+      const headers: Record<string, string> = {}
+      if (import.meta.server) {
+        const reqHeaders = useRequestHeaders(['cookie', 'authorization'])
+        Object.assign(headers, reqHeaders)
+      }
+      const res = await $fetch<{ user: User }>('/api/auth/me', { headers })
+      user.value = res.user
+      return res.user
     } catch {
       user.value = null
       return null
     } finally {
-      loading.value = false
+      isInitialized.value = true
     }
   }
 
-  const login = async (credentials: LoginCredentials): Promise<LoginResult> => {
-    loading.value = true
-    try {
-      const data = await request<LoginResult>('/api/auth/login', {
-        method: 'POST',
-        body: credentials,
-      })
-      if (!data.requires_2fa && data.user) {
-        user.value = data.user
-      }
-      return data
-    } finally {
-      loading.value = false
+  const login = async (payload: LoginRequest): Promise<AuthResponse> => {
+    const res = await $fetch<AuthResponse>('/api/auth/login', {
+      method: 'POST',
+      body: payload,
+    })
+    if (!res.requires_2fa && res.user) {
+      user.value = res.user
     }
+    return res
   }
 
-  const login2fa = async (tempToken: string, code: string): Promise<User> => {
-    loading.value = true
-    try {
-      const data = await request<{ user: User }>('/api/auth/login-2fa', {
-        method: 'POST',
-        body: {
-          temp_token: tempToken,
-          code,
-        },
-      })
-      user.value = data.user
-      return data.user
-    } finally {
-      loading.value = false
+  const login2fa = async (payload: Login2faRequest): Promise<AuthResponse> => {
+    const res = await $fetch<AuthResponse>('/api/auth/login-2fa', {
+      method: 'POST',
+      body: payload,
+    })
+    if (res.user) {
+      user.value = res.user
     }
+    return res
   }
 
-  const register = async (credentials: RegisterCredentials): Promise<User> => {
-    loading.value = true
-    try {
-      const data = await request<{ user: User }>('/api/auth/register', {
-        method: 'POST',
-        body: {
-          email: credentials.email,
-          password: credentials.password,
-          name: credentials.displayName,
-        },
-      })
-      user.value = data.user
-      return data.user
-    } finally {
-      loading.value = false
+  const register = async (payload: RegisterRequest): Promise<AuthResponse> => {
+    const res = await $fetch<AuthResponse>('/api/auth/register', {
+      method: 'POST',
+      body: payload,
+    })
+    if (res.user) {
+      user.value = res.user
     }
+    return res
   }
 
   const logout = async (): Promise<void> => {
     try {
-      await request('/api/auth/logout', { method: 'POST' })
+      await $fetch('/api/auth/logout', { method: 'POST' })
     } finally {
       user.value = null
     }
   }
 
-  const setupTotp = async (): Promise<TotpSetupData> => {
-    return await request<TotpSetupData>('/api/auth/2fa/setup', {
+  const setup2fa = async (): Promise<TotpSetupResponse> => {
+    return await $fetch<TotpSetupResponse>('/api/auth/2fa/setup', {
       method: 'POST',
     })
   }
 
-  const verifyTotp = async (code: string): Promise<User> => {
-    const res = await request<User>('/api/auth/2fa/verify', {
+  const verify2fa = async (payload: TotpVerifyRequest): Promise<{ success: boolean }> => {
+    const res = await $fetch<{ success: boolean }>('/api/auth/2fa/verify', {
       method: 'POST',
-      body: { code },
+      body: payload,
     })
     if (user.value) {
       user.value.totp_enabled = true
@@ -120,10 +90,10 @@ export const useAuthService = (): AuthService => {
     return res
   }
 
-  const disableTotp = async (code: string): Promise<User> => {
-    const res = await request<User>('/api/auth/2fa/disable', {
+  const disable2fa = async (payload: TotpDisableRequest): Promise<{ success: boolean }> => {
+    const res = await $fetch<{ success: boolean }>('/api/auth/2fa/disable', {
       method: 'POST',
-      body: { code },
+      body: payload,
     })
     if (user.value) {
       user.value.totp_enabled = false
@@ -133,15 +103,15 @@ export const useAuthService = (): AuthService => {
 
   return {
     user,
-    loading,
     isAuthenticated,
-    fetchMe,
+    isInitialized,
+    fetchCurrentUser,
     login,
     login2fa,
     register,
     logout,
-    setupTotp,
-    verifyTotp,
-    disableTotp,
+    setup2fa,
+    verify2fa,
+    disable2fa,
   }
 }

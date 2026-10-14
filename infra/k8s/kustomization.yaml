@@ -8,7 +8,6 @@ resources:
   - 01-secrets.yaml
   - 02-configmaps.yaml
   - 03-surrealdb.yaml
-  - 04-temporal.yaml
   - 05-api.yaml
   - 06-intelligence.yaml
   - 07-web.yaml

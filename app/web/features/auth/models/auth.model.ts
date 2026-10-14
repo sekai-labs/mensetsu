@@ -1,7 +1,5 @@
 import type { UserRole } from '~/models/common.model'
 
-export type { UserRole }
-
 export interface User {
   id: string
   email: string
@@ -13,35 +11,40 @@ export interface User {
   updated_at: string
 }
 
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface RegisterRequest {
+  email: string
+  password: string
+  name: string
+}
+
+export interface Login2faRequest {
+  temp_token: string
+  code: string
+}
+
 export interface AuthResponse {
-  user: User
-  access_token: string
-  refresh_token: string
-}
-
-export interface MeResponse {
-  user: User
-}
-
-export interface LoginCredentials {
-  email: string
-  password: string
-}
-
-export interface RegisterCredentials {
-  email: string
-  password: string
-  displayName: string
-}
-
-export interface LoginResult {
   user?: User
-  requires_2fa: boolean
+  access_token?: string
+  refresh_token?: string
+  requires_2fa?: boolean
   temp_token?: string
 }
 
-export interface TotpSetupData {
+export interface TotpSetupResponse {
   secret: string
-  qr_code_data_url: string
+  qr_code_svg: string
   otpauth_url: string
+}
+
+export interface TotpVerifyRequest {
+  code: string
+}
+
+export interface TotpDisableRequest {
+  code: string
 }

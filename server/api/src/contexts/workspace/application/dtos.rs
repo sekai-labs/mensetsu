@@ -5,6 +5,7 @@ use validator::Validate;
 use crate::contexts::workspace::domain::{PipelinePhase, SeniorityLevel, WorkspaceStatus};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct CreateWorkspaceRequestDto {
     #[validate(length(min = 1, message = "Company name must not be empty"))]
     pub company_name: String,

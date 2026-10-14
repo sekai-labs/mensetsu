@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import type { User, AuthResponse } from '../features/auth/models/auth.model'
 import {
   isPublicAuthRoute,
@@ -27,9 +27,9 @@ describe('Auth Contracts and Composable logic', () => {
       refresh_token: 'opaque_refresh_token_mock',
     }
 
-    expect(authRes.user.id).toBe('user_123')
-    expect(authRes.user.email).toBe('engineer@mensetsu.ai')
-    expect(authRes.user.name).toBe('Ada Lovelace')
+    expect(authRes.user?.id).toBe('user_123')
+    expect(authRes.user?.email).toBe('engineer@mensetsu.ai')
+    expect(authRes.user?.name).toBe('Ada Lovelace')
     expect(authRes.access_token).toBeDefined()
     expect(authRes.refresh_token).toBeDefined()
   })

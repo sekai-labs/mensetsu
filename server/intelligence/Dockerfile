@@ -11,8 +11,8 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
 COPY src ./src
+COPY agents ./agents
 RUN uv sync --frozen --no-dev
-
 RUN chown -R appuser:appuser /app
 USER appuser
 ENV PYTHONPATH="/app"

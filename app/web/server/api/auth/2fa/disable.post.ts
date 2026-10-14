@@ -23,13 +23,13 @@ export default defineEventHandler(async (event) => {
   const apiBase = getBackendApiBase()
 
   try {
-    return await $fetch(`${apiBase}/api/v1/auth/2fa/disable`, {
+    return await $fetch.raw(`${apiBase}/api/v1/auth/2fa/disable`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${session.accessToken}`,
       },
       body,
-    })
+    }).then(r => r._data)
   } catch (err: unknown) {
     const errorObj = err as { statusCode?: number; data?: { error?: { message?: string } } }
     throw createError({

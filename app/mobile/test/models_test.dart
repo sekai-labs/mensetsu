@@ -1,5 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mensetsu_mobile/models.dart';
+import 'package:mensetsu_mobile/api_client.dart';
+import 'package:mensetsu_mobile/core/theme/app_theme.dart';
+import 'package:mensetsu_mobile/features/workspace/presentation/screens/workspace_list_screen.dart';
+import 'package:mensetsu_mobile/features/workspace/presentation/screens/workspace_detail_shell.dart';
+import 'package:mensetsu_mobile/features/match/presentation/screens/match_analysis_screen.dart';
+import 'package:mensetsu_mobile/features/company/presentation/screens/company_dossier_screen.dart';
+import 'package:mensetsu_mobile/features/learning/presentation/screens/learning_path_screen.dart';
+import 'package:mensetsu_mobile/features/questions/presentation/screens/question_book_screen.dart';
 
 void main() {
   group('Flutter Client Model Deserialization', () {
@@ -37,6 +46,30 @@ void main() {
       expect(dto.overallMatchRatio, 0.9);
       expect(dto.strengths.length, 1);
       expect(dto.gaps.length, 1);
+      expect(dto.parsedStrengths.first.skill, 'Rust');
+      expect(dto.parsedGaps.first.skill, 'eBPF');
+    });
+
+    test('CompanyResearchDto parses stack and citations', () {
+      final json = {
+        'workspace_id': 'ws_123',
+        'company_name': 'ScaleVector',
+        'overview': 'ScaleVector builds distributed consensus engines.',
+        'technology_stack': ['Rust', 'SurrealDB'],
+        'engineering_culture_pillars': ['Formal RFCs'],
+        'citations': [
+          {
+            'source_url': 'https://scalevector.io/rfcs',
+            'title': 'RFC 101',
+            'snippet': 'Consensus lease renewals',
+          }
+        ],
+      };
+      final dto = CompanyResearchDto.fromJson(json);
+      expect(dto.companyName, 'ScaleVector');
+      expect(dto.technologyStack.length, 2);
+      expect(dto.citations.length, 1);
+      expect(dto.citations.first.title, 'RFC 101');
     });
 
     test('UserProfileDto parses role from JSON', () {
@@ -87,6 +120,158 @@ void main() {
       expect(config.isShared, true);
       expect(config.hasKey, true);
       expect(config.maskedKey, 'sk-...1234');
+    });
+  });
+
+  group('Adaptive Screen Widget Rendering', () {
+    testWidgets('WorkspaceListScreen renders list and empty/card states', (tester) async {
+      final api = MensetsuApiClient();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: WorkspaceListScreen(api: api),
+        ),
+      );
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mensetsu Workspaces'), findsOneWidget);
+      expect(find.text('ScaleVector Systems'), findsOneWidget);
+      expect(find.text('Staff Systems Architect'), findsOneWidget);
+    });
+
+    testWidgets('MatchAnalysisScreen renders strengths and gaps', (tester) async {
+      final match = MatchAnalysisDto(
+        workspaceId: 'ws_1',
+        overallMatchRatio: 0.85,
+        rawStrengths: [
+          {'skill': 'Distributed Systems', 'evidence_quote': 'Built Raft engine', 'relevance': 'High'}
+        ],
+        rawGaps: [
+          {
+            'skill': 'eBPF',
+            'requirement_quote': 'Profiling network traffic',
+            'importance': 'Mandatory',
+            'recommended_focus': 'Study socket filters'
+          }
+        ],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: Scaffold(body: MatchAnalysisScreen(match: match)),
+        ),
+      );
+
+      expect(find.text('CV & JD Match Analysis'), findsOneWidget);
+      expect(find.text('85% Match'), findsOneWidget);
+      expect(find.text('Distributed Systems'), findsOneWidget);
+      expect(find.text('eBPF'), findsOneWidget);
+    });
+
+    testWidgets('CompanyDossierScreen renders tech stack and pillars', (tester) async {
+      final company = CompanyResearchDto(
+        workspaceId: 'ws_1',
+        companyName: 'Acme Systems',
+        overview: 'Specialized in ultra-low latency compute.',
+        technologyStack: ['Rust', 'Linux'],
+        engineeringCulturePillars: ['Blameless postmortems'],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: Scaffold(body: CompanyDossierScreen(company: company)),
+        ),
+      );
+
+      expect(find.text('Acme Systems'), findsOneWidget);
+      expect(find.text('Rust'), findsOneWidget);
+      expect(find.text('Linux'), findsOneWidget);
+      expect(find.text('Blameless postmortems'), findsOneWidget);
+    });
+
+    testWidgets('LearningPathScreen renders units and handles completion toggle', (tester) async {
+      bool toggled = false;
+      final lessons = [
+        LearningUnitDto(
+          id: 'lu_1',
+          skill: 'Temporal',
+          title: 'Durable Workflows',
+          estimatedMinutes: 20,
+          summary: 'Deterministic workflows',
+          contentMarkdown: '# Temporal Markdown Invariants',
+          completed: false,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: Scaffold(
+            body: LearningPathScreen(
+              lessons: lessons,
+              onToggleCompleted: (id) async {
+                toggled = true;
+              },
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Durable Workflows'), findsWidgets);
+      await tester.tap(find.byType(Checkbox).first);
+      await tester.pumpAndSettle();
+      expect(toggled, isTrue);
+    });
+
+    testWidgets('QuestionBookScreen renders interview questions and intent', (tester) async {
+      final questions = [
+        InterviewQuestionDto(
+          id: 'q_1',
+          question: 'How do you handle split-brain in Raft clusters?',
+          difficulty: 'Hard',
+          interviewerIntent: 'Checks consensus intuition.',
+          answerOutline: ['Use quorum terms and heartbeats.'],
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: Scaffold(body: QuestionBookScreen(questions: questions)),
+        ),
+      );
+
+      expect(find.text('Curated Interview Question Book'), findsOneWidget);
+      expect(find.text('How do you handle split-brain in Raft clusters?'), findsOneWidget);
+      expect(find.text('HARD'), findsOneWidget);
+    });
+
+    testWidgets('WorkspaceDetailShell renders adaptive layout on tablet/desktop', (tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final api = MensetsuApiClient();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: WorkspaceDetailShell(
+            workspaceId: 'ws_scalevector',
+            api: api,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Workspace Overview'), findsWidgets);
+      expect(find.text('CANDIDATE MATCH RATIO'), findsOneWidget);
+      expect(find.text('IDENTIFIED SKILL GAPS'), findsOneWidget);
     });
   });
 }

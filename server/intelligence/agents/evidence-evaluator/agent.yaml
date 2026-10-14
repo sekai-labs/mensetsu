@@ -1,0 +1,8 @@
+id: evidence-evaluator
+name: Evidence & Rubric Auditor
+description: Evaluates generated rubrics against identified candidate gaps to ensure complete coverage.
+allowed_tools:
+  - update_notes
+  - evaluate_findings
+delegation_permissions: []
+max_budget: 1.0

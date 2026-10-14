@@ -33,18 +33,7 @@ impl DatabasePool {
             .await
             .map_err(|e| AppError::Database(format!("SurrealDB namespace select failed: {e}")))?;
 
-        let use_query = format!("USE NS {} DB {};", config.surreal_ns, config.surreal_db);
-        let resp = client
-            .query(use_query)
-            .await
-            .map_err(|e| AppError::Database(format!("USE NS DB query failed: {e}")))?;
-        let _ = resp.check();
-
-        
-        let schema_sql = include_str!("../../../schema.surql");
-        if let Ok(schema_resp) = client.query(schema_sql).await {
-            let _ = schema_resp.check();
-        }
+        super::schema::apply(&client, super::schema::SCHEMA, &config.surreal_ns, &config.surreal_db).await?;
 
         Ok(Self {
             client: Arc::new(client),

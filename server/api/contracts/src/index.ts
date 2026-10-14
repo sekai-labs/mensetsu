@@ -1,130 +1,81 @@
+export type { paths, components, operations } from './generated/api.js';
+import type { components } from './generated/api.js';
 
-export type WorkspaceStatus = 'pending' | 'processing' | 'ready' | 'failed';
+export type Schemas = components['schemas'];
 
-export type PipelinePhase =
-  | 'preparing_input'
-  | 'analyzing_resume'
-  | 'reading_job_description'
-  | 'researching_company'
-  | 'researching_engineering_environment'
-  | 'extracting_role_requirements'
-  | 'mapping_resume_evidence'
-  | 'constructing_knowledge_graph'
-  | 'building_learning_plan'
-  | 'generating_lessons'
-  | 'building_interview_question_book'
-  | 'final_validation'
-  | 'ready'
-  | 'failed';
+export type UserId = Schemas['UserId'];
+export type SessionId = Schemas['SessionId'];
+export type User = Schemas['User'];
+export type UserRole = Schemas['UserRole'];
+export type UserStatus = Schemas['UserStatus'];
+export type UserResponse = Schemas['UserResponseDto'];
+export type AuthResponse = Schemas['AuthResponseDto'];
+export type TokenResponse = Schemas['TokenResponseDto'];
+export type RegisterRequest = Schemas['RegisterRequestDto'];
+export type LoginRequest = Schemas['LoginRequestDto'];
+export type LoginResponse = Schemas['LoginResponseDto'];
 
-export type SeniorityLevel = 'junior' | 'mid' | 'senior' | 'staff' | 'principal' | 'lead';
+export type WorkspaceStatus = Schemas['WorkspaceStatus'];
+export type PipelinePhase = Schemas['PipelinePhase'];
+export type SeniorityLevel = Schemas['SeniorityLevel'];
+export type WorkspaceId = Schemas['WorkspaceId'];
+export type Workspace = Schemas['Workspace'];
+export type CreateWorkspaceRequest = Schemas['CreateWorkspaceRequestDto'];
+export type WorkspaceResponse = Schemas['WorkspaceResponseDto'];
+export type WorkspaceProgressEvent = Schemas['WorkspaceProgressEventDto'];
 
-export interface CreateWorkspaceRequest {
-  company_name: string;
-  role_title: string;
-  job_description?: string;
-  company_urls: string[];
-  seniority?: SeniorityLevel;
-  target_date?: string;
-  prep_time_weeks?: number;
-  resume_text?: string;
-}
+export type MatchAnalysisResponse = Schemas['MatchAnalysis'];
+export type StrengthEvidence = Schemas['StrengthEvidence'];
+export type GapEvidence = Schemas['GapEvidence'];
+export type WordingImprovement = Schemas['WordingImprovement'];
+export type CompanyResearchResponse = Schemas['CompanyResearch'];
+export type SourceCitation = Schemas['SourceCitation'];
+export type CompanyClaim = Schemas['CompanyClaim'];
+export type KnowledgeGraphResponse = Schemas['KnowledgeGraphResponse'];
+export type KnowledgeSkillNode = Schemas['KnowledgeSkillNode'];
+export type KnowledgeEdge = Schemas['KnowledgeEdge'];
 
-export interface WorkspaceResponse {
-  id: string;
-  user_id: string;
-  company_name: string;
-  role_title: string;
-  status: WorkspaceStatus;
-  current_phase: PipelinePhase;
-  progress_percent: number;
-  created_at: string;
-  updated_at: string;
-}
+export type LearningUnitResponse = Schemas['LearningUnit'];
+export type VisualDiagram = Schemas['VisualDiagram'];
+export type InterviewQuestionResponse = Schemas['InterviewQuestion'];
+export type QuestionCategory = Schemas['QuestionCategory'];
+export type QuestionDifficulty = Schemas['QuestionDifficulty'];
 
-export interface WorkspaceProgressEvent {
-  workspace_id: string;
-  phase: PipelinePhase;
-  percent: number;
-  message: string;
-  timestamp: string;
-}
+export type UserProfileResponse = Schemas['UserProfileResponseDto'];
+export type LlmConfigItem = Schemas['LlmConfigItemDto'];
+export type UpsertLlmConfigRequest = Schemas['UpsertLlmConfigRequestDto'];
 
-export interface MatchAnalysisResponse {
-  workspace_id: string;
-  overall_match_ratio: number;
-  strengths: {
-    skill: string;
-    evidence_quote: string;
-    relevance: string;
-  }[];
-  gaps: {
-    skill: string;
-    requirement_quote: string;
-    importance: 'mandatory' | 'preferred';
-    recommended_focus: string;
-  }[];
-  risks: string[];
-  wording_improvements: {
-    original_text: string;
-    suggested_revision: string;
-    rationale: string;
-  }[];
-}
-
-export interface CompanyResearchResponse {
-  workspace_id: string;
-  company_name: string;
-  overview: string;
-  business_model: string;
-  engineering_culture: string[];
-  technology_stack: string[];
-  recent_developments: string[];
-  interview_process_insights: string[];
-  sources: {
-    id: string;
-    url: string;
-    title: string;
-    domain: string;
-    retrieved_at: string;
-    snippet: string;
-    confidence: number;
-  }[];
-}
-
-export interface LearningUnitResponse {
-  id: string;
-  workspace_id: string;
-  skill: string;
-  title: string;
-  prerequisites: string[];
-  estimated_minutes: number;
-  summary: string;
-  content_markdown: string;
-  diagram?: {
-    type: 'dependency_graph' | 'architecture_diagram' | 'data_flow' | 'comparison_matrix';
-    caption: string;
-    data: Record<string, unknown>;
-  };
-}
-
-export interface InterviewQuestionResponse {
-  id: string;
-  workspace_id: string;
-  category:
-    | 'resume_deep_dive'
-    | 'project_deep_dive'
-    | 'technical_fundamentals'
-    | 'target_stack'
-    | 'system_design'
-    | 'debugging'
-    | 'behavioral';
-  question: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  skills_tested: string[];
-  interviewer_intent: string;
-  answer_outline: string[];
-  strong_answer_rubric: string[];
-  common_weaknesses: string[];
-  follow_up_questions: string[];
-}
+export type WorkflowType = Schemas['WorkflowType'];
+export type RunStatus = Schemas['RunStatus'];
+export type TaskStatus = Schemas['TaskStatus'];
+export type ExecutionStatus = Schemas['ExecutionStatus'];
+export type ToolStatus = Schemas['ToolStatus'];
+export type DelegationStatus = Schemas['DelegationStatus'];
+export type LogSeverity = Schemas['LogSeverity'];
+export type ErrorCategory = Schemas['ErrorCategory'];
+export type ArtifactType = Schemas['ArtifactType'];
+export type WorkflowProgress = Schemas['WorkflowProgress'];
+export type WorkflowDefinition = Schemas['WorkflowDefinition'];
+export type WorkflowRun = Schemas['WorkflowRun'];
+export type WorkflowTask = Schemas['WorkflowTask'];
+export type ExecutionNote = Schemas['ExecutionNote'];
+export type ExecutionBudgets = Schemas['ExecutionBudgets'];
+export type ExecutionBudgetsUsed = Schemas['ExecutionBudgetsUsed'];
+export type AgentExecution = Schemas['AgentExecution'];
+export type ToolInvocation = Schemas['ToolInvocation'];
+export type Delegation = Schemas['Delegation'];
+export type SourceLink = Schemas['SourceLink'];
+export type EvidenceProvenance = Schemas['EvidenceProvenance'];
+export type Artifact = Schemas['Artifact'];
+export type LogEntry = Schemas['LogEntry'];
+export type ExecutionEvent = Schemas['ExecutionEvent'];
+export type RunsPageResponse = Schemas['RunsPageResponse'];
+export type LogsPageResponse = Schemas['LogsPageResponse'];
+export type EventsHistoryPageResponse = Schemas['EventsHistoryPageResponse'];
+export type ToolInvocationsPageResponse = Schemas['ToolInvocationsPageResponse'];
+export type ToolOutputResponse = Schemas['ToolOutputResponse'];
+export type TaskGraphResponse = Schemas['TaskGraphResponse'];
+export type ExecutionEventType = Schemas['ExecutionEventType'];
+export type WorkflowRetryingPayload = Schemas['WorkflowRetryingPayload'];
+export type DelegationGraphResponse = Schemas['DelegationGraphResponse'];
+export type TriggerWorkflowRunRequest = Schemas['TriggerWorkflowRunRequestDto'];

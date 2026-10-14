@@ -1,8 +1,8 @@
 import pytest
 
-from src.activities.resume import parse_resume_activity
 from src.extractor.models import PromptInjectionDefense
 from src.fetcher.ssrf_client import SSRFSecurityError, validate_url_for_ssrf
+from src.generation.resume import parse_resume_activity
 
 
 def test_ssrf_rejects_localhost():
@@ -51,6 +51,7 @@ async def test_complex_jailbreak_variants_neutralized():
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("resume_model")
 async def test_synthetic_resume_varied_profiles():
     profile_systems = """
     Alice Chen

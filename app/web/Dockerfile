@@ -1,23 +1,30 @@
-FROM oven/bun:1-alpine AS builder
+FROM oven/bun:1-slim AS builder
 
-WORKDIR /app
+WORKDIR /build
 
-COPY package.json bun.lock* ./
-RUN bun install
+COPY app/web/package.json app/web/bun.lock ./app/web/
+WORKDIR /build/app/web
+RUN bun install --frozen-lockfile
 
-COPY . .
+WORKDIR /build
+COPY server/api/contracts/src ./server/api/contracts/src
+COPY app/web ./app/web
+
+WORKDIR /build/app/web
 RUN bun run build
 
-FROM oven/bun:1-alpine
+FROM node:22-slim AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV HOST=0.0.0.0
 ENV PORT=3000
+ENV HOST=0.0.0.0
 
-COPY --from=builder /app/.output ./
+USER node
+
+COPY --chown=node:node --from=builder /build/app/web/.output ./
 
 EXPOSE 3000
 
-CMD ["bun", "run", "server/index.mjs"]
+CMD ["node", "server/index.mjs"]

@@ -8,7 +8,7 @@ AI-driven, evidence-backed technical interview preparation platform. Mensetsu pa
 
 - **Web Client (`app/web`)**: Nuxt 4, Vue 3, Tailwind CSS, Vue Flow. Uses a Backend-For-Frontend (BFF) proxy with Redis-mapped session tokens and RFC 6238 TOTP 2FA.
 - **Core API (`server/api`)**: Rust (Axum, Tokio, SurrealDB, Utoipa OpenAPI 3.1).
-- **Intelligence Engine (`server/intelligence`)**: Python 3.12 (`uv`), Temporal workflows, SSRF-guarded research scraper, semantic LLM routing.
+- **Intelligence Engine (`server/intelligence`)**: Python 3.12 (`uv`), LangGraph multi-agent workflows, SSRF-guarded research scraper, semantic LLM routing.
 - **Mobile & Desktop Client (`app/mobile`)**: Flutter 3+ adaptive client.
 - **Data & Cache**: SurrealDB (relational, vector, graph) and Redis 7 (BFF session mapping).
 
@@ -24,13 +24,13 @@ AI-driven, evidence-backed technical interview preparation platform. Mensetsu pa
 
 ### Run with Docker Compose
 ```bash
-# Start SurrealDB, Redis, Temporal, and core services
+# Start SurrealDB, Redis, and core services
 docker compose up -d
 
-# Services will be available at:
-# - Web Application:  http://localhost:3001
-# - Temporal Web UI:  http://localhost:8088
-# - Redis Server:     localhost:6379
+# Verified Endpoints:
+# - Web Client:       http://localhost:3000
+# - Rust Core API:    http://localhost:3000/api/v1/health
+# - SurrealDB:        http://localhost:8000
 ```
 
 ### Local Development

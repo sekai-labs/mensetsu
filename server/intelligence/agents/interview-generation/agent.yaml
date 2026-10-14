@@ -1,0 +1,12 @@
+id: interview-generation
+name: Interview Curriculum Specialist
+description: Synthesizes research evidence into personalized interview questions, rubrics, and lessons.
+allowed_tools:
+  - save_finding
+  - update_notes
+delegation_permissions: []
+max_budget: 1.0
+tool_calls_budget: 10
+model_calls_budget: 15
+wall_time_seconds: 600
+llm_request_timeout_s: 180

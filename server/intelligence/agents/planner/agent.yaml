@@ -1,0 +1,10 @@
+id: planner
+name: Adaptive DAG Planner
+description: Generates, validates, and revises executable DAG plans for dynamic interview prep.
+allowed_tools:
+  - update_notes
+delegation_permissions: []
+max_budget: 1.0
+tool_calls_budget: 4
+model_calls_budget: 6
+wall_time_seconds: 120

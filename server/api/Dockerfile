@@ -1,12 +1,31 @@
-FROM rust:1-bookworm AS builder
+FROM rust:1.98-slim-trixie AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config \
+    cmake \
+    clang \
+    build-essential \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG CARGO_BUILD_JOBS=2
+ENV CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS}
 
 WORKDIR /app
+
 COPY Cargo.toml Cargo.lock ./
+
+RUN mkdir src && \
+    echo 'fn main() {}' > src/main.rs && \
+    cargo build --release && \
+    rm -rf src target/release/deps/mensetsu_api* target/release/mensetsu-api* target/release/.fingerprint/mensetsu-api-*
+
 COPY src ./src
 
 RUN cargo build --release --bin mensetsu-api
 
-FROM debian:bookworm-slim
+FROM debian:trixie-slim AS runner
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \

@@ -9,7 +9,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
-        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::fmt::layer().with_ansi(false))
         .init();
 
     let config = AppConfig::from_env();
@@ -30,11 +30,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         hasher,
         token_service,
     ));
+    let ws_repo = std::sync::Arc::new(contexts::workspace::infrastructure::SurrealWorkspaceRepository::new((*db.client).clone()));
+    let workspace_service = std::sync::Arc::new(contexts::workspace::application::WorkspaceService::new(ws_repo.clone()));
+
+    let wf_repo = std::sync::Arc::new(contexts::workflow::infrastructure::SurrealWorkflowRunRepository::new((*db.client).clone()));
+    let workflow_service = std::sync::Arc::new(contexts::workflow::application::WorkflowService::new(wf_repo, ws_repo));
+
+    let intelligence_client = std::sync::Arc::new(mensetsu_api::interfaces::http::intelligence_client::IntelligenceClient::new(&config)?);
 
     let state = AppState {
         db,
         config: config.clone(),
         identity_service,
+        workspace_service,
+        workflow_service,
+        intelligence_client,
     };
     let app = create_router(state);
     let addr = format!("{}:{}", config.host, config.port);

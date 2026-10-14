@@ -1,10 +1,35 @@
 use utoipa::OpenApi;
 use std::fs;
 
+fn sort_json(value: &serde_json::Value) -> serde_json::Value {
+    match value {
+        serde_json::Value::Object(map) => {
+            let mut entries: Vec<(&String, &serde_json::Value)> = map.iter().collect();
+            entries.sort_by_key(|(k, _)| *k);
+            let sorted_map: serde_json::Map<String, serde_json::Value> = entries
+                .into_iter()
+                .map(|(k, v)| (k.clone(), sort_json(v)))
+                .collect();
+            serde_json::Value::Object(sorted_map)
+        }
+        serde_json::Value::Array(arr) => {
+            serde_json::Value::Array(arr.iter().map(sort_json).collect())
+        }
+        _ => value.clone(),
+    }
+}
+
 fn main() {
     let openapi = mensetsu_api::interfaces::http::ApiDoc::openapi();
-    let json = serde_json::to_string_pretty(&openapi).expect("Failed to serialize OpenAPI spec");
-    fs::create_dir_all("contracts").expect("Failed to create contracts dir");
-    fs::write("contracts/openapi.json", json).expect("Failed to write openapi.json");
-    println!("Exported OpenAPI spec to contracts/openapi.json");
+    let val = serde_json::to_value(&openapi).expect("Failed to convert OpenAPI spec to JSON Value");
+    let sorted_val = sort_json(&val);
+    let mut json = serde_json::to_string_pretty(&sorted_val).expect("Failed to serialize OpenAPI spec");
+    json.push('\n');
+
+    let contracts_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("contracts");
+    fs::create_dir_all(&contracts_dir).expect("Failed to create contracts dir");
+
+    let out_path = contracts_dir.join("openapi.json");
+    fs::write(&out_path, &json).expect("Failed to write openapi.json");
+    println!("Exported deterministic OpenAPI spec to {}", out_path.display());
 }

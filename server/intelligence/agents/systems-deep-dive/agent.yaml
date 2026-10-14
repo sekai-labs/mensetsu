@@ -1,0 +1,15 @@
+id: systems-deep-dive
+name: Systems Deep-Dive Researcher
+description: Focused child researcher that investigates one scoped technical area (e.g. networking, storage internals, streaming, consensus) delegated by the technical research lead and returns cited evidence.
+allowed_tools:
+  - web_search
+  - read_source
+  - save_evidence
+  - save_finding
+  - update_notes
+delegation_permissions: []
+tool_calls_budget: 20
+model_calls_budget: 12
+llm_request_timeout_s: 60
+max_budget: 0.5
+wall_time_seconds: 420

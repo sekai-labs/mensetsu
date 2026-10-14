@@ -2,8 +2,12 @@ pub mod admin;
 pub mod auth;
 pub mod extractors;
 pub mod health;
+pub mod intelligence_client;
 pub mod middleware;
 pub mod settings;
+pub mod sse_parser;
+pub mod workflow_dtos;
+pub mod workflows;
 pub mod workspaces;
 use axum::{
     http::{header, HeaderValue, Method},
@@ -11,7 +15,9 @@ use axum::{
     Router,
 };
 use tower_http::cors::CorsLayer;
-use tower_http::trace::TraceLayer;
+use tower_http::trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnResponse, TraceLayer};
+use tower_http::LatencyUnit;
+use tracing::Level;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -66,7 +72,24 @@ use crate::{
         settings::get_profile,
         settings::get_llm_settings,
         settings::upsert_llm_setting,
-        settings::delete_llm_setting
+        settings::delete_llm_setting,
+        workflows::list_workflows,
+        workflows::list_workflow_runs,
+        workflows::trigger_workflow_run,
+        workflows::get_workflow_run,
+        workflows::get_workflow_run_graph,
+        workflows::get_workflow_run_delegation_graph,
+        workflows::workflow_run_events,
+        workflows::get_workflow_run_logs,
+        workflows::get_workflow_run_task,
+        workflows::list_workflow_run_agents,
+        workflows::get_workflow_run_agent,
+        workflows::list_workflow_run_agent_tools,
+        workflows::get_workflow_run_tool_output,
+        workflows::get_workflow_run_events_history,
+        workflows::get_workflow_run_delegations,
+        workflows::get_workflow_run_artifacts,
+        workflows::cancel_workflow_run
     ),
     components(
         schemas(
@@ -112,11 +135,56 @@ use crate::{
             crate::contexts::learning::domain::LessonChapter,
             settings::UserProfileResponseDto,
             settings::LlmConfigItemDto,
-            settings::UpsertLlmConfigRequestDto
+            settings::UpsertLlmConfigRequestDto,
+            workflows::TriggerWorkflowRunRequestDto,
+            workflow_dtos::WorkflowType,
+            workflow_dtos::RunStatus,
+            workflow_dtos::TaskStatus,
+            workflow_dtos::ExecutionStatus,
+            workflow_dtos::ToolStatus,
+            workflow_dtos::DelegationStatus,
+            workflow_dtos::LogSeverity,
+            workflow_dtos::ErrorCategory,
+            workflow_dtos::ArtifactType,
+            workflow_dtos::WorkflowProgress,
+            workflow_dtos::WorkflowDefinition,
+            workflow_dtos::WorkflowRun,
+            workflow_dtos::WorkflowTask,
+            workflow_dtos::ExecutionNote,
+            workflow_dtos::ExecutionBudgets,
+            workflow_dtos::ExecutionBudgetsUsed,
+            workflow_dtos::AgentExecution,
+            workflow_dtos::ToolInvocation,
+            workflow_dtos::Delegation,
+            workflow_dtos::SourceLink,
+            workflow_dtos::EvidenceProvenance,
+            workflow_dtos::ArtifactContent,
+            workflow_dtos::Artifact,
+            workflow_dtos::LogEntry,
+            workflow_dtos::ExecutionEventType,
+            workflow_dtos::WorkflowRetryingPayload,
+            workflow_dtos::ExecutionEvent,
+            workflow_dtos::RunsPageResponse,
+            workflow_dtos::LogsPageResponse,
+            workflow_dtos::EventsHistoryPageResponse,
+            workflow_dtos::ToolInvocationsPageResponse,
+            workflow_dtos::ToolOutputResponse,
+            workflow_dtos::TaskGraphNodeData,
+            workflow_dtos::TaskGraphNode,
+            workflow_dtos::DependencyEdgeKind,
+            workflow_dtos::TaskGraphEdge,
+            workflow_dtos::TaskGraphResponse,
+            workflow_dtos::DelegationGraphNodeData,
+            workflow_dtos::DelegationGraphNode,
+            workflow_dtos::DelegationGraphEdgeData,
+            workflow_dtos::DelegationEdgeKind,
+            workflow_dtos::DelegationGraphEdge,
+            workflow_dtos::DelegationGraphResponse
         )
     ),
     tags(
-        (name = "workspaces", description = "Interview workspace endpoints")
+        (name = "workspaces", description = "Interview workspace endpoints"),
+        (name = "workflows", description = "Multi-agent workflow runs (authorized per run, proxied to intelligence)")
     )
 )]
 pub struct ApiDoc;
@@ -155,9 +223,15 @@ pub fn create_router(state: AppState) -> Router {
         .merge(auth::auth_routes(state.clone()))
         .merge(settings::settings_routes(state.clone()))
         .merge(admin::admin_routes(state.clone()))
-        .merge(workspaces::workspace_routes(state))
+        .merge(workspaces::workspace_routes(state.clone()))
+        .merge(workflows::workflow_routes(state))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .layer(axum::middleware::from_fn(middleware::correlation_id_middleware))
-        .layer(TraceLayer::new_for_http())
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .on_response(DefaultOnResponse::new().level(Level::INFO).latency_unit(LatencyUnit::Millis))
+                .on_failure(DefaultOnFailure::new().level(Level::WARN).latency_unit(LatencyUnit::Millis)),
+        )
         .layer(cors)
 }

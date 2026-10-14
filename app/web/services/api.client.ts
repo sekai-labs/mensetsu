@@ -1,38 +1,71 @@
-/**
- * Core API Client handling base URL resolution and authenticated requests.
- */
+export class ApiError extends Error {
+  statusCode: number
+  data?: unknown
 
-
-export interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-  body?: unknown
-  query?: Record<string, unknown>
-  headers?: Record<string, string>
+  constructor(message: string, statusCode = 500, data?: unknown) {
+    super(message)
+    this.name = 'ApiError'
+    this.statusCode = statusCode
+    this.data = data
+  }
 }
 
 export const useApiClient = () => {
-  const fetchClient = useRequestFetch()
-
   const request = async <T>(
-    endpoint: string,
-    options: RequestOptions = {}
+    path: string,
+    options: {
+      method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+      body?: unknown
+      query?: Record<string, unknown>
+      headers?: Record<string, string>
+    } = {}
   ): Promise<T> => {
-    // Convert direct backend calls (/api/v1/...) to Nuxt server proxy (/api/backend/...)
-    let url = endpoint
-    if (url.startsWith('/api/v1/')) {
-      url = url.replace(/^\/api\/v1\//, '/api/backend/')
+
+    const backendPath = path.startsWith('/api/v1/') ? path.replace('/api/v1/', '') : path.replace(/^\//, '')
+    const url = `/api/backend/${backendPath}`
+
+    try {
+      const fetchHeaders: Record<string, string> = {
+        ...(options.headers || {}),
+      }
+      if (import.meta.server) {
+        const reqHeaders = useRequestHeaders(['cookie', 'authorization'])
+        Object.assign(fetchHeaders, reqHeaders)
+      }
+
+      const res = await $fetch.raw(url, {
+        method: options.method || 'GET',
+        body: options.body as Record<string, unknown> | undefined,
+        query: options.query,
+        headers: fetchHeaders,
+      })
+      return res._data as unknown as T
+    } catch (err: unknown) {
+      if (err && typeof err === 'object') {
+        const statusCode = (('statusCode' in err ? err.statusCode : undefined) ||
+          ('status' in err ? err.status : undefined) ||
+          500) as number
+        let message = 'An unexpected API error occurred'
+        let data: unknown = undefined
+
+        if ('data' in err && err.data) {
+          data = err.data
+          if (typeof err.data === 'object' && 'error' in err.data && err.data.error) {
+            const errData = err.data.error
+            if (typeof errData === 'object' && 'message' in errData && typeof errData.message === 'string') {
+              message = errData.message
+            }
+          }
+        } else if ('message' in err && typeof err.message === 'string') {
+          message = err.message
+        }
+
+        throw new ApiError(message, statusCode, data)
+      }
+
+      throw new ApiError('Network connection failed', 500)
     }
-
-    return await fetchClient<T>(url, {
-      method: options.method || 'GET',
-      headers: options.headers,
-      body: options.body as Record<string, unknown> | undefined,
-      query: options.query,
-    })
   }
 
-  return {
-    baseUrl: '',
-    request,
-  }
+  return { request }
 }

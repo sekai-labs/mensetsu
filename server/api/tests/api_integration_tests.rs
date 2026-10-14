@@ -17,8 +17,16 @@ use mensetsu_api::{
 use std::sync::Arc;
 use tower::ServiceExt;
 
+const TEST_INTERNAL_TOKEN: &str = "test-internal-service-token";
+
 async fn setup_test_app() -> (axum::Router, AppConfig, DatabasePool) {
-    let config = AppConfig::from_env();
+    setup_test_app_with_upstream("http://127.0.0.1:9").await
+}
+
+async fn setup_test_app_with_upstream(intelligence_url: &str) -> (axum::Router, AppConfig, DatabasePool) {
+    let mut config = AppConfig::from_env();
+    config.intelligence_url = intelligence_url.to_string();
+    config.internal_service_token = TEST_INTERNAL_TOKEN.to_string();
     let db = DatabasePool::connect(&config)
         .await
         .expect("SurrealDB should connect during test");
@@ -28,6 +36,13 @@ async fn setup_test_app() -> (axum::Router, AppConfig, DatabasePool) {
     let _ = db.client.query(schema_sql).await;
     let schema_sql2 = include_str!("../../../infra/migrations/002_user_roles_and_llm_settings.surql");
     let _ = db.client.query(schema_sql2).await;
+    let schema_sql3 = include_str!("../../../infra/migrations/003_research_and_jd_intelligence.surql");
+    let _ = db.client.query(schema_sql3).await;
+    let schema_sql4 = include_str!("../../../infra/migrations/004_workflow_ledger_and_runs.surql");
+    let _ = db.client.query(schema_sql4).await;
+    let schema_sql5 = include_str!("../../../infra/migrations/005_converge_with_schema_surql.surql");
+    let _ = db.client.query(schema_sql5).await;
+
     let user_repo = Arc::new(SurrealUserRepository::new(db.client.clone()));
     let session_repo = Arc::new(SurrealAuthSessionRepository::new(db.client.clone()));
     let hasher = Arc::new(Argon2PasswordHasher::new());
@@ -43,10 +58,24 @@ async fn setup_test_app() -> (axum::Router, AppConfig, DatabasePool) {
         token_service,
     ));
 
+    let ws_repo = Arc::new(mensetsu_api::contexts::workspace::infrastructure::SurrealWorkspaceRepository::new((*db.client).clone()));
+    let workspace_service = Arc::new(mensetsu_api::contexts::workspace::application::WorkspaceService::new(ws_repo.clone()));
+
+    let wf_repo = Arc::new(mensetsu_api::contexts::workflow::infrastructure::SurrealWorkflowRunRepository::new((*db.client).clone()));
+    let workflow_service = Arc::new(mensetsu_api::contexts::workflow::application::WorkflowService::new(wf_repo, ws_repo));
+
+    let intelligence_client = Arc::new(
+        mensetsu_api::interfaces::http::intelligence_client::IntelligenceClient::new(&config)
+            .expect("IntelligenceClient should initialize"),
+    );
+
     let state = AppState {
         db: db.clone(),
         config: config.clone(),
         identity_service,
+        workspace_service,
+        workflow_service,
+        intelligence_client,
     };
 
     let app = create_router(state);
@@ -381,7 +410,7 @@ async fn test_workspace_cross_user_isolation() {
 
 #[tokio::test]
 async fn test_llm_settings_encryption_and_sharing() {
-    let (app, _, _) = setup_test_app().await;
+    let (app, _, db) = setup_test_app().await;
     
     let admin_email = format!("admin_{}@company.com", uuid::Uuid::new_v4());
     let admin_payload = serde_json::json!({
@@ -481,24 +510,105 @@ async fn test_llm_settings_encryption_and_sharing() {
     assert_eq!(openai_cfg["has_key"], true);
     assert_eq!(openai_cfg["is_inherited"], true);
 
-    
-    let member_forbidden = app
+    let member_key_suffix: String = uuid::Uuid::new_v4().simple().to_string()[..4].to_string();
+    for method in ["PUT", "POST"] {
+        let member_share = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(method)
+                    .uri("/api/v1/settings/llm")
+                    .header("authorization", format!("Bearer {member_token}"))
+                    .header("content-type", "application/json")
+                    .body(Body::from(serde_json::json!({
+                        "provider": "anthropic",
+                        "api_key": format!("sk-ant-membersecret{member_key_suffix}"),
+                        "is_shared": true
+                    }).to_string()))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(member_share.status(), StatusCode::OK, "{method}");
+        let body = axum::body::to_bytes(member_share.into_body(), usize::MAX).await.unwrap();
+        let saved: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(saved["is_shared"], false, "{method}: member share request must be downgraded");
+        assert_eq!(saved["is_inherited"], false);
+    }
+
+    let member_id = member_auth["user"]["id"].as_str().unwrap().replace("user:", "").replace('`', "");
+    let mut stored = db
+        .client
+        .query("SELECT VALUE is_shared FROM user_llm_config WHERE user_id = type::record('user', $uid) AND provider = 'anthropic';")
+        .bind(("uid", member_id))
+        .await
+        .unwrap();
+    let flags: Vec<bool> = stored.take(0).unwrap();
+    assert_eq!(flags, vec![false], "exactly one personal, unshared row");
+
+    let other_reg = app
         .clone()
         .oneshot(
             Request::builder()
-                .method("PUT")
-                .uri("/api/v1/settings/llm")
-                .header("authorization", format!("Bearer {member_token}"))
+                .method("POST")
+                .uri("/api/v1/auth/register")
                 .header("content-type", "application/json")
                 .body(Body::from(serde_json::json!({
-                    "provider": "anthropic",
-                    "api_key": "sk-ant-testkey",
-                    "is_shared": true
+                    "email": format!("other_{}@gmail.com", uuid::Uuid::new_v4()),
+                    "password": "Password123!",
+                    "name": "Other Member"
                 }).to_string()))
                 .unwrap(),
         )
         .await
         .unwrap();
+    let body = axum::body::to_bytes(other_reg.into_body(), usize::MAX).await.unwrap();
+    let other_auth: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(other_auth["user"]["role"], "member");
+    let other_get = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/v1/settings/llm")
+                .header("authorization", format!("Bearer {}", other_auth["access_token"].as_str().unwrap()))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(other_get.status(), StatusCode::OK);
+    let body = axum::body::to_bytes(other_get.into_body(), usize::MAX).await.unwrap();
+    let text = String::from_utf8_lossy(&body);
+    assert!(!text.contains(&member_key_suffix), "other member saw the first member's key: {text}");
+    assert!(!text.contains("membersecret"));
+}
 
-    assert_eq!(member_forbidden.status(), StatusCode::FORBIDDEN);
+#[tokio::test]
+async fn test_workflow_endpoints_auth_and_routing() {
+    let (app, _, _) = setup_test_app().await;
+
+    let unauth_res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/workflows")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(unauth_res.status(), StatusCode::UNAUTHORIZED);
+
+    let unauth_runs = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/workflows/runs")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(unauth_runs.status(), StatusCode::UNAUTHORIZED);
 }

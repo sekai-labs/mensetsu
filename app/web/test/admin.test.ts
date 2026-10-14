@@ -27,11 +27,11 @@ describe('Admin Feature Utilities', () => {
   })
 
   it('calculates step state accurately based on progress', () => {
-    // When pipeline is ready, all steps should be completed
+
     expect(calculateStepState('preparing_input', 'ready', 'ready')).toBe('completed')
     expect(calculateStepState('generating_lessons', 'ready', 'ready')).toBe('completed')
 
-    // When in progress
+
     expect(
       calculateStepState(
         'preparing_input',
@@ -59,7 +59,7 @@ describe('Admin Feature Utilities', () => {
       )
     ).toBe('pending')
 
-    // When failed on current step
+
     expect(
       calculateStepState(
         'researching_company',

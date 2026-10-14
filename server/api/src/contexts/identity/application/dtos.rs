@@ -5,6 +5,7 @@ use validator::Validate;
 use crate::contexts::identity::domain::{User, UserRole, UserStatus};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct RegisterRequestDto {
     #[validate(email(message = "Invalid email format"))]
     pub email: String,
@@ -15,6 +16,7 @@ pub struct RegisterRequestDto {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct LoginRequestDto {
     #[validate(email(message = "Invalid email format"))]
     pub email: String,
@@ -22,6 +24,7 @@ pub struct LoginRequestDto {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct RefreshTokenRequestDto {
     pub refresh_token: Option<String>,
 }
@@ -68,6 +71,7 @@ pub struct LoginResponseDto {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct Login2faRequestDto {
     pub temp_token: String,
     #[validate(length(min = 6, max = 8, message = "Code must be 6 digits"))]
@@ -82,6 +86,7 @@ pub struct TotpSetupResponseDto {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct VerifyTotpRequestDto {
     #[validate(length(min = 6, max = 8, message = "Code must be 6 digits"))]
     pub code: String,

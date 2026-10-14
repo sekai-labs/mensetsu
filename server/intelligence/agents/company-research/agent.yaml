@@ -1,0 +1,17 @@
+id: company-research
+name: Company Research Specialist
+description: Deep web researcher extracting verified claims regarding target company culture, tech stack, and values.
+allowed_tools:
+  - web_search
+  - read_source
+  - save_evidence
+  - save_finding
+  - update_notes
+  - delegate_task
+  - evaluate_findings
+delegation_permissions:
+  - technical-research
+max_budget: 1.0
+tool_calls_budget: 40
+model_calls_budget: 40
+wall_time_seconds: 480
