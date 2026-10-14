@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 import { useInterviewService } from '~/features/interviews/services/interview.service'
 import { calculateLearningProgress } from '~/features/interviews/utils/interview.util'
 import AppButton from '~/components/ui/AppButton.vue'
+import MarkdownRenderer from '~/components/ui/MarkdownRenderer.vue'
 
 definePageMeta({
   layout: 'workspace',
@@ -80,9 +81,9 @@ const handleToggle = async (lessonId: string) => {
             {{ unit.title }}
           </h3>
 
-          <p v-if="unit.summary" class="text-xs text-slate-500 line-clamp-2 m-0">
-            {{ unit.summary }}
-          </p>
+          <div v-if="unit.summary" class="text-xs text-slate-500 dark:text-slate-400">
+            <MarkdownRenderer :content="unit.summary" dense />
+          </div>
 
           <div class="flex items-center gap-3 text-xs text-slate-400 font-mono pt-1">
             <span>{{ unit.estimated_minutes }} mins</span>

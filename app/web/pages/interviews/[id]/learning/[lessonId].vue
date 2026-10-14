@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { useInterviewService } from '~/features/interviews/services/interview.service'
+import MarkdownRenderer from '~/components/ui/MarkdownRenderer.vue'
 
 definePageMeta({
   layout: 'workspace',
@@ -65,13 +66,13 @@ const handleToggle = async () => {
 
     <article class="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm space-y-6 text-sm leading-relaxed text-slate-800 dark:text-slate-200">
       <div v-if="currentLesson?.summary" class="p-4 bg-slate-50 dark:bg-slate-850 rounded border-l-2 border-indigo-600 text-xs italic text-slate-600 dark:text-slate-400">
-        {{ currentLesson.summary }}
+        <MarkdownRenderer :content="currentLesson.summary" dense />
       </div>
 
       <div class="space-y-4">
-        <p>
-          {{ currentLesson?.content_markdown || currentLesson?.deep_dive_markdown || 'Synthesizing technical deep dive for this module. Focus on core architectural invariants, edge failure cases, and operational mitigations.' }}
-        </p>
+        <MarkdownRenderer
+          :content="currentLesson?.content_markdown || currentLesson?.deep_dive_markdown || 'Synthesizing technical deep dive for this module. Focus on core architectural invariants, edge failure cases, and operational mitigations.'"
+        />
       </div>
 
 

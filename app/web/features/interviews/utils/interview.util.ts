@@ -2,7 +2,28 @@ import type {
   WorkspaceResponse,
   InterviewQuestionResponse,
   LearningUnitResponse,
+  KnowledgeSkillNode,
 } from '../models/interview.model'
+
+export const getSkillNodeLabel = (node: KnowledgeSkillNode): string => {
+  return node.label || node.name || node.slug || node.id || 'Unnamed Skill'
+}
+
+export const isSkillNodeMatched = (node: KnowledgeSkillNode): boolean => {
+  if (typeof node.is_matched === 'boolean') {
+    return node.is_matched
+  }
+  const status = (node.candidate_status || '').toLowerCase()
+  return status === 'verified' || status === 'matched' || status === 'strength'
+}
+
+export const getSkillNodeStatusCategory = (node: KnowledgeSkillNode): 'matched' | 'in_progress' | 'gap' => {
+  const status = (node.candidate_status || '').toLowerCase()
+  if (status === 'gap' || status === 'missing') return 'gap'
+  if (status === 'in_progress' || status === 'learning') return 'in_progress'
+  if (status === 'verified' || status === 'matched' || status === 'strength' || node.is_matched) return 'matched'
+  return 'gap'
+}
 
 export const filterWorkspaces = (
   workspaces: WorkspaceResponse[],

@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 import { useInterviewService } from '~/features/interviews/services/interview.service'
 import { filterQuestions } from '~/features/interviews/utils/interview.util'
 import AppInput from '~/components/ui/AppInput.vue'
+import MarkdownRenderer from '~/components/ui/MarkdownRenderer.vue'
 
 definePageMeta({
   layout: 'workspace',
@@ -211,10 +212,12 @@ watch([searchQuery, categoryFilter, difficultyFilter], () => {
             <div v-if="Array.isArray(q.answer_outline)" class="space-y-1">
               <div v-for="(pt, idx) in q.answer_outline" :key="idx" class="flex items-start gap-2 text-slate-700 dark:text-slate-300">
                 <span class="text-indigo-600 dark:text-indigo-400 font-bold">•</span>
-                <span>{{ pt }}</span>
+                <div class="flex-1"><MarkdownRenderer :content="pt" dense /></div>
               </div>
             </div>
-            <p v-else class="text-slate-700 dark:text-slate-300 m-0">{{ q.answer_outline }}</p>
+            <div v-else class="text-slate-700 dark:text-slate-300">
+              <MarkdownRenderer :content="q.answer_outline" dense />
+            </div>
           </div>
 
           <div v-if="q.strong_answer_rubric?.length" class="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-800">

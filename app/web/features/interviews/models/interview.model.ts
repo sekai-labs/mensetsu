@@ -160,20 +160,24 @@ export interface InterviewQuestionResponse {
 
 export interface KnowledgeSkillNode {
   id: string
-  label: string
-  category: 'language' | 'framework' | 'distributed_system' | 'database' | 'cloud' | 'architecture'
-  importance: 'core' | 'supporting' | 'peripheral'
-  is_matched: boolean
+  name?: string
+  slug?: string
+  label?: string
+  category: string
+  importance: string
+  candidate_status?: string
+  is_matched?: boolean
 }
 
 export interface KnowledgeEdge {
   source: string
   target: string
-  relationship: 'requires' | 'implements' | 'runs_on' | 'complements'
+  relation?: string
+  relationship?: string
 }
 
 export interface KnowledgeGraphResponse {
-  workspace_id: string
+  workspace_id?: string
   nodes: KnowledgeSkillNode[]
   edges: KnowledgeEdge[]
 }
