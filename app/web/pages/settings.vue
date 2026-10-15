@@ -1,77 +1,144 @@
 <script setup lang="ts">
 import { useAuthService } from '~/features/auth/services/auth.service'
-import { useSettingsService } from '~/features/settings/services/settings.service'
-import { KNOWN_LLM_PROVIDERS } from '~/features/settings/utils/settings.util'
-import type { LlmConfigItem, LlmProviderInfo } from '~/features/settings/models/settings.model'
+import { useApiClient } from '~/services/api.client'
 import AppButton from '~/components/ui/AppButton.vue'
-import AppInput from '~/components/ui/AppInput.vue'
 
 definePageMeta({
   layout: 'default',
 })
 
 const { user, setup2fa, verify2fa, disable2fa } = useAuthService()
-const { listLlmConfigs, upsertLlmConfig } = useSettingsService()
+const { request } = useApiClient()
 
-const { data: llmConfigs, refresh: refreshLlm } = await useAsyncData('llm-settings', () => listLlmConfigs())
+const activeTab = ref<'providers' | 'routing' | 'security'>('providers')
 
-const activeTab = ref<'llm' | 'security'>('llm')
-const selectedProviderId = ref<string>('openai')
-const apiKeyInput = ref<string>('')
-const baseUrlInput = ref<string>('')
-const modelChatInput = ref<string>('')
-const isSharedInput = ref<boolean>(false)
-const isSaving = ref<boolean>(false)
-const feedbackMessage = ref<string>('')
+// Provider BYOK State
+interface CombinedProvider {
+  provider_key: string
+  name: string
+  base_url?: string
+  active_key_source: 'user' | 'system' | 'none'
+  is_user_override: boolean
+  is_enabled: boolean
+  allowed_models: string[]
+}
 
-
-const totpSetupData = ref<{ secret: string; qr_code_svg: string; otpauth_url: string } | null>(null)
-const totpCodeInput = ref<string>('')
-const twoFaError = ref<string>('')
-
-const currentProviderInfo = computed<LlmProviderInfo>(() => {
-  return KNOWN_LLM_PROVIDERS.find((p) => p.id === selectedProviderId.value) || KNOWN_LLM_PROVIDERS[0]!
+const { data: providers, refresh: refreshProviders } = await useAsyncData('user-providers', async () => {
+  return await request<CombinedProvider[]>('/api/v1/settings/llm/providers')
 })
 
-const currentConfigItem = computed<LlmConfigItem | undefined>(() => {
-  return (llmConfigs.value || []).find((c) => c.provider === selectedProviderId.value)
+const selectedProvider = ref<string>('openai')
+const providerApiKey = ref<string>('')
+const providerBaseUrl = ref<string>('')
+const isSavingProvider = ref<boolean>(false)
+const providerFeedback = ref<string>('')
+
+// Model Routing Matrix State
+interface ModelSlot {
+  provider_key: string
+  model: string
+  temperature?: number
+}
+interface SlotConfig {
+  primary: ModelSlot
+  fallback?: ModelSlot
+}
+interface RoutingResponse {
+  slots: Record<string, SlotConfig>
+}
+
+const { data: routingData, refresh: refreshRouting } = await useAsyncData('user-routing', async () => {
+  return await request<RoutingResponse>('/api/v1/settings/llm/routing')
 })
 
-const isAdmin = computed(() => user.value?.role === 'admin')
+const roles = ['router', 'planner', 'research', 'generation'] as const
+const slotRoles = [
+  { id: 'router', name: 'Workflow Router', desc: 'Fast intent routing & complexity classification' },
+  { id: 'planner', name: 'Planner Agent', desc: 'DAG construction & research subtask scoping' },
+  { id: 'research', name: 'Research Specialists', desc: 'Company, architecture & technical scrapers' },
+  { id: 'generation', name: 'Synthesis & Generation', desc: 'Evidence evaluation, curriculum & question rubrics' },
+]
+
+const matrixState = ref<Record<string, SlotConfig>>({
+  router: { primary: { provider_key: 'openai', model: 'gpt-4o-mini', temperature: 0.1 } },
+  planner: { primary: { provider_key: 'openai', model: 'gpt-4o', temperature: 0.2 } },
+  research: { primary: { provider_key: 'openai', model: 'gpt-4o-mini', temperature: 0.2 } },
+  generation: { primary: { provider_key: 'openai', model: 'gpt-4o', temperature: 0.2 } },
+})
 
 watch(
-  selectedProviderId,
-  () => {
-    const existing = currentConfigItem.value
-    apiKeyInput.value = ''
-    baseUrlInput.value = existing?.base_url || currentProviderInfo.value.defaultBaseUrl || ''
-    modelChatInput.value = existing?.model_chat || currentProviderInfo.value.defaultChatModel || ''
-
-    isSharedInput.value = (isAdmin.value && !existing?.is_inherited) ? (existing?.is_shared || false) : false
+  routingData,
+  (val) => {
+    if (val?.slots) {
+      for (const r of roles) {
+        if (val.slots[r]) {
+          matrixState.value[r] = val.slots[r]
+        }
+      }
+    }
   },
   { immediate: true }
 )
 
-const handleSaveLlm = async () => {
-  isSaving.value = true
-  feedbackMessage.value = ''
+const isSavingMatrix = ref<boolean>(false)
+const matrixFeedback = ref<string>('')
+
+const handleSaveProvider = async () => {
+  isSavingProvider.value = true
+  providerFeedback.value = ''
   try {
-    await upsertLlmConfig({
-      provider: selectedProviderId.value,
-      api_key: apiKeyInput.value.trim() || undefined,
-      base_url: baseUrlInput.value.trim() || undefined,
-      model_chat: modelChatInput.value.trim() || undefined,
-      is_shared: isAdmin.value ? isSharedInput.value : false,
+    await request('/api/v1/settings/llm/providers', {
+      method: 'PUT',
+      body: {
+        provider_key: selectedProvider.value,
+        api_key: providerApiKey.value.trim() || undefined,
+        base_url: providerBaseUrl.value.trim() || undefined,
+      },
     })
-    feedbackMessage.value = `${currentProviderInfo.value.name} configuration saved successfully.`
-    apiKeyInput.value = ''
-    await refreshLlm()
-  } catch (err: unknown) {
-    feedbackMessage.value = 'Failed to save configuration.'
+    providerFeedback.value = `Personal credentials for ${selectedProvider.value} saved.`
+    providerApiKey.value = ''
+    await refreshProviders()
+  } catch (err: any) {
+    providerFeedback.value = err?.data?.error?.message || err?.message || 'Failed to save provider key.'
   } finally {
-    isSaving.value = false
+    isSavingProvider.value = false
   }
 }
+
+const handleRevertProvider = async (providerKey: string) => {
+  try {
+    await request(`/api/v1/settings/llm/providers/${providerKey}`, {
+      method: 'DELETE',
+    })
+    await refreshProviders()
+  } catch (err: any) {
+    providerFeedback.value = 'Failed to revert provider to platform default.'
+  }
+}
+
+const handleSaveRoutingMatrix = async () => {
+  isSavingMatrix.value = true
+  matrixFeedback.value = ''
+  try {
+    await request('/api/v1/settings/llm/routing', {
+      method: 'PUT',
+      body: {
+        slots: matrixState.value,
+      },
+    })
+    matrixFeedback.value = 'Model routing matrix updated.'
+    await refreshRouting()
+  } catch (err: any) {
+    matrixFeedback.value = err?.data?.error?.message || err?.message || 'Failed to update routing matrix.'
+  } finally {
+    isSavingMatrix.value = false
+  }
+}
+
+// 2FA Security State
+const totpSetupData = ref<{ secret: string; qr_code_svg: string; otpauth_url: string } | null>(null)
+const totpCodeInput = ref<string>('')
+const twoFaError = ref<string>('')
 
 const handleStart2faSetup = async () => {
   twoFaError.value = ''
@@ -95,10 +162,8 @@ const handleVerify2fa = async () => {
 
 const handleDisable2fa = async () => {
   twoFaError.value = ''
-  const code = prompt('Enter 2FA code to confirm disabling:')
-  if (!code) return
   try {
-    await disable2fa({ code: code.trim() })
+    await disable2fa()
   } catch {
     twoFaError.value = 'Failed to disable 2FA.'
   }
@@ -106,199 +171,279 @@ const handleDisable2fa = async () => {
 </script>
 
 <template>
-  <div class="space-y-6 max-w-4xl">
-
-    <div class="border-b border-slate-200 dark:border-slate-800 pb-5">
-      <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-        System & Account Settings
-      </h1>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-        Configure LLM inference providers, API keys, and account authentication security.
+  <div class="max-w-5xl mx-auto py-8 px-4 sm:px-6">
+    <div class="mb-8 border-b border-surface-border pb-5">
+      <h1 class="text-2xl font-bold tracking-tight text-text-primary">Workspace & LLM Configuration</h1>
+      <p class="text-xs text-text-muted mt-1">
+        Manage BYOK platform overrides, model role slots, and account authentication security.
       </p>
-    </div>
 
-
-    <div class="border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
-      <button
-        type="button"
-        class="px-3 py-2 text-xs font-semibold border-b-2 transition-colors -mb-px"
-        :class="activeTab === 'llm'
-          ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-          : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-        @click="activeTab = 'llm'"
-      >
-        LLM Inference Providers
-      </button>
-      <button
-        type="button"
-        class="px-3 py-2 text-xs font-semibold border-b-2 transition-colors -mb-px"
-        :class="activeTab === 'security'
-          ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-          : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'"
-        @click="activeTab = 'security'"
-      >
-        Security & 2FA
-      </button>
-    </div>
-
-
-    <div v-if="activeTab === 'llm'" class="flex flex-col md:flex-row gap-6 items-start">
-
-      <aside class="w-full md:w-56 shrink-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 shadow-sm space-y-1">
+      <div class="flex gap-2 mt-5">
         <button
-          v-for="prov in KNOWN_LLM_PROVIDERS"
-          :key="prov.id"
           type="button"
-          class="w-full text-left px-3 py-2 rounded text-xs font-medium transition-colors flex items-center justify-between"
-          :class="selectedProviderId === prov.id
-            ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold'
-            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-white'"
-          @click="selectedProviderId = prov.id"
+          @click="activeTab = 'providers'"
+          :class="[
+            'px-4 py-2 text-xs font-semibold rounded-lg transition border cursor-pointer',
+            activeTab === 'providers' ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:text-slate-900 dark:hover:text-white'
+          ]"
         >
-          <span>{{ prov.name }}</span>
-          <span
-            v-if="(llmConfigs || []).some((c) => c.provider === prov.id && c.has_key)"
-            class="w-1.5 h-1.5 rounded-full bg-emerald-500"
-          ></span>
+          BYOK Model Credentials
         </button>
-      </aside>
-
-
-      <div class="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-sm space-y-6">
-        <div>
-          <h2 class="text-base font-semibold text-slate-900 dark:text-white">
-            {{ currentProviderInfo.name }} Configuration
-          </h2>
-          <p class="text-xs text-slate-500 mt-0.5">
-            {{ currentProviderInfo.description }}
-          </p>
-        </div>
-
-        <div
-          v-if="feedbackMessage"
-          class="p-3 text-xs rounded-md bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300"
+        <button
+          type="button"
+          @click="activeTab = 'routing'"
+          :class="[
+            'px-4 py-2 text-xs font-semibold rounded-lg transition border cursor-pointer',
+            activeTab === 'routing' ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:text-slate-900 dark:hover:text-white'
+          ]"
         >
-          {{ feedbackMessage }}
-        </div>
-
-        <form class="space-y-4" @submit.prevent="handleSaveLlm">
-          <div class="space-y-1.5">
-            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              API Secret Key
-            </label>
-            <input
-              v-model="apiKeyInput"
-              type="password"
-              :placeholder="currentConfigItem?.has_key ? (currentConfigItem.masked_key || '••••••••') : 'Enter API Key'"
-              class="block w-full rounded-md border text-xs px-3 py-2 font-mono bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            />
-            <p v-if="currentConfigItem?.has_key" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono">
-              ✓ Active key configured ({{ currentConfigItem.masked_key || 'Masked' }})
-            </p>
-          </div>
-
-          <AppInput
-            id="base-url"
-            v-model="baseUrlInput"
-            label="Base URL / API Endpoint"
-            placeholder="https://api.openai.com/v1"
-          />
-
-          <AppInput
-            id="chat-model"
-            v-model="modelChatInput"
-            label="Default Chat / Reasoning Model"
-            placeholder="e.g. gpt-4o, claude-3-5-sonnet-latest"
-          />
-
-
-
-          <div v-if="isAdmin" class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-md border border-slate-200 dark:border-slate-800">
-            <input
-              id="is-shared-toggle"
-              v-model="isSharedInput"
-              type="checkbox"
-              class="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900"
-            />
-            <label for="is-shared-toggle" class="text-xs select-none cursor-pointer">
-              <span class="font-medium text-slate-800 dark:text-slate-200 block">Share organization-wide</span>
-              <span class="text-slate-500 dark:text-slate-400 block mt-0.5">
-                Allow team members who have not configured their own keys to inherit this configuration.
-              </span>
-            </label>
-          </div>
-          <div v-else class="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 p-2.5 rounded-md border border-slate-200 dark:border-slate-800 flex items-center gap-2">
-            <span class="inline-block w-2 h-2 rounded-full bg-slate-400"></span>
-            <span>Personal key (saved to your private profile).</span>
-          </div>
-          <div class="pt-2 flex items-center justify-between">
-            <AppButton type="submit" size="sm" :loading="isSaving">
-              Save {{ currentProviderInfo.name }} Settings
-            </AppButton>
-          </div>
-        </form>
+          Model Routing Matrix
+        </button>
+        <button
+          type="button"
+          @click="activeTab = 'security'"
+          :class="[
+            'px-4 py-2 text-xs font-semibold rounded-lg transition border cursor-pointer',
+            activeTab === 'security' ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:text-slate-900 dark:hover:text-white'
+          ]"
+        >
+          Security & 2FA
+        </button>
       </div>
     </div>
 
-
-    <div v-else class="max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-sm space-y-6">
-      <div>
-        <h2 class="text-base font-semibold text-slate-900 dark:text-white">
-          Two-Factor Authentication (TOTP)
-        </h2>
-        <p class="text-xs text-slate-500 mt-0.5">
-          Protect your account with RFC 6238 time-based one-time password security.
+    <div v-if="activeTab === 'providers'" class="space-y-6">
+      <div class="bg-surface-elevated/70 border border-surface-border rounded-xl p-5 shadow-sm">
+        <h2 class="text-sm font-bold text-text-primary mb-1">Bring Your Own Key (BYOK) Precedence</h2>
+        <p class="text-xs text-text-muted mb-4">
+          When configured, personal keys take strict 100% precedence over shared platform admin keys.
         </p>
-      </div>
 
-      <div
-        v-if="twoFaError"
-        class="p-3 text-xs rounded-md bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300"
-      >
-        {{ twoFaError }}
-      </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div
+            v-for="p in (providers || [])"
+            :key="p.provider_key"
+            @click="selectedProvider = p.provider_key"
+            class="p-4 bg-surface-base border rounded-xl flex flex-col justify-between cursor-pointer transition shadow-xs"
+            :class="selectedProvider === p.provider_key ? 'ring-2 ring-indigo-600 border-indigo-600 bg-indigo-50/20 dark:bg-indigo-950/20' : (p.is_user_override ? 'border-indigo-300 dark:border-indigo-800 bg-indigo-50/10' : 'border-surface-border hover:border-indigo-300 dark:hover:border-indigo-700')"
+          >
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-text-primary tracking-wide uppercase">{{ p.name }}</span>
+                <span
+                  class="px-2 py-0.5 text-[10px] font-mono rounded font-semibold"
+                  :class="p.is_user_override ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' : (p.active_key_source === 'system' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400')"
+                >
+                  {{ p.is_user_override ? 'Your Key Active' : (p.active_key_source === 'system' ? 'Platform Admin Key' : 'No Key Set') }}
+                </span>
+              </div>
+              <p class="text-[11px] text-text-muted font-mono truncate">{{ p.base_url || 'Default Cloud Endpoint' }}</p>
+            </div>
 
-      <div v-if="user?.totp_enabled" class="space-y-4">
-        <div class="p-3 bg-emerald-50 dark:bg-emerald-950/50 rounded border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between">
-          <span>✓ Two-Factor Authentication is currently ENABLED.</span>
+            <div class="mt-4 pt-2.5 border-t border-surface-border/60 flex items-center justify-between text-[11px]">
+              <span class="font-medium" :class="selectedProvider === p.provider_key ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-text-muted'">
+                {{ selectedProvider === p.provider_key ? '● Currently Selected' : 'Click to Configure' }}
+              </span>
+              <button
+                v-if="p.is_user_override"
+                type="button"
+                @click.stop="handleRevertProvider(p.provider_key)"
+                class="text-danger hover:underline font-medium"
+              >
+                Remove Override
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 bg-surface-base border border-surface-border rounded-xl space-y-4">
+          <div class="flex items-center justify-between border-b border-surface-border/60 pb-3">
+            <div>
+              <h3 class="text-xs font-bold text-text-primary uppercase tracking-wider">
+                Configure Credentials: <span class="text-indigo-600 dark:text-indigo-400">{{ (providers || []).find(p => p.provider_key === selectedProvider)?.name || selectedProvider }}</span>
+              </h3>
+              <p class="text-[11px] text-text-muted mt-0.5">Enter your personal API key or custom endpoint for this provider.</p>
+            </div>
+            <span class="px-2 py-0.5 text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-700">
+              ID: {{ selectedProvider }}
+            </span>
+          </div>
+
+          <form @submit.prevent="handleSaveProvider" class="space-y-4">
+            <div v-if="providerFeedback" class="p-3 rounded-lg text-xs" :class="providerFeedback.includes('Failed') ? 'bg-danger/10 text-danger border border-danger/20' : 'bg-success/10 text-success border border-success/20'">
+              {{ providerFeedback }}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-text-muted mb-1">Personal API Key</label>
+                <input
+                  v-model="providerApiKey"
+                  type="password"
+                  placeholder="sk-... (Leave empty to keep current key)"
+                  class="w-full bg-surface-elevated border border-surface-border rounded-lg px-3 py-2 text-xs font-mono text-text-primary focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-text-muted mb-1">Custom Base URL (Optional)</label>
+                <input
+                  v-model="providerBaseUrl"
+                  type="url"
+                  placeholder="https://api.openai.com/v1"
+                  class="w-full bg-surface-elevated border border-surface-border rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-indigo-600"
+                />
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+              <p class="text-[11px] text-text-muted">
+                Saved keys are AES-256 encrypted at rest and never shared with other workspace users.
+              </p>
+              <button
+                type="submit"
+                :disabled="isSavingProvider"
+                class="px-5 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 transition cursor-pointer shadow-sm"
+              >
+                {{ isSavingProvider ? 'Saving Key...' : 'Save Credentials' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="activeTab === 'routing'" class="space-y-6">
+      <div class="bg-surface-elevated/70 border border-surface-border rounded-xl p-5 shadow-sm">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h2 class="text-sm font-bold text-text-primary">Functional Role Slots & Fallback Matrix</h2>
+            <p class="text-xs text-text-muted">Configure dedicated primary and automatic fallback models per agent capability.</p>
+          </div>
           <button
             type="button"
-            class="text-xs text-rose-600 dark:text-rose-400 hover:underline font-semibold"
+            @click="handleSaveRoutingMatrix"
+            :disabled="isSavingMatrix"
+            class="px-4 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg hover:bg-primary-hover disabled:opacity-50 transition"
+          >
+            {{ isSavingMatrix ? 'Saving...' : 'Save Routing Matrix' }}
+          </button>
+        </div>
+
+        <div v-if="matrixFeedback" class="mb-4 p-3 rounded-lg text-xs bg-success/10 text-success border border-success/20">
+          {{ matrixFeedback }}
+        </div>
+
+        <div class="space-y-5">
+          <div
+            v-for="slot in slotRoles"
+            :key="slot.id"
+            class="p-4 bg-surface-base border border-surface-border rounded-lg space-y-3"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-xs font-mono font-bold text-primary uppercase">{{ slot.name }}</span>
+                <p class="text-xs text-text-muted mt-0.5">{{ slot.desc }}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-surface-border/50">
+              <div class="space-y-2">
+                <span class="text-[11px] font-semibold text-text-primary">Primary Model</span>
+                <div class="grid grid-cols-2 gap-2">
+                  <select
+                    v-model="matrixState[slot.id].primary.provider_key"
+                    class="bg-surface-elevated border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option v-for="p in (providers || [])" :key="p.provider_key" :value="p.provider_key" class="bg-surface-base text-text-primary">
+                      {{ p.name }}
+                    </option>
+                  </select>
+                  <input
+                    v-model="matrixState[slot.id].primary.model"
+                    type="text"
+                    placeholder="Model ID (e.g. gpt-4o)"
+                    class="bg-surface-elevated border border-surface-border rounded-lg px-2.5 py-1.5 text-xs font-mono text-text-primary"
+                  />
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <span class="text-[11px] font-semibold text-text-muted">Fallback Model (Triggered on 5xx/429)</span>
+                <div class="grid grid-cols-2 gap-2">
+                  <select
+                    v-if="matrixState[slot.id].fallback"
+                    v-model="matrixState[slot.id].fallback!.provider_key"
+                    class="bg-surface-elevated border border-surface-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option v-for="p in (providers || [])" :key="p.provider_key" :value="p.provider_key" class="bg-surface-base text-text-primary">
+                      {{ p.name }}
+                    </option>
+                  </select>
+                  <input
+                    v-if="matrixState[slot.id].fallback"
+                    v-model="matrixState[slot.id].fallback!.model"
+                    type="text"
+                    placeholder="Fallback Model ID"
+                    class="bg-surface-elevated border border-surface-border rounded-lg px-2.5 py-1.5 text-xs font-mono text-text-primary"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="activeTab === 'security'" class="space-y-6">
+      <div class="bg-surface-elevated/70 border border-surface-border rounded-xl p-5 shadow-sm space-y-4">
+        <h2 class="text-sm font-bold text-text-primary">Two-Factor Authentication (TOTP)</h2>
+        <p class="text-xs text-text-muted">
+          Protect your account with RFC 6238 compliant hardware or software authenticators.
+        </p>
+
+        <div v-if="twoFaError" class="p-3 bg-danger/10 text-danger text-xs rounded-lg border border-danger/20">
+          {{ twoFaError }}
+        </div>
+
+        <div v-if="user?.totp_enabled" class="flex items-center justify-between p-3 bg-success/10 border border-success/20 rounded-lg">
+          <span class="text-xs font-medium text-success">2FA is currently active on your account.</span>
+          <button
+            type="button"
             @click="handleDisable2fa"
+            class="px-3 py-1 bg-danger text-white rounded text-xs font-medium"
           >
             Disable 2FA
           </button>
         </div>
-      </div>
 
-      <div v-else class="space-y-4">
-        <div v-if="!totpSetupData">
-          <p class="text-xs text-slate-600 dark:text-slate-400 mb-3">
-            Two-factor authentication adds an extra layer of security to your account during login.
-          </p>
-          <AppButton size="sm" @click="handleStart2faSetup">
-            Enable 2FA Authentication
-          </AppButton>
+        <div v-else-if="totpSetupData" class="space-y-4 p-4 border border-surface-border rounded-lg">
+          <div class="text-xs text-text-muted">Scan QR code with your authenticator app:</div>
+          <div v-html="totpSetupData.qr_code_svg" class="w-48 h-48 bg-white p-2 rounded"></div>
+          <div class="flex gap-2">
+            <input
+              v-model="totpCodeInput"
+              type="text"
+              placeholder="6-digit code"
+              class="bg-surface-base border border-surface-border rounded-lg px-3 py-1.5 text-sm font-mono text-text-primary"
+            />
+            <button
+              type="button"
+              @click="handleVerify2fa"
+              class="px-4 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg"
+            >
+              Verify & Enable
+            </button>
+          </div>
         </div>
 
-        <div v-else class="space-y-4 pt-2">
-          <div class="text-xs font-mono bg-slate-50 dark:bg-slate-850 p-3 rounded border border-slate-200 dark:border-slate-700">
-            <span class="block text-slate-400 mb-1">Manual Setup Secret:</span>
-            <span class="font-bold select-all text-indigo-600 dark:text-indigo-400">{{ totpSetupData.secret }}</span>
-          </div>
-
-          <form class="space-y-3" @submit.prevent="handleVerify2fa">
-            <AppInput
-              id="totp-code"
-              v-model="totpCodeInput"
-              label="Enter 6-Digit Authenticator Code"
-              placeholder="123456"
-              required
-            />
-            <AppButton type="submit" size="sm">
-              Verify & Activate 2FA
-            </AppButton>
-          </form>
+        <div v-else>
+          <button
+            type="button"
+            @click="handleStart2faSetup"
+            class="px-4 py-2 text-xs font-semibold bg-primary text-white rounded-lg hover:bg-primary-hover transition"
+          >
+            Configure 2FA
+          </button>
         </div>
       </div>
     </div>

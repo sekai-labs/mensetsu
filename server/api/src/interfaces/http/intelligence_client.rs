@@ -25,9 +25,15 @@ pub struct CreateRunPayload {
     pub job_description: String,
     pub jd_url: Option<String>,
     pub seniority: Option<String>,
+    pub user_prompt: Option<String>,
+    pub workflow_mode: Option<String>,
     pub llm_config: Option<serde_json::Value>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct ResumePlanPayload {
+    pub prompt: String,
+}
 #[derive(Clone)]
 pub struct IntelligenceClient {
     client: reqwest::Client,
@@ -83,6 +89,22 @@ impl IntelligenceClient {
         send_json(self.client.post(url)).await
     }
 
+    pub async fn post_json_with_body<B: Serialize + ?Sized, T: DeserializeOwned>(
+        &self,
+        segments: &[&str],
+        body: &B,
+    ) -> Result<T> {
+        let url = self.endpoint(segments)?;
+        send_json(self.client.post(url).json(body)).await
+    }
+
+    pub async fn resume_plan(
+        &self,
+        run_id: &str,
+        payload: &ResumePlanPayload,
+    ) -> Result<serde_json::Value> {
+        self.post_json_with_body(&["runs", run_id, "resume-plan"], payload).await
+    }
     pub async fn create_run(
         &self,
         payload: &CreateRunPayload,

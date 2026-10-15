@@ -30,6 +30,14 @@
     @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-600 selection:text-white min-h-screen;
   }
 
+  ::selection {
+    background-color: #4f46e5 !important;
+    color: #ffffff !important;
+  }
+
+  select, option {
+    @apply bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100;
+  }
   code, pre, kbd {
     @apply font-mono;
   }

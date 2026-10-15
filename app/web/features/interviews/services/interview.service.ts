@@ -35,6 +35,20 @@ export const useInterviewService = () => {
     return await request<WorkspaceResponse>(`/api/v1/workspaces/${cleanId}`)
   }
 
+  const updateWorkspaceObjective = async (
+    id: string,
+    prompt: string
+  ): Promise<{ workspace_id: string; current_objective: string; status: string }> => {
+    const cleanId = cleanWorkspaceId(id)
+    return await request<{ workspace_id: string; current_objective: string; status: string }>(
+      `/api/v1/workspaces/${cleanId}/objective`,
+      {
+        method: 'PATCH',
+        body: { prompt },
+      }
+    )
+  }
+
   const getWorkspaceRole = async (id: string): Promise<WorkspaceRoleResponse> => {
     const cleanId = cleanWorkspaceId(id)
     return await request<WorkspaceRoleResponse>(`/api/v1/workspaces/${cleanId}/role`)
@@ -128,6 +142,7 @@ export const useInterviewService = () => {
     listWorkspaces,
     getWorkspace,
     getWorkspaceRole,
+    updateWorkspaceObjective,
     getWorkspaceMatch,
     getWorkspaceCompany,
     getWorkspaceKnowledge,

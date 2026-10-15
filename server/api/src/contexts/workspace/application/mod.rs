@@ -22,11 +22,13 @@ impl WorkspaceService {
     ) -> Result<Workspace> {
         let workspace = Workspace::new(
             user_id,
-            dto.company_name,
-            dto.role_title,
+            dto.company_name.unwrap_or_default(),
+            dto.role_title.unwrap_or_default(),
             dto.seniority,
             dto.target_date,
             dto.prep_time_weeks,
+            dto.prompt,
+            dto.workflow_mode,
         )?;
 
         self.repository.save(&workspace).await?;

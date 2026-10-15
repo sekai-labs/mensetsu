@@ -20,6 +20,9 @@ export interface WorkspaceResponse {
   status: WorkspaceStatus
   current_phase: PipelinePhase
   progress_percent: number
+  user_prompt?: string
+  current_objective?: string
+  workflow_mode?: string
   created_at: string
   updated_at: string
 }

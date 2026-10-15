@@ -66,6 +66,7 @@ pub struct LogsQuery {
     pub limit: Option<u32>,
     pub severity: Option<String>,
     pub task_id: Option<String>,
+    pub execution_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -167,6 +168,7 @@ pub async fn list_workflow_runs(
     let run_type = query.run_type.map(|t| match t {
         WorkflowType::Static => "static",
         WorkflowType::Dynamic => "dynamic",
+        WorkflowType::Hybrid => "hybrid",
     });
 
     let (run_ids, next_cursor) = state
@@ -392,6 +394,9 @@ pub async fn get_workflow_run_logs(
     }
     if let Some(t) = query.task_id {
         params.push(("task_id", t));
+    }
+    if let Some(e) = query.execution_id {
+        params.push(("execution_id", e));
     }
     let page: LogsPageResponse =
         state.intelligence_client.get_json(&["runs", &owned.run_id.0, "logs"], &params).await?;

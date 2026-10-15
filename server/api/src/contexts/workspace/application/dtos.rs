@@ -7,14 +7,13 @@ use crate::contexts::workspace::domain::{PipelinePhase, SeniorityLevel, Workspac
 #[derive(Debug, Clone, Serialize, Deserialize, Validate, ToSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CreateWorkspaceRequestDto {
-    #[validate(length(min = 1, message = "Company name must not be empty"))]
-    pub company_name: String,
-
-    #[validate(length(min = 1, message = "Role title must not be empty"))]
-    pub role_title: String,
-
+    pub prompt: Option<String>,
+    pub company_name: Option<String>,
+    pub role_title: Option<String>,
+    pub workflow_mode: Option<String>,
     pub job_description: Option<String>,
     pub jd_url: Option<String>,
+    #[serde(default)]
     pub company_urls: Vec<String>,
     pub seniority: Option<SeniorityLevel>,
     pub target_date: Option<chrono::DateTime<chrono::Utc>>,
@@ -24,6 +23,12 @@ pub struct CreateWorkspaceRequestDto {
     pub resume_filename: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Validate, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PatchWorkspaceObjectiveDto {
+    #[validate(length(min = 1, message = "Objective prompt must not be empty"))]
+    pub prompt: String,
+}
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct WorkspaceResponseDto {
     pub id: String,
@@ -33,6 +38,9 @@ pub struct WorkspaceResponseDto {
     pub status: WorkspaceStatus,
     pub current_phase: PipelinePhase,
     pub progress_percent: u8,
+    pub user_prompt: Option<String>,
+    pub current_objective: Option<String>,
+    pub workflow_mode: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }

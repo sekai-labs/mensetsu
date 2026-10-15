@@ -82,6 +82,8 @@ export const useWorkflowService = () => {
       cursor?: string
       limit?: number
       severity?: string
+      task_id?: string
+      execution_id?: string
     }
   ): Promise<LogsPageResponse> => {
     const raw = await request<unknown>(`/api/v1/workflows/runs/${runId}/logs`, {

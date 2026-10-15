@@ -204,11 +204,10 @@ class DurableJobWorker:
                 return
 
             if run and run.status in ("pending", "queued") and not run.started_at:
-                is_static = (
-                    payload.get("workflow_id", "interview-preparation-static")
-                    == "interview-preparation-static"
-                )
-                planned = STATIC_TASK_COUNT if is_static else 0
+                wf_type = payload.get("workflow_id", "interview-preparation-hybrid")
+                is_static = (wf_type == "interview-preparation-static")
+                is_hybrid = (wf_type == "interview-preparation-hybrid")
+                planned = STATIC_TASK_COUNT if is_static else (6 if is_hybrid else 0)
                 await self.ledger.update_workflow_run(
                     run_id,
                     {
@@ -280,6 +279,26 @@ class DurableJobWorker:
                     jd_url=payload.get("jd_url"),
                     seniority=payload.get("seniority"),
                 )
+            elif wf_id == "interview-preparation-hybrid":
+                from src.orchestration.hybrid_workflow import HybridWorkflowState, build_hybrid_workflow
+                graph = build_hybrid_workflow(checkpointer=self._saver, ledger=self.ledger)
+                initial_state = HybridWorkflowState(
+                    run_id=run_id,
+                    workspace_id=payload["workspace_id"],
+                    company_name=payload["company_name"],
+                    role_title=payload["role_title"],
+                    company_urls=payload.get("company_urls", []),
+                    resume_text=payload.get("resume_text", ""),
+                    resume_pdf_base64=payload.get("resume_pdf_base64"),
+                    resume_filename=payload.get("resume_filename"),
+                    job_description=payload.get("job_description", ""),
+                    jd_url=payload.get("jd_url"),
+                    seniority=payload.get("seniority"),
+                    user_prompt=payload.get("user_prompt"),
+                    workflow_mode=payload.get("workflow_mode", "hybrid"),
+                    llm_config=payload.get("llm_config"),
+                    plan_revision=int(payload.get("plan_revision", 1)),
+                )
             else:
                 graph = build_dynamic_workflow(checkpointer=self._saver, ledger=self.ledger)
                 initial_state = DynamicWorkflowState(
@@ -295,7 +314,6 @@ class DurableJobWorker:
                     jd_url=payload.get("jd_url"),
                     seniority=payload.get("seniority"),
                 )
-
             input_val = None if existing_checkpoint is not None else initial_state
             await graph.ainvoke(input_val, config=config)
 
