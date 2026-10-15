@@ -874,15 +874,15 @@ def build_static_workflow(
                     payload={
                         "task_id": task.id,
                         "duration_ms": dur,
-                        "output_summary": f"{graph_dict['summary']} Generated {len(learning_units)} learning units in {len(batches)} parallel batches.",
+                        "output_summary": f"{graph_dict.get('summary', '')} Generated {len(learning_units)} learning units in {len(batches)} parallel batches.",
                     },
                 )
                 return {
                     "curriculum": {
                         "skills": skills,
-                        "relations": graph_dict["relations"],
+                        "relations": graph_dict.get("relations", []),
                         "learning_units": learning_units,
-                        "summary": graph_dict["summary"],
+                        "summary": graph_dict.get("summary", ""),
                     }
                 }
             except Exception as e:

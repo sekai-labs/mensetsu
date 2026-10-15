@@ -3,15 +3,13 @@ import collections
 from datetime import datetime, timezone
 import logging
 import time
-import uuid
 from typing import Annotated, Any
 
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 from pydantic import BaseModel, Field
-from src.agents.registry import registry
+
 from src.agents.runtime import agent_runtime
-from src.agents.schemas import WorkflowRoutingDecision
 from src.agents.workflow_router import route_workflow_request
 
 def check_lease() -> None:
@@ -19,22 +17,17 @@ def check_lease() -> None:
     lost_ev = current_lost_lease_var.get()
     if lost_ev and lost_ev.is_set():
         raise RuntimeError("Worker lost redis lease during execution. Aborting.")
-from src.contracts.v1 import Artifact, WorkflowProgress, WorkflowTask
+
+from src.contracts.v1 import Artifact, PlanTaskItem, WorkflowProgress, WorkflowTask
 from src.orchestration.dynamic_workflow import (
-    MAX_PLAN_DEPTH,
-    MAX_PLAN_TASKS,
-    MAX_PLAN_TOOL_CALLS,
     PLANNABLE_AGENTS,
     merge_completed,
     merge_results,
     validate_plan_dag,
 )
 from src.orchestration.ledger import SurrealLedgerRepository
-from src.orchestration.limits import agent_limits
-from src.orchestration.static_workflow import StaticWorkflowState, build_static_workflow
 
 logger = logging.getLogger("mensetsu.orchestration.hybrid_workflow")
-
 
 class HybridWorkflowState(BaseModel):
     run_id: str
@@ -114,7 +107,6 @@ def build_hybrid_workflow(checkpointer=None, ledger: SurrealLedgerRepository | N
             content=routing.model_dump(),
         )
         await ledger.save_artifact(routing_art)
-        from src.contracts.v1 import PlanTaskItem
         initial_plan_items = [
             PlanTaskItem(id=f"task_company_{state.run_id[:8]}", name="Company Research", assigned_agent="company-research", dependencies=[], required=True),
             PlanTaskItem(id=f"task_tech_{state.run_id[:8]}", name="Technical Research", assigned_agent="technical-research", dependencies=[], required=True),
@@ -129,7 +121,6 @@ def build_hybrid_workflow(checkpointer=None, ledger: SurrealLedgerRepository | N
             },
         )
 
-        parsed_cv: dict[str, Any] = {}
         norm_task_id = f"task_normalize_{state.run_id[:8]}"
         existing_tasks = await ledger.list_tasks_for_run(state.run_id)
         norm_task = next((t for t in existing_tasks if t.id == norm_task_id), None)
@@ -193,7 +184,7 @@ def build_hybrid_workflow(checkpointer=None, ledger: SurrealLedgerRepository | N
                 "assigned_agent": "company-research",
                 "name": "Company Research",
                 "objective": f"Investigate {state.company_name} engineering culture and stack, focusing on: {state.user_prompt or 'general architecture'}",
-                "dependencies": [plan_task_id],
+                "dependencies": [],
                 "required": True,
             },
             {
@@ -202,8 +193,8 @@ def build_hybrid_workflow(checkpointer=None, ledger: SurrealLedgerRepository | N
                 "assigned_agent": "technical-research",
                 "name": "Technical Research",
                 "objective": f"Deep dive into {state.company_name}'s production architecture, technologies, and concerns relevant to {state.role_title}",
-                "dependencies": [plan_task_id],
-                "required": False,
+                "dependencies": [],
+                "required": True,
             },
             {
                 "id": f"task_job_{state.run_id[:8]}",
@@ -211,7 +202,7 @@ def build_hybrid_workflow(checkpointer=None, ledger: SurrealLedgerRepository | N
                 "assigned_agent": "job-analysis",
                 "name": "Job Analysis",
                 "objective": f"Extract role requirements, constraints, and seniority expectations for {state.role_title}",
-                "dependencies": [plan_task_id],
+                "dependencies": [],
                 "required": True,
             },
         ]
