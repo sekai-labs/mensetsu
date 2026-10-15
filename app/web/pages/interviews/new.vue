@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useInterviewService } from '~/features/interviews/services/interview.service'
-import type { CreateWorkspaceRequest } from '~/features/interviews/models/interview.model'
 import type { SeniorityLevel } from '~/models/common.model'
 import AppInput from '~/components/ui/AppInput.vue'
 
@@ -11,31 +10,26 @@ definePageMeta({
 const router = useRouter()
 const { createWorkspace } = useInterviewService()
 
-const step = ref<number>(1)
 const isSubmitting = ref<boolean>(false)
 const errorMessage = ref<string>('')
 
+// Prompt-First State
+const prompt = ref<string>('')
 const companyName = ref<string>('')
 const roleTitle = ref<string>('')
 const seniority = ref<SeniorityLevel>('staff')
-const targetDate = ref<string>('')
-const prepTimeWeeks = ref<number>(2)
 const urlsInput = ref<string>('')
 const resumeText = ref<string>('')
 const jdText = ref<string>('')
 const resumeFileName = ref<string | null>(null)
 const resumePdfBase64 = ref<string | null>(null)
+const showAdvanced = ref<boolean>(false)
 
-const steps = [
-  { id: 1, name: 'Target Role', desc: 'Company and level' },
-  { id: 2, name: 'Evidence URLs', desc: 'Blogs and architecture' },
-  { id: 3, name: 'Resume', desc: 'Candidate experience' },
-  { id: 4, name: 'Job Description', desc: 'Role requirements & review' },
-]
-
-const canAdvanceStep1 = computed(() => companyName.value.trim().length > 0 && roleTitle.value.trim().length > 0)
 const hasResume = computed(() => resumeText.value.trim().length > 0 || Boolean(resumePdfBase64.value))
-const hasJobDescription = computed(() => jdText.value.trim().length > 0)
+const canSubmit = computed(() => {
+  const hasPromptOrExplicit = prompt.value.trim().length > 0 || (companyName.value.trim().length > 0 && roleTitle.value.trim().length > 0)
+  return hasPromptOrExplicit && hasResume.value && !isSubmitting.value
+})
 
 const handleFileUpload = async (e: Event) => {
   const target = e.target
@@ -62,31 +56,17 @@ const handleFileUpload = async (e: Event) => {
   }
 }
 
-const advanceStep = () => {
-  errorMessage.value = ''
-  if (step.value === 1 && !canAdvanceStep1.value) {
-    errorMessage.value = 'Please provide both company name and target role title.'
-    return
-  }
-  if (step.value === 3 && !hasResume.value) {
-    errorMessage.value = 'Please provide candidate resume text or upload a resume PDF before continuing.'
-    return
-  }
-  if (step.value < 4) {
-    step.value++
-  }
-}
-
 const handleSubmit = async () => {
   errorMessage.value = ''
+  if (!prompt.value.trim() && (!companyName.value.trim() || !roleTitle.value.trim())) {
+    errorMessage.value = 'Please describe your interview goal or enter target company & role.'
+    return
+  }
   if (!hasResume.value) {
     errorMessage.value = 'Please provide candidate resume text or upload a resume PDF.'
     return
   }
-  if (!hasJobDescription.value) {
-    errorMessage.value = 'Please provide target job description text to ground the workspace.'
-    return
-  }
+
   isSubmitting.value = true
   try {
     const urls = urlsInput.value
@@ -94,32 +74,24 @@ const handleSubmit = async () => {
       .map((u) => u.trim())
       .filter((u) => u.length > 0)
 
-    const targetDateIso = targetDate.value
-      ? (targetDate.value.includes('T') ? targetDate.value : `${targetDate.value}T00:00:00Z`)
-      : null
-
-    const payload: CreateWorkspaceRequest = {
-      company_name: companyName.value.trim(),
-      role_title: roleTitle.value.trim(),
-      seniority: seniority.value,
-      target_date: targetDateIso,
-      prep_time_weeks: prepTimeWeeks.value,
+    const payload = {
+      prompt: prompt.value.trim() || undefined,
+      company_name: companyName.value.trim() || undefined,
+      role_title: roleTitle.value.trim() || undefined,
+      workflow_mode: 'hybrid',
       company_urls: urls,
-      resume_text: resumeText.value.trim() || null,
-      resume_filename: resumeFileName.value,
-      resume_pdf_base64: resumePdfBase64.value,
-      job_description: jdText.value.trim() || null,
+      seniority: seniority.value,
+      resume_text: resumeText.value.trim() || undefined,
+      resume_pdf_base64: resumePdfBase64.value || undefined,
+      resume_filename: resumeFileName.value || undefined,
+      job_description: jdText.value.trim() || undefined,
     }
 
-    const created = await createWorkspace(payload)
-    const cleanId = created.id.replace(/^workspace:/, '').replace(/`/g, '')
-    await router.push(`/interviews/${cleanId}/overview`)
-  } catch (err: unknown) {
-    if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
-      errorMessage.value = err.message
-    } else {
-      errorMessage.value = 'Failed to create workspace. Please check your inputs.'
-    }
+    const ws = await createWorkspace(payload as any)
+    const cleanId = ws.id.replace(/^workspace:/, '').replace(/`/g, '')
+    router.push(`/interviews/${cleanId}/overview`)
+  } catch (err: any) {
+    errorMessage.value = err?.data?.error?.message || err?.message || 'Failed to create workspace. Please check inputs.'
   } finally {
     isSubmitting.value = false
   }
@@ -127,200 +99,173 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto py-6 space-y-8">
-
-    <div class="space-y-1">
-      <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-        New Preparation Workspace
-      </h1>
-      <p class="text-xs text-slate-500 dark:text-slate-400">
-        Initiate an asynchronous durable research pipeline for your target company and role.
+  <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6">
+    <!-- Header -->
+    <div class="mb-8 border-b border-surface-border pb-5">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="px-2 py-0.5 text-xs font-mono font-medium bg-primary/10 text-primary border border-primary/20 rounded">Hybrid AI Engine</span>
+        <span class="text-xs text-text-muted">Autonomous Planner + Deterministic Synthesis</span>
+      </div>
+      <h1 class="text-2xl font-bold tracking-tight text-text-primary">Prepare for an Interview</h1>
+      <p class="text-sm text-text-muted mt-1">
+        Describe your target role and goals. Mensetsu routes, researches, and compiles your personalized preparation workspace.
       </p>
     </div>
 
-    <div class="grid grid-cols-4 gap-2 border-b border-slate-200 dark:border-slate-800 pb-4">
-      <div
-        v-for="s in steps"
-        :key="s.id"
-        class="space-y-1"
-      >
-        <div class="flex items-center gap-1.5">
-          <span
-            class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-bold"
-            :class="step >= s.id
-              ? 'bg-indigo-600 text-white'
-              : 'bg-slate-200 dark:bg-slate-800 text-slate-500'"
-          >
-            {{ s.id }}
-          </span>
-          <span
-            class="text-xs font-semibold truncate hidden sm:inline"
-            :class="step >= s.id ? 'text-slate-900 dark:text-white' : 'text-slate-400'"
-          >
-            {{ s.name }}
-          </span>
-        </div>
-      </div>
+    <!-- Error Banner -->
+    <div v-if="errorMessage" class="mb-6 p-4 rounded-lg bg-danger/10 border border-danger/20 text-danger text-sm flex items-start gap-3">
+      <span class="font-bold">Error:</span>
+      <span>{{ errorMessage }}</span>
     </div>
 
-    <div
-      v-if="errorMessage"
-      class="p-3 text-xs rounded-md bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300"
-      role="alert"
-    >
-      {{ errorMessage }}
-    </div>
+    <form @submit.prevent="handleSubmit" class="space-y-6">
+      <!-- Natural Language Goal Prompt -->
+      <div class="bg-surface-elevated/70 border border-surface-border rounded-xl p-5 shadow-sm">
+        <div class="flex justify-between items-center mb-2">
+          <label class="block text-sm font-semibold text-text-primary">
+            Preparation Goal & Focus Areas
+          </label>
+          <span class="text-xs text-primary font-medium">Natural Language Prompt</span>
+        </div>
+        <textarea
+          v-model="prompt"
+          rows="4"
+          placeholder="e.g. Prepare me for Senior Staff Infrastructure Engineer at Stripe focusing on their MongoDB DocDB architecture and custom Envoy replacement proxy. Deep dive into card ledger settlement."
+          class="w-full bg-surface-base border border-surface-border rounded-lg p-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition"
+        ></textarea>
+        <p class="text-xs text-text-muted mt-1.5">
+          The Workflow Router mini-agent inspects your prompt and tasks autonomous research agents to investigate exact technical topics.
+        </p>
+      </div>
 
-    <section v-if="step === 1" class="space-y-4">
-      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-        Step 1: Target Organization & Role
-      </h2>
+      <!-- Resume Dropzone & Text -->
+      <div class="bg-surface-elevated/70 border border-surface-border rounded-xl p-5 shadow-sm">
+        <div class="flex justify-between items-center mb-3">
+          <label class="block text-sm font-semibold text-text-primary">
+            Candidate Resume <span class="text-danger">*</span>
+          </label>
+          <span class="text-xs text-text-muted">PDF or Raw Text</span>
+        </div>
 
-      <AppInput
-        id="company-name"
-        v-model="companyName"
-        label="Target Company Name"
-        placeholder="e.g. OpenAI, ScaleVector, Stripe"
-        required
-      />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- PDF Upload -->
+          <div class="border-2 border-dashed border-surface-border hover:border-primary/50 transition rounded-lg p-5 flex flex-col items-center justify-center text-center cursor-pointer bg-surface-base/50">
+            <input
+              type="file"
+              accept=".pdf,application/pdf"
+              @change="handleFileUpload"
+              class="hidden"
+              id="resume-upload"
+            />
+            <label for="resume-upload" class="cursor-pointer w-full h-full flex flex-col items-center justify-center">
+              <svg class="w-8 h-8 text-text-muted mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <span v-if="resumeFileName" class="text-xs font-mono font-medium text-primary">{{ resumeFileName }}</span>
+              <span v-else class="text-xs font-medium text-text-muted">Upload PDF Resume</span>
+            </label>
+          </div>
 
-      <AppInput
-        id="role-title"
-        v-model="roleTitle"
-        label="Target Role Title"
-        placeholder="e.g. Infrastructure Engineer, Systems Architect"
-        required
-      />
-
-      <div class="space-y-1.5">
-        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">
-          Seniority Level
-        </label>
-        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
-          <button
-            v-for="lvl in (['junior', 'mid', 'senior', 'staff', 'principal', 'lead'] as SeniorityLevel[])"
-            :key="lvl"
-            type="button"
-            class="px-2 py-1.5 rounded border text-xs capitalize font-medium transition-colors"
-            :class="seniority === lvl
-              ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold'
-              : 'border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"
-            @click="seniority = lvl"
-          >
-            {{ lvl }}
-          </button>
+          <!-- Raw Resume Text -->
+          <div>
+            <textarea
+              v-model="resumeText"
+              rows="4"
+              placeholder="Or paste resume experience and skills here..."
+              class="w-full h-full bg-surface-base border border-surface-border rounded-lg p-3 text-xs font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition"
+            ></textarea>
+          </div>
         </div>
       </div>
-    </section>
 
-    <section v-else-if="step === 2" class="space-y-4">
-      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-        Step 2: Company URLs & Architecture Sources
-      </h2>
-      <p class="text-xs text-slate-500 leading-relaxed">
-        Provide official engineering blogs, tech talks, architecture documentation, or career pages. Our research engine inspects these with SSRF-safe fetching.
-      </p>
-
-      <div class="space-y-1.5">
-        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">
-          Source URLs (One per line)
-        </label>
-        <textarea
-          v-model="urlsInput"
-          data-testid="urls-text"
-          rows="5"
-          placeholder="https://example.com/blog/architecture"
-          class="block w-full rounded-md border text-xs p-3 font-mono bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-        ></textarea>
-      </div>
-    </section>
-
-    <section v-else-if="step === 3" class="space-y-4">
-      <div class="flex items-center justify-between">
-        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-          Step 3: Candidate Resume
-        </h2>
-        <label class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium cursor-pointer">
-          <span>{{ resumeFileName ? `Uploaded: ${resumeFileName}` : 'Upload PDF' }}</span>
-          <input
-            type="file"
-            accept="application/pdf"
-            class="hidden"
-            @change="handleFileUpload"
-          />
-        </label>
+      <!-- Advanced / Optional Fields Toggle -->
+      <div class="pt-1">
+        <button
+          type="button"
+          @click="showAdvanced = !showAdvanced"
+          class="text-xs font-medium text-text-muted hover:text-text-primary flex items-center gap-1.5 transition"
+        >
+          <span>{{ showAdvanced ? 'Hide' : 'Show' }} Advanced Settings (Company, Role, Job Description, URLs)</span>
+          <svg class="w-3.5 h-3.5 transition-transform" :class="{ 'rotate-180': showAdvanced }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
       </div>
 
-      <div class="space-y-1.5">
-        <textarea
-          v-model="resumeText"
-          data-testid="resume-text"
-          rows="7"
-          placeholder="Paste candidate resume content, qualifications, and experience here..."
-          class="block w-full rounded-md border text-xs p-3 font-mono bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-        ></textarea>
-      </div>
-    </section>
+      <!-- Advanced Fields Box -->
+      <div v-show="showAdvanced" class="bg-surface-elevated/40 border border-surface-border rounded-xl p-5 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-text-muted mb-1">Company Name (Optional override)</label>
+            <input
+              v-model="companyName"
+              type="text"
+              placeholder="e.g. Stripe"
+              class="w-full bg-surface-base border border-surface-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-text-muted mb-1">Role Title (Optional override)</label>
+            <input
+              v-model="roleTitle"
+              type="text"
+              placeholder="e.g. Staff Infrastructure Engineer"
+              class="w-full bg-surface-base border border-surface-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        </div>
 
-    <section v-else-if="step === 4" class="space-y-4">
-      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-        Step 4: Target Job Description & Review
-      </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-text-muted mb-1">Target Seniority Level</label>
+            <select
+              v-model="seniority"
+              class="w-full bg-surface-base border border-surface-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="junior">Junior</option>
+              <option value="mid">Mid-Level</option>
+              <option value="senior">Senior</option>
+              <option value="staff">Staff</option>
+              <option value="principal">Principal</option>
+              <option value="lead">Lead / Management</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-text-muted mb-1">Evidence URLs (One per line)</label>
+            <textarea
+              v-model="urlsInput"
+              rows="2"
+              placeholder="https://stripe.com/blog/..."
+              class="w-full bg-surface-base border border-surface-border rounded-lg p-2 text-xs font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
+            ></textarea>
+          </div>
+        </div>
 
-      <div class="space-y-1.5">
-        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">
-          Job Description Text
-        </label>
-        <textarea
-          v-model="jdText"
-          data-testid="jd-text"
-          rows="6"
-          placeholder="Paste the target job description requirements, responsibilities, and qualifications..."
-          class="block w-full rounded-md border text-xs p-3 font-mono bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-        ></textarea>
-      </div>
-
-      <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
-        <div class="font-semibold text-slate-900 dark:text-white">Workspace Summary Review</div>
-        <div class="text-slate-600 dark:text-slate-400">
-          <div><span class="font-medium">Company:</span> {{ companyName }}</div>
-          <div><span class="font-medium">Target Role:</span> {{ roleTitle }} ({{ seniority }})</div>
-          <div><span class="font-medium">URLs:</span> {{ urlsInput ? urlsInput.split('\n').filter(Boolean).length : 0 }} specified</div>
-          <div><span class="font-medium">Resume Source:</span> {{ resumeFileName ? `PDF (${resumeFileName})` : (resumeText ? 'Text provided' : 'None') }}</div>
+        <div>
+          <label class="block text-xs font-medium text-text-muted mb-1">Target Job Description (Optional)</label>
+          <textarea
+            v-model="jdText"
+            rows="3"
+            placeholder="Paste job posting text..."
+            class="w-full bg-surface-base border border-surface-border rounded-lg p-2.5 text-xs font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
+          ></textarea>
         </div>
       </div>
-    </section>
 
-    <div class="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800">
-      <button
-        v-if="step > 1"
-        type="button"
-        class="text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white"
-        @click="step--"
-      >
-        ← Previous Step
-      </button>
-      <div v-else></div>
-
-      <AppButton
-        v-if="step < 4"
-        type="button"
-        size="sm"
-        data-testid="wizard-continue"
-        @click="advanceStep"
-      >
-        Continue →
-      </AppButton>
-      <AppButton
-        v-else
-        type="button"
-        size="sm"
-        data-testid="wizard-submit"
-        :loading="isSubmitting"
-        @click="handleSubmit"
-      >
-        Initialize Workspace Pipeline
-      </AppButton>
-    </div>
+      <!-- Submit Action -->
+      <div class="flex items-center justify-between pt-4 border-t border-surface-border">
+        <NuxtLink to="/interviews" class="text-sm text-text-muted hover:text-text-primary transition">
+          Cancel
+        </NuxtLink>
+        <button
+          type="submit"
+          :disabled="!canSubmit"
+          class="px-6 py-2.5 rounded-lg bg-primary text-white font-medium text-sm hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 shadow-sm"
+        >
+          <span v-if="isSubmitting" class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+          <span>{{ isSubmitting ? 'Initializing Workspace...' : 'Launch Hybrid Preparation' }}</span>
+        </button>
+      </div>
+    </form>
   </div>
 </template>

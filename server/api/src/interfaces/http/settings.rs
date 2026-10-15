@@ -50,11 +50,63 @@ pub struct UpsertLlmConfigRequestDto {
     pub is_shared: Option<bool>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ProviderStatusItemDto {
+    pub provider_key: String,
+    pub name: String,
+    pub base_url: Option<String>,
+    pub active_key_source: String, // "user" | "system" | "none"
+    pub is_user_override: bool,
+    pub is_enabled: bool,
+    pub allowed_models: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate, ToSchema)]
+pub struct UpsertUserProviderRequestDto {
+    pub provider_key: String,
+    pub api_key: Option<String>,
+    pub base_url: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ModelRoutingSlotDto {
+    pub provider_key: String,
+    pub model: String,
+    pub temperature: Option<f32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ModelRoutingConfigDto {
+    pub primary: ModelRoutingSlotDto,
+    pub fallback: Option<ModelRoutingSlotDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UserRoutingResponseDto {
+    pub slots: std::collections::HashMap<String, ModelRoutingConfigDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct UpdateUserRoutingRequestDto {
+    pub slots: std::collections::HashMap<String, ModelRoutingConfigDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DiscoverModelsRequestDto {
+    pub provider_key: String,
+    pub base_url: Option<String>,
+    pub api_key: Option<String>,
+}
+
 pub fn settings_routes(state: AppState) -> Router {
     Router::new()
         .route("/api/v1/settings/profile", get(get_profile))
         .route("/api/v1/settings/llm", get(get_llm_settings).put(upsert_llm_setting).post(upsert_llm_setting))
         .route("/api/v1/settings/llm/{provider}", delete(delete_llm_setting))
+        .route("/api/v1/settings/llm/providers", get(get_combined_providers).put(upsert_user_provider).post(upsert_user_provider))
+        .route("/api/v1/settings/llm/providers/{provider_key}", delete(delete_user_provider))
+        .route("/api/v1/settings/llm/routing", get(get_user_routing).put(update_user_routing))
+        .route("/api/v1/settings/llm/models", axum::routing::post(discover_models))
         .with_state(state)
 }
 
@@ -358,3 +410,275 @@ pub async fn delete_llm_setting(
 
     Ok(StatusCode::OK)
 }
+#[utoipa::path(
+    get,
+    path = "/api/v1/settings/llm/providers",
+    responses(
+        (status = 200, description = "Combined LLM provider list with active key source", body = [ProviderStatusItemDto])
+    )
+)]
+pub async fn get_combined_providers(
+    State(state): State<AppState>,
+    auth_user: AuthenticatedUser,
+) -> Result<Json<Vec<ProviderStatusItemDto>>> {
+    let db = &state.db.client;
+
+    let mut sys_res = db
+        .query("SELECT * FROM system_llm_provider WHERE is_enabled = true;")
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+    let system_providers: Vec<serde_json::Value> = sys_res.take(0).unwrap_or_default();
+
+    let mut user_res = db
+        .query("SELECT * FROM user_llm_provider WHERE user_id = type::record('user', $uid);")
+        .bind(("uid", auth_user.user_id.0.clone()))
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+    let user_providers: Vec<serde_json::Value> = user_res.take(0).unwrap_or_default();
+
+    let default_providers = [
+        ("openai", "OpenAI"),
+        ("anthropic", "Anthropic"),
+        ("gemini", "Google Gemini"),
+        ("openrouter", "OpenRouter"),
+        ("ollama", "Ollama (Local)"),
+    ];
+
+    let mut result = Vec::new();
+    let mut seen_keys = std::collections::HashSet::new();
+
+    for sp in &system_providers {
+        let pkey = sp["provider_key"].as_str().unwrap_or_default().to_string();
+        let name = sp["name"].as_str().unwrap_or(&pkey).to_string();
+        let base_url = sp["base_url"].as_str().map(|s| s.to_string());
+        let allowed_models = sp["allowed_models"]
+            .as_array()
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+            .unwrap_or_default();
+
+        seen_keys.insert(pkey.clone());
+        let user_override = user_providers.iter().find(|up| up["provider_key"].as_str() == Some(&pkey));
+
+        let (source, is_override) = if let Some(up) = user_override {
+            let key_exists = up["encrypted_api_key"].as_str().map(|k| !k.is_empty()).unwrap_or(false);
+            if key_exists {
+                ("user".to_string(), true)
+            } else {
+                let sys_has_key = sp["encrypted_api_key"].as_str().map(|k| !k.is_empty()).unwrap_or(false);
+                if sys_has_key { ("system".to_string(), false) } else { ("none".to_string(), false) }
+            }
+        } else {
+            let sys_has_key = sp["encrypted_api_key"].as_str().map(|k| !k.is_empty()).unwrap_or(false);
+            if sys_has_key { ("system".to_string(), false) } else { ("none".to_string(), false) }
+        };
+
+        result.push(ProviderStatusItemDto {
+            provider_key: pkey,
+            name,
+            base_url,
+            active_key_source: source,
+            is_user_override: is_override,
+            is_enabled: true,
+            allowed_models,
+        });
+    }
+
+    for (def_key, def_name) in default_providers {
+        if !seen_keys.contains(def_key) {
+            let user_override = user_providers.iter().find(|up| up["provider_key"].as_str() == Some(def_key));
+            let (source, is_override) = if let Some(up) = user_override {
+                let key_exists = up["encrypted_api_key"].as_str().map(|k| !k.is_empty()).unwrap_or(false);
+                if key_exists { ("user".to_string(), true) } else { ("none".to_string(), false) }
+            } else {
+                ("none".to_string(), false)
+            };
+            let base_url = user_override.and_then(|up| up["base_url"].as_str().map(String::from));
+
+            result.push(ProviderStatusItemDto {
+                provider_key: def_key.to_string(),
+                name: def_name.to_string(),
+                base_url,
+                active_key_source: source,
+                is_user_override: is_override,
+                is_enabled: true,
+                allowed_models: Vec::new(),
+            });
+        }
+    }
+    Ok(Json(result))
+}
+
+#[utoipa::path(
+    put,
+    path = "/api/v1/settings/llm/providers",
+    request_body = UpsertUserProviderRequestDto,
+    responses(
+        (status = 200, description = "User BYOK provider credentials updated")
+    )
+)]
+pub async fn upsert_user_provider(
+    State(state): State<AppState>,
+    auth_user: AuthenticatedUser,
+    Json(payload): Json<UpsertUserProviderRequestDto>,
+) -> Result<StatusCode> {
+    let db = &state.db.client;
+    let crypto = CryptoService::new(&state.config.encryption_key);
+    let pkey = payload.provider_key.to_lowercase();
+
+    let enc_key = match payload.api_key.as_deref() {
+        Some(raw) if !raw.trim().is_empty() => Some(crypto.encrypt(raw.trim())?),
+        _ => None,
+    };
+
+    let rec_id = format!("{}_{}", auth_user.user_id.0, pkey);
+    let query = "
+        UPSERT type::record('user_llm_provider', $id) SET
+            user_id = type::record('user', $uid),
+            provider_key = $pkey,
+            encrypted_api_key = $enc_key,
+            base_url = $base_url,
+            updated_at = time::now();
+    ";
+    db.query(query)
+        .bind(("id", rec_id))
+        .bind(("uid", auth_user.user_id.0))
+        .bind(("pkey", pkey))
+        .bind(("enc_key", enc_key))
+        .bind(("base_url", payload.base_url))
+        .await
+        .and_then(|r| r.check())
+        .map_err(|e| AppError::Database(format!("Failed to save user provider: {e}")))?;
+
+    Ok(StatusCode::OK)
+}
+
+#[utoipa::path(
+    delete,
+    path = "/api/v1/settings/llm/providers/{provider_key}",
+    responses(
+        (status = 200, description = "User provider override reverted to admin")
+    )
+)]
+pub async fn delete_user_provider(
+    State(state): State<AppState>,
+    auth_user: AuthenticatedUser,
+    Path(provider_key): Path<String>,
+) -> Result<StatusCode> {
+    let db = &state.db.client;
+    let pkey = provider_key.to_lowercase();
+    let rec_id = format!("{}_{}", auth_user.user_id.0, pkey);
+
+    db.query("DELETE type::record('user_llm_provider', $id);")
+        .bind(("id", rec_id))
+        .await
+        .and_then(|r| r.check())
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+    Ok(StatusCode::OK)
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/settings/llm/routing",
+    responses(
+        (status = 200, description = "User model routing matrix", body = UserRoutingResponseDto)
+    )
+)]
+pub async fn get_user_routing(
+    State(state): State<AppState>,
+    auth_user: AuthenticatedUser,
+) -> Result<Json<UserRoutingResponseDto>> {
+    let db = &state.db.client;
+    let mut res = db
+        .query("SELECT slots FROM type::record('user_model_routing', $uid);")
+        .bind(("uid", auth_user.user_id.0.clone()))
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+    let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+    let slots_val = rows.into_iter().next().and_then(|r| r.get("slots").cloned()).unwrap_or(serde_json::json!({}));
+
+    let slots: std::collections::HashMap<String, ModelRoutingConfigDto> = serde_json::from_value(slots_val).unwrap_or_default();
+    Ok(Json(UserRoutingResponseDto { slots }))
+}
+
+#[utoipa::path(
+    put,
+    path = "/api/v1/settings/llm/routing",
+    request_body = UpdateUserRoutingRequestDto,
+    responses(
+        (status = 200, description = "Model routing matrix updated")
+    )
+)]
+pub async fn update_user_routing(
+    State(state): State<AppState>,
+    auth_user: AuthenticatedUser,
+    Json(payload): Json<UpdateUserRoutingRequestDto>,
+) -> Result<StatusCode> {
+    let db = &state.db.client;
+    let slots_val = serde_json::to_value(&payload.slots).map_err(|e| AppError::Validation(e.to_string()))?;
+
+    let query = "
+        UPSERT type::record('user_model_routing', $uid) SET
+            user_id = type::record('user', $uid),
+            slots = $slots,
+            updated_at = time::now();
+    ";
+    db.query(query)
+        .bind(("uid", auth_user.user_id.0.clone()))
+        .bind(("slots", slots_val))
+        .await
+        .and_then(|r| r.check())
+        .map_err(|e| AppError::Database(format!("Failed to update model routing: {e}")))?;
+
+    Ok(StatusCode::OK)
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/settings/llm/models",
+    request_body = DiscoverModelsRequestDto,
+    responses(
+        (status = 200, description = "Discovered models list", body = serde_json::Value)
+    )
+)]
+pub async fn discover_models(
+    State(_state): State<AppState>,
+    _auth_user: AuthenticatedUser,
+    Json(payload): Json<DiscoverModelsRequestDto>,
+) -> Result<Json<serde_json::Value>> {
+    let base_url = payload.base_url.unwrap_or_else(|| match payload.provider_key.to_lowercase().as_str() {
+        "openai" => "https://api.openai.com/v1".to_string(),
+        "openrouter" => "https://openrouter.ai/api/v1".to_string(),
+        "anthropic" => "https://api.anthropic.com/v1".to_string(),
+        _ => "https://api.openai.com/v1".to_string(),
+    });
+
+    if base_url.starts_with("http://127.") || base_url.starts_with("http://192.168.") || base_url.starts_with("http://10.") || base_url.starts_with("http://169.254.") {
+        return Err(AppError::Forbidden("Private network URLs are forbidden".into()));
+    }
+
+    let models_url = format!("{}/models", base_url.trim_end_matches('/'));
+    let client = reqwest::Client::new();
+    let mut req = client.get(&models_url).timeout(std::time::Duration::from_secs(5));
+    if let Some(key) = payload.api_key.filter(|k| !k.is_empty()) {
+        req = req.header("Authorization", format!("Bearer {key}"));
+    }
+
+    match req.send().await {
+        Ok(res) if res.status().is_success() => {
+            let val: serde_json::Value = res.json().await.unwrap_or(serde_json::json!({ "data": [] }));
+            Ok(Json(val))
+        }
+        _ => {
+            let defaults = match payload.provider_key.to_lowercase().as_str() {
+                "anthropic" => vec!["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
+                "openai" => vec!["gpt-4o", "gpt-4o-mini", "o1-mini", "o1-preview"],
+                "gemini" => vec!["gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.0-flash-exp"],
+                _ => vec!["default-model"],
+            };
+            let data: Vec<serde_json::Value> = defaults.into_iter().map(|m| serde_json::json!({ "id": m })).collect();
+            Ok(Json(serde_json::json!({ "data": data })))
+        }
+    }
+}
+

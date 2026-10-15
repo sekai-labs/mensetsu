@@ -5,6 +5,7 @@ pub mod health;
 pub mod intelligence_client;
 pub mod middleware;
 pub mod settings;
+pub mod setup;
 pub mod sse_parser;
 pub mod workflow_dtos;
 pub mod workflows;
@@ -19,7 +20,6 @@ use tower_http::trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnResponse, Tr
 use tower_http::LatencyUnit;
 use tracing::Level;
 use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     contexts::{
@@ -221,11 +221,11 @@ pub fn create_router(state: AppState) -> Router {
         .route("/health/ready", get(health::ready_check))
         .route("/ready", get(health::ready_check))
         .merge(auth::auth_routes(state.clone()))
+        .merge(setup::setup_routes(state.clone()))
         .merge(settings::settings_routes(state.clone()))
         .merge(admin::admin_routes(state.clone()))
         .merge(workspaces::workspace_routes(state.clone()))
         .merge(workflows::workflow_routes(state))
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .layer(axum::middleware::from_fn(middleware::correlation_id_middleware))
         .layer(
             TraceLayer::new_for_http()

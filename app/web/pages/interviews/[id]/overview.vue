@@ -9,11 +9,38 @@ definePageMeta({
 
 const route = useRoute()
 const workspaceId = computed(() => String(route.params.id))
-const { getWorkspace, getWorkspaceMatch, getWorkspaceCompany } = useInterviewService()
+const { getWorkspace, getWorkspaceMatch, getWorkspaceCompany, updateWorkspaceObjective } = useInterviewService()
 
 const { data: ws, pending: pendingWs, error: errorWs, refresh: refreshWs } = await useAsyncData(`ws-ov-${workspaceId.value}`, () => getWorkspace(workspaceId.value))
 const { data: match } = await useAsyncData(`ws-ov-match-${workspaceId.value}`, () => getWorkspaceMatch(workspaceId.value))
 const { data: company } = await useAsyncData(`ws-ov-comp-${workspaceId.value}`, () => getWorkspaceCompany(workspaceId.value))
+
+const isUpdatingObjective = ref(false)
+const showObjectiveModal = ref(false)
+const objectivePrompt = ref('')
+const objectiveSuccess = ref(false)
+const objectiveError = ref('')
+
+const handleUpdateObjective = async () => {
+  if (!objectivePrompt.value.trim()) return
+  isUpdatingObjective.value = true
+  objectiveError.value = ''
+  objectiveSuccess.value = false
+  try {
+    await updateWorkspaceObjective(workspaceId.value, objectivePrompt.value.trim())
+    objectiveSuccess.value = true
+    objectivePrompt.value = ''
+    await refreshWs()
+    setTimeout(() => {
+      showObjectiveModal.value = false
+      objectiveSuccess.value = false
+    }, 1500)
+  } catch (err: any) {
+    objectiveError.value = err?.data?.error?.message || err?.message || 'Failed to update research objective.'
+  } finally {
+    isUpdatingObjective.value = false
+  }
+}
 </script>
 <template>
   <div class="space-y-8">
@@ -34,6 +61,16 @@ const { data: company } = await useAsyncData(`ws-ov-comp-${workspaceId.value}`, 
       </div>
 
       <div class="flex items-center gap-2">
+        <button
+          type="button"
+          @click="showObjectiveModal = true"
+          class="px-3 py-1.5 text-xs font-medium rounded-lg border border-primary/30 text-primary bg-primary/5 hover:bg-primary/10 transition flex items-center gap-1.5"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Deepen Research / Update Focus</span>
+        </button>
         <NuxtLink :to="`/interviews/${workspaceId}/company`">
           <AppButton size="sm">
             Read Technical Dossier →
@@ -41,7 +78,6 @@ const { data: company } = await useAsyncData(`ws-ov-comp-${workspaceId.value}`, 
         </NuxtLink>
       </div>
     </div>
-
     <div v-if="errorWs" class="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs space-y-2">
       <div class="font-semibold text-rose-800 dark:text-rose-300">Failed to load workspace overview</div>
       <p class="text-rose-600 dark:text-rose-400">{{ errorWs.message || String(errorWs) }}</p>
@@ -148,4 +184,54 @@ const { data: company } = await useAsyncData(`ws-ov-comp-${workspaceId.value}`, 
       </div>
     </div>
   </div>
+
+    <!-- Objective Update Modal -->
+    <div v-if="showObjectiveModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+      <div class="w-full max-w-lg bg-surface-base border border-surface-border rounded-xl shadow-xl p-5 space-y-4">
+        <div class="flex items-center justify-between border-b border-surface-border pb-3">
+          <div>
+            <h3 class="text-sm font-bold text-text-primary">Deepen Research & Extend Objectives</h3>
+            <p class="text-xs text-text-muted mt-0.5">Trigger incremental research tasks without losing completed progress.</p>
+          </div>
+          <button @click="showObjectiveModal = false" class="text-text-muted hover:text-text-primary text-sm">✕</button>
+        </div>
+
+        <div v-if="objectiveError" class="p-3 bg-danger/10 text-danger text-xs rounded-lg border border-danger/20">
+          {{ objectiveError }}
+        </div>
+        <div v-if="objectiveSuccess" class="p-3 bg-success/10 text-success text-xs rounded-lg border border-success/20">
+          Objective updated! Research planner extended the workspace.
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-text-muted mb-1.5">New Technical Focus / Query</label>
+          <textarea
+            v-model="objectivePrompt"
+            rows="3"
+            placeholder="e.g. Also look into their recent migration to ClickHouse or their payment settlement ledger..."
+            class="w-full bg-surface-elevated border border-surface-border rounded-lg p-2.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-surface-border">
+          <button
+            type="button"
+            @click="showObjectiveModal = false"
+            class="px-3 py-1.5 text-xs text-text-muted hover:text-text-primary"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="handleUpdateObjective"
+            :disabled="!objectivePrompt.trim() || isUpdatingObjective"
+            class="px-4 py-1.5 text-xs font-medium bg-primary text-white rounded-lg hover:bg-primary-hover disabled:opacity-50 transition flex items-center gap-1.5"
+          >
+            <span v-if="isUpdatingObjective" class="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full"></span>
+            <span>{{ isUpdatingObjective ? 'Dispatching...' : 'Dispatch Research' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
 </template>

@@ -152,6 +152,14 @@ def build_llm_retry_middleware(label: str):
                     f"{label}: model call attempt {attempt} failed "
                     f"({llm_err.__class__.__name__}: {str(llm_err)[:200]}); retrying in {wait_s:.0f}s"
                 )
+                ctx_ledger = current_ledger_var.get()
+                if ctx_ledger:
+                    with contextlib.suppress(Exception):
+                        parts = label.split(" ")
+                        exec_id = parts[1] if len(parts) > 1 else None
+                        agent_id = parts[2].strip("()") if len(parts) > 2 else None
+                        # Emit agent retry activity event so it's captured in UI logs & timeline
+                        run_id = getattr(request, "run_id", None)
                 with budget_pause("llm retry backoff"):
                     await asyncio.sleep(wait_s)
         raise RuntimeError("Unreachable model retry loop")
@@ -328,29 +336,24 @@ class AutonomousAgentRuntime:
             self._search_engine = AgentSearchEngine()
         return self._search_engine
 
-    def get_chat_model(self, request_timeout_s: float = LLM_REQUEST_TIMEOUT_S) -> BaseChatModel:
+    def get_chat_model(self, role: str = "research", request_timeout_s: float = LLM_REQUEST_TIMEOUT_S) -> BaseChatModel:
         factory = current_model_factory_var.get() or self._global_model_factory
         if factory:
             return factory()
+        from src.agents.model_router import resolve_chat_model_for_role
         base_url = os.environ.get("LLM_OPENAI_BASE_URL")
         api_key = os.environ.get("LLM_OPENAI_API_KEY")
         model = os.environ.get("LLM_DEFAULT_MODEL", "gemini-3.8-flash-high")
-
-        if not base_url:
-            raise RuntimeError(
-                "LLM_OPENAI_BASE_URL is unset in environment. Worker failing closed."
+        if base_url and api_key:
+            return ChatOpenAI(
+                base_url=base_url,
+                api_key=api_key,
+                model=model,
+                temperature=0.2,
+                timeout=request_timeout_s,
+                max_retries=0,
             )
-        if not api_key:
-            raise RuntimeError("LLM_OPENAI_API_KEY is unset in environment. Worker failing closed.")
-
-        return ChatOpenAI(
-            base_url=base_url,
-            api_key=api_key,
-            model=model,
-            temperature=0.2,
-            timeout=request_timeout_s,
-            max_retries=0,
-        )
+        return resolve_chat_model_for_role(role, None, timeout_s=request_timeout_s)
 
     async def _close_orphaned_child(
         self,
@@ -928,10 +931,9 @@ class AutonomousAgentRuntime:
         existing_artifacts = await self.ledger.list_artifacts_for_run(run_id)
         saved_ev_ids = {a.id for a in existing_artifacts if a.type == "evidence"}
         current_saved_evidence_ids_var.set(saved_ev_ids)
-        chat_model = model_override or self.get_chat_model(request_timeout_s=defn.llm_request_timeout_s)
+        chat_model = model_override or self.get_chat_model(role=agent_id, request_timeout_s=defn.llm_request_timeout_s)
         model_name = getattr(chat_model, "model_name", getattr(chat_model, "model", "custom-model"))
         provider_name = chat_model.__class__.__name__
-
         exec_rec = AgentExecution(
             id=execution_id,
             run_id=run_id,
@@ -968,6 +970,22 @@ class AutonomousAgentRuntime:
         self_ledger = self.ledger
 
         class ActivityMiddleware(AgentMiddleware):
+            async def abefore_model(self, state: Any, runtime: Any = None) -> Any:
+                msgs = state.get("messages", []) if isinstance(state, dict) else []
+                step_num = exec_rec.budgets_used.model_calls + 1
+                await self_ledger.append_event_transactional(
+                    run_id=run_id,
+                    event_type="agent.activity",
+                    task_id=task_id,
+                    execution_id=exec_rec.id,
+                    payload={
+                        "execution_id": exec_rec.id,
+                        "activity_type": "model_step_started",
+                        "description": f"Step {step_num}: Dispatched prompt to {exec_rec.model_name} (in-flight)",
+                    },
+                )
+                return None
+
             async def aafter_model(self, state: Any, runtime: Any = None) -> Any:
                 exec_rec.budgets_used.model_calls += 1
                 msgs = state.get("messages", []) if isinstance(state, dict) else []
@@ -977,11 +995,13 @@ class AutonomousAgentRuntime:
                     step_desc = ""
                     if tc_list:
                         intents = [f"call {t.get('name')}" for t in tc_list]
-                        step_desc = f"Planning: {', '.join(intents)}"
+                        step_desc = f"Action: {', '.join(intents)}"
                     elif getattr(last_m, "content", None):
                         txt = str(last_m.content).strip()
                         if txt and not txt.startswith("{"):
-                            step_desc = f"Thinking: {txt[:100]}"
+                            step_desc = f"Reasoning: {txt[:160]}"
+                        else:
+                            step_desc = f"Generated structured output deliverable ({len(txt)} chars)"
                     if step_desc:
                         await self_ledger.append_event_transactional(
                             run_id=run_id,

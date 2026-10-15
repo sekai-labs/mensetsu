@@ -10,6 +10,7 @@ pub type JsonObject = serde_json::Map<String, serde_json::Value>;
 pub enum WorkflowType {
     Static,
     Dynamic,
+    Hybrid,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
@@ -95,6 +96,7 @@ pub enum ArtifactType {
     QuestionSet,
     Recommendation,
     ValidationResult,
+    RoutingDecision,
 }
 
 fn default_one() -> i64 {

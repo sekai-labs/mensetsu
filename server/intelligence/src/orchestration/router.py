@@ -96,15 +96,33 @@ DEFINITIONS = [
             "interview-generation",
         ],
     ),
+    WorkflowDefinition(
+        id="interview-preparation-hybrid",
+        name="Hybrid Interview Preparation Workflow",
+        type="hybrid",
+        version="1.0.0",
+        description="Adaptive prompt-directed research DAG combined with deterministic interview preparation milestones",
+        default_max_retries=3,
+        supported_agents=[
+            "planner",
+            "company-research",
+            "job-analysis",
+            "technical-research",
+            "systems-deep-dive",
+            "evidence-evaluator",
+            "curriculum",
+            "interview-generation",
+        ],
+    ),
 ]
 
 
 class CreateRunRequest(BaseModel):
     workspace_id: str
     user_id: str
-    workflow_id: str = "interview-preparation-static"
-    company_name: str
-    role_title: str
+    workflow_id: str = "interview-preparation-hybrid"
+    company_name: str = "Target Company"
+    role_title: str = "Target Role"
     company_urls: list[str] = Field(default_factory=list)
     resume_text: str = ""
     resume_pdf_base64: str | None = None
@@ -112,8 +130,12 @@ class CreateRunRequest(BaseModel):
     job_description: str = ""
     jd_url: str | None = None
     seniority: str | None = None
+    user_prompt: str | None = None
+    workflow_mode: str | None = None
     llm_config: dict[str, Any] | None = None
 
+class ResumePlanRequest(BaseModel):
+    prompt: str
 
 @router.get("", response_model=list[WorkflowDefinition])
 async def list_workflow_definitions() -> list[WorkflowDefinition]:
@@ -173,15 +195,49 @@ async def create_workflow_run(req: CreateRunRequest) -> WorkflowRun:
                 "job_description": req.job_description,
                 "jd_url": req.jd_url,
                 "seniority": req.seniority,
+                "user_prompt": req.user_prompt,
+                "workflow_mode": req.workflow_mode,
                 "llm_config": req.llm_config,
             },
         )
-
         run.last_seq = 1
         return run
     except Exception as e:
         logger.error(f"Failed to create workflow run: {e}")
         raise HTTPException(status_code=503, detail=f"Failed to initialize run in storage: {e}")
+
+@router.post("/runs/{run_id}/resume-plan")
+async def resume_workflow_plan(run_id: str, req: ResumePlanRequest) -> dict[str, Any]:
+    run = await ledger.get_workflow_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail=f"Workflow run '{run_id}' not found")
+
+    new_revision = run.plan_revision + 1
+    await ledger.update_workflow_run(run_id, {"plan_revision": new_revision})
+    await ledger.append_event_transactional(
+        run_id=run_id,
+        event_type="plan.revised",
+        payload={"run_id": run_id, "prompt": req.prompt, "plan_revision": new_revision},
+    )
+
+    # Enqueue resumption job with updated prompt
+    await job_queue.enqueue_job(
+        run_id=run.id,
+        payload={
+            "run_id": run.id,
+            "workflow_id": run.workflow_id,
+            "workspace_id": run.workspace_id,
+            "user_id": run.user_id,
+            "company_name": "Target Company",
+            "role_title": "Target Role",
+            "user_prompt": req.prompt,
+            "plan_revision": new_revision,
+            "resume_plan": True,
+        },
+    )
+
+    return {"status": "plan_resumed", "run_id": run_id, "plan_revision": new_revision}
+
 
 
 @router.get("/runs", response_model=RunsPageResponse)

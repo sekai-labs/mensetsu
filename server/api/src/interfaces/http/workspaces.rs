@@ -29,7 +29,7 @@ use crate::{
     contexts::{
         identity::domain::UserId,
         workspace::{
-            application::dtos::{CreateWorkspaceRequestDto, WorkspaceResponseDto},
+            application::dtos::{CreateWorkspaceRequestDto, PatchWorkspaceObjectiveDto, WorkspaceResponseDto},
             domain::WorkspaceId,
             infrastructure::db::DatabasePool,
         },
@@ -56,6 +56,7 @@ pub fn workspace_routes(state: AppState) -> Router {
     Router::new()
         .route("/api/v1/workspaces", post(create_workspace).get(list_workspaces))
         .route("/api/v1/workspaces/{id}", get(get_workspace))
+        .route("/api/v1/workspaces/{id}/objective", axum::routing::patch(update_workspace_objective))
         .route("/api/v1/workspaces/{id}/events", get(workspace_events))
         .route("/api/v1/workspaces/{id}/match", get(get_workspace_match))
         .route("/api/v1/workspaces/{id}/role", get(get_workspace_role))
@@ -145,11 +146,19 @@ pub async fn create_workspace(
     let mut status = workspace.status;
     let mut current_phase = workspace.current_phase;
 
+    let workflow_id = if workspace.workflow_mode == "static" {
+        "interview-preparation-static".to_string()
+    } else if workspace.workflow_mode == "dynamic" {
+        "interview-preparation-dynamic".to_string()
+    } else {
+        "interview-preparation-hybrid".to_string()
+    };
+
     match start_workspace_run(
         &state,
         &user_id,
         &ws_id,
-        "interview-preparation-static".to_string(),
+        workflow_id,
         Some(&ws_id),
     )
     .await
@@ -183,10 +192,12 @@ pub async fn create_workspace(
         status,
         current_phase,
         progress_percent: if status == crate::contexts::workspace::domain::WorkspaceStatus::Failed { 0 } else { workspace.progress_percent },
+        user_prompt: workspace.user_prompt,
+        current_objective: workspace.current_objective,
+        workflow_mode: Some(workspace.workflow_mode),
         created_at: workspace.created_at,
         updated_at: chrono::Utc::now(),
     };
-
     Ok((StatusCode::CREATED, Json(response)))
 }
 
@@ -196,8 +207,9 @@ struct StoredWorkspace {
     role_title: String,
     seniority: Option<String>,
     company_urls: Option<Vec<String>>,
+    user_prompt: Option<String>,
+    workflow_mode: Option<String>,
 }
-
 #[derive(Default, Deserialize)]
 struct StoredResume {
     raw_text: Option<String>,
@@ -227,7 +239,7 @@ pub(crate) async fn start_workspace_run(
         .db
         .client
         .query(
-            "SELECT company_name, role_title, seniority, company_urls FROM type::record('workspace', $ws_id);
+            "SELECT company_name, role_title, seniority, company_urls, user_prompt, workflow_mode FROM type::record('workspace', $ws_id);
              SELECT raw_text, source_pdf_base64, source_filename FROM type::record('resume', $res_id);
              SELECT raw_text, jd_url FROM type::record('job_description', $jd_id);",
         )
@@ -256,22 +268,46 @@ pub(crate) async fn start_workspace_run(
         job_description: jd.raw_text.unwrap_or_default(),
         jd_url: jd.jd_url,
         seniority: workspace.seniority,
+        user_prompt: workspace.user_prompt,
+        workflow_mode: workspace.workflow_mode,
         llm_config: resolve_llm_config(state, user_id).await?,
     };
     state.intelligence_client.create_run(&payload, idempotency_key).await
 }
-
 pub(crate) async fn resolve_llm_config(
     state: &AppState,
     user_id: &crate::contexts::identity::domain::UserId,
 ) -> std::result::Result<Option<serde_json::Value>, AppError> {
     let db = &state.db.client;
-    let mut res = db
+    let crypto = crate::shared::encryption::CryptoService::new(&state.config.encryption_key);
+
+    let mut user_prov_res = db
+        .query("SELECT * FROM user_llm_provider WHERE user_id = type::record('user', $uid);")
+        .bind(("uid", user_id.0.clone()))
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+    let user_providers: Vec<serde_json::Value> = user_prov_res.take(0).unwrap_or_default();
+
+    let mut sys_prov_res = db
+        .query("SELECT * FROM system_llm_provider WHERE is_enabled = true;")
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+    let system_providers: Vec<serde_json::Value> = sys_prov_res.take(0).unwrap_or_default();
+
+    let mut routing_res = db
+        .query("SELECT slots FROM type::record('user_model_routing', $uid);")
+        .bind(("uid", user_id.0.clone()))
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+    let routing_rows: Vec<serde_json::Value> = routing_res.take(0).unwrap_or_default();
+    let user_slots = routing_rows.into_iter().next().and_then(|r| r.get("slots").cloned()).unwrap_or(serde_json::json!({}));
+
+    let mut legacy_res = db
         .query("SELECT * FROM user_llm_config WHERE user_id = type::record('user', $uid);")
         .bind(("uid", user_id.0.clone()))
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
-    let mut configs: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
+    let mut configs: Vec<serde_json::Value> = legacy_res.take(0).unwrap_or_default();
     if configs.is_empty() {
         let mut shared = db
             .query("SELECT * FROM user_llm_config WHERE is_shared = true;")
@@ -280,8 +316,7 @@ pub(crate) async fn resolve_llm_config(
         configs = shared.take(0).unwrap_or_default();
     }
 
-    let crypto = crate::shared::encryption::CryptoService::new(&state.config.encryption_key);
-    Ok(configs.into_iter().next().map(|cfg| {
+    let legacy_active = configs.into_iter().next().map(|cfg| {
         let api_key = cfg["encrypted_api_key"]
             .as_str()
             .filter(|k| !k.is_empty())
@@ -295,7 +330,52 @@ pub(crate) async fn resolve_llm_config(
             "model_search": cfg["model_search"],
             "model_embed": cfg["model_embed"],
         })
-    }))
+    });
+
+    let mut decrypted_user_providers = serde_json::Map::new();
+    for up in user_providers {
+        if let Some(pkey) = up.get("provider_key").and_then(|v| v.as_str()) {
+            let key = up.get("encrypted_api_key")
+                .and_then(|v| v.as_str())
+                .map(|k| crypto.decrypt(k).unwrap_or_default())
+                .unwrap_or_default();
+            decrypted_user_providers.insert(pkey.to_string(), serde_json::json!({
+                "provider_key": pkey,
+                "api_key": key,
+                "base_url": up.get("base_url").cloned()
+            }));
+        }
+    }
+
+    let mut decrypted_system_providers = serde_json::Map::new();
+    for sp in system_providers {
+        if let Some(pkey) = sp.get("provider_key").and_then(|v| v.as_str()) {
+            let key = sp.get("encrypted_api_key")
+                .and_then(|v| v.as_str())
+                .map(|k| crypto.decrypt(k).unwrap_or_default())
+                .unwrap_or_default();
+            decrypted_system_providers.insert(pkey.to_string(), serde_json::json!({
+                "provider_key": pkey,
+                "name": sp.get("name").cloned(),
+                "api_key": key,
+                "base_url": sp.get("base_url").cloned(),
+                "allowed_models": sp.get("allowed_models").cloned()
+            }));
+        }
+    }
+
+    Ok(Some(serde_json::json!({
+        "user_providers": decrypted_user_providers,
+        "system_providers": decrypted_system_providers,
+        "model_routing": user_slots,
+        "legacy": legacy_active,
+        "provider": legacy_active.as_ref().and_then(|l| l.get("provider")).cloned().unwrap_or(serde_json::Value::Null),
+        "api_key": legacy_active.as_ref().and_then(|l| l.get("api_key")).cloned().unwrap_or(serde_json::Value::Null),
+        "base_url": legacy_active.as_ref().and_then(|l| l.get("base_url")).cloned().unwrap_or(serde_json::Value::Null),
+        "model_chat": legacy_active.as_ref().and_then(|l| l.get("model_chat")).cloned().unwrap_or(serde_json::Value::Null),
+        "model_search": legacy_active.as_ref().and_then(|l| l.get("model_search")).cloned().unwrap_or(serde_json::Value::Null),
+        "model_embed": legacy_active.as_ref().and_then(|l| l.get("model_embed")).cloned().unwrap_or(serde_json::Value::Null),
+    })))
 }
 
 #[utoipa::path(
@@ -324,6 +404,9 @@ pub async fn list_workspaces(
             status: w.status,
             current_phase: w.current_phase,
             progress_percent: w.progress_percent,
+            user_prompt: w.user_prompt,
+            current_objective: w.current_objective,
+            workflow_mode: Some(w.workflow_mode),
             created_at: w.created_at,
             updated_at: w.updated_at,
         })
@@ -358,9 +441,76 @@ pub async fn get_workspace(
         status: w.status,
         current_phase: w.current_phase,
         progress_percent: w.progress_percent,
+        user_prompt: w.user_prompt,
+        current_objective: w.current_objective,
+        workflow_mode: Some(w.workflow_mode),
         created_at: w.created_at,
         updated_at: w.updated_at,
     }))
+}
+#[utoipa::path(
+    patch,
+    path = "/api/v1/workspaces/{id}/objective",
+    request_body = PatchWorkspaceObjectiveDto,
+    responses(
+        (status = 200, description = "Workspace objective updated and resume-plan triggered", body = serde_json::Value),
+        (status = 404, description = "Workspace not found")
+    )
+)]
+pub async fn update_workspace_objective(
+    State(state): State<AppState>,
+    auth_user: AuthenticatedUser,
+    Path(id): Path<String>,
+    Json(payload): Json<crate::contexts::workspace::application::dtos::PatchWorkspaceObjectiveDto>,
+) -> std::result::Result<Json<serde_json::Value>, AppError> {
+    let clean_id = id.replace("workspace:", "").replace('`', "");
+    let _ = state
+        .workspace_service
+        .get_workspace(&WorkspaceId(clean_id.clone()), &auth_user.user_id)
+        .await?;
+
+    let db = &state.db.client;
+    db.query("UPDATE type::record('workspace', $ws_id) SET current_objective = $prompt, updated_at = time::now();")
+        .bind(("ws_id", clean_id.clone()))
+        .bind(("prompt", payload.prompt.clone()))
+        .await
+        .and_then(|res| res.check())
+        .map_err(|e| AppError::Database(format!("Failed to update objective: {e}")))?;
+
+    let mut run_res = db
+        .query("SELECT id FROM workflow_run WHERE workspace_id = type::record('workspace', $ws_id) ORDER BY created_at DESC LIMIT 1;")
+        .bind(("ws_id", clean_id.clone()))
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+    let latest_run_rows: Vec<serde_json::Value> = run_res.take(0).unwrap_or_default();
+    let latest_run = latest_run_rows.into_iter().next();
+
+    if let Some(run_val) = latest_run {
+        let run_id = run_val["id"]
+            .as_str()
+            .unwrap_or_default()
+            .replace("workflow_run:", "")
+            .replace('`', "");
+
+        let resume_payload = crate::interfaces::http::intelligence_client::ResumePlanPayload {
+            prompt: payload.prompt.clone(),
+        };
+
+        let _ = state
+            .intelligence_client
+            .resume_plan(&run_id, &resume_payload)
+            .await
+            .map_err(|e| {
+                tracing::warn!(run_id = %run_id, error = %e, "resume_plan call error");
+                e
+            });
+    }
+
+    Ok(Json(serde_json::json!({
+        "workspace_id": clean_id,
+        "current_objective": payload.prompt,
+        "status": "updated"
+    })))
 }
 
 impl IntoResponse for AppError {

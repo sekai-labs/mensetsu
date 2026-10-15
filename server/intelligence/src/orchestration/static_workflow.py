@@ -829,8 +829,8 @@ def build_static_workflow(
                     "knowledge_graph_skills": all_skill_names,
                 },
             )
-            batch_dict = data if isinstance(data, dict) else data.model_dump()
-            return rec, batch_dict["learning_units"]
+            batch_dict = data if isinstance(data, dict) else (data.model_dump() if hasattr(data, "model_dump") else {})
+            return rec, batch_dict.get("learning_units", [])
 
         for attempt in range(first_attempt, first_attempt + 2):
             task.attempt = attempt
@@ -844,11 +844,11 @@ def build_static_workflow(
                     input_data={**curriculum_input, "curriculum_stage": "graph"},
                 )
                 graph_dict = graph_data if isinstance(graph_data, dict) else graph_data.model_dump()
-                skills = graph_dict["skills"]
-                skill_names = [s["name"] for s in skills]
-                unit_targets = [s for s in skills if s["candidate_status"] != "verified"]
+                skills = graph_dict.get("skills", [])
+                skill_names = [s.get("name", "") for s in skills if isinstance(s, dict)]
+                unit_targets = [s for s in skills if isinstance(s, dict) and s.get("candidate_status") != "verified"]
                 if len(unit_targets) < CURRICULUM_MIN_UNITS:
-                    unit_targets += [s for s in skills if s not in unit_targets]
+                    unit_targets += [s for s in skills if isinstance(s, dict) and s not in unit_targets]
                 unit_targets = unit_targets[:CURRICULUM_MIN_UNITS]
                 batches = [
                     unit_targets[i : i + CURRICULUM_UNIT_BATCH_SIZE]

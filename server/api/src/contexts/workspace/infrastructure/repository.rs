@@ -21,6 +21,9 @@ struct WorkspaceDbRow {
     seniority: Option<String>,
     target_date: Option<String>,
     prep_time_weeks: Option<u8>,
+    user_prompt: Option<String>,
+    current_objective: Option<String>,
+    workflow_mode: Option<String>,
     created_at: Option<String>,
     updated_at: Option<String>,
 }
@@ -92,6 +95,9 @@ impl WorkspaceDbRow {
             seniority,
             target_date,
             prep_time_weeks: self.prep_time_weeks,
+            user_prompt: self.user_prompt,
+            current_objective: self.current_objective,
+            workflow_mode: self.workflow_mode.unwrap_or_else(|| "hybrid".to_string()),
             created_at,
             updated_at,
         }
@@ -162,6 +168,9 @@ impl WorkspaceRepository for SurrealWorkspaceRepository {
                 seniority = $seniority,
                 target_date = $target_date,
                 prep_time_weeks = $prep_time_weeks,
+                user_prompt = $user_prompt,
+                current_objective = $current_objective,
+                workflow_mode = $workflow_mode,
                 created_at = type::datetime($created_at),
                 updated_at = type::datetime($updated_at);
         ";
@@ -209,11 +218,13 @@ impl WorkspaceRepository for SurrealWorkspaceRepository {
             .bind(("seniority", seniority_str))
             .bind(("target_date", target_date_str))
             .bind(("prep_time_weeks", workspace.prep_time_weeks.map(|w| w as i64)))
+            .bind(("user_prompt", workspace.user_prompt.clone()))
+            .bind(("current_objective", workspace.current_objective.clone()))
+            .bind(("workflow_mode", workspace.workflow_mode.clone()))
             .bind(("created_at", workspace.created_at.to_rfc3339()))
             .bind(("updated_at", workspace.updated_at.to_rfc3339()))
             .await
             .map_err(|e| AppError::Database(format!("Failed to save workspace: {e}")))?;
-
         Ok(())
     }
 

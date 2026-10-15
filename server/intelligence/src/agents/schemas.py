@@ -32,6 +32,17 @@ class AgentTaskOutput(BaseModel):
     confidence: float = Field(default=0.9, ge=0.0, le=1.0)
 
 
+class WorkflowRoutingDecision(BaseModel):
+    selected_workflow: Literal["hybrid", "static", "dynamic"] = Field(
+        default="hybrid",
+        description="Selected workflow type based on prompt and candidate complexity."
+    )
+    confidence: float = Field(default=0.9, ge=0.0, le=1.0)
+    reasoning: str = Field(description="Brief explanation of why this workflow was selected.")
+    extracted_company: str | None = Field(default=None, description="Company extracted from prompt if missing.")
+    extracted_role: str | None = Field(default=None, description="Role extracted from prompt if missing.")
+
+
 class SystemsDeepDiveOutput(BaseModel):
     summary: str = Field(description="Exhaustive architectural breakdown of the delegated subsystem.")
     subsystem: str = Field(description="The specific subsystem investigated, e.g. networking or storage.")
