@@ -4,7 +4,7 @@ import { useInterviewService } from '~/features/interviews/services/interview.se
 import type { SourceCitation } from '~/features/interviews/models/interview.model'
 import EvidenceBadge from '~/components/ui/EvidenceBadge.vue'
 import EvidenceDrawer from '~/components/ui/EvidenceDrawer.vue'
-
+import MarkdownRenderer from '~/components/ui/MarkdownRenderer.vue'
 definePageMeta({
   layout: 'workspace',
 })
@@ -18,19 +18,67 @@ const { data: companyData } = await useAsyncData(
   () => getWorkspaceCompany(workspaceId.value)
 )
 
-const activeChapter = ref<number>(1)
+const activeChapterId = ref<string>('profile')
 const fontSize = ref<'sm' | 'base' | 'lg'>('base')
 const selectedSource = ref<SourceCitation | null>(null)
 const isDrawerOpen = ref<boolean>(false)
 
-const chapters = [
-  { id: 1, title: '1. Executive Profile & Evidence Matrix', slug: 'profile' },
-  { id: 2, title: '2. System Architecture & Topology', slug: 'architecture' },
-  { id: 3, title: '3. Verified Technology Stack', slug: 'tech-stack' },
-  { id: 4, title: '4. Engineering Culture & Reliability', slug: 'culture' },
-  { id: 5, title: '5. Interview Process & Rubrics', slug: 'interview' },
-  { id: 6, title: '6. Citation Index & Provenance', slug: 'citations' },
+const defaultChapters = [
+  { id: 'profile', title: '1. Executive Profile & Evidence Matrix', slug: 'profile' },
+  { id: 'architecture', title: '2. System Architecture & Topology', slug: 'architecture' },
+  { id: 'tech-stack', title: '3. Verified Technology Stack', slug: 'tech-stack' },
+  { id: 'culture', title: '4. Engineering Culture & Reliability', slug: 'culture' },
+  { id: 'interview', title: '5. Interview Process & Rubrics', slug: 'interview' },
+  { id: 'citations', title: '6. Citation Index & Provenance', slug: 'citations' },
 ]
+
+const displayedChapters = computed(() => {
+  const custom = companyData.value?.chapters || []
+  if (custom.length > 0) {
+    const list = custom.map((chap, idx) => ({
+      id: chap.id || `chapter_${idx + 1}`,
+      title: `${idx + 1}. ${chap.title}`,
+      slug: chap.id || `chapter_${idx + 1}`,
+      custom: true,
+      summary: chap.summary,
+      content_markdown: chap.content_markdown,
+    }))
+    // Add verified tech stack & citations as companion references if not in custom list
+    if (companyData.value?.tech_stack?.length && !list.some((c) => c.slug === 'tech-stack')) {
+      list.push({
+        id: 'tech-stack',
+        title: `${list.length + 1}. Verified Technology Stack`,
+        slug: 'tech-stack',
+        custom: false,
+        summary: 'Production runtime technologies with citations.',
+        content_markdown: undefined,
+      })
+    }
+    if (companyData.value?.sources?.length && !list.some((c) => c.slug === 'citations')) {
+      list.push({
+        id: 'citations',
+        title: `${list.length + 1}. Citation Index & Provenance`,
+        slug: 'citations',
+        custom: false,
+        summary: 'Exhaustive index of indexed engineering sources and retrieval confidence scores.',
+        content_markdown: undefined,
+      })
+    }
+    return list
+  }
+  return defaultChapters.map((c) => ({ ...c, custom: false, summary: undefined, content_markdown: undefined }))
+})
+
+// Keep activeChapterId pointing to first available chapter if unset
+watchEffect(() => {
+  if (displayedChapters.value.length > 0 && !displayedChapters.value.some((c) => c.id === activeChapterId.value)) {
+    activeChapterId.value = displayedChapters.value[0].id
+  }
+})
+
+const activeCustomChapter = computed(() => {
+  return displayedChapters.value.find((c) => c.id === activeChapterId.value && c.custom)
+})
 
 const openCitation = (source: SourceCitation) => {
   selectedSource.value = source
@@ -45,7 +93,6 @@ const openSourceById = (sourceId?: string) => {
   }
 }
 </script>
-
 <template>
   <div class="space-y-6">
 
@@ -102,21 +149,20 @@ const openSourceById = (sourceId?: string) => {
         </div>
         <nav class="flex lg:flex-col overflow-x-auto lg:overflow-x-visible scrollbar-none gap-1 pb-1 lg:pb-0">
           <button
-            v-for="chap in chapters"
+            v-for="chap in displayedChapters"
             :key="chap.id"
             type="button"
             class="whitespace-nowrap lg:whitespace-normal text-left px-2.5 py-1.5 rounded text-xs transition-colors shrink-0 lg:shrink flex items-center justify-between"
-            :class="activeChapter === chap.id
+            :class="activeChapterId === chap.id
               ? 'bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-semibold'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-white'"
-            @click="activeChapter = chap.id"
+            @click="activeChapterId = chap.id"
           >
             <span class="truncate">{{ chap.title }}</span>
-            <span v-if="activeChapter === chap.id" class="w-1.5 h-1.5 rounded-full bg-indigo-600 shrink-0 ml-1.5 hidden lg:inline-block"></span>
+            <span v-if="activeChapterId === chap.id" class="w-1.5 h-1.5 rounded-full bg-indigo-600 shrink-0 ml-1.5 hidden lg:inline-block"></span>
           </button>
         </nav>
       </aside>
-
 
       <article
         class="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 sm:p-8 shadow-sm transition-all"
@@ -127,7 +173,27 @@ const openSourceById = (sourceId?: string) => {
         }"
       >
 
-        <section v-if="activeChapter === 1" class="space-y-6 max-w-prose">
+        <!-- Custom Agent-Decided Chapter -->
+        <section v-if="activeCustomChapter" class="space-y-6 max-w-prose">
+          <div class="border-l-3 border-indigo-600 pl-4">
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white">
+              {{ activeCustomChapter.title }}
+            </h2>
+            <p v-if="activeCustomChapter.summary" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {{ activeCustomChapter.summary }}
+            </p>
+          </div>
+
+          <div v-if="activeCustomChapter.content_markdown" class="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-slate-300">
+            <MarkdownRenderer :content="activeCustomChapter.content_markdown" />
+          </div>
+          <div v-else class="text-xs text-slate-400 italic">
+            No content recorded for this chapter.
+          </div>
+        </section>
+
+        <!-- Standard Chapter: Executive Profile & Evidence Matrix -->
+        <section v-else-if="activeChapterId === 'profile' || activeChapterId === '1'" class="space-y-6 max-w-prose">
           <div class="border-l-3 border-indigo-600 pl-4">
             <h2 class="text-lg font-bold text-slate-900 dark:text-white">
               Chapter 1: Executive Profile & Evidence Classification
@@ -188,7 +254,7 @@ const openSourceById = (sourceId?: string) => {
         </section>
 
 
-        <section v-else-if="activeChapter === 2" class="space-y-6 max-w-prose">
+        <section v-else-if="activeChapterId === 'architecture' || activeChapterId === '2'" class="space-y-6 max-w-prose">
           <div class="border-l-3 border-indigo-600 pl-4">
             <h2 class="text-lg font-bold text-slate-900 dark:text-white">
               Chapter 2: System Architecture & Infrastructure Topology
@@ -241,7 +307,7 @@ const openSourceById = (sourceId?: string) => {
         </section>
 
 
-        <section v-else-if="activeChapter === 3" class="space-y-6 max-w-prose">
+        <section v-else-if="activeChapterId === 'tech-stack' || activeChapterId === '3'" class="space-y-6 max-w-prose">
           <div class="border-l-3 border-indigo-600 pl-4">
             <h2 class="text-lg font-bold text-slate-900 dark:text-white">
               Chapter 3: Verified Technology Stack & Tooling
@@ -288,7 +354,7 @@ const openSourceById = (sourceId?: string) => {
         </section>
 
 
-        <section v-else-if="activeChapter === 4" class="space-y-6 max-w-prose">
+        <section v-else-if="activeChapterId === 'culture' || activeChapterId === '4'" class="space-y-6 max-w-prose">
           <div class="border-l-3 border-indigo-600 pl-4">
             <h2 class="text-lg font-bold text-slate-900 dark:text-white">
               Chapter 4: Engineering Culture, Cadence & Reliability
@@ -310,7 +376,7 @@ const openSourceById = (sourceId?: string) => {
         </section>
 
 
-        <section v-else-if="activeChapter === 5" class="space-y-6 max-w-prose">
+        <section v-else-if="activeChapterId === 'interview' || activeChapterId === '5'" class="space-y-6 max-w-prose">
           <div class="border-l-3 border-indigo-600 pl-4">
             <h2 class="text-lg font-bold text-slate-900 dark:text-white">
               Chapter 5: Technical Interview Process & Rubrics
@@ -332,7 +398,7 @@ const openSourceById = (sourceId?: string) => {
         </section>
 
 
-        <section v-else-if="activeChapter === 6" class="space-y-6 max-w-prose">
+        <section v-else-if="activeChapterId === 'citations' || activeChapterId === '6'" class="space-y-6 max-w-prose">
           <div class="border-l-3 border-indigo-600 pl-4">
             <h2 class="text-lg font-bold text-slate-900 dark:text-white">
               Chapter 6: Citation Index & Provenance

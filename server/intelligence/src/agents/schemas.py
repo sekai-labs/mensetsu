@@ -91,6 +91,18 @@ class CompanyClaim(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0, description="Confidence score.")
     evidence_ids: list[str] = Field(description="IDs of saved evidence citations.")
 
+class DossierChapterItem(BaseModel):
+    id: str = Field(description="Unique slug or chapter identifier, e.g. executive-summary, edge-topology, regulatory-compliance.")
+    title: str = Field(description="Descriptive chapter title decided dynamically based on the company's domain and architecture.")
+    summary: str = Field(description="Summary of findings in this chapter.")
+    content_markdown: str = Field(
+        description="In-depth, evidence-backed narrative and analysis of this architectural or organizational facet."
+    )
+    evidence_ids: list[str] = Field(
+        default_factory=list,
+        description="Evidence citation IDs grounding this chapter's claims.",
+    )
+
 
 class CompanyResearchOutput(BaseModel):
     overview: str = Field(
@@ -102,6 +114,10 @@ class CompanyResearchOutput(BaseModel):
     engineering_culture: list[str] = Field(
         description="Observable traits of the engineering organization and practices."
     )
+    operational_realities: list[str] = Field(
+        default_factory=list,
+        description="Concrete operational constraints (e.g., air-gapped on-premise networks, regulatory data residency, GPU edge appliances).",
+    )
     tech_stack: list[CompanyTechStackItem] = Field(
         description="Verified technologies in production."
     )
@@ -111,6 +127,10 @@ class CompanyResearchOutput(BaseModel):
     interview_process_notes: list[str] = Field(
         description="Documented stages, rounds, and candidate evaluation criteria."
     )
+    chapters: list[DossierChapterItem] = Field(
+        default_factory=list,
+        description="Agent-decided custom document outline and in-depth chapters investigating the company's real operational and engineering landscape.",
+    )
     claims: list[CompanyClaim] = Field(
         min_length=8,
         description="At least 8 evidence-backed claims extracted from authoritative sources.",
@@ -118,7 +138,6 @@ class CompanyResearchOutput(BaseModel):
     summary: str = Field(
         description="Concise synthesis for workflow ledger and execution overview."
     )
-
     @model_validator(mode="after")
     def validate_provenance(self) -> "CompanyResearchOutput":
         all_ev_ids = []
@@ -273,7 +292,7 @@ class CategoryQuestionBatchOutput(BaseModel):
 class InterviewGenerationOutput(BaseModel):
     questions: list[InterviewQuestionItem] = Field(
         min_length=15,
-        description="Comprehensive question book containing at least 15 targeted, evidence-grounded interview questions spanning at least 4 categories.",
+        description="Comprehensive question book containing at least 100 targeted, evidence-grounded interview questions spanning at least 4 categories.",
     )
     summary: str = Field(
         description="Summary of generated question portfolio and evaluation rubrics."
@@ -354,21 +373,34 @@ class SkillEdgeItem(BaseModel):
     )
 
 
+class LessonSessionItem(BaseModel):
+    session_id: str = Field(description="Unique session identifier, e.g. ses_1_internals.")
+    title: str = Field(description="Session title detailing low-level under-the-hood mechanism.")
+    estimated_minutes: int = Field(default=20, ge=5)
+    focus_area: str = Field(description="Architecture mechanics, kernel internals, concurrency invariants, or failure triage.")
+    content_markdown: str = Field(
+        description="Exhaustive under-the-hood technical session with concrete code patterns, failure modes, and execution traces."
+    )
+
+
 class LearningUnitItem(BaseModel):
     skill: str = Field(description="Skill name.")
-    title: str = Field(description="Unit title.")
+    title: str = Field(description="Unit module title.")
     prerequisites: list[str] = Field(default_factory=list, description="Prerequisite skills.")
-    estimated_minutes: int = Field(default=45, ge=10)
-    summary: str = Field(description="Short summary of learning unit.")
+    estimated_minutes: int = Field(default=60, ge=10)
+    summary: str = Field(description="Executive summary of this deep-dive module.")
     deep_dive_markdown: str = Field(
         min_length=400,
         description="Comprehensive in-depth technical explanation (at least 400 characters) covering architecture mechanics, code patterns, trade-offs, and failure modes.",
+    )
+    sessions: list[LessonSessionItem] = Field(
+        default_factory=list,
+        description="Granular deep-dive sessions teaching low-level under-the-hood systems, algorithms, invariants, and operational battle scars.",
     )
     evidence_ids: list[str] = Field(
         min_length=1,
         description="At least 1 evidence ID from input cited as provenance for this learning unit.",
     )
-
 
 class CurriculumOutput(BaseModel):
     skills: list[SkillNodeItem] = Field(

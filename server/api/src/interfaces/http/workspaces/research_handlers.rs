@@ -120,6 +120,7 @@ pub async fn get_workspace_company(
         "interview_process_insights": [],
         "bar_raiser_focus_areas": [],
         "compliance_and_governance": [],
+        "chapters": [],
         "sources": sources
     })))
 }

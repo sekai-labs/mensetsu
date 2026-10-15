@@ -14,9 +14,15 @@ pub struct VisualDiagram {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct LessonChapter {
+    #[serde(default)]
+    pub id: Option<String>,
     pub timestamp: String,
     pub title: String,
     pub summary: Option<String>,
+    #[serde(default)]
+    pub focus_area: Option<String>,
+    #[serde(default)]
+    pub content: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

@@ -73,11 +73,12 @@ MAX_DELEGATION_CHILDREN = 2
 MAX_CONSECUTIVE_NOT_FOUND = 3
 
 FINALIZE_RESERVED_TOOL_CALLS = 2
-FINALIZE_RESERVED_MODEL_CALLS = 2
-FINALIZE_ACTIVE_BUDGET_FRACTION = 0.85
+FINALIZE_RESERVED_MODEL_CALLS = 3
+FINALIZE_ACTIVE_BUDGET_FRACTION = 0.75
 FINALIZE_TIME_RATIO = 1.0 - FINALIZE_ACTIVE_BUDGET_FRACTION
-FINALIZE_MODEL_CALL_HEADROOM = 3
-MAX_MISSING_OUTPUT_TOOL_NUDGES = 2
+FINALIZE_MIN_WALL_TIME_RESERVE_S = 90.0
+FINALIZE_MODEL_CALL_HEADROOM = 4
+MAX_MISSING_OUTPUT_TOOL_NUDGES = 3
 DELEGATION_PARENT_RESERVE_S = 90.0
 SEARCH_QUOTA_BASE = 6
 SEARCH_QUOTA_PER_SAVE = 4
@@ -1125,10 +1126,12 @@ class AutonomousAgentRuntime:
             rem_time_ratio = 1.0 - (active_s / max(1.0, budget_clock.budget_s))
             saved_ids = own_saved_ids()
 
+            rem_time_s = budget_clock.remaining_s()
             if (
                 rem_tools <= FINALIZE_RESERVED_TOOL_CALLS
                 or rem_models <= FINALIZE_RESERVED_MODEL_CALLS
                 or rem_time_ratio <= FINALIZE_TIME_RATIO
+                or rem_time_s <= FINALIZE_MIN_WALL_TIME_RESERVE_S
             ):
                 if budget_mode["value"] != "finalize":
                     budget_mode["value"] = "finalize"

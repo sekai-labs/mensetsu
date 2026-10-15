@@ -19,10 +19,19 @@ logger = logging.getLogger("mensetsu.orchestration.static_workflow")
 
 CURRICULUM_MIN_UNITS = 6
 CURRICULUM_UNIT_BATCH_SIZE = 2
-QUESTION_CATEGORIES = ("system_design", "target_stack", "behavioral", "technical_fundamentals")
-QUESTIONS_PER_BATCH = 2
-BATCHES_PER_CATEGORY = 2
+QUESTION_CATEGORIES = (
+    "system_design",
+    "target_stack",
+    "technical_fundamentals",
+    "resume_deep_dive",
+    "project_deep_dive",
+    "debugging",
+    "behavioral",
+)
+QUESTIONS_PER_BATCH = 5
+BATCHES_PER_CATEGORY = 3
 MIN_QUESTIONS_PER_CATEGORY = QUESTIONS_PER_BATCH * BATCHES_PER_CATEGORY
+TOTAL_MIN_QUESTIONS = 100
 
 
 def merge_dict(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
@@ -1193,7 +1202,7 @@ def build_static_workflow(
         return {}
 
     async def persist_domain_entities(state: StaticWorkflowState, persist_task_id: str) -> None:
-        while len(state.questions) < 15:
+        while len(state.questions) < TOTAL_MIN_QUESTIONS:
             q_res = await generate_questions_node(state)
             state.questions = q_res.get("questions", state.questions)
         start_t = time.perf_counter()
@@ -1431,6 +1440,19 @@ def build_static_workflow(
                     "estimated_minutes": int(lu_dict["estimated_minutes"]),
                     "summary": lu_dict["summary"],
                     "content_markdown": lu_dict["deep_dive_markdown"],
+                    "chapters": [
+                        {
+                            "id": s.get("session_id") or f"ses_{s_idx + 1}",
+                            "title": s.get("title", ""),
+                            "timestamp": f"{s.get('estimated_minutes', 15)}m",
+                            "focus_area": s.get("focus_area", ""),
+                            "content": s.get("content_markdown") or s.get("content", ""),
+                            "summary": s.get("focus_area") or s.get("summary", ""),
+                        }
+                        for s_idx, s in enumerate(lu_dict.get("sessions", []))
+                    ]
+                    if lu_dict.get("sessions")
+                    else None,
                 },
             )
 

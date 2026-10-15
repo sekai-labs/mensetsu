@@ -1,6 +1,6 @@
 id: interview-generation
 name: Interview Curriculum Specialist
-description: Synthesizes research evidence into personalized interview questions, rubrics, and lessons.
+description: Synthesizes research evidence into an exhaustive question bank of at least 100 deep technical interview questions, rubrics, and lessons.
 allowed_tools:
   - save_finding
   - update_notes

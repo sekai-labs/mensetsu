@@ -24,6 +24,8 @@ const currentLesson = computed(() => {
   })
 })
 
+const activeSessionIndex = ref<number>(0)
+
 const handleToggle = async () => {
   if (currentLesson.value) {
     await toggleLearningUnitCompleted(workspaceId.value, currentLesson.value.id)
@@ -75,6 +77,65 @@ const handleToggle = async () => {
         />
       </div>
 
+
+      <!-- Under-the-hood In-depth Sessions -->
+      <div v-if="currentLesson?.chapters?.length" class="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between">
+          <div class="text-xs font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            Under-the-Hood Technical Sessions ({{ currentLesson.chapters.length }})
+          </div>
+          <div class="text-[11px] font-mono text-slate-400">
+            Deep Internals & Invariants
+          </div>
+        </div>
+
+        <!-- Session Tabs -->
+        <div class="flex flex-wrap gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg">
+          <button
+            v-for="(session, sIdx) in currentLesson.chapters"
+            :key="session.id || sIdx"
+            type="button"
+            class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-left"
+            :class="activeSessionIndex === sIdx
+              ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm font-semibold'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+            @click="activeSessionIndex = sIdx"
+          >
+            <span class="font-mono text-[10px] opacity-70 mr-1.5">S{{ sIdx + 1 }}.</span>
+            <span>{{ session.title }}</span>
+          </button>
+        </div>
+
+        <!-- Active Session Content -->
+        <div
+          v-if="currentLesson.chapters[activeSessionIndex]"
+          class="p-4 rounded-lg bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-750 space-y-3"
+        >
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-700/60 pb-2.5">
+            <h4 class="text-sm font-bold text-slate-900 dark:text-white">
+              {{ currentLesson.chapters[activeSessionIndex].title }}
+            </h4>
+            <div class="flex items-center gap-2 text-xs font-mono text-slate-500">
+              <span v-if="currentLesson.chapters[activeSessionIndex].focus_area" class="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-semibold">
+                {{ currentLesson.chapters[activeSessionIndex].focus_area }}
+              </span>
+              <span v-if="currentLesson.chapters[activeSessionIndex].timestamp">
+                {{ currentLesson.chapters[activeSessionIndex].timestamp }}
+              </span>
+            </div>
+          </div>
+
+          <div v-if="currentLesson.chapters[activeSessionIndex].summary" class="text-xs text-slate-600 dark:text-slate-400 italic">
+            {{ currentLesson.chapters[activeSessionIndex].summary }}
+          </div>
+
+          <div class="text-xs leading-relaxed text-slate-800 dark:text-slate-200 pt-1">
+            <MarkdownRenderer
+              :content="currentLesson.chapters[activeSessionIndex].content || currentLesson.chapters[activeSessionIndex].content_markdown || 'Under-the-hood technical breakdown in progress.'"
+            />
+          </div>
+        </div>
+      </div>
 
       <div v-if="currentLesson?.core_concepts?.length" class="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
         <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-500">Core Concepts & Invariants</h3>

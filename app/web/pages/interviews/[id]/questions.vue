@@ -23,8 +23,29 @@ const categoryFilter = ref('all')
 const difficultyFilter = ref('all')
 const expandedQuestionId = ref<string | null>(null)
 const currentPage = ref(1)
-const pageSize = ref(5)
+const pageSize = ref(10)
 
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = currentPage.value
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1)
+  }
+  const pages: (number | string)[] = [1]
+  if (current > 3) {
+    pages.push('...')
+  }
+  const start = Math.max(2, current - 1)
+  const end = Math.min(total - 1, current + 1)
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  if (current < total - 2) {
+    pages.push('...')
+  }
+  pages.push(total)
+  return pages
+})
 const toggleExpand = (id: string) => {
   expandedQuestionId.value = expandedQuestionId.value === id ? null : id
 }
@@ -257,16 +278,23 @@ watch([searchQuery, categoryFilter, difficultyFilter], () => {
           >
             ← Previous
           </button>
-          <button
-            v-for="p in totalPages"
-            :key="p"
-            type="button"
-            class="w-7 h-7 rounded text-xs font-mono font-bold transition-colors"
-            :class="currentPage === p ? 'bg-indigo-600 text-white' : 'border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"
-            @click="currentPage = p"
-          >
-            {{ p }}
-          </button>
+          <template v-for="(p, pIdx) in visiblePages" :key="pIdx">
+            <span
+              v-if="p === '...'"
+              class="w-7 h-7 flex items-center justify-center text-xs font-mono text-slate-400"
+            >
+              ...
+            </span>
+            <button
+              v-else
+              type="button"
+              class="w-7 h-7 rounded text-xs font-mono font-bold transition-colors"
+              :class="currentPage === p ? 'bg-indigo-600 text-white' : 'border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"
+              @click="currentPage = Number(p)"
+            >
+              {{ p }}
+            </button>
+          </template>
           <button
             type="button"
             class="px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"

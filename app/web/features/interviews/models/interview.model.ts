@@ -83,6 +83,14 @@ export interface EvidenceMatrixItem {
   architectural_role?: string
 }
 
+export interface DossierChapter {
+  id: string
+  title: string
+  summary?: string
+  content_markdown?: string
+  evidence_ids?: string[]
+}
+
 export interface CompanyResearchResponse {
   workspace_id: string
   company_name: string
@@ -93,14 +101,20 @@ export interface CompanyResearchResponse {
   tech_stack: TechnologyEvidenceItem[]
   architecture_topology?: ArchitectureTopology
   interview_process_notes: string[]
+  chapters?: DossierChapter[]
   sources: SourceCitation[]
   evidence_matrix?: EvidenceMatrixItem[]
 }
-
 export interface LessonChapter {
-  id: string
+  id?: string
+  session_id?: string
   title: string
-  content: string
+  timestamp?: string
+  estimated_minutes?: number
+  focus_area?: string
+  summary?: string
+  content?: string
+  content_markdown?: string
 }
 
 export interface VisualDiagram {
