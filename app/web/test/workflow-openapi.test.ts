@@ -40,6 +40,9 @@ describe('Workflow Service & Store Error Boundaries', () => {
     })
 
     let registeredOnError: (() => void) | null = null
+    if (typeof (globalThis as Record<string, unknown>).window === 'undefined') {
+      (globalThis as Record<string, unknown>).window = globalThis
+    }
     instance.connectSse((url) => {
       const fake = {
         url,

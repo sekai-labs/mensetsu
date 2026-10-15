@@ -3,7 +3,29 @@
     "AgentActivityEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -13,11 +35,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -43,34 +61,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/AgentActivityPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -82,6 +72,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -95,16 +97,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "agent.activity",
           "default": "agent.activity",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/AgentActivityPayload"
         }
       },
       "required": [
@@ -119,16 +119,16 @@
     "AgentActivityPayload": {
       "additionalProperties": false,
       "properties": {
+        "execution_id": {
+          "title": "Execution Id",
+          "type": "string"
+        },
         "activity_type": {
           "title": "Activity Type",
           "type": "string"
         },
         "description": {
           "title": "Description",
-          "type": "string"
-        },
-        "execution_id": {
-          "title": "Execution Id",
           "type": "string"
         }
       },
@@ -143,7 +143,29 @@
     "AgentCompletedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -153,11 +175,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -183,34 +201,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/AgentCompletedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -222,6 +212,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -235,16 +237,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "agent.completed",
           "default": "agent.completed",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/AgentCompletedPayload"
         }
       },
       "required": [
@@ -267,12 +267,12 @@
           "title": "Summary",
           "type": "string"
         },
-        "tokens_used": {
-          "title": "Tokens Used",
-          "type": "integer"
-        },
         "tool_calls": {
           "title": "Tool Calls",
+          "type": "integer"
+        },
+        "tokens_used": {
+          "title": "Tokens Used",
           "type": "integer"
         }
       },
@@ -288,96 +288,16 @@
     "AgentExecution": {
       "additionalProperties": false,
       "properties": {
-        "agent_id": {
-          "title": "Agent Id",
-          "type": "string"
-        },
-        "artifact_ids": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Artifact Ids",
-          "type": "array"
-        },
-        "budgets": {
-          "$ref": "#/$defs/ExecutionBudgets"
-        },
-        "budgets_used": {
-          "$ref": "#/$defs/ExecutionBudgetsUsed"
-        },
-        "child_execution_ids": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Child Execution Ids",
-          "type": "array"
-        },
-        "completed_at": {
-          "anyOf": [
-            {
-              "format": "date-time",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Completed At"
-        },
-        "current_activity": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Current Activity"
-        },
-        "delegation_depth": {
-          "default": 0,
-          "title": "Delegation Depth",
-          "type": "integer"
-        },
-        "error": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Error"
-        },
         "id": {
           "title": "Id",
           "type": "string"
         },
-        "model_name": {
-          "default": "",
-          "title": "Model Name",
+        "run_id": {
+          "title": "Run Id",
           "type": "string"
         },
-        "model_provider": {
-          "default": "",
-          "title": "Model Provider",
-          "type": "string"
-        },
-        "notes": {
-          "items": {
-            "$ref": "#/$defs/ExecutionNote"
-          },
-          "title": "Notes",
-          "type": "array"
-        },
-        "objective": {
-          "default": "",
-          "title": "Objective",
+        "task_id": {
+          "title": "Task Id",
           "type": "string"
         },
         "parent_execution_id": {
@@ -392,23 +312,20 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "public_summary": {
+        "child_execution_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Child Execution Ids",
+          "type": "array"
+        },
+        "agent_id": {
+          "title": "Agent Id",
+          "type": "string"
+        },
+        "objective": {
           "default": "",
-          "title": "Public Summary",
-          "type": "string"
-        },
-        "retries": {
-          "default": 0,
-          "title": "Retries",
-          "type": "integer"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "started_at": {
-          "format": "date-time",
-          "title": "Started At",
+          "title": "Objective",
           "type": "string"
         },
         "status": {
@@ -423,14 +340,97 @@
           "title": "Status",
           "type": "string"
         },
-        "task_id": {
-          "title": "Task Id",
+        "delegation_depth": {
+          "default": 0,
+          "title": "Delegation Depth",
+          "type": "integer"
+        },
+        "retries": {
+          "default": 0,
+          "title": "Retries",
+          "type": "integer"
+        },
+        "current_activity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Current Activity"
+        },
+        "model_provider": {
+          "default": "",
+          "title": "Model Provider",
           "type": "string"
+        },
+        "model_name": {
+          "default": "",
+          "title": "Model Name",
+          "type": "string"
+        },
+        "budgets": {
+          "$ref": "#/$defs/ExecutionBudgets"
+        },
+        "budgets_used": {
+          "$ref": "#/$defs/ExecutionBudgetsUsed"
         },
         "tool_call_count": {
           "default": 0,
           "title": "Tool Call Count",
           "type": "integer"
+        },
+        "notes": {
+          "items": {
+            "$ref": "#/$defs/ExecutionNote"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "artifact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Artifact Ids",
+          "type": "array"
+        },
+        "public_summary": {
+          "default": "",
+          "title": "Public Summary",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "started_at": {
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        },
+        "completed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Completed At"
         }
       },
       "required": [
@@ -445,7 +445,29 @@
     "AgentFailedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -455,11 +477,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -485,34 +503,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/AgentFailedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -524,6 +514,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -537,16 +539,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "agent.failed",
           "default": "agent.failed",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/AgentFailedPayload"
         }
       },
       "required": [
@@ -561,12 +561,12 @@
     "AgentFailedPayload": {
       "additionalProperties": false,
       "properties": {
-        "error": {
-          "title": "Error",
-          "type": "string"
-        },
         "execution_id": {
           "title": "Execution Id",
+          "type": "string"
+        },
+        "error": {
+          "title": "Error",
           "type": "string"
         }
       },
@@ -580,7 +580,29 @@
     "AgentStartedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -590,11 +612,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -620,34 +638,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/AgentStartedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -659,6 +649,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -672,16 +674,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "agent.started",
           "default": "agent.started",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/AgentStartedPayload"
         }
       },
       "required": [
@@ -696,20 +696,20 @@
     "AgentStartedPayload": {
       "additionalProperties": false,
       "properties": {
-        "agent_id": {
-          "title": "Agent Id",
-          "type": "string"
-        },
         "execution_id": {
           "title": "Execution Id",
           "type": "string"
         },
-        "model": {
-          "title": "Model",
+        "agent_id": {
+          "title": "Agent Id",
           "type": "string"
         },
         "objective": {
           "title": "Objective",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
           "type": "string"
         }
       },
@@ -725,6 +725,26 @@
     "Artifact": {
       "additionalProperties": false,
       "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "task_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task Id"
+        },
         "agent_execution_id": {
           "anyOf": [
             {
@@ -736,6 +756,65 @@
           ],
           "default": null,
           "title": "Agent Execution Id"
+        },
+        "type": {
+          "enum": [
+            "research_report",
+            "finding",
+            "evidence",
+            "question_set",
+            "recommendation",
+            "validation_result",
+            "routing_decision"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "version": {
+          "default": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "surreal_record_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Surreal Record Id"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "source_links": {
+          "items": {
+            "$ref": "#/$defs/SourceLink"
+          },
+          "title": "Source Links",
+          "type": "array"
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceProvenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "content": {
           "anyOf": [
@@ -753,84 +832,6 @@
           "format": "date-time",
           "title": "Created At",
           "type": "string"
-        },
-        "evidence": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/EvidenceProvenance"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "evidence_ids": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Evidence Ids",
-          "type": "array"
-        },
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "source_links": {
-          "items": {
-            "$ref": "#/$defs/SourceLink"
-          },
-          "title": "Source Links",
-          "type": "array"
-        },
-        "surreal_record_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Surreal Record Id"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
-        "title": {
-          "title": "Title",
-          "type": "string"
-        },
-        "type": {
-          "enum": [
-            "research_report",
-            "finding",
-            "evidence",
-            "question_set",
-            "recommendation",
-            "validation_result"
-          ],
-          "title": "Type",
-          "type": "string"
-        },
-        "version": {
-          "default": 1,
-          "title": "Version",
-          "type": "integer"
         }
       },
       "required": [
@@ -845,7 +846,29 @@
     "ArtifactCreatedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -855,11 +878,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -885,34 +904,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/ArtifactCreatedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -924,6 +915,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -937,16 +940,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "artifact.created",
           "default": "artifact.created",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ArtifactCreatedPayload"
         }
       },
       "required": [
@@ -965,6 +966,23 @@
           "title": "Artifact Id",
           "type": "string"
         },
+        "type": {
+          "enum": [
+            "research_report",
+            "finding",
+            "evidence",
+            "question_set",
+            "recommendation",
+            "validation_result",
+            "routing_decision"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
         "surreal_record_id": {
           "anyOf": [
             {
@@ -976,22 +994,6 @@
           ],
           "default": null,
           "title": "Surreal Record Id"
-        },
-        "title": {
-          "title": "Title",
-          "type": "string"
-        },
-        "type": {
-          "enum": [
-            "research_report",
-            "finding",
-            "evidence",
-            "question_set",
-            "recommendation",
-            "validation_result"
-          ],
-          "title": "Type",
-          "type": "string"
         }
       },
       "required": [
@@ -1005,7 +1007,29 @@
     "CheckpointCreatedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -1015,11 +1039,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -1045,34 +1065,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/CheckpointCreatedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -1084,6 +1076,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -1097,16 +1101,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "checkpoint.created",
           "default": "checkpoint.created",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/CheckpointCreatedPayload"
         }
       },
       "required": [
@@ -1121,6 +1123,10 @@
     "CheckpointCreatedPayload": {
       "additionalProperties": false,
       "properties": {
+        "thread_id": {
+          "title": "Thread Id",
+          "type": "string"
+        },
         "checkpoint_id": {
           "title": "Checkpoint Id",
           "type": "string"
@@ -1128,10 +1134,6 @@
         "step": {
           "title": "Step",
           "type": "integer"
-        },
-        "thread_id": {
-          "title": "Thread Id",
-          "type": "string"
         }
       },
       "required": [
@@ -1145,12 +1147,89 @@
     "Delegation": {
       "additionalProperties": false,
       "properties": {
-        "child_agent_id": {
-          "title": "Child Agent Id",
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "parent_execution_id": {
+          "title": "Parent Execution Id",
           "type": "string"
         },
         "child_execution_id": {
           "title": "Child Execution Id",
+          "type": "string"
+        },
+        "parent_agent_id": {
+          "title": "Parent Agent Id",
+          "type": "string"
+        },
+        "child_agent_id": {
+          "title": "Child Agent Id",
+          "type": "string"
+        },
+        "delegation_task_id": {
+          "title": "Delegation Task Id",
+          "type": "string"
+        },
+        "objective": {
+          "title": "Objective",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "depth": {
+          "default": 1,
+          "title": "Depth",
+          "type": "integer"
+        },
+        "status": {
+          "default": "requested",
+          "enum": [
+            "requested",
+            "accepted",
+            "running",
+            "completed",
+            "failed",
+            "rejected"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "input_artifact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Input Artifact Ids",
+          "type": "array"
+        },
+        "output_artifact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Output Artifact Ids",
+          "type": "array"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
           "type": "string"
         },
         "completed_at": {
@@ -1165,83 +1244,6 @@
           ],
           "default": null,
           "title": "Completed At"
-        },
-        "created_at": {
-          "format": "date-time",
-          "title": "Created At",
-          "type": "string"
-        },
-        "delegation_task_id": {
-          "title": "Delegation Task Id",
-          "type": "string"
-        },
-        "depth": {
-          "default": 1,
-          "title": "Depth",
-          "type": "integer"
-        },
-        "error": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Error"
-        },
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
-        "input_artifact_ids": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Input Artifact Ids",
-          "type": "array"
-        },
-        "objective": {
-          "title": "Objective",
-          "type": "string"
-        },
-        "output_artifact_ids": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Output Artifact Ids",
-          "type": "array"
-        },
-        "parent_agent_id": {
-          "title": "Parent Agent Id",
-          "type": "string"
-        },
-        "parent_execution_id": {
-          "title": "Parent Execution Id",
-          "type": "string"
-        },
-        "reason": {
-          "title": "Reason",
-          "type": "string"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "status": {
-          "default": "requested",
-          "enum": [
-            "requested",
-            "accepted",
-            "running",
-            "completed",
-            "failed",
-            "rejected"
-          ],
-          "title": "Status",
-          "type": "string"
         }
       },
       "required": [
@@ -1261,7 +1263,29 @@
     "DelegationAcceptedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -1271,11 +1295,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -1301,34 +1321,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/DelegationAcceptedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -1340,6 +1332,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -1353,16 +1357,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "delegation.accepted",
           "default": "delegation.accepted",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/DelegationAcceptedPayload"
         }
       },
       "required": [
@@ -1377,12 +1379,12 @@
     "DelegationAcceptedPayload": {
       "additionalProperties": false,
       "properties": {
-        "child_execution_id": {
-          "title": "Child Execution Id",
-          "type": "string"
-        },
         "delegation_id": {
           "title": "Delegation Id",
+          "type": "string"
+        },
+        "child_execution_id": {
+          "title": "Child Execution Id",
           "type": "string"
         }
       },
@@ -1396,7 +1398,29 @@
     "DelegationCompletedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -1406,11 +1430,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -1436,34 +1456,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/DelegationCompletedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -1475,6 +1467,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -1488,16 +1492,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "delegation.completed",
           "default": "delegation.completed",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/DelegationCompletedPayload"
         }
       },
       "required": [
@@ -1512,12 +1514,12 @@
     "DelegationCompletedPayload": {
       "additionalProperties": false,
       "properties": {
-        "child_execution_id": {
-          "title": "Child Execution Id",
-          "type": "string"
-        },
         "delegation_id": {
           "title": "Delegation Id",
+          "type": "string"
+        },
+        "child_execution_id": {
+          "title": "Child Execution Id",
           "type": "string"
         },
         "summary": {
@@ -1536,7 +1538,29 @@
     "DelegationFailedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -1546,11 +1570,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -1576,34 +1596,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/DelegationFailedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -1615,6 +1607,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -1628,16 +1632,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "delegation.failed",
           "default": "delegation.failed",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/DelegationFailedPayload"
         }
       },
       "required": [
@@ -1671,17 +1673,8 @@
     "DelegationGraphEdge": {
       "additionalProperties": false,
       "properties": {
-        "data": {
-          "$ref": "#/$defs/DelegationGraphEdgeData"
-        },
         "id": {
           "title": "Id",
-          "type": "string"
-        },
-        "kind": {
-          "const": "delegation",
-          "default": "delegation",
-          "title": "Kind",
           "type": "string"
         },
         "source": {
@@ -1691,6 +1684,15 @@
         "target": {
           "title": "Target",
           "type": "string"
+        },
+        "kind": {
+          "const": "delegation",
+          "default": "delegation",
+          "title": "Kind",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/DelegationGraphEdgeData"
         }
       },
       "required": [
@@ -1705,25 +1707,12 @@
     "DelegationGraphEdgeData": {
       "additionalProperties": false,
       "properties": {
-        "child_agent_id": {
-          "title": "Child Agent Id",
-          "type": "string"
-        },
-        "created_at": {
-          "format": "date-time",
-          "title": "Created At",
-          "type": "string"
-        },
         "delegation_id": {
           "title": "Delegation Id",
           "type": "string"
         },
         "objective": {
           "title": "Objective",
-          "type": "string"
-        },
-        "parent_agent_id": {
-          "title": "Parent Agent Id",
           "type": "string"
         },
         "status": {
@@ -1736,6 +1725,19 @@
             "rejected"
           ],
           "title": "Status",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "parent_agent_id": {
+          "title": "Parent Agent Id",
+          "type": "string"
+        },
+        "child_agent_id": {
+          "title": "Child Agent Id",
           "type": "string"
         }
       },
@@ -1753,9 +1755,6 @@
     "DelegationGraphNode": {
       "additionalProperties": false,
       "properties": {
-        "data": {
-          "$ref": "#/$defs/DelegationGraphNodeData"
-        },
         "id": {
           "title": "Id",
           "type": "string"
@@ -1768,6 +1767,9 @@
           "default": "agent",
           "title": "Type",
           "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/DelegationGraphNodeData"
         }
       },
       "required": [
@@ -1781,10 +1783,6 @@
     "DelegationGraphNodeData": {
       "additionalProperties": false,
       "properties": {
-        "agent_id": {
-          "title": "Agent Id",
-          "type": "string"
-        },
         "status": {
           "enum": [
             "pending",
@@ -1799,6 +1797,10 @@
         "task_id": {
           "title": "Task Id",
           "type": "string"
+        },
+        "agent_id": {
+          "title": "Agent Id",
+          "type": "string"
         }
       },
       "required": [
@@ -1812,18 +1814,18 @@
     "DelegationGraphResponse": {
       "additionalProperties": false,
       "properties": {
-        "edges": {
-          "items": {
-            "$ref": "#/$defs/DelegationGraphEdge"
-          },
-          "title": "Edges",
-          "type": "array"
-        },
         "nodes": {
           "items": {
             "$ref": "#/$defs/DelegationGraphNode"
           },
           "title": "Nodes",
+          "type": "array"
+        },
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/DelegationGraphEdge"
+          },
+          "title": "Edges",
           "type": "array"
         }
       },
@@ -1837,7 +1839,29 @@
     "DelegationRequestedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -1847,11 +1871,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -1877,34 +1897,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/DelegationRequestedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -1916,6 +1908,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -1929,16 +1933,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "delegation.requested",
           "default": "delegation.requested",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/DelegationRequestedPayload"
         }
       },
       "required": [
@@ -1957,12 +1959,12 @@
           "title": "Parent Execution Id",
           "type": "string"
         },
-        "reason": {
-          "title": "Reason",
-          "type": "string"
-        },
         "target_agent": {
           "title": "Target Agent",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
           "type": "string"
         }
       },
@@ -1977,7 +1979,29 @@
     "DelegationStartedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -1987,11 +2011,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -2017,34 +2037,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/DelegationStartedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -2056,6 +2048,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -2069,16 +2073,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "delegation.started",
           "default": "delegation.started",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/DelegationStartedPayload"
         }
       },
       "required": [
@@ -2093,12 +2095,12 @@
     "DelegationStartedPayload": {
       "additionalProperties": false,
       "properties": {
-        "child_execution_id": {
-          "title": "Child Execution Id",
-          "type": "string"
-        },
         "delegation_id": {
           "title": "Delegation Id",
+          "type": "string"
+        },
+        "child_execution_id": {
+          "title": "Child Execution Id",
           "type": "string"
         }
       },
@@ -2261,11 +2263,6 @@
           "title": "Events",
           "type": "array"
         },
-        "last_seq": {
-          "default": 0,
-          "title": "Last Seq",
-          "type": "integer"
-        },
         "next_after_seq": {
           "anyOf": [
             {
@@ -2277,6 +2274,11 @@
           ],
           "default": null,
           "title": "Next After Seq"
+        },
+        "last_seq": {
+          "default": 0,
+          "title": "Last Seq",
+          "type": "integer"
         }
       },
       "required": [
@@ -2288,11 +2290,13 @@
     "EvidenceProvenance": {
       "additionalProperties": false,
       "properties": {
-        "confidence": {
-          "maximum": 1.0,
-          "minimum": 0.0,
-          "title": "Confidence",
-          "type": "number"
+        "source_url": {
+          "title": "Source Url",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
         },
         "retrieved_at": {
           "format": "date-time",
@@ -2303,13 +2307,11 @@
           "title": "Snippet",
           "type": "string"
         },
-        "source_url": {
-          "title": "Source Url",
-          "type": "string"
-        },
-        "title": {
-          "title": "Title",
-          "type": "string"
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
         }
       },
       "required": [
@@ -2324,7 +2326,29 @@
     "EvidenceSavedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -2334,11 +2358,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -2364,34 +2384,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/EvidenceSavedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -2403,6 +2395,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -2416,16 +2420,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "evidence.saved",
           "default": "evidence.saved",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/EvidenceSavedPayload"
         }
       },
       "required": [
@@ -2440,21 +2442,21 @@
     "EvidenceSavedPayload": {
       "additionalProperties": false,
       "properties": {
-        "chunk_count": {
-          "title": "Chunk Count",
-          "type": "integer"
-        },
         "source_id": {
           "title": "Source Id",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
           "type": "string"
         },
         "title": {
           "title": "Title",
           "type": "string"
         },
-        "url": {
-          "title": "Url",
-          "type": "string"
+        "chunk_count": {
+          "title": "Chunk Count",
+          "type": "integer"
         }
       },
       "required": [
@@ -2469,14 +2471,14 @@
     "ExecutionBudgets": {
       "additionalProperties": false,
       "properties": {
-        "external_requests": {
-          "default": 25,
-          "title": "External Requests",
-          "type": "integer"
-        },
         "model_calls": {
           "default": 10,
           "title": "Model Calls",
+          "type": "integer"
+        },
+        "tool_calls": {
+          "default": 20,
+          "title": "Tool Calls",
           "type": "integer"
         },
         "tokens_in": {
@@ -2489,15 +2491,15 @@
           "title": "Tokens Out",
           "type": "integer"
         },
-        "tool_calls": {
-          "default": 20,
-          "title": "Tool Calls",
-          "type": "integer"
-        },
         "wall_time_ms": {
           "default": 120000.0,
           "title": "Wall Time Ms",
           "type": "number"
+        },
+        "external_requests": {
+          "default": 25,
+          "title": "External Requests",
+          "type": "integer"
         }
       },
       "title": "ExecutionBudgets",
@@ -2506,14 +2508,14 @@
     "ExecutionBudgetsUsed": {
       "additionalProperties": false,
       "properties": {
-        "external_requests": {
-          "default": 0,
-          "title": "External Requests",
-          "type": "integer"
-        },
         "model_calls": {
           "default": 0,
           "title": "Model Calls",
+          "type": "integer"
+        },
+        "tool_calls": {
+          "default": 0,
+          "title": "Tool Calls",
           "type": "integer"
         },
         "tokens_in": {
@@ -2526,15 +2528,15 @@
           "title": "Tokens Out",
           "type": "integer"
         },
-        "tool_calls": {
-          "default": 0,
-          "title": "Tool Calls",
-          "type": "integer"
-        },
         "wall_time_ms": {
           "default": 0.0,
           "title": "Wall Time Ms",
           "type": "number"
+        },
+        "external_requests": {
+          "default": 0,
+          "title": "External Requests",
+          "type": "integer"
         }
       },
       "title": "ExecutionBudgetsUsed",
@@ -2543,13 +2545,13 @@
     "ExecutionNote": {
       "additionalProperties": false,
       "properties": {
-        "text": {
-          "title": "Text",
-          "type": "string"
-        },
         "ts": {
           "format": "date-time",
           "title": "Ts",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
           "type": "string"
         }
       },
@@ -2562,7 +2564,29 @@
     "ExecutionResumedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -2572,11 +2596,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -2602,34 +2622,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/ExecutionResumedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -2641,6 +2633,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -2654,16 +2658,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "execution.resumed",
           "default": "execution.resumed",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ExecutionResumedPayload"
         }
       },
       "required": [
@@ -2678,13 +2680,13 @@
     "ExecutionResumedPayload": {
       "additionalProperties": false,
       "properties": {
-        "from_step": {
-          "title": "From Step",
-          "type": "integer"
-        },
         "thread_id": {
           "title": "Thread Id",
           "type": "string"
+        },
+        "from_step": {
+          "title": "From Step",
+          "type": "integer"
         }
       },
       "required": [
@@ -2697,7 +2699,29 @@
     "FindingSavedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -2707,11 +2731,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -2737,34 +2757,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/FindingSavedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -2776,6 +2768,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -2789,16 +2793,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "finding.saved",
           "default": "finding.saved",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/FindingSavedPayload"
         }
       },
       "required": [
@@ -2813,6 +2815,10 @@
     "FindingSavedPayload": {
       "additionalProperties": false,
       "properties": {
+        "finding_id": {
+          "title": "Finding Id",
+          "type": "string"
+        },
         "category": {
           "title": "Category",
           "type": "string"
@@ -2831,10 +2837,6 @@
           },
           "title": "Evidence Ids",
           "type": "array"
-        },
-        "finding_id": {
-          "title": "Finding Id",
-          "type": "string"
         }
       },
       "required": [
@@ -2849,14 +2851,92 @@
     "LogEntry": {
       "additionalProperties": false,
       "properties": {
-        "attributes": {
-          "additionalProperties": true,
-          "title": "Attributes",
-          "type": "object"
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Seq"
+        },
+        "task_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task Id"
+        },
+        "execution_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Execution Id"
+        },
+        "tool_invocation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tool Invocation Id"
+        },
+        "trace_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trace Id"
         },
         "component": {
           "default": "orchestration",
           "title": "Component",
+          "type": "string"
+        },
+        "severity": {
+          "default": "info",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
           "type": "string"
         },
         "duration_ms": {
@@ -2891,88 +2971,10 @@
           "default": null,
           "title": "Error Category"
         },
-        "execution_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Execution Id"
-        },
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
-        "message": {
-          "title": "Message",
-          "type": "string"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "seq": {
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Seq"
-        },
-        "severity": {
-          "default": "info",
-          "enum": [
-            "debug",
-            "info",
-            "warn",
-            "error"
-          ],
-          "title": "Severity",
-          "type": "string"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
-        "tool_invocation_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Tool Invocation Id"
-        },
-        "trace_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Trace Id"
+        "attributes": {
+          "additionalProperties": true,
+          "title": "Attributes",
+          "type": "object"
         },
         "ts": {
           "format": "date-time",
@@ -3020,7 +3022,29 @@
     "PlanCreatedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -3030,11 +3054,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -3060,34 +3080,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/PlanCreatedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -3099,6 +3091,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -3112,16 +3116,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "plan.created",
           "default": "plan.created",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/PlanCreatedPayload"
         }
       },
       "required": [
@@ -3158,7 +3160,29 @@
     "PlanRevisedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -3168,11 +3192,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -3198,34 +3218,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/PlanRevisedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -3237,6 +3229,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -3250,16 +3254,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "plan.revised",
           "default": "plan.revised",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/PlanRevisedPayload"
         }
       },
       "required": [
@@ -3274,16 +3276,16 @@
     "PlanRevisedPayload": {
       "additionalProperties": false,
       "properties": {
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        },
         "added_tasks": {
           "items": {
             "type": "string"
           },
           "title": "Added Tasks",
           "type": "array"
-        },
-        "reason": {
-          "title": "Reason",
-          "type": "string"
         },
         "removed_tasks": {
           "items": {
@@ -3292,9 +3294,9 @@
           "title": "Removed Tasks",
           "type": "array"
         },
-        "revision": {
-          "title": "Revision",
-          "type": "integer"
+        "reason": {
+          "title": "Reason",
+          "type": "string"
         }
       },
       "required": [
@@ -3307,6 +3309,14 @@
     "PlanTaskItem": {
       "additionalProperties": false,
       "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
         "assigned_agent": {
           "title": "Assigned Agent",
           "type": "string"
@@ -3317,14 +3327,6 @@
           },
           "title": "Dependencies",
           "type": "array"
-        },
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
-        "name": {
-          "title": "Name",
-          "type": "string"
         },
         "required": {
           "title": "Required",
@@ -3391,7 +3393,29 @@
     "TaskAddedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -3401,11 +3425,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -3431,34 +3451,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/TaskAddedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -3470,6 +3462,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -3483,16 +3487,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "task.added",
           "default": "task.added",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/TaskAddedPayload"
         }
       },
       "required": [
@@ -3507,9 +3509,13 @@
     "TaskAddedPayload": {
       "additionalProperties": false,
       "properties": {
-        "added_in_revision": {
-          "title": "Added In Revision",
-          "type": "integer"
+        "task_id": {
+          "title": "Task Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
         },
         "assigned_agent": {
           "title": "Assigned Agent",
@@ -3522,13 +3528,9 @@
           "title": "Dependencies",
           "type": "array"
         },
-        "name": {
-          "title": "Name",
-          "type": "string"
-        },
-        "task_id": {
-          "title": "Task Id",
-          "type": "string"
+        "added_in_revision": {
+          "title": "Added In Revision",
+          "type": "integer"
         }
       },
       "required": [
@@ -3543,7 +3545,29 @@
     "TaskBlockedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -3553,11 +3577,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -3583,34 +3603,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/TaskBlockedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -3622,6 +3614,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -3635,16 +3639,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "task.blocked",
           "default": "task.blocked",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/TaskBlockedPayload"
         }
       },
       "required": [
@@ -3659,12 +3661,12 @@
     "TaskBlockedPayload": {
       "additionalProperties": false,
       "properties": {
-        "blocked_by_task_id": {
-          "title": "Blocked By Task Id",
-          "type": "string"
-        },
         "task_id": {
           "title": "Task Id",
+          "type": "string"
+        },
+        "blocked_by_task_id": {
+          "title": "Blocked By Task Id",
           "type": "string"
         }
       },
@@ -3678,7 +3680,29 @@
     "TaskCompletedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -3688,11 +3712,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -3718,34 +3738,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/TaskCompletedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -3757,6 +3749,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -3770,16 +3774,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "task.completed",
           "default": "task.completed",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/TaskCompletedPayload"
         }
       },
       "required": [
@@ -3794,6 +3796,10 @@
     "TaskCompletedPayload": {
       "additionalProperties": false,
       "properties": {
+        "task_id": {
+          "title": "Task Id",
+          "type": "string"
+        },
         "duration_ms": {
           "title": "Duration Ms",
           "type": "number"
@@ -3801,10 +3807,6 @@
         "output_summary": {
           "default": "",
           "title": "Output Summary",
-          "type": "string"
-        },
-        "task_id": {
-          "title": "Task Id",
           "type": "string"
         }
       },
@@ -3818,7 +3820,29 @@
     "TaskFailedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -3828,11 +3852,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -3858,34 +3878,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/TaskFailedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -3897,6 +3889,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -3910,16 +3914,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "task.failed",
           "default": "task.failed",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/TaskFailedPayload"
         }
       },
       "required": [
@@ -3934,22 +3936,22 @@
     "TaskFailedPayload": {
       "additionalProperties": false,
       "properties": {
+        "task_id": {
+          "title": "Task Id",
+          "type": "string"
+        },
         "attempt": {
           "title": "Attempt",
           "type": "integer"
-        },
-        "can_retry": {
-          "default": false,
-          "title": "Can Retry",
-          "type": "boolean"
         },
         "error": {
           "title": "Error",
           "type": "string"
         },
-        "task_id": {
-          "title": "Task Id",
-          "type": "string"
+        "can_retry": {
+          "default": false,
+          "title": "Can Retry",
+          "type": "boolean"
         }
       },
       "required": [
@@ -3967,18 +3969,18 @@
           "title": "Id",
           "type": "string"
         },
-        "kind": {
-          "const": "dependency",
-          "default": "dependency",
-          "title": "Kind",
-          "type": "string"
-        },
         "source": {
           "title": "Source",
           "type": "string"
         },
         "target": {
           "title": "Target",
+          "type": "string"
+        },
+        "kind": {
+          "const": "dependency",
+          "default": "dependency",
+          "title": "Kind",
           "type": "string"
         }
       },
@@ -3993,9 +3995,6 @@
     "TaskGraphNode": {
       "additionalProperties": false,
       "properties": {
-        "data": {
-          "$ref": "#/$defs/TaskGraphNodeData"
-        },
         "id": {
           "title": "Id",
           "type": "string"
@@ -4008,6 +4007,9 @@
           "default": "task",
           "title": "Type",
           "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/TaskGraphNodeData"
         }
       },
       "required": [
@@ -4021,34 +4023,6 @@
     "TaskGraphNodeData": {
       "additionalProperties": false,
       "properties": {
-        "added_in_revision": {
-          "title": "Added In Revision",
-          "type": "integer"
-        },
-        "assigned_agent": {
-          "title": "Assigned Agent",
-          "type": "string"
-        },
-        "attempt": {
-          "title": "Attempt",
-          "type": "integer"
-        },
-        "execution_ids": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Execution Ids",
-          "type": "array"
-        },
-        "group": {
-          "default": "default",
-          "title": "Group",
-          "type": "string"
-        },
-        "required": {
-          "title": "Required",
-          "type": "boolean"
-        },
         "status": {
           "enum": [
             "pending",
@@ -4064,8 +4038,36 @@
           "title": "Status",
           "type": "string"
         },
+        "assigned_agent": {
+          "title": "Assigned Agent",
+          "type": "string"
+        },
+        "attempt": {
+          "title": "Attempt",
+          "type": "integer"
+        },
         "task_type": {
           "title": "Task Type",
+          "type": "string"
+        },
+        "required": {
+          "title": "Required",
+          "type": "boolean"
+        },
+        "added_in_revision": {
+          "title": "Added In Revision",
+          "type": "integer"
+        },
+        "execution_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Execution Ids",
+          "type": "array"
+        },
+        "group": {
+          "default": "default",
+          "title": "Group",
           "type": "string"
         }
       },
@@ -4083,18 +4085,18 @@
     "TaskGraphResponse": {
       "additionalProperties": false,
       "properties": {
-        "edges": {
-          "items": {
-            "$ref": "#/$defs/TaskGraphEdge"
-          },
-          "title": "Edges",
-          "type": "array"
-        },
         "nodes": {
           "items": {
             "$ref": "#/$defs/TaskGraphNode"
           },
           "title": "Nodes",
+          "type": "array"
+        },
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/TaskGraphEdge"
+          },
+          "title": "Edges",
           "type": "array"
         }
       },
@@ -4108,7 +4110,29 @@
     "TaskQueuedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -4118,11 +4142,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -4148,34 +4168,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/TaskQueuedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -4187,6 +4179,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -4200,16 +4204,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "task.queued",
           "default": "task.queued",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/TaskQueuedPayload"
         }
       },
       "required": [
@@ -4224,14 +4226,14 @@
     "TaskQueuedPayload": {
       "additionalProperties": false,
       "properties": {
+        "task_id": {
+          "title": "Task Id",
+          "type": "string"
+        },
         "priority": {
           "default": 0,
           "title": "Priority",
           "type": "integer"
-        },
-        "task_id": {
-          "title": "Task Id",
-          "type": "string"
         }
       },
       "required": [
@@ -4243,7 +4245,29 @@
     "TaskRemovedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -4253,11 +4277,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -4283,34 +4303,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/TaskRemovedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -4322,6 +4314,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -4335,16 +4339,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "task.removed",
           "default": "task.removed",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/TaskRemovedPayload"
         }
       },
       "required": [
@@ -4359,12 +4361,12 @@
     "TaskRemovedPayload": {
       "additionalProperties": false,
       "properties": {
-        "reason": {
-          "title": "Reason",
-          "type": "string"
-        },
         "task_id": {
           "title": "Task Id",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
           "type": "string"
         }
       },
@@ -4378,7 +4380,29 @@
     "TaskRetryingEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -4388,11 +4412,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -4418,34 +4438,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/TaskRetryingPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -4457,6 +4449,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -4470,16 +4474,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "task.retrying",
           "default": "task.retrying",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/TaskRetryingPayload"
         }
       },
       "required": [
@@ -4494,17 +4496,17 @@
     "TaskRetryingPayload": {
       "additionalProperties": false,
       "properties": {
-        "delay_ms": {
-          "title": "Delay Ms",
-          "type": "integer"
+        "task_id": {
+          "title": "Task Id",
+          "type": "string"
         },
         "next_attempt": {
           "title": "Next Attempt",
           "type": "integer"
         },
-        "task_id": {
-          "title": "Task Id",
-          "type": "string"
+        "delay_ms": {
+          "title": "Delay Ms",
+          "type": "integer"
         }
       },
       "required": [
@@ -4518,7 +4520,29 @@
     "TaskStartedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -4528,11 +4552,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -4558,34 +4578,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/TaskStartedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -4597,6 +4589,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -4610,16 +4614,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "task.started",
           "default": "task.started",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/TaskStartedPayload"
         }
       },
       "required": [
@@ -4634,16 +4636,16 @@
     "TaskStartedPayload": {
       "additionalProperties": false,
       "properties": {
-        "assigned_agent": {
-          "title": "Assigned Agent",
+        "task_id": {
+          "title": "Task Id",
           "type": "string"
         },
         "attempt": {
           "title": "Attempt",
           "type": "integer"
         },
-        "task_id": {
-          "title": "Task Id",
+        "assigned_agent": {
+          "title": "Assigned Agent",
           "type": "string"
         }
       },
@@ -4658,7 +4660,29 @@
     "ToolCompletedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -4668,11 +4692,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -4698,34 +4718,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/ToolCompletedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -4737,6 +4729,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -4750,16 +4754,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "tool.completed",
           "default": "tool.completed",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ToolCompletedPayload"
         }
       },
       "required": [
@@ -4774,20 +4776,20 @@
     "ToolCompletedPayload": {
       "additionalProperties": false,
       "properties": {
-        "duration_ms": {
-          "title": "Duration Ms",
-          "type": "number"
-        },
-        "summary": {
-          "title": "Summary",
-          "type": "string"
-        },
         "tool_invocation_id": {
           "title": "Tool Invocation Id",
           "type": "string"
         },
         "tool_name": {
           "title": "Tool Name",
+          "type": "string"
+        },
+        "duration_ms": {
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "summary": {
+          "title": "Summary",
           "type": "string"
         }
       },
@@ -4803,7 +4805,29 @@
     "ToolFailedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -4813,11 +4837,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -4843,34 +4863,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/ToolFailedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -4882,6 +4874,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -4895,16 +4899,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "tool.failed",
           "default": "tool.failed",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ToolFailedPayload"
         }
       },
       "required": [
@@ -4919,16 +4921,16 @@
     "ToolFailedPayload": {
       "additionalProperties": false,
       "properties": {
-        "error": {
-          "title": "Error",
-          "type": "string"
-        },
         "tool_invocation_id": {
           "title": "Tool Invocation Id",
           "type": "string"
         },
         "tool_name": {
           "title": "Tool Name",
+          "type": "string"
+        },
+        "error": {
+          "title": "Error",
           "type": "string"
         }
       },
@@ -4943,42 +4945,42 @@
     "ToolInvocation": {
       "additionalProperties": false,
       "properties": {
-        "completed_at": {
-          "anyOf": [
-            {
-              "format": "date-time",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "execution_id": {
+          "title": "Execution Id",
+          "type": "string"
+        },
+        "tool_name": {
+          "title": "Tool Name",
+          "type": "string"
+        },
+        "status": {
+          "default": "pending",
+          "enum": [
+            "pending",
+            "running",
+            "completed",
+            "failed"
           ],
-          "default": null,
-          "title": "Completed At"
+          "title": "Status",
+          "type": "string"
         },
         "duration_ms": {
           "default": 0.0,
           "title": "Duration Ms",
           "type": "number"
         },
-        "error": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Error"
+        "sanitized_input": {
+          "additionalProperties": true,
+          "title": "Sanitized Input",
+          "type": "object"
         },
-        "execution_id": {
-          "title": "Execution Id",
-          "type": "string"
-        },
-        "id": {
-          "title": "Id",
+        "output_summary": {
+          "default": "",
+          "title": "Output Summary",
           "type": "string"
         },
         "output_ref": {
@@ -4993,35 +4995,35 @@
           "default": null,
           "title": "Output Ref"
         },
-        "output_summary": {
-          "default": "",
-          "title": "Output Summary",
-          "type": "string"
-        },
-        "sanitized_input": {
-          "additionalProperties": true,
-          "title": "Sanitized Input",
-          "type": "object"
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
         },
         "started_at": {
           "format": "date-time",
           "title": "Started At",
           "type": "string"
         },
-        "status": {
-          "default": "pending",
-          "enum": [
-            "pending",
-            "running",
-            "completed",
-            "failed"
+        "completed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
           ],
-          "title": "Status",
-          "type": "string"
-        },
-        "tool_name": {
-          "title": "Tool Name",
-          "type": "string"
+          "default": null,
+          "title": "Completed At"
         }
       },
       "required": [
@@ -5064,29 +5066,29 @@
     "ToolOutputResponse": {
       "additionalProperties": false,
       "properties": {
-        "content": {
-          "title": "Content",
+        "tool_invocation_id": {
+          "title": "Tool Invocation Id",
           "type": "string"
-        },
-        "has_more": {
-          "title": "Has More",
-          "type": "boolean"
-        },
-        "limit": {
-          "title": "Limit",
-          "type": "integer"
         },
         "offset": {
           "title": "Offset",
           "type": "integer"
         },
-        "tool_invocation_id": {
-          "title": "Tool Invocation Id",
-          "type": "string"
+        "limit": {
+          "title": "Limit",
+          "type": "integer"
         },
         "total_bytes": {
           "title": "Total Bytes",
           "type": "integer"
+        },
+        "has_more": {
+          "title": "Has More",
+          "type": "boolean"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
         }
       },
       "required": [
@@ -5103,7 +5105,29 @@
     "ToolStartedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -5113,11 +5137,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -5143,34 +5163,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/ToolStartedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -5182,6 +5174,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -5195,16 +5199,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "tool.started",
           "default": "tool.started",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ToolStartedPayload"
         }
       },
       "required": [
@@ -5219,11 +5221,6 @@
     "ToolStartedPayload": {
       "additionalProperties": false,
       "properties": {
-        "sanitized_input": {
-          "additionalProperties": true,
-          "title": "Sanitized Input",
-          "type": "object"
-        },
         "tool_invocation_id": {
           "title": "Tool Invocation Id",
           "type": "string"
@@ -5231,6 +5228,11 @@
         "tool_name": {
           "title": "Tool Name",
           "type": "string"
+        },
+        "sanitized_input": {
+          "additionalProperties": true,
+          "title": "Sanitized Input",
+          "type": "object"
         }
       },
       "required": [
@@ -5243,7 +5245,29 @@
     "WorkerRecoveredEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -5253,11 +5277,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -5283,34 +5303,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/WorkerRecoveredPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -5322,6 +5314,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -5335,16 +5339,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "worker.recovered",
           "default": "worker.recovered",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/WorkerRecoveredPayload"
         }
       },
       "required": [
@@ -5359,17 +5361,17 @@
     "WorkerRecoveredPayload": {
       "additionalProperties": false,
       "properties": {
-        "resumed_tasks_count": {
-          "title": "Resumed Tasks Count",
-          "type": "integer"
+        "worker_id": {
+          "title": "Worker Id",
+          "type": "string"
         },
         "run_id": {
           "title": "Run Id",
           "type": "string"
         },
-        "worker_id": {
-          "title": "Worker Id",
-          "type": "string"
+        "resumed_tasks_count": {
+          "title": "Resumed Tasks Count",
+          "type": "integer"
         }
       },
       "required": [
@@ -5383,7 +5385,29 @@
     "WorkflowCancelledEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -5393,11 +5417,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -5423,34 +5443,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/WorkflowCancelledPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -5462,6 +5454,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -5475,16 +5479,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "workflow.cancelled",
           "default": "workflow.cancelled",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/WorkflowCancelledPayload"
         }
       },
       "required": [
@@ -5499,12 +5501,12 @@
     "WorkflowCancelledPayload": {
       "additionalProperties": false,
       "properties": {
-        "cancelled_by": {
-          "title": "Cancelled By",
-          "type": "string"
-        },
         "reason": {
           "title": "Reason",
+          "type": "string"
+        },
+        "cancelled_by": {
+          "title": "Cancelled By",
           "type": "string"
         }
       },
@@ -5518,7 +5520,29 @@
     "WorkflowCompletedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -5528,11 +5552,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -5558,34 +5578,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/WorkflowCompletedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -5597,6 +5589,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -5610,16 +5614,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "workflow.completed",
           "default": "workflow.completed",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/WorkflowCompletedPayload"
         }
       },
       "required": [
@@ -5634,6 +5636,14 @@
     "WorkflowCompletedPayload": {
       "additionalProperties": false,
       "properties": {
+        "duration_ms": {
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "total_tasks": {
+          "title": "Total Tasks",
+          "type": "integer"
+        },
         "artifacts_count": {
           "title": "Artifacts Count",
           "type": "integer"
@@ -5649,14 +5659,6 @@
           },
           "title": "Degraded Reasons",
           "type": "array"
-        },
-        "duration_ms": {
-          "title": "Duration Ms",
-          "type": "number"
-        },
-        "total_tasks": {
-          "title": "Total Tasks",
-          "type": "integer"
         }
       },
       "required": [
@@ -5670,7 +5672,29 @@
     "WorkflowCreatedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -5680,11 +5704,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -5710,34 +5730,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/WorkflowCreatedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -5749,6 +5741,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -5762,16 +5766,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "workflow.created",
           "default": "workflow.created",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/WorkflowCreatedPayload"
         }
       },
       "required": [
@@ -5786,24 +5788,25 @@
     "WorkflowCreatedPayload": {
       "additionalProperties": false,
       "properties": {
-        "type": {
-          "enum": [
-            "static",
-            "dynamic"
-          ],
-          "title": "Type",
-          "type": "string"
-        },
-        "user_id": {
-          "title": "User Id",
-          "type": "string"
-        },
         "workflow_id": {
           "title": "Workflow Id",
           "type": "string"
         },
         "workspace_id": {
           "title": "Workspace Id",
+          "type": "string"
+        },
+        "user_id": {
+          "title": "User Id",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "static",
+            "dynamic",
+            "hybrid"
+          ],
+          "title": "Type",
           "type": "string"
         }
       },
@@ -5819,15 +5822,6 @@
     "WorkflowDefinition": {
       "additionalProperties": false,
       "properties": {
-        "default_max_retries": {
-          "default": 3,
-          "title": "Default Max Retries",
-          "type": "integer"
-        },
-        "description": {
-          "title": "Description",
-          "type": "string"
-        },
         "id": {
           "title": "Id",
           "type": "string"
@@ -5836,17 +5830,11 @@
           "title": "Name",
           "type": "string"
         },
-        "supported_agents": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Supported Agents",
-          "type": "array"
-        },
         "type": {
           "enum": [
             "static",
-            "dynamic"
+            "dynamic",
+            "hybrid"
           ],
           "title": "Type",
           "type": "string"
@@ -5855,6 +5843,22 @@
           "default": "1.0.0",
           "title": "Version",
           "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "default_max_retries": {
+          "default": 3,
+          "title": "Default Max Retries",
+          "type": "integer"
+        },
+        "supported_agents": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Agents",
+          "type": "array"
         }
       },
       "required": [
@@ -5869,7 +5873,29 @@
     "WorkflowFailedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -5879,11 +5905,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -5909,34 +5931,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/WorkflowFailedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -5948,6 +5942,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -5961,16 +5967,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "workflow.failed",
           "default": "workflow.failed",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/WorkflowFailedPayload"
         }
       },
       "required": [
@@ -6011,6 +6015,41 @@
     "WorkflowProgress": {
       "additionalProperties": false,
       "properties": {
+        "total_tasks": {
+          "default": 0,
+          "title": "Total Tasks",
+          "type": "integer"
+        },
+        "pending": {
+          "default": 0,
+          "title": "Pending",
+          "type": "integer"
+        },
+        "queued": {
+          "default": 0,
+          "title": "Queued",
+          "type": "integer"
+        },
+        "running": {
+          "default": 0,
+          "title": "Running",
+          "type": "integer"
+        },
+        "completed": {
+          "default": 0,
+          "title": "Completed",
+          "type": "integer"
+        },
+        "failed": {
+          "default": 0,
+          "title": "Failed",
+          "type": "integer"
+        },
+        "retrying": {
+          "default": 0,
+          "title": "Retrying",
+          "type": "integer"
+        },
         "blocked": {
           "default": 0,
           "title": "Blocked",
@@ -6021,24 +6060,9 @@
           "title": "Cancelled",
           "type": "integer"
         },
-        "completed": {
+        "skipped": {
           "default": 0,
-          "title": "Completed",
-          "type": "integer"
-        },
-        "estimate": {
-          "default": false,
-          "title": "Estimate",
-          "type": "boolean"
-        },
-        "failed": {
-          "default": 0,
-          "title": "Failed",
-          "type": "integer"
-        },
-        "pending": {
-          "default": 0,
-          "title": "Pending",
+          "title": "Skipped",
           "type": "integer"
         },
         "percentage": {
@@ -6053,17 +6077,10 @@
           "default": null,
           "title": "Percentage"
         },
-        "phase_count": {
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Phase Count"
+        "estimate": {
+          "default": false,
+          "title": "Estimate",
+          "type": "boolean"
         },
         "phase_index": {
           "anyOf": [
@@ -6077,30 +6094,17 @@
           "default": null,
           "title": "Phase Index"
         },
-        "queued": {
-          "default": 0,
-          "title": "Queued",
-          "type": "integer"
-        },
-        "retrying": {
-          "default": 0,
-          "title": "Retrying",
-          "type": "integer"
-        },
-        "running": {
-          "default": 0,
-          "title": "Running",
-          "type": "integer"
-        },
-        "skipped": {
-          "default": 0,
-          "title": "Skipped",
-          "type": "integer"
-        },
-        "total_tasks": {
-          "default": 0,
-          "title": "Total Tasks",
-          "type": "integer"
+        "phase_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Phase Count"
         }
       },
       "title": "WorkflowProgress",
@@ -6109,7 +6113,29 @@
     "WorkflowRetryingEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -6119,11 +6145,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -6149,34 +6171,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/WorkflowRetryingPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -6188,6 +6182,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -6201,16 +6207,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "workflow.retrying",
           "default": "workflow.retrying",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/WorkflowRetryingPayload"
         }
       },
       "required": [
@@ -6229,6 +6233,10 @@
           "title": "Attempt",
           "type": "integer"
         },
+        "next_attempt": {
+          "title": "Next Attempt",
+          "type": "integer"
+        },
         "delay_ms": {
           "title": "Delay Ms",
           "type": "integer"
@@ -6236,10 +6244,6 @@
         "error_category": {
           "title": "Error Category",
           "type": "string"
-        },
-        "next_attempt": {
-          "title": "Next Attempt",
-          "type": "integer"
         }
       },
       "required": [
@@ -6254,73 +6258,50 @@
     "WorkflowRun": {
       "additionalProperties": false,
       "properties": {
-        "completed_at": {
-          "anyOf": [
-            {
-              "format": "date-time",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Completed At"
+        "id": {
+          "title": "Id",
+          "type": "string"
         },
-        "created_at": {
-          "format": "date-time",
-          "title": "Created At",
+        "workflow_id": {
+          "title": "Workflow Id",
+          "type": "string"
+        },
+        "workflow_name": {
+          "title": "Workflow Name",
+          "type": "string"
+        },
+        "workspace_id": {
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "user_id": {
+          "title": "User Id",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "static",
+            "dynamic",
+            "hybrid"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "running",
+            "completed",
+            "failed",
+            "cancelled"
+          ],
+          "title": "Status",
           "type": "string"
         },
         "current_phase": {
           "default": "initialization",
           "title": "Current Phase",
           "type": "string"
-        },
-        "degraded": {
-          "default": false,
-          "title": "Degraded",
-          "type": "boolean"
-        },
-        "degraded_reasons": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Degraded Reasons",
-          "type": "array"
-        },
-        "duration_ms": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Duration Ms"
-        },
-        "error_message": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Error Message"
-        },
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
-        "last_seq": {
-          "default": 0,
-          "title": "Last Seq",
-          "type": "integer"
         },
         "plan_revision": {
           "default": 1,
@@ -6329,6 +6310,11 @@
         },
         "progress": {
           "$ref": "#/$defs/WorkflowProgress"
+        },
+        "last_seq": {
+          "default": 0,
+          "title": "Last Seq",
+          "type": "integer"
         },
         "started_at": {
           "anyOf": [
@@ -6343,23 +6329,34 @@
           "default": null,
           "title": "Started At"
         },
-        "status": {
-          "enum": [
-            "pending",
-            "running",
-            "completed",
-            "failed",
-            "cancelled"
+        "completed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
           ],
-          "title": "Status",
-          "type": "string"
+          "default": null,
+          "title": "Completed At"
         },
-        "type": {
-          "enum": [
-            "static",
-            "dynamic"
+        "duration_ms": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
           ],
-          "title": "Type",
+          "default": null,
+          "title": "Duration Ms"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
           "type": "string"
         },
         "updated_at": {
@@ -6367,21 +6364,29 @@
           "title": "Updated At",
           "type": "string"
         },
-        "user_id": {
-          "title": "User Id",
-          "type": "string"
+        "error_message": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Message"
         },
-        "workflow_id": {
-          "title": "Workflow Id",
-          "type": "string"
+        "degraded": {
+          "default": false,
+          "title": "Degraded",
+          "type": "boolean"
         },
-        "workflow_name": {
-          "title": "Workflow Name",
-          "type": "string"
-        },
-        "workspace_id": {
-          "title": "Workspace Id",
-          "type": "string"
+        "degraded_reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Degraded Reasons",
+          "type": "array"
         }
       },
       "required": [
@@ -6399,7 +6404,29 @@
     "WorkflowStartedEvent": {
       "additionalProperties": false,
       "properties": {
-        "correlation_id": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
           "anyOf": [
             {
               "type": "string"
@@ -6409,11 +6436,7 @@
             }
           ],
           "default": null,
-          "title": "Correlation Id"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "string"
+          "title": "Task Id"
         },
         "execution_id": {
           "anyOf": [
@@ -6439,34 +6462,6 @@
           "default": null,
           "title": "Parent Execution Id"
         },
-        "payload": {
-          "$ref": "#/$defs/WorkflowStartedPayload"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
-        },
-        "schema_version": {
-          "default": "1.0",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "seq": {
-          "title": "Seq",
-          "type": "integer"
-        },
-        "task_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Task Id"
-        },
         "tool_invocation_id": {
           "anyOf": [
             {
@@ -6478,6 +6473,18 @@
           ],
           "default": null,
           "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
         },
         "trace_id": {
           "anyOf": [
@@ -6491,16 +6498,14 @@
           "default": null,
           "title": "Trace Id"
         },
-        "ts": {
-          "format": "date-time",
-          "title": "Ts",
-          "type": "string"
-        },
         "type": {
           "const": "workflow.started",
           "default": "workflow.started",
           "title": "Type",
           "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/WorkflowStartedPayload"
         }
       },
       "required": [
@@ -6515,12 +6520,12 @@
     "WorkflowStartedPayload": {
       "additionalProperties": false,
       "properties": {
-        "initial_tasks_count": {
-          "title": "Initial Tasks Count",
-          "type": "integer"
-        },
         "plan_revision": {
           "title": "Plan Revision",
+          "type": "integer"
+        },
+        "initial_tasks_count": {
+          "title": "Initial Tasks Count",
           "type": "integer"
         }
       },
@@ -6534,23 +6539,24 @@
     "WorkflowTask": {
       "additionalProperties": false,
       "properties": {
-        "added_in_revision": {
-          "default": 1,
-          "title": "Added In Revision",
-          "type": "integer"
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "task_type": {
+          "title": "Task Type",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
         },
         "assigned_agent": {
           "title": "Assigned Agent",
-          "type": "string"
-        },
-        "attempt": {
-          "default": 1,
-          "title": "Attempt",
-          "type": "integer"
-        },
-        "created_at": {
-          "format": "date-time",
-          "title": "Created At",
           "type": "string"
         },
         "dependencies": {
@@ -6559,52 +6565,6 @@
           },
           "title": "Dependencies",
           "type": "array"
-        },
-        "error": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Error"
-        },
-        "execution_ids": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Execution Ids",
-          "type": "array"
-        },
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
-        "input_data": {
-          "additionalProperties": true,
-          "title": "Input Data",
-          "type": "object"
-        },
-        "name": {
-          "title": "Name",
-          "type": "string"
-        },
-        "output_data": {
-          "additionalProperties": true,
-          "title": "Output Data",
-          "type": "object"
-        },
-        "required": {
-          "default": true,
-          "title": "Required",
-          "type": "boolean"
-        },
-        "run_id": {
-          "title": "Run Id",
-          "type": "string"
         },
         "status": {
           "default": "pending",
@@ -6622,8 +6582,53 @@
           "title": "Status",
           "type": "string"
         },
-        "task_type": {
-          "title": "Task Type",
+        "attempt": {
+          "default": 1,
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "required": {
+          "default": true,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "added_in_revision": {
+          "default": 1,
+          "title": "Added In Revision",
+          "type": "integer"
+        },
+        "execution_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Execution Ids",
+          "type": "array"
+        },
+        "input_data": {
+          "additionalProperties": true,
+          "title": "Input Data",
+          "type": "object"
+        },
+        "output_data": {
+          "additionalProperties": true,
+          "title": "Output Data",
+          "type": "object"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
           "type": "string"
         },
         "updated_at": {
@@ -6643,6 +6648,6 @@
       "type": "object"
     }
   },
-  "description": "Public v1 Workflow and Multi-Agent Orchestration Contracts",
-  "title": "MensetsuWorkflowsV1Schemas"
+  "title": "MensetsuWorkflowsV1Schemas",
+  "description": "Public v1 Workflow and Multi-Agent Orchestration Contracts"
 }

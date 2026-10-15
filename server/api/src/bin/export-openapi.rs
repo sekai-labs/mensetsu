@@ -26,10 +26,16 @@ fn main() {
     let mut json = serde_json::to_string_pretty(&sorted_val).expect("Failed to serialize OpenAPI spec");
     json.push('\n');
 
-    let contracts_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("contracts");
-    fs::create_dir_all(&contracts_dir).expect("Failed to create contracts dir");
+    let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
+    let packages_contracts_dir = repo_root.join("packages").join("contracts");
+    fs::create_dir_all(&packages_contracts_dir).expect("Failed to create packages/contracts dir");
+    let packages_out_path = packages_contracts_dir.join("openapi.json");
+    fs::write(&packages_out_path, &json).expect("Failed to write packages/contracts/openapi.json");
+    println!("Exported deterministic OpenAPI spec to {}", packages_out_path.display());
 
-    let out_path = contracts_dir.join("openapi.json");
-    fs::write(&out_path, &json).expect("Failed to write openapi.json");
-    println!("Exported deterministic OpenAPI spec to {}", out_path.display());
+    let api_contracts_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("contracts");
+    fs::create_dir_all(&api_contracts_dir).expect("Failed to create server/api/contracts dir");
+    let api_out_path = api_contracts_dir.join("openapi.json");
+    fs::write(&api_out_path, &json).expect("Failed to write server/api/contracts/openapi.json");
+    println!("Exported deterministic OpenAPI spec to {}", api_out_path.display());
 }

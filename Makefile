@@ -70,8 +70,11 @@ test: test-api test-ai test-web
 
 contracts: api-target-owner
 	cd server/api && cargo run --quiet --bin export-openapi
+	cd packages/contracts && bun install --frozen-lockfile && bun run generate
 	cd $(CONTRACTS_DIR) && bun install --frozen-lockfile && bun run generate
-
+	cd server/intelligence && PYTHONPATH=. uv run python src/contracts/export_schema.py
+	cd app/web && bun run scripts/gen-contracts.ts
+	@echo "All API DTOs, schemas, and contracts generated and exported to packages/contracts, server/api/contracts, and app/web."
 contracts-check:
 	@set -e; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
 	cp -R $(CONTRACTS_DIR)/openapi.json $(CONTRACTS_DIR)/src "$$tmp/"; \

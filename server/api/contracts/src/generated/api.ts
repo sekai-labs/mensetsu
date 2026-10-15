@@ -560,7 +560,7 @@ export interface components {
         };
         ArtifactContent: Record<string, never> | string;
         /** @enum {string} */
-        ArtifactType: "research_report" | "finding" | "evidence" | "question_set" | "recommendation" | "validation_result";
+        ArtifactType: "research_report" | "finding" | "evidence" | "question_set" | "recommendation" | "validation_result" | "routing_decision";
         AuthResponseDto: {
             access_token: string;
             refresh_token: string;
@@ -587,19 +587,21 @@ export interface components {
             workspace_id: components["schemas"]["WorkspaceId"];
         };
         CreateWorkspaceRequestDto: {
-            company_name: string;
-            company_urls: string[];
+            company_name?: string | null;
+            company_urls?: string[];
             jd_url?: string | null;
             job_description?: string | null;
             /** Format: int32 */
             prep_time_weeks?: number | null;
+            prompt?: string | null;
             resume_filename?: string | null;
             resume_pdf_base64?: string | null;
             resume_text?: string | null;
-            role_title: string;
+            role_title?: string | null;
             seniority?: null | components["schemas"]["SeniorityLevel"];
             /** Format: date-time */
             target_date?: string | null;
+            workflow_mode?: string | null;
         };
         Delegation: {
             child_agent_id: string;
@@ -818,6 +820,9 @@ export interface components {
             workspace_id: components["schemas"]["WorkspaceId"];
         };
         LessonChapter: {
+            content?: string | null;
+            focus_area?: string | null;
+            id?: string | null;
             summary?: string | null;
             timestamp: string;
             title: string;
@@ -1193,11 +1198,12 @@ export interface components {
             updated_at: string;
         };
         /** @enum {string} */
-        WorkflowType: "static" | "dynamic";
+        WorkflowType: "static" | "dynamic" | "hybrid";
         Workspace: {
             company_name: string;
             /** Format: date-time */
             created_at: string;
+            current_objective?: string | null;
             current_phase: components["schemas"]["PipelinePhase"];
             id: components["schemas"]["WorkspaceId"];
             /** Format: int32 */
@@ -1212,6 +1218,8 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
             user_id: components["schemas"]["UserId"];
+            user_prompt?: string | null;
+            workflow_mode: string;
         };
         WorkspaceId: string;
         WorkspaceProgressEventDto: {
@@ -1227,6 +1235,7 @@ export interface components {
             company_name: string;
             /** Format: date-time */
             created_at: string;
+            current_objective?: string | null;
             current_phase: components["schemas"]["PipelinePhase"];
             id: string;
             /** Format: int32 */
@@ -1236,6 +1245,8 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
             user_id: string;
+            user_prompt?: string | null;
+            workflow_mode?: string | null;
         };
         /** @enum {string} */
         WorkspaceStatus: "pending" | "processing" | "ready" | "failed";
@@ -2234,6 +2245,7 @@ export interface operations {
                 limit?: number;
                 severity?: string;
                 task_id?: string;
+                execution_id?: string;
             };
             header?: never;
             path: {

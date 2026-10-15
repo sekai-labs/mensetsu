@@ -196,7 +196,8 @@
           "evidence",
           "question_set",
           "recommendation",
-          "validation_result"
+          "validation_result",
+          "routing_decision"
         ],
         "type": "string"
       },
@@ -313,7 +314,10 @@
         "additionalProperties": false,
         "properties": {
           "company_name": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "company_urls": {
             "items": {
@@ -341,6 +345,12 @@
               "null"
             ]
           },
+          "prompt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "resume_filename": {
             "type": [
               "string",
@@ -360,7 +370,10 @@
             ]
           },
           "role_title": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "seniority": {
             "oneOf": [
@@ -378,13 +391,14 @@
               "string",
               "null"
             ]
+          },
+          "workflow_mode": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
-        "required": [
-          "company_name",
-          "role_title",
-          "company_urls"
-        ],
         "type": "object"
       },
       "Delegation": {
@@ -1140,6 +1154,24 @@
       },
       "LessonChapter": {
         "properties": {
+          "content": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "focus_area": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "summary": {
             "type": [
               "string",
@@ -2472,7 +2504,8 @@
       "WorkflowType": {
         "enum": [
           "static",
-          "dynamic"
+          "dynamic",
+          "hybrid"
         ],
         "type": "string"
       },
@@ -2484,6 +2517,12 @@
           "created_at": {
             "format": "date-time",
             "type": "string"
+          },
+          "current_objective": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "current_phase": {
             "$ref": "#/components/schemas/PipelinePhase"
@@ -2533,6 +2572,15 @@
           },
           "user_id": {
             "$ref": "#/components/schemas/UserId"
+          },
+          "user_prompt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "workflow_mode": {
+            "type": "string"
           }
         },
         "required": [
@@ -2543,6 +2591,7 @@
           "status",
           "current_phase",
           "progress_percent",
+          "workflow_mode",
           "created_at",
           "updated_at"
         ],
@@ -2590,6 +2639,12 @@
             "format": "date-time",
             "type": "string"
           },
+          "current_objective": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "current_phase": {
             "$ref": "#/components/schemas/PipelinePhase"
           },
@@ -2613,6 +2668,18 @@
           },
           "user_id": {
             "type": "string"
+          },
+          "user_prompt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "workflow_mode": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -3735,6 +3802,14 @@
           {
             "in": "query",
             "name": "task_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "execution_id",
             "required": false,
             "schema": {
               "type": "string"
