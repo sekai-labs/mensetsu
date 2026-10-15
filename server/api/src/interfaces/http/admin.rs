@@ -252,7 +252,7 @@ pub async fn list_admin_providers(
         .map_err(|e| AppError::Database(e.to_string()))?;
     let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
 
-    let providers = rows.into_iter().map(|r| {
+    let mut providers: Vec<AdminProviderDto> = rows.into_iter().map(|r| {
         let pkey = r["provider_key"].as_str().unwrap_or_default().to_string();
         let name = r["name"].as_str().unwrap_or(&pkey).to_string();
         let base_url = r["base_url"].as_str().map(|s| s.to_string());
@@ -274,6 +274,27 @@ pub async fn list_admin_providers(
             has_key,
         }
     }).collect();
+
+    if providers.is_empty() {
+        let defaults = [
+            ("openai", "OpenAI"),
+            ("anthropic", "Anthropic"),
+            ("gemini", "Google Gemini"),
+            ("openrouter", "OpenRouter"),
+            ("ollama", "Ollama (Local)"),
+        ];
+        for (key, name) in defaults {
+            providers.push(AdminProviderDto {
+                provider_key: key.to_string(),
+                name: name.to_string(),
+                base_url: None,
+                encrypted_api_key: None,
+                is_enabled: true,
+                allowed_models: Vec::new(),
+                has_key: false,
+            });
+        }
+    }
 
     Ok(Json(providers))
 }

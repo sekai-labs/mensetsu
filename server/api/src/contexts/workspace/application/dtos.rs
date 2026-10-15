@@ -38,6 +38,7 @@ pub struct WorkspaceResponseDto {
     pub status: WorkspaceStatus,
     pub current_phase: PipelinePhase,
     pub progress_percent: u8,
+    pub seniority: Option<SeniorityLevel>,
     pub user_prompt: Option<String>,
     pub current_objective: Option<String>,
     pub workflow_mode: Option<String>,

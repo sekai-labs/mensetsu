@@ -79,6 +79,18 @@ def build_hybrid_workflow(checkpointer=None, ledger: SurrealLedgerRepository | N
         }
         await ledger.update_workflow_run(run_id, updates)
 
+        from src.generation.progress import update_workspace_progress
+        ws_rec = await ledger.get_workflow_run(run_id)
+        if ws_rec and ws_rec.workspace_id:
+            try:
+                await update_workspace_progress(
+                    workspace_id=ws_rec.workspace_id,
+                    phase=phase,
+                    percent=updates["progress"].percentage or 0,
+                    db=ledger.db,
+                )
+            except Exception as pe:
+                logger.warning(f"Could not update workspace progress for {ws_rec.workspace_id}: {pe}")
     async def route_and_normalize_node(state: HybridWorkflowState) -> dict[str, Any]:
         check_lease()
         await set_run_phase(state.run_id, "analyzing_input", 5)
@@ -506,6 +518,15 @@ def build_hybrid_workflow(checkpointer=None, ledger: SurrealLedgerRepository | N
                 "degraded_reasons": [],
             },
         )
+        from src.generation.progress import update_workspace_progress
+        try:
+            await update_workspace_progress(
+                phase="ready",
+                percent=100,
+                db=ledger.db,
+            )
+        except Exception as pe:
+            logger.warning(f"Could not update workspace progress ready for {state.workspace_id}: {pe}")
         return {}
     builder = StateGraph(HybridWorkflowState)
     builder.add_node("route_and_normalize", route_and_normalize_node)

@@ -2659,6 +2659,16 @@
           "role_title": {
             "type": "string"
           },
+          "seniority": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SeniorityLevel"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/WorkspaceStatus"
           },
