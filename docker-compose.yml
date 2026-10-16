@@ -51,12 +51,20 @@ services:
       retries: 5
 
   api:
-    build:
-      context: ./server/api
-      dockerfile: Dockerfile
     container_name: mensetsu-api
+    build:
+      context: .
+      dockerfile: server/api/Dockerfile
+    expose:
+      - "3000"
     ports:
       - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health/live"]
+      interval: 5s
+      timeout: 3s
+      start_period: 30s
+      retries: 6
     env_file:
       - .env
     environment:
@@ -67,7 +75,7 @@ services:
       - SURREAL_PASS=root
       - SURREAL_NS=mensetsu
       - SURREAL_DB=production
-      - INTELLIGENCE_URL=http://intelligence:8001
+      - INTELLIGENCE_GRPC_ENDPOINT=http://intelligence:50051
       - CORS_ORIGIN=http://localhost:3000,http://localhost:3001
       - RUST_LOG=info,tower_http=info
     depends_on:
@@ -80,23 +88,23 @@ services:
     cpus: 1.0
 
   intelligence:
+    container_name: mensetsu-intelligence
     build:
       context: ./server/intelligence
       dockerfile: Dockerfile
-    container_name: mensetsu-intelligence
     expose:
-      - "8001"
+      - "50051"
     env_file:
       - .env
     environment:
-      - INTELLIGENCE_PORT=8001
+      - INTELLIGENCE_PORT=50051
       - INTELLIGENCE_HOST=0.0.0.0
       - SURREAL_ENDPOINT=http://surrealdb:8000
       - REDIS_URL=redis://redis:6379
       - CHECKPOINT_TTL_MINUTES=180
       - SEARXNG_URL=http://searxng:8080
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health/live')"]
+      test: ["CMD", "python", "-c", "import grpc; c=grpc.insecure_channel('127.0.0.1:50051'); grpc.channel_ready_future(c).result(timeout=2)"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -112,10 +120,10 @@ services:
     cpus: 1.0
 
   worker:
+    container_name: mensetsu-worker
     build:
       context: ./server/intelligence
       dockerfile: Dockerfile
-    container_name: mensetsu-worker
     command: ["python", "-m", "src.worker"]
     env_file:
       - .env

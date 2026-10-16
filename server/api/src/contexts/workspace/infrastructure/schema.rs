@@ -135,7 +135,8 @@ pub async fn apply(client: &Db, sql: &str, ns: &str, db: &str) -> Result<()> {
         }
         if only_conflicts(&errors) && attempt < MAX_ATTEMPTS {
             tracing::warn!(attempt, "schema.surql transaction lost a commit race with a concurrent applier; retrying");
-            tokio::time::sleep(std::time::Duration::from_millis(20 * u64::from(attempt))).await;
+            let jitter_ms = 50 + (rand::random::<u64>() % 200);
+            tokio::time::sleep(std::time::Duration::from_millis(jitter_ms * u64::from(attempt))).await;
             continue;
         }
         return Err(describe(&statements, errors, attempt));

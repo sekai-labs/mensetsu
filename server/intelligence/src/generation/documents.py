@@ -18,13 +18,17 @@ class ResumePdfError(ValueError):
 def extract_resume_pdf_text(resume_pdf_base64: str, resume_filename: str | None) -> str:
     label = resume_filename or "uploaded resume"
     if len(resume_pdf_base64) > (MAX_RESUME_PDF_BYTES * 4) // 3 + 4:
-        raise ResumePdfError(f"{label} exceeds the {MAX_RESUME_PDF_BYTES // (1024 * 1024)} MB limit.")
+        raise ResumePdfError(
+            f"{label} exceeds the {MAX_RESUME_PDF_BYTES // (1024 * 1024)} MB limit."
+        )
     try:
         pdf_bytes = base64.b64decode(resume_pdf_base64, validate=True)
     except (binascii.Error, ValueError) as e:
         raise ResumePdfError(f"{label} is not valid base64: {e}") from e
     if len(pdf_bytes) > MAX_RESUME_PDF_BYTES:
-        raise ResumePdfError(f"{label} exceeds the {MAX_RESUME_PDF_BYTES // (1024 * 1024)} MB limit.")
+        raise ResumePdfError(
+            f"{label} exceeds the {MAX_RESUME_PDF_BYTES // (1024 * 1024)} MB limit."
+        )
     if not pdf_bytes.startswith(PDF_MAGIC):
         raise ResumePdfError(f"{label} is not a PDF (missing %PDF header).")
     try:

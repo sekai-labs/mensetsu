@@ -267,8 +267,7 @@ const handlePrevPage = () => {
                   <Sparkles v-if="run.type === 'dynamic' || run.type === 'hybrid'" class="w-2.5 h-2.5" :class="run.type === 'hybrid' ? 'text-indigo-500' : 'text-amber-500'" />
                   <span>{{ run.type }}</span>
                 </span>
-
-
+              </td>
               <td class="py-3 px-4">
                 <span
                   class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border"

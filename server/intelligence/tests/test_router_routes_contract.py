@@ -1,142 +1,317 @@
-import pytest
-from httpx import ASGITransport, AsyncClient
+import json
 
+import pytest
+
+import grpc
+import src.orchestration.shared as shared_mod
+from src.agents.runtime import current_ledger_var
 from src.contracts.v1 import (
     AgentExecution,
     Artifact,
-    DelegationGraphResponse,
-    EventsHistoryPageResponse,
-    LogsPageResponse,
-    TaskGraphResponse,
-    ToolInvocationsPageResponse,
-    ToolOutputResponse,
+    Delegation,
     WorkflowRun,
     WorkflowTask,
 )
+from src.grpc.auth_interceptor import GrpcAuthInterceptor
+from src.grpc.control_servicer import DataControlServicer
+from src.grpc.v1 import control_pb2, control_pb2_grpc
 from src.orchestration.ledger import SurrealLedgerRepository
-from src.service import app
+
+
+@pytest.fixture
+async def grpc_control_server(monkeypatch):
+    token = "test_internal_service_token_12345"
+    monkeypatch.setenv("INTERNAL_SERVICE_TOKEN", token)
+
+    server = grpc.aio.server(interceptors=[GrpcAuthInterceptor()])
+    control_pb2_grpc.add_DataControlServiceServicer_to_server(DataControlServicer(), server)
+    port = server.add_insecure_port("127.0.0.1:0")
+    await server.start()
+
+    yield port, token
+
+    await server.stop(grace=0)
 
 
 @pytest.mark.asyncio
-async def test_all_internal_workflow_routes_signatures_and_responses():
-    token = "test_internal_service_token_12345"
+async def test_all_control_commands_and_contract_responses(grpc_control_server):
+    port, token = grpc_control_server
     run_id = "run_route_test_123"
     ws_id = "ws_route_test_123"
 
     ledger = SurrealLedgerRepository()
-    import src.orchestration.router as router_mod
-    from src.agents.runtime import current_ledger_var
-    router_mod.default_ledger = ledger
+    shared_mod.default_ledger = ledger
     current_ledger_var.set(ledger)
 
     run = WorkflowRun(
         id=run_id,
-        workflow_id="interview-preparation-static",
-        workflow_name="Route Test",
+        workflow_id="interview-preparation-hybrid",
+        workflow_name="Hybrid",
         workspace_id=ws_id,
-        user_id="usr_route",
-        type="static",
-        status="running",
+        user_id="usr_test",
+        type="hybrid",
+        status="pending",
+        current_phase="queued",
+        plan_revision=1,
+        last_seq=0,
     )
-    await ledger.create_workflow_run(run)
-
     task = WorkflowTask(
-        id="task_route_1",
+        id="task_1",
         run_id=run_id,
+        name="Analyze Job",
+        assigned_agent="planner",
+        status="completed",
         task_type="research",
-        name="Route Task",
-        assigned_agent="company-research",
-        status="completed",
     )
-    await ledger.save_task(task)
-
-    agent_exec = AgentExecution(
-        id="exec_route_1",
+    agent = AgentExecution(
+        id="exec_1",
         run_id=run_id,
-        task_id=task.id,
+        task_id="task_1",
         agent_id="company-research",
-        objective="Analyze routes",
+        objective="Analyze company",
         status="completed",
-        public_summary="Route analysis complete",
     )
-    await ledger.save_agent_execution(agent_exec)
-
-    from src.contracts.v1 import ToolInvocation
-    tool_inv = ToolInvocation(
-        id="tool_route_1",
-        execution_id=agent_exec.id,
-        tool_name="web_search",
-        status="completed",
-        output_summary="Tool output test text",
-    )
-    await ledger.save_tool_invocation(tool_inv, run_id=run_id)
-
-    art = Artifact(
-        id="art_route_1",
+    delegation = Delegation(
+        id="del_1",
         run_id=run_id,
-        task_id=task.id,
-        agent_execution_id=agent_exec.id,
+        parent_execution_id="exec_parent",
+        child_execution_id="exec_child",
+        parent_agent_id="planner",
+        child_agent_id="company-research",
+        delegation_task_id="task_1",
+        objective="Analyze company",
+        reason="Subtask delegation",
+        status="completed",
+    )
+    artifact = Artifact(
+        id="art_1",
+        run_id=run_id,
         type="research_report",
-        title="Route Deliverable",
-        content={"data": "test"},
+        title="Test Brief",
+        content='{"key":"value"}',
     )
-    await ledger.save_artifact(art)
+    from src.contracts.v1 import TaskCompletedEvent, TaskCompletedPayload
 
-    await ledger.append_execution_log(
+    evt = TaskCompletedEvent(
+        event_id="evt_1",
         run_id=run_id,
-        message="Route execution log entry",
-        severity="info",
-        task_id=task.id,
-        execution_id=agent_exec.id,
+        seq=1,
+        task_id="task_1",
+        payload=TaskCompletedPayload(task_id="task_1", duration_ms=10.0),
     )
 
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test", timeout=10.0) as client:
-        headers = {"Authorization": f"Bearer {token}"}
+    async def mock_list_runs(*args, **kwargs):
+        from src.contracts.v1 import RunsPageResponse
 
-        r_runs = await client.get("/internal/v1/workflows/runs", headers=headers)
-        assert r_runs.status_code == 200
-        r_run = await client.get(f"/internal/v1/workflows/runs/{run_id}", headers=headers)
-        assert r_run.status_code == 200
-        WorkflowRun.model_validate(r_run.json())
+        return RunsPageResponse(items=[run], next_cursor=None)
 
-        r_task = await client.get(f"/internal/v1/workflows/runs/{run_id}/tasks/{task.id}", headers=headers)
-        assert r_task.status_code == 200
-        WorkflowTask.model_validate(r_task.json())
+    async def mock_list_tools(*args, **kwargs):
+        from src.contracts.v1 import ToolInvocationsPageResponse
 
-        r_agents = await client.get(f"/internal/v1/workflows/runs/{run_id}/agents", headers=headers)
-        assert r_agents.status_code == 200
+        return ToolInvocationsPageResponse(items=[], next_cursor=None)
 
-        r_agent = await client.get(f"/internal/v1/workflows/runs/{run_id}/agents/{agent_exec.id}", headers=headers)
-        assert r_agent.status_code == 200
-        AgentExecution.model_validate(r_agent.json())
+    async def mock_tool_inv(*args, **kwargs):
+        class MockTool:
+            output_summary = "mock tool invocation output"
 
-        r_tools = await client.get(f"/internal/v1/workflows/runs/{run_id}/agents/{agent_exec.id}/tools", headers=headers)
-        assert r_tools.status_code == 200
-        ToolInvocationsPageResponse.model_validate(r_tools.json())
+        return MockTool()
 
-        r_out = await client.get(f"/internal/v1/workflows/runs/{run_id}/tools/{tool_inv.id}/output", headers=headers)
-        assert r_out.status_code == 200
-        t_out = ToolOutputResponse.model_validate(r_out.json())
-        assert t_out.content == "Tool output test text"
+    async def mock_logs_page(*args, **kwargs):
+        from src.contracts.v1 import LogsPageResponse
 
-        r_arts = await client.get(f"/internal/v1/workflows/runs/{run_id}/artifacts", headers=headers)
-        assert r_arts.status_code == 200
+        return LogsPageResponse(items=[], next_cursor=None)
 
-        r_logs = await client.get(f"/internal/v1/workflows/runs/{run_id}/logs", headers=headers)
-        assert r_logs.status_code == 200
-        logs_page = LogsPageResponse.model_validate(r_logs.json())
-        assert len(logs_page.items) >= 1
-        assert logs_page.items[0].message == "Route execution log entry"
+    async def mock_task_graph(*args, **kwargs):
+        from src.contracts.v1 import TaskGraphResponse
 
-        r_graph = await client.get(f"/internal/v1/workflows/runs/{run_id}/graph", headers=headers)
-        assert r_graph.status_code == 200
-        TaskGraphResponse.model_validate(r_graph.json())
+        return TaskGraphResponse(nodes=[], edges=[])
 
-        r_del_graph = await client.get(f"/internal/v1/workflows/runs/{run_id}/delegations/graph", headers=headers)
-        assert r_del_graph.status_code == 200
-        DelegationGraphResponse.model_validate(r_del_graph.json())
+    async def mock_del_graph(*args, **kwargs):
+        from src.contracts.v1 import DelegationGraphResponse
 
-        r_ev_hist = await client.get(f"/internal/v1/workflows/runs/{run_id}/events/history", headers=headers)
-        assert r_ev_hist.status_code == 200
-        EventsHistoryPageResponse.model_validate(r_ev_hist.json())
+        return DelegationGraphResponse(nodes=[], edges=[])
+
+    async def mock_evts_history(*args, **kwargs):
+        from src.contracts.v1 import EventsHistoryPageResponse
+
+        return EventsHistoryPageResponse(events=[evt], next_after_seq=None, last_seq=1)
+
+    ledger.get_workflow_run = lambda r: mock_return(run if r == run_id else None)
+    ledger.list_workflow_runs = mock_list_runs
+    ledger.get_task = lambda r, t: mock_return(task if t == "task_1" else None)
+    ledger.list_agent_executions_for_run = lambda r: mock_return([agent])
+    ledger.get_agent_execution = lambda r, e: mock_return(agent if e == "exec_1" else None)
+    ledger.list_tools_for_execution = mock_list_tools
+    ledger.get_tool_invocation = mock_tool_inv
+    ledger.list_delegations_for_run = lambda r: mock_return([delegation])
+    ledger.list_artifacts_for_run = lambda r: mock_return([artifact])
+    ledger.get_logs_page = mock_logs_page
+    ledger.get_task_graph = mock_task_graph
+    ledger.get_delegation_graph = mock_del_graph
+    ledger.get_events_history = mock_evts_history
+    ledger.update_workflow_run = lambda *args, **kwargs: mock_return(None)
+    ledger.sweep_run_to_terminal = lambda *args, **kwargs: mock_return(None)
+    ledger.append_event_transactional = lambda *args, **kwargs: mock_return(None)
+
+    async with grpc.aio.insecure_channel(f"127.0.0.1:{port}") as channel:
+        stub = control_pb2_grpc.DataControlServiceStub(channel)
+        metadata = (("authorization", f"Bearer {token}"),)
+
+        # Helper to send a single command and receive envelope
+        async def call_cmd(cmd: control_pb2.ControlCommand) -> control_pb2.ControlDataEnvelope:
+            async def gen():
+                yield cmd
+
+            call = stub.StreamControl(gen(), metadata=metadata)
+            res = []
+            async for env in call:
+                res.append(env)
+            assert len(res) == 1
+            return res[0]
+
+        # 1. list_workflows
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="1", list_workflows=control_pb2.ListWorkflowsCommand()
+            )
+        )
+        assert e.status_code == 200
+        defs = json.loads(e.payload_json)
+        assert len(defs) == 3
+
+        # 2. list_runs
+        e = await call_cmd(
+            control_pb2.ControlCommand(correlation_id="2", list_runs=control_pb2.ListRunsCommand())
+        )
+        assert e.status_code == 200
+        assert run_id in e.payload_json
+
+        # 3. get_run
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="3", get_run=control_pb2.GetRunCommand(run_id=run_id)
+            )
+        )
+        assert e.status_code == 200
+        assert json.loads(e.payload_json)["id"] == run_id
+
+        # 4. get_task
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="4",
+                get_task=control_pb2.GetTaskCommand(run_id=run_id, task_id="task_1"),
+            )
+        )
+        assert e.status_code == 200
+        assert json.loads(e.payload_json)["id"] == "task_1"
+
+        # 5. list_agents
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="5", list_agents=control_pb2.ListAgentsCommand(run_id=run_id)
+            )
+        )
+        assert e.status_code == 200
+        assert json.loads(e.payload_json)[0]["id"] == "exec_1"
+
+        # 6. get_agent
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="6",
+                get_agent=control_pb2.GetAgentCommand(run_id=run_id, execution_id="exec_1"),
+            )
+        )
+        assert e.status_code == 200
+        assert json.loads(e.payload_json)["id"] == "exec_1"
+
+        # 7. list_agent_tools
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="7",
+                list_agent_tools=control_pb2.ListAgentToolsCommand(
+                    run_id=run_id, execution_id="exec_1"
+                ),
+            )
+        )
+        assert e.status_code == 200
+
+        # 8. get_tool_output
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="8",
+                get_tool_output=control_pb2.GetToolOutputCommand(
+                    run_id=run_id, tool_invocation_id="tool_1", offset=0, limit=100
+                ),
+            )
+        )
+        assert e.status_code == 200
+        assert json.loads(e.payload_json)["content"] == "mock tool invocation output"
+
+        # 9. list_delegations
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="9",
+                list_delegations=control_pb2.ListDelegationsCommand(run_id=run_id),
+            )
+        )
+        assert e.status_code == 200
+        assert json.loads(e.payload_json)[0]["id"] == "del_1"
+
+        # 10. list_artifacts
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="10", list_artifacts=control_pb2.ListArtifactsCommand(run_id=run_id)
+            )
+        )
+        assert e.status_code == 200
+        assert json.loads(e.payload_json)[0]["id"] == "art_1"
+
+        # 11. get_logs
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="11", get_logs=control_pb2.GetLogsCommand(run_id=run_id)
+            )
+        )
+        assert e.status_code == 200
+
+        # 12. get_task_graph
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="12", get_task_graph=control_pb2.GetTaskGraphCommand(run_id=run_id)
+            )
+        )
+        assert e.status_code == 200
+
+        # 13. get_delegation_graph
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="13",
+                get_delegation_graph=control_pb2.GetDelegationGraphCommand(run_id=run_id),
+            )
+        )
+        assert e.status_code == 200
+
+        # 14. cancel_run
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="14", cancel_run=control_pb2.CancelRunCommand(run_id=run_id)
+            )
+        )
+        assert e.status_code == 200
+        assert json.loads(e.payload_json)["status"] == "cancelled"
+
+        # 15. get_events_history
+        e = await call_cmd(
+            control_pb2.ControlCommand(
+                correlation_id="15",
+                get_events_history=control_pb2.GetEventsHistoryCommand(
+                    run_id=run_id, after_seq=0, limit=50
+                ),
+            )
+        )
+        assert e.status_code == 200
+        assert len(json.loads(e.payload_json)["events"]) == 1
+
+
+async def mock_return(val):
+    return val

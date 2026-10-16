@@ -7,7 +7,7 @@ WORKDIR /build/app/web
 RUN bun install --frozen-lockfile
 
 WORKDIR /build
-COPY server/api/contracts/src ./server/api/contracts/src
+COPY contracts/rest/src ./contracts/rest/src
 COPY app/web ./app/web
 
 WORKDIR /build/app/web

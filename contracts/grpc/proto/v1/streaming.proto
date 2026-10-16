@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package mensetsu.streaming.v1;
+
+message SubscribeRunMessage {
+  string run_id = 1;
+  uint64 after_seq = 2;
+}
+
+message UnsubscribeRunMessage {
+  string run_id = 1;
+}
+
+message AckMessage {
+  string run_id = 1;
+  uint64 ack_seq = 2;
+}
+
+message PingMessage {
+  int64 timestamp = 1;
+}
+
+message EventStreamClientMessage {
+  oneof message {
+    SubscribeRunMessage subscribe = 1;
+    UnsubscribeRunMessage unsubscribe = 2;
+    AckMessage ack = 3;
+    PingMessage ping = 4;
+  }
+}
+
+message ExecutionEventFrame {
+  uint64 seq = 1;
+  string run_id = 2;
+  string event_type = 3;
+  string task_id = 4;
+  string execution_id = 5;
+  string payload_json = 6;
+  string timestamp = 7;
+  bool is_terminal = 8;
+}
+
+service WorkflowEventStreamService {
+  rpc StreamWorkflowEvents(stream EventStreamClientMessage) returns (stream ExecutionEventFrame);
+}

@@ -43,7 +43,9 @@ def is_retryable_error(err: BaseException) -> bool:
     text = str(err)
     if any(marker in name or marker in text for marker in RETRYABLE_NAME_MARKERS):
         return True
-    if any(f"Error code: {code}" in text or f"status {code}" in text for code in RETRYABLE_STATUS_CODES):
+    if any(
+        f"Error code: {code}" in text or f"status {code}" in text for code in RETRYABLE_STATUS_CODES
+    ):
         return True
     return "redis" in getattr(err.__class__, "__module__", "")
 
@@ -205,8 +207,8 @@ class DurableJobWorker:
 
             if run and run.status in ("pending", "queued") and not run.started_at:
                 wf_type = payload.get("workflow_id", "interview-preparation-hybrid")
-                is_static = (wf_type == "interview-preparation-static")
-                is_hybrid = (wf_type == "interview-preparation-hybrid")
+                is_static = wf_type == "interview-preparation-static"
+                is_hybrid = wf_type == "interview-preparation-hybrid"
                 planned = STATIC_TASK_COUNT if is_static else (6 if is_hybrid else 0)
                 await self.ledger.update_workflow_run(
                     run_id,
@@ -262,6 +264,7 @@ class DurableJobWorker:
                 )
             if wf_id == "interview-preparation-static":
                 from src.agents.runtime import current_ledger_var
+
                 current_ledger_var.set(self.ledger)
                 graph = build_static_workflow(
                     checkpointer=self._saver, ledger=self.ledger, db_client=self.ledger.db
@@ -280,7 +283,11 @@ class DurableJobWorker:
                     seniority=payload.get("seniority"),
                 )
             elif wf_id == "interview-preparation-hybrid":
-                from src.orchestration.hybrid_workflow import HybridWorkflowState, build_hybrid_workflow
+                from src.orchestration.hybrid_workflow import (
+                    HybridWorkflowState,
+                    build_hybrid_workflow,
+                )
+
                 graph = build_hybrid_workflow(checkpointer=self._saver, ledger=self.ledger)
                 initial_state = HybridWorkflowState(
                     run_id=run_id,

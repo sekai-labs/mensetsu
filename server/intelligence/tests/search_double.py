@@ -17,7 +17,9 @@ class InMemorySearchEngine:
         ]
         self.queries: list[str] = []
 
-    async def search_web(self, query: str, limit: int = 5, search_depth: str = "advanced") -> list[SearchResult]:
+    async def search_web(
+        self, query: str, limit: int = 5, search_depth: str = "advanced"
+    ) -> list[SearchResult]:
         self.queries.append(query)
         return [
             SearchResult(
@@ -30,7 +32,9 @@ class InMemorySearchEngine:
             for item in self.corpus[:limit]
         ]
 
-    async def search(self, query: str, limit: int = 5, search_depth: str = "advanced") -> list[SearchResult]:
+    async def search(
+        self, query: str, limit: int = 5, search_depth: str = "advanced"
+    ) -> list[SearchResult]:
         return await self.search_web(query, limit=limit, search_depth=search_depth)
 
 

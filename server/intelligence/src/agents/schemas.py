@@ -35,17 +35,25 @@ class AgentTaskOutput(BaseModel):
 class WorkflowRoutingDecision(BaseModel):
     selected_workflow: Literal["hybrid", "static", "dynamic"] = Field(
         default="hybrid",
-        description="Selected workflow type based on prompt and candidate complexity."
+        description="Selected workflow type based on prompt and candidate complexity.",
     )
     confidence: float = Field(default=0.9, ge=0.0, le=1.0)
     reasoning: str = Field(description="Brief explanation of why this workflow was selected.")
-    extracted_company: str | None = Field(default=None, description="Company extracted from prompt if missing.")
-    extracted_role: str | None = Field(default=None, description="Role extracted from prompt if missing.")
+    extracted_company: str | None = Field(
+        default=None, description="Company extracted from prompt if missing."
+    )
+    extracted_role: str | None = Field(
+        default=None, description="Role extracted from prompt if missing."
+    )
 
 
 class SystemsDeepDiveOutput(BaseModel):
-    summary: str = Field(description="Exhaustive architectural breakdown of the delegated subsystem.")
-    subsystem: str = Field(description="The specific subsystem investigated, e.g. networking or storage.")
+    summary: str = Field(
+        description="Exhaustive architectural breakdown of the delegated subsystem."
+    )
+    subsystem: str = Field(
+        description="The specific subsystem investigated, e.g. networking or storage."
+    )
     evidence_ids: list[str] = Field(
         min_length=2,
         description="At least 2 distinct evidence IDs saved BY THIS EXECUTION demonstrating concrete implementation details.",
@@ -102,9 +110,14 @@ class CompanyClaim(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0, description="Confidence score.")
     evidence_ids: list[str] = Field(description="IDs of saved evidence citations.")
 
+
 class DossierChapterItem(BaseModel):
-    id: str = Field(description="Unique slug or chapter identifier, e.g. executive-summary, edge-topology, regulatory-compliance.")
-    title: str = Field(description="Descriptive chapter title decided dynamically based on the company's domain and architecture.")
+    id: str = Field(
+        description="Unique slug or chapter identifier, e.g. executive-summary, edge-topology, regulatory-compliance."
+    )
+    title: str = Field(
+        description="Descriptive chapter title decided dynamically based on the company's domain and architecture."
+    )
     summary: str = Field(description="Summary of findings in this chapter.")
     content_markdown: str = Field(
         description="In-depth, evidence-backed narrative and analysis of this architectural or organizational facet."
@@ -149,6 +162,7 @@ class CompanyResearchOutput(BaseModel):
     summary: str = Field(
         description="Concise synthesis for workflow ledger and execution overview."
     )
+
     @model_validator(mode="after")
     def validate_provenance(self) -> "CompanyResearchOutput":
         all_ev_ids = []
@@ -388,7 +402,9 @@ class LessonSessionItem(BaseModel):
     session_id: str = Field(description="Unique session identifier, e.g. ses_1_internals.")
     title: str = Field(description="Session title detailing low-level under-the-hood mechanism.")
     estimated_minutes: int = Field(default=20, ge=5)
-    focus_area: str = Field(description="Architecture mechanics, kernel internals, concurrency invariants, or failure triage.")
+    focus_area: str = Field(
+        description="Architecture mechanics, kernel internals, concurrency invariants, or failure triage."
+    )
     content_markdown: str = Field(
         description="Exhaustive under-the-hood technical session with concrete code patterns, failure modes, and execution traces."
     )
@@ -412,6 +428,7 @@ class LearningUnitItem(BaseModel):
         min_length=1,
         description="At least 1 evidence ID from input cited as provenance for this learning unit.",
     )
+
 
 class CurriculumOutput(BaseModel):
     skills: list[SkillNodeItem] = Field(

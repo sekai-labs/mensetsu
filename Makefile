@@ -1,6 +1,6 @@
 .PHONY: help infra-up infra-down up down build dev-api dev-ai dev-worker dev-web test-api test-ai test-web build-web test check contracts contracts-check schema-parity api-target-owner
 
-CONTRACTS_DIR := server/api/contracts
+CONTRACTS_DIR := contracts/rest
 
 help:
 	@echo "Mensetsu Commands:"
@@ -46,8 +46,7 @@ dev-api: api-target-owner
 	cd server/api && cargo run
 
 dev-ai:
-	cd server/intelligence && uv run uvicorn src.service:app --host 0.0.0.0 --port 8001
-
+	cd server/intelligence && uv run python -m src.main
 dev-worker:
 	cd server/intelligence && uv run python -m src.worker
 
@@ -69,23 +68,24 @@ test-web:
 test: test-api test-ai test-web
 
 contracts: api-target-owner
+	./contracts/grpc/scripts/gen-proto.sh
 	cd server/api && cargo run --quiet --bin export-openapi
-	cd packages/contracts && bun install --frozen-lockfile && bun run generate
 	cd $(CONTRACTS_DIR) && bun install --frozen-lockfile && bun run generate
 	cd server/intelligence && PYTHONPATH=. uv run python src/contracts/export_schema.py
-	cd app/web && bun run scripts/gen-contracts.ts
-	@echo "All API DTOs, schemas, and contracts generated and exported to packages/contracts, server/api/contracts, and app/web."
+	cp $(CONTRACTS_DIR)/src/generated/workflows.v1.ts app/web/models/generated/workflows.v1.ts
+	@echo "All API DTOs, schemas, and contracts generated and exported to contracts/rest, contracts/grpc, and app/web."
+
 contracts-check:
 	@set -e; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
-	cp -R $(CONTRACTS_DIR)/openapi.json $(CONTRACTS_DIR)/src "$$tmp/"; \
+	cp -R $(CONTRACTS_DIR)/openapi.json $(CONTRACTS_DIR)/src server/intelligence/src/grpc/v1 "$$tmp/"; \
 	$(MAKE) --no-print-directory contracts; \
 	diff -u "$$tmp/openapi.json" $(CONTRACTS_DIR)/openapi.json; \
 	diff -ru "$$tmp/src" $(CONTRACTS_DIR)/src; \
+	diff -ru "$$tmp/v1" server/intelligence/src/grpc/v1; \
 	echo "contracts up to date"
 
 schema-parity:
 	./scripts/check-schema-parity.py $${SURREAL_HTTP_URL:-http://127.0.0.1:8000}
-
 e2e-reset:
 	@if [ "$${MENSETSU_ALLOW_RESET:-0}" != "1" ]; then \
 		echo "Error: Reset refused. You must explicitly export MENSETSU_ALLOW_RESET=1" >&2; \

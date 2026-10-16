@@ -1,8 +1,10 @@
 import uuid
+
 import pytest
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
+
 from src.agents.runtime import AutonomousAgentRuntime
 from src.contracts.v1 import WorkflowRun
 from src.orchestration.ledger import SurrealLedgerRepository
@@ -109,8 +111,10 @@ async def test_budget_aware_finalization_forces_output_tool():
 
     assert exec_rec.tool_call_count <= exec_rec.budgets.tool_calls
 
+
 class SchemaRepairFinalizerModel(BaseChatModel):
     attempted_invalid: bool = False
+
     @property
     def _llm_type(self) -> str:
         return "schema_repair_finalizer_model"

@@ -1,8 +1,6 @@
 import hmac
 import os
 
-from fastapi import Header, HTTPException, status
-
 
 def get_internal_token() -> str:
     token = os.environ.get("INTERNAL_SERVICE_TOKEN")
@@ -13,25 +11,17 @@ def get_internal_token() -> str:
     return token.strip()
 
 
-async def verify_internal_auth(authorization: str | None = Header(None)) -> None:
-    expected_token = get_internal_token()
-
+def validate_internal_token(authorization: str | None) -> bool:
     if not authorization:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing Authorization header",
-        )
+        return False
+    try:
+        expected_token = get_internal_token()
+    except RuntimeError:
+        return False
 
     parts = authorization.split(" ", 1)
     if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authorization scheme; Bearer token required",
-        )
+        return False
 
     provided_token = parts[1].strip()
-    if not provided_token or not hmac.compare_digest(provided_token, expected_token):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid internal service token",
-        )
+    return bool(provided_token and hmac.compare_digest(provided_token, expected_token))

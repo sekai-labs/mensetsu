@@ -41,10 +41,12 @@ class ExtractedResumeSkill(BaseModel):
 
 class DynamicResumeExtraction(BaseModel):
     candidate_name: str | None = Field(
-        default=None, description="Candidate name exactly as written; null if the resume does not state it"
+        default=None,
+        description="Candidate name exactly as written; null if the resume does not state it",
     )
     summary: str | None = Field(
-        default=None, description="Short factual summary of the resume; null if it cannot be derived"
+        default=None,
+        description="Short factual summary of the resume; null if it cannot be derived",
     )
     skills: list[ExtractedResumeSkill] = Field(default_factory=list)
     experience_highlights: list[str] = Field(default_factory=list)
@@ -62,7 +64,8 @@ def grounded_resume_schema(resume_text: str) -> type[DynamicResumeExtraction]:
             f"{skill.name}: {ev.quote!r}"
             for skill in self.skills
             for ev in skill.evidence
-            if not normalize_whitespace(ev.quote) or normalize_whitespace(ev.quote) not in flat_resume
+            if not normalize_whitespace(ev.quote)
+            or normalize_whitespace(ev.quote) not in flat_resume
         ]
         if missing:
             raise ValueError(
@@ -169,12 +172,20 @@ async def parse_resume_activity(
     }
 
 
-async def load_parsed_resume(workspace_id: str, db_client: SurrealDirectClient | None = None) -> dict | None:
+async def load_parsed_resume(
+    workspace_id: str, db_client: SurrealDirectClient | None = None
+) -> dict | None:
     client_to_use = db_client or globals()["db_client"]
     res = await client_to_use.execute_query(
         "SELECT * FROM type::record('resume', $rid);", vars={"rid": f"res_{workspace_id}"}
     )
-    rows = [r for item in res if isinstance(item, dict) for r in (item.get("result") or []) if isinstance(r, dict)]
+    rows = [
+        r
+        for item in res
+        if isinstance(item, dict)
+        for r in (item.get("result") or [])
+        if isinstance(r, dict)
+    ]
     if not rows or not rows[-1].get("raw_text"):
         return None
     row = rows[-1]

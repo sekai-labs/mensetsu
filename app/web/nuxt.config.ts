@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss'],
   css: ['~/assets/css/main.css'],
   alias: {
-    '@mensetsu/contracts': fileURLToPath(new URL('../../server/api/contracts/src/index.ts', import.meta.url)),
+    '@mensetsu/contracts': fileURLToPath(new URL('../../contracts/rest/src/index.ts', import.meta.url)),
   },
   vite: {
     optimizeDeps: {

@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
+
 WorkflowType = Literal["static", "dynamic", "hybrid"]
 RunStatus = Literal["pending", "running", "completed", "failed", "cancelled"]
 TaskStatus = Literal[
@@ -28,7 +29,13 @@ ErrorCategory = Literal[
     "network", "rate_limit", "budget_exceeded", "llm_error", "validation_error", "internal_error"
 ]
 ArtifactType = Literal[
-    "research_report", "finding", "evidence", "question_set", "recommendation", "validation_result", "routing_decision"
+    "research_report",
+    "finding",
+    "evidence",
+    "question_set",
+    "recommendation",
+    "validation_result",
+    "routing_decision",
 ]
 
 

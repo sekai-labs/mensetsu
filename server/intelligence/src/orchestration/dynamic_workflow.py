@@ -124,7 +124,9 @@ def validate_plan_dag(tasks: list[dict[str, Any]]) -> None:
         if t["assigned_agent"] == "job-analysis" and not t["required"]:
             raise ValueError(f"Task '{t['id']}' runs job-analysis and must be required.")
 
-    research = [t for t in tasks if t["assigned_agent"] in ("company-research", "technical-research")]
+    research = [
+        t for t in tasks if t["assigned_agent"] in ("company-research", "technical-research")
+    ]
     if len(research) > MAX_RESEARCH_TASKS_PER_REVISION:
         raise ValueError(
             f"Plan proposes {len(research)} research tasks; maximum permitted per revision is {MAX_RESEARCH_TASKS_PER_REVISION}."
@@ -200,7 +202,11 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
             run_id=state.run_id,
             event_type="task.started",
             task_id=plan_task.id,
-            payload={"task_id": plan_task.id, "attempt": first_attempt, "assigned_agent": "planner"},
+            payload={
+                "task_id": plan_task.id,
+                "attempt": first_attempt,
+                "assigned_agent": "planner",
+            },
         )
 
         planner_input = {
@@ -218,7 +224,8 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
                 "max_depth": MAX_PLAN_DEPTH,
                 "max_total_tool_calls": MAX_PLAN_TOOL_CALLS,
                 "tool_calls_per_agent": {
-                    agent_id: registry.get(agent_id).tool_calls_budget for agent_id in PLANNABLE_AGENTS
+                    agent_id: registry.get(agent_id).tool_calls_budget
+                    for agent_id in PLANNABLE_AGENTS
                 },
             },
             "plan_revision": state.plan_revision,
@@ -307,29 +314,33 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
         failed = set(state.failed_task_ids)
         finished = completed | failed
         blocked = [
-            t for t in state.tasks
+            t
+            for t in state.tasks
             if t["id"] not in finished and any(d in failed for d in t.get("dependencies", []))
         ]
         finished |= {t["id"] for t in blocked}
         remaining = [t for t in state.tasks if t["id"] not in finished]
-        roots_done = all(
-            t["id"] in finished for t in state.tasks if not t.get("dependencies")
-        )
+        roots_done = all(t["id"] in finished for t in state.tasks if not t.get("dependencies"))
         if not state.revision_evaluated and roots_done:
             return "revise"
         if not remaining:
             return "outputs"
-        ready = [
-            t for t in remaining if all(d in completed for d in t.get("dependencies", []))
-        ]
+        ready = [t for t in remaining if all(d in completed for d in t.get("dependencies", []))]
         if not ready:
             raise RuntimeError(
                 f"Dynamic plan for {state.run_id} stalled: {[t['id'] for t in remaining]} have unmet dependencies."
             )
-        payload = state.model_dump(include={
-            "run_id", "company_name", "role_title", "company_urls", "job_description",
-            "jd_url", "jd_evidence_id",
-        })
+        payload = state.model_dump(
+            include={
+                "run_id",
+                "company_name",
+                "role_title",
+                "company_urls",
+                "job_description",
+                "jd_url",
+                "jd_evidence_id",
+            }
+        )
         return [Send("execute_dynamic_task", {**payload, "task": t}) for t in ready]
 
     async def execute_task_node(arg: dict[str, Any]) -> dict[str, Any]:
@@ -367,7 +378,11 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
             run_id=run_id,
             event_type="task.started",
             task_id=task.id,
-            payload={"task_id": task.id, "attempt": first_attempt, "assigned_agent": task.assigned_agent},
+            payload={
+                "task_id": task.id,
+                "attempt": first_attempt,
+                "assigned_agent": task.assigned_agent,
+            },
         )
 
         for attempt in range(first_attempt, first_attempt - 1 + TASK_ATTEMPTS + 1):
@@ -390,7 +405,11 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
                         run_id=run_id,
                         event_type="task.retrying",
                         task_id=task.id,
-                        payload={"task_id": task.id, "next_attempt": attempt + 1, "delay_ms": delay_ms},
+                        payload={
+                            "task_id": task.id,
+                            "next_attempt": attempt + 1,
+                            "delay_ms": delay_ms,
+                        },
                     )
                     await asyncio.sleep(delay_ms / 1000.0)
                     continue
@@ -402,7 +421,12 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
                     run_id=run_id,
                     event_type="task.failed",
                     task_id=task.id,
-                    payload={"task_id": task.id, "attempt": attempt, "error": task.error, "can_retry": False},
+                    payload={
+                        "task_id": task.id,
+                        "attempt": attempt,
+                        "error": task.error,
+                        "can_retry": False,
+                    },
                 )
                 if task_info["required"]:
                     raise
@@ -436,7 +460,8 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
         pending = [t for t in state.tasks if t["id"] not in completed and t["id"] not in failed]
         depended_on = {d for t in pending for d in t.get("dependencies", [])}
         removed = [
-            t for t in pending
+            t
+            for t in pending
             if t["assigned_agent"] in completed_agents
             and t["id"] not in depended_on
             and not t["required"]
@@ -477,7 +502,9 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
             if added:
                 reasons.append(f"added missing coverage for {[t['assigned_agent'] for t in added]}")
             if removed:
-                reasons.append(f"dropped duplicate tasks for agents already completed {sorted(removed_ids)}")
+                reasons.append(
+                    f"dropped duplicate tasks for agents already completed {sorted(removed_ids)}"
+                )
             for t in removed:
                 task = await ledger.get_task(state.run_id, t["id"])
                 if task:
@@ -542,7 +569,9 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
         from src.orchestration.static_workflow import StaticWorkflowState, build_static_workflow
 
         if "job" not in state.research_results:
-            raise RuntimeError(f"Dynamic run {state.run_id} reached outputs without job analysis results.")
+            raise RuntimeError(
+                f"Dynamic run {state.run_id} reached outputs without job analysis results."
+            )
         if "company" not in state.research_results and "tech" not in state.research_results:
             raise RuntimeError(
                 f"Dynamic run {state.run_id} has neither company nor technical research results."
@@ -595,7 +624,11 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
             ),
             config={"configurable": {"thread_id": f"{state.run_id}__normalize"}},
         )
-        jd_evidence_id = f"art_jd_{state.run_id[:8]}" if state.jd_url and not state.job_description.strip() else None
+        jd_evidence_id = (
+            f"art_jd_{state.run_id[:8]}"
+            if state.jd_url and not state.job_description.strip()
+            else None
+        )
         return {
             "resume_text": normalized["resume_text"],
             "job_description": normalized["job_description"],
@@ -617,7 +650,9 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
     builder.add_edge("plan", "join")
     builder.add_edge("execute_dynamic_task", "join")
     builder.add_edge("revise", "join")
-    builder.add_conditional_edges("join", route_from_join, ["execute_dynamic_task", "revise", "outputs"])
+    builder.add_conditional_edges(
+        "join", route_from_join, ["execute_dynamic_task", "revise", "outputs"]
+    )
     builder.add_edge("outputs", END)
 
     return builder.compile(checkpointer=checkpointer)

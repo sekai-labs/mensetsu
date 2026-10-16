@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it } from 'vitest'
 
 describe('Settings & Providers Contract Verification', () => {
   it('correctly manages BYOK vs Admin key source precedence', () => {

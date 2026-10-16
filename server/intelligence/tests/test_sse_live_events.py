@@ -1,149 +1,190 @@
 import asyncio
-import time
-import uuid
+import contextlib
+import os
+from unittest.mock import patch
 
 import pytest
 
-from src.contracts.v1 import WorkflowRun
+import grpc
+import src.orchestration.shared as shared_mod
+from src.grpc.auth_interceptor import GrpcAuthInterceptor
+from src.grpc.streaming_servicer import WorkflowEventStreamServicer
+from src.grpc.v1 import streaming_pb2, streaming_pb2_grpc
 from src.orchestration import ledger as ledger_module
 from src.orchestration.ledger import SurrealLedgerRepository
 
 
-class ConnectedRequest:
-    async def is_disconnected(self) -> bool:
-        return False
+class FakePubSub:
+    def __init__(self, queue: asyncio.Queue):
+        self.queue = queue
+        self.subscribed = False
+
+    async def subscribe(self, channel: str) -> None:
+        self.subscribed = True
+
+    async def unsubscribe(self, channel: str) -> None:
+        self.subscribed = False
+
+    async def get_message(self, ignore_subscribe_messages: bool = True, timeout: float = 1.0):
+        try:
+            data = await asyncio.wait_for(self.queue.get(), timeout=timeout)
+            return {"type": "message", "data": data}
+        except asyncio.TimeoutError:
+            return None
+
+    async def close(self) -> None:
+        self.subscribed = False
+
+    async def aclose(self) -> None:
+        self.subscribed = False
 
 
-async def create_run_with_history(ledger: SurrealLedgerRepository) -> str:
-    run_id = f"run_sse_{uuid.uuid4().hex[:8]}"
+class FakeRedis:
+    def __init__(self, queue: asyncio.Queue):
+        self.queue = queue
+        self.pubsub_instance = FakePubSub(queue)
+
+    def pubsub(self):
+        return self.pubsub_instance
+
+    async def publish(self, channel: str, message: str) -> int:
+        await self.queue.put(message)
+        return 1
+
+    async def xgroup_create(self, *args, **kwargs):
+        pass
+
+    async def aclose(self):
+        pass
+
+
+@pytest.fixture
+def fake_redis_queue():
+    queue = asyncio.Queue()
+    fake_client = FakeRedis(queue)
+    with patch("redis.asyncio.from_url", return_value=fake_client):
+        yield queue
+
+
+@pytest.fixture
+async def grpc_stream_server(monkeypatch):
+    token = "test_internal_service_token_12345"
+    monkeypatch.setenv("INTERNAL_SERVICE_TOKEN", token)
+
+    server = grpc.aio.server(interceptors=[GrpcAuthInterceptor()])
+    servicer = WorkflowEventStreamServicer()
+    streaming_pb2_grpc.add_WorkflowEventStreamServiceServicer_to_server(servicer, server)
+    port = server.add_insecure_port("127.0.0.1:0")
+    await server.start()
+
+    yield port, token, servicer
+
+    await server.stop(grace=0)
+
+
+async def append_task_started(ledger: SurrealLedgerRepository, run_id: str, task_id: str) -> None:
+    await ledger.append_event_transactional(
+        run_id=run_id,
+        event_type="task.started",
+        task_id=task_id,
+        payload={"task_id": task_id, "attempt": 1, "assigned_agent": "planner"},
+    )
+
+
+async def wait_for_count(
+    received: list[tuple[int, str, float]], target: int, timeout: float = 4.0
+) -> None:
+    deadline = asyncio.get_running_loop().time() + timeout
+    while asyncio.get_running_loop().time() < deadline:
+        if len(received) >= target:
+            return
+        await asyncio.sleep(0.05)
+    raise TimeoutError(f"Expected at least {target} events, got {len(received)}")
+
+
+@pytest.mark.asyncio
+async def test_grpc_stream_delivers_published_events_without_duplicates(
+    fake_redis_queue, grpc_stream_server
+):
+    port, token, servicer = grpc_stream_server
+    job_queue = shared_mod.job_queue
+    job_queue.client = None
+    ledger_module.set_event_publisher(job_queue.publish_event)
+
+    ledger = SurrealLedgerRepository()
+    shared_mod.default_ledger = ledger
+    servicer.ledger = ledger
+    servicer.queue = job_queue
+    from src.agents.runtime import current_ledger_var
+
+    token_var = current_ledger_var.set(ledger)
+    run_id = f"run_test_{os.urandom(4).hex()}"
+
+    from src.contracts.v1 import WorkflowRun
+
     await ledger.create_workflow_run(
         WorkflowRun(
             id=run_id,
-            workflow_id="interview-preparation-static",
-            workflow_name="SSE live",
-            workspace_id=f"ws_{run_id}",
-            user_id="usr_sse",
-            type="static",
+            workflow_id="interview-preparation-hybrid",
+            workflow_name="Hybrid",
+            workspace_id="ws",
+            user_id="u",
+            type="hybrid",
             status="running",
         )
     )
     await ledger.append_event_transactional(
         run_id=run_id,
         event_type="workflow.created",
-        payload={
-            "workflow_id": "interview-preparation-static",
-            "workspace_id": f"ws_{run_id}",
-            "user_id": "usr_sse",
-            "type": "static",
-        },
+        payload={"workflow_id": "test", "workspace_id": "ws", "user_id": "u", "type": "hybrid"},
     )
-    await ledger.append_event_transactional(
-        run_id=run_id, event_type="workflow.started", payload={"plan_revision": 1, "initial_tasks_count": 9}
+    history_check = await ledger.get_events_history(run_id=run_id, after_seq=0, limit=10)
+    assert len(history_check.events) == 1, (
+        f"Expected 1 event in history, got {len(history_check.events)}"
     )
-    return run_id
 
+    received: list[tuple[int, str, float]] = []
 
-def start_reader(run_id: str, received: list[tuple[int, str, float]]) -> asyncio.Task:
-    from src.orchestration.router import stream_events
+    async def client_sub():
+        metadata = (("authorization", f"Bearer {token}"),)
+        async with grpc.aio.insecure_channel(f"127.0.0.1:{port}") as channel:
+            stub = streaming_pb2_grpc.WorkflowEventStreamServiceStub(channel)
 
-    async def read_stream():
-        response = await stream_events(ConnectedRequest(), run_id=run_id, after_seq=None, last_event_id=None)
-        seq = None
-        async for chunk in response.body_iterator:
-            for line in chunk.splitlines():
-                if line.startswith("id: "):
-                    seq = int(line[4:])
-                elif line.startswith("event: ") and seq is not None:
-                    received.append((seq, line[7:], time.monotonic()))
-                    if line[7:] == "workflow.completed":
-                        return
+            async def send_msg():
+                yield streaming_pb2.EventStreamClientMessage(
+                    subscribe=streaming_pb2.SubscribeRunMessage(run_id=run_id, after_seq=0)
+                )
+                while True:
+                    await asyncio.sleep(1.0)
 
-    return asyncio.create_task(read_stream())
+            call = stub.StreamWorkflowEvents(send_msg(), metadata=metadata)
+            async for frame in call:
+                received.append((frame.seq, frame.event_type, asyncio.get_running_loop().time()))
+                if frame.is_terminal:
+                    break
 
-
-async def wait_for_count(received: list, count: int, timeout_s: float) -> None:
-    deadline = time.monotonic() + timeout_s
-    while len(received) < count and time.monotonic() < deadline:
-        await asyncio.sleep(0.02)
-
-
-async def append_task_started(ledger: SurrealLedgerRepository, run_id: str, task_id: str) -> float:
-    await ledger.append_event_transactional(
-        run_id=run_id,
-        event_type="task.started",
-        task_id=task_id,
-        payload={"task_id": task_id, "attempt": 1, "assigned_agent": "job-analysis"},
-    )
-    return time.monotonic()
-
-
-@pytest.mark.asyncio
-async def test_sse_delivers_published_events_within_two_seconds_without_duplicates():
-    from src.orchestration.router import job_queue
-
-    job_queue.client = None
-    ledger_module.set_event_publisher(job_queue.publish_event)
+    reader = asyncio.create_task(client_sub())
     try:
-        ledger = SurrealLedgerRepository()
-        run_id = await create_run_with_history(ledger)
-        received: list[tuple[int, str, float]] = []
-        reader = start_reader(run_id, received)
-        await wait_for_count(received, 2, 5.0)
-        assert [s for s, _, _ in received] == [1, 2]
-        await asyncio.sleep(0.3)
-
-        for i in range(3):
-            committed_at = await append_task_started(ledger, run_id, f"task_{i}")
-            await wait_for_count(received, 3 + i, 2.0)
-            assert len(received) == 3 + i, f"event seq {3 + i} not delivered within 2s"
-            assert received[-1][2] - committed_at < 2.0
-
-        await ledger.append_event_transactional(
-            run_id=run_id,
-            event_type="workflow.completed",
-            payload={"duration_ms": 1.0, "total_tasks": 3, "artifacts_count": 0},
-        )
-        await asyncio.wait_for(reader, timeout=10)
-
-        seqs = [s for s, _, _ in received]
-        assert seqs == [1, 2, 3, 4, 5, 6]
-        assert len(seqs) == len(set(seqs))
-        assert [t for _, t, _ in received][2:] == ["task.started"] * 3 + ["workflow.completed"]
-    finally:
-        await job_queue.close()
-
-
-@pytest.mark.asyncio
-async def test_sse_backstop_replays_missed_events_when_publishing_is_disabled():
-    from src.orchestration import router as router_module
-    from src.orchestration.router import job_queue
-
-    job_queue.client = None
-    ledger_module.set_event_publisher(None)
-    try:
-        ledger = SurrealLedgerRepository()
-        run_id = await create_run_with_history(ledger)
-        received: list[tuple[int, str, float]] = []
-        reader = start_reader(run_id, received)
-        await wait_for_count(received, 2, 5.0)
-        assert [s for s, _, _ in received] == [1, 2]
+        await wait_for_count(received, 1, timeout=4.0)
+        assert received[0][0] == 1
+        assert received[0][1] == "workflow.created"
 
         await append_task_started(ledger, run_id, "task_a")
         await append_task_started(ledger, run_id, "task_b")
-        await wait_for_count(received, 4, router_module.SSE_IDLE_REPLAY_S + 5.0)
-        assert [s for s, _, _ in received] == [1, 2, 3, 4]
+        await wait_for_count(received, 3, timeout=4.0)
+
+        assert [s for s, _, _ in received] == [1, 2, 3]
 
         await ledger.append_event_transactional(
             run_id=run_id,
             event_type="workflow.completed",
             payload={"duration_ms": 1.0, "total_tasks": 2, "artifacts_count": 0},
         )
-        await asyncio.wait_for(reader, timeout=router_module.SSE_IDLE_REPLAY_S + 10.0)
-
-        seqs = [s for s, _, _ in received]
-        assert seqs == [1, 2, 3, 4, 5]
-        assert len(seqs) == len(set(seqs))
-        assert [t for _, t, _ in received][2:] == ["task.started", "task.started", "workflow.completed"]
+        await wait_for_count(received, 4, timeout=4.0)
+        assert [s for s, _, _ in received] == [1, 2, 3, 4]
+        assert received[-1][1] == "workflow.completed"
     finally:
-        ledger_module.set_event_publisher(job_queue.publish_event)
-        await job_queue.close()
+        reader.cancel()
+        with contextlib.suppress(BaseException):
+            await reader
+        current_ledger_var.reset(token_var)

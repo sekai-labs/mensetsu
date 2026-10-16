@@ -11,8 +11,6 @@ dependencies = [
     "beautifulsoup4>=4.12.0",
     "pypdf>=5.1.0",
     "python-docx>=1.1.2",
-    "fastapi>=0.115.0",
-    "uvicorn>=0.34.0",
     "openai>=3.22.1",
     "pyyaml>=6.0.2",
     "langgraph>=1.2.0",
@@ -21,6 +19,8 @@ dependencies = [
     "langchain-openai>=1.7.0",
     "langgraph-checkpoint-redis==0.5.2",
     "redis>=5.2.0",
+    "grpcio>=1.68.0",
+    "grpcio-tools>=1.68.0",
 ]
 
 [dependency-groups]
@@ -34,6 +34,7 @@ dev = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = ["src/grpc/v1"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]

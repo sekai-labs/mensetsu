@@ -65,10 +65,13 @@ async def retry_on_write_conflict(operation, description: str, attempts: int):
         except Exception as e:
             if not is_write_conflict(e) or attempt == attempts:
                 if is_write_conflict(e):
-                    logger.error(f"{description}: write conflict persisted after {attempts} attempts: {e}")
+                    logger.error(
+                        f"{description}: write conflict persisted after {attempts} attempts: {e}"
+                    )
                 raise
             await asyncio.sleep(random.uniform(0.02, 0.2))
     raise RuntimeError(f"{description}: retry loop exited without result")
+
 
 WORKFLOW_RUN_ALLOWED_FIELDS = {
     "workflow_id",
@@ -142,7 +145,9 @@ async def publish_committed_event(evt: ExecutionEvent) -> None:
     try:
         await publisher(evt.run_id, evt.model_dump_json())
     except Exception as pe:
-        logger.warning(f"Live publish failed for {evt.type} seq={evt.seq} (history replay still has it): {pe}")
+        logger.warning(
+            f"Live publish failed for {evt.type} seq={evt.seq} (history replay still has it): {pe}"
+        )
 
 
 class SurrealLedgerRepository:
@@ -269,7 +274,9 @@ class SurrealLedgerRepository:
             return progress
 
         return await retry_on_write_conflict(
-            attempt_refresh, f"progress refresh for {clean_run_id}", attempts=PROGRESS_RETRY_ATTEMPTS
+            attempt_refresh,
+            f"progress refresh for {clean_run_id}",
+            attempts=PROGRESS_RETRY_ATTEMPTS,
         )
 
     async def list_workflow_runs(
@@ -299,7 +306,9 @@ class SurrealLedgerRepository:
             vars_payload["cursor"] = clean_cur
 
         where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
-        query = "SELECT * FROM workflow_run " + where_clause + " ORDER BY created_at DESC LIMIT $limit;"
+        query = (
+            "SELECT * FROM workflow_run " + where_clause + " ORDER BY created_at DESC LIMIT $limit;"
+        )
         res = await self.db.execute_query(query, vars=vars_payload)
         items: list[WorkflowRun] = []
         if isinstance(res, list) and res:
@@ -374,11 +383,7 @@ class SurrealLedgerRepository:
         max_retries: int = 30,
     ) -> ExecutionEvent:
         clean_run_id = validate_id(run_id, "run_id")
-        raw_payload = (
-            payload.model_dump()
-            if hasattr(payload, "model_dump")
-            else dict(payload)
-        )
+        raw_payload = payload.model_dump() if hasattr(payload, "model_dump") else dict(payload)
         sanitized_payload = sanitize_data(raw_payload)
 
         async def attempt_append() -> ExecutionEvent:
@@ -415,7 +420,9 @@ class SurrealLedgerRepository:
                 "LET $r = (UPDATE type::record('workflow_run', $run_id) SET last_seq += 1, updated_at = time::now() RETURN AFTER);\n"
                 "LET $seq = (IF array::len($r) > 0 THEN $r[0].last_seq ELSE 1 END);\n"
                 "LET $rec_id = string::concat($run_id, '_', type::string($seq));\n"
-                "UPSERT type::record('execution_event', $rec_id) SET " + set_items_str + " RETURN AFTER;\n"
+                "UPSERT type::record('execution_event', $rec_id) SET "
+                + set_items_str
+                + " RETURN AFTER;\n"
                 "COMMIT TRANSACTION;\n"
             )
             res = await self.db.execute_query(txn_query, vars=vars_payload)
@@ -604,17 +611,29 @@ class SurrealLedgerRepository:
             "public_summary": execution.public_summary,
         }
         if execution.started_at:
-            query = query.replace("public_summary = $public_summary;", "public_summary = $public_summary, started_at = started_at ?? type::datetime($started_at);")
+            query = query.replace(
+                "public_summary = $public_summary;",
+                "public_summary = $public_summary, started_at = started_at ?? type::datetime($started_at);",
+            )
             vars_payload["started_at"] = execution.started_at.isoformat()
         else:
-            query = query.replace("public_summary = $public_summary;", "public_summary = $public_summary, started_at = started_at ?? time::now();")
+            query = query.replace(
+                "public_summary = $public_summary;",
+                "public_summary = $public_summary, started_at = started_at ?? time::now();",
+            )
 
         if execution.status in ("completed", "failed", "cancelled"):
             if execution.completed_at:
-                query = query.replace("started_at = ", "completed_at = type::datetime($completed_at), started_at = ", 1)
+                query = query.replace(
+                    "started_at = ",
+                    "completed_at = type::datetime($completed_at), started_at = ",
+                    1,
+                )
                 vars_payload["completed_at"] = execution.completed_at.isoformat()
             else:
-                query = query.replace("started_at = ", "completed_at = time::now(), started_at = ", 1)
+                query = query.replace(
+                    "started_at = ", "completed_at = time::now(), started_at = ", 1
+                )
         if execution.error is not None:
             query = query.replace("started_at = ", "error = $error, started_at = ", 1)
             vars_payload["error"] = execution.error
@@ -1069,16 +1088,24 @@ class SurrealLedgerRepository:
             query = query.replace("ts = time::now();", "task_id = $task_id, ts = time::now();")
             vars_payload["task_id"] = task_id
         if execution_id:
-            query = query.replace("ts = time::now();", "execution_id = $execution_id, ts = time::now();")
+            query = query.replace(
+                "ts = time::now();", "execution_id = $execution_id, ts = time::now();"
+            )
             vars_payload["execution_id"] = execution_id
         if tool_invocation_id:
-            query = query.replace("ts = time::now();", "tool_invocation_id = $tool_invocation_id, ts = time::now();")
+            query = query.replace(
+                "ts = time::now();", "tool_invocation_id = $tool_invocation_id, ts = time::now();"
+            )
             vars_payload["tool_invocation_id"] = tool_invocation_id
         if duration_ms is not None:
-            query = query.replace("ts = time::now();", "duration_ms = $duration_ms, ts = time::now();")
+            query = query.replace(
+                "ts = time::now();", "duration_ms = $duration_ms, ts = time::now();"
+            )
             vars_payload["duration_ms"] = float(duration_ms)
         if error_category:
-            query = query.replace("ts = time::now();", "error_category = $error_category, ts = time::now();")
+            query = query.replace(
+                "ts = time::now();", "error_category = $error_category, ts = time::now();"
+            )
             vars_payload["error_category"] = error_category
 
         await self.db.execute_query(query, vars=vars_payload)
@@ -1110,7 +1137,9 @@ class SurrealLedgerRepository:
             vars_payload["cursor"] = int(cursor)
 
         where_clause = " AND ".join(conditions)
-        query = "SELECT * FROM execution_log WHERE " + where_clause + " ORDER BY id ASC LIMIT $limit;"
+        query = (
+            "SELECT * FROM execution_log WHERE " + where_clause + " ORDER BY id ASC LIMIT $limit;"
+        )
         res = await self.db.execute_query(query, vars=vars_payload)
         items: list[LogEntry] = []
         if isinstance(res, list) and res:

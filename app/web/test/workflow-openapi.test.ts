@@ -5,7 +5,7 @@ import { useWorkflowRunStore } from '../composables/useWorkflowStore'
 
 describe('Workflow Service & Store Error Boundaries', () => {
   it('asserts every workflow service API path and method exists in openapi.json', () => {
-    const openapiPath = path.resolve(__dirname, '../../../server/api/contracts/openapi.json')
+    const openapiPath = path.resolve(__dirname, '../../../contracts/rest/openapi.json')
     const openapi = JSON.parse(fs.readFileSync(openapiPath, 'utf8'))
     const openapiPaths = openapi.paths || {}
 

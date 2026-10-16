@@ -44,48 +44,82 @@ class DynamicPlanFakeModel(ScriptedToolCallingFakeModel):
         }
         msg = AIMessage(
             content="",
-            tool_calls=[{"name": "PlanOutput", "args": payload, "id": f"tc_{uuid.uuid4().hex[:6]}", "type": "tool_call"}],
+            tool_calls=[
+                {
+                    "name": "PlanOutput",
+                    "args": payload,
+                    "id": f"tc_{uuid.uuid4().hex[:6]}",
+                    "type": "tool_call",
+                }
+            ],
         )
         return ChatResult(generations=[ChatGeneration(message=msg)])
 
 
 def test_validate_plan_dag_rules():
     with pytest.raises(ValueError, match="maximum task count"):
-        validate_plan_dag([{"id": f"t_{i}", "assigned_agent": "job-analysis", "dependencies": []} for i in range(16)])
+        validate_plan_dag(
+            [
+                {"id": f"t_{i}", "assigned_agent": "job-analysis", "dependencies": []}
+                for i in range(16)
+            ]
+        )
 
     with pytest.raises(ValueError, match="maximum permitted per revision is 4"):
-        validate_plan_dag([
-            {"id": f"t_{i}", "assigned_agent": "company-research", "dependencies": [], "name": f"Task {i}", "required": True}
-            for i in range(5)
-        ])
+        validate_plan_dag(
+            [
+                {
+                    "id": f"t_{i}",
+                    "assigned_agent": "company-research",
+                    "dependencies": [],
+                    "name": f"Task {i}",
+                    "required": True,
+                }
+                for i in range(5)
+            ]
+        )
     with pytest.raises(ValueError, match="Duplicate task ID"):
-        validate_plan_dag([
-            {"id": "t_1", "assigned_agent": "company-research", "dependencies": []},
-            {"id": "t_1", "assigned_agent": "technical-research", "dependencies": []},
-        ])
+        validate_plan_dag(
+            [
+                {"id": "t_1", "assigned_agent": "company-research", "dependencies": []},
+                {"id": "t_1", "assigned_agent": "technical-research", "dependencies": []},
+            ]
+        )
 
     with pytest.raises(ValueError, match="Unknown agent"):
-        validate_plan_dag([{"id": "t_1", "assigned_agent": "unknown-nonexistent-agent", "dependencies": []}])
+        validate_plan_dag(
+            [{"id": "t_1", "assigned_agent": "unknown-nonexistent-agent", "dependencies": []}]
+        )
 
     with pytest.raises(ValueError, match="nonexistent dependency"):
-        validate_plan_dag([
-            {"id": "t_1", "assigned_agent": "company-research", "dependencies": ["missing_dep"]},
-        ])
+        validate_plan_dag(
+            [
+                {
+                    "id": "t_1",
+                    "assigned_agent": "company-research",
+                    "dependencies": ["missing_dep"],
+                },
+            ]
+        )
 
     with pytest.raises(ValueError, match="Cycle detected"):
-        validate_plan_dag([
-            {"id": "t_1", "assigned_agent": "company-research", "dependencies": ["t_2"]},
-            {"id": "t_2", "assigned_agent": "technical-research", "dependencies": ["t_1"]},
-        ])
+        validate_plan_dag(
+            [
+                {"id": "t_1", "assigned_agent": "company-research", "dependencies": ["t_2"]},
+                {"id": "t_2", "assigned_agent": "technical-research", "dependencies": ["t_1"]},
+            ]
+        )
 
     with pytest.raises(ValueError, match="maximum depth"):
-        validate_plan_dag([
-            {"id": "t_1", "assigned_agent": "company-research", "dependencies": []},
-            {"id": "t_2", "assigned_agent": "technical-research", "dependencies": ["t_1"]},
-            {"id": "t_3", "assigned_agent": "job-analysis", "dependencies": ["t_2"]},
-            {"id": "t_4", "assigned_agent": "evidence-evaluator", "dependencies": ["t_3"]},
-            {"id": "t_5", "assigned_agent": "curriculum", "dependencies": ["t_4"]},
-        ])
+        validate_plan_dag(
+            [
+                {"id": "t_1", "assigned_agent": "company-research", "dependencies": []},
+                {"id": "t_2", "assigned_agent": "technical-research", "dependencies": ["t_1"]},
+                {"id": "t_3", "assigned_agent": "job-analysis", "dependencies": ["t_2"]},
+                {"id": "t_4", "assigned_agent": "evidence-evaluator", "dependencies": ["t_3"]},
+                {"id": "t_5", "assigned_agent": "curriculum", "dependencies": ["t_4"]},
+            ]
+        )
 
 
 @pytest.mark.asyncio
@@ -107,6 +141,7 @@ async def test_dynamic_workflow_plan_revision_and_parallel_overlap():
     )
 
     from src.contracts.v1 import Artifact
+
     for k in range(5):
         await ledger.save_artifact(
             Artifact(

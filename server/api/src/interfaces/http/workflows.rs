@@ -20,7 +20,6 @@ use crate::{
     },
     interfaces::http::{
         extractors::authenticated_user::AuthenticatedUser,
-        sse_parser::SseParser,
         workflow_dtos::{
             bare_run_id, AgentExecution, Artifact, Delegation, DelegationGraphResponse,
             LogsPageResponse, RunsPageResponse, TaskGraphResponse, WorkflowDefinition,
@@ -138,7 +137,7 @@ pub async fn list_workflows(
     State(state): State<AppState>,
     _auth_user: AuthenticatedUser,
 ) -> Result<Json<Vec<WorkflowDefinition>>, AppError> {
-    Ok(Json(state.intelligence_client.get_json(&[], &[]).await?))
+    Ok(Json(state.grpc_client.list_workflows().await?))
 }
 
 #[utoipa::path(
@@ -187,10 +186,10 @@ pub async fn list_workflow_runs(
         return Ok(Json(RunsPageResponse { items: Vec::new(), next_cursor: None }));
     }
 
-    let ids_param = run_ids.iter().map(|r| r.0.as_str()).collect::<Vec<_>>().join(",");
+    let ids_vec: Vec<String> = run_ids.iter().map(|r| r.0.clone()).collect();
     let page: RunsPageResponse = state
-        .intelligence_client
-        .get_json(&["runs"], &[("run_ids", ids_param), ("limit", run_ids.len().to_string())])
+        .grpc_client
+        .list_runs(ids_vec, None, None, None, run_ids.len() as u32, None)
         .await?;
 
     let mut by_id: HashMap<String, WorkflowRun> = page
@@ -259,7 +258,7 @@ pub async fn get_workflow_run(
     Path(run_id): Path<String>,
 ) -> Result<Json<WorkflowRun>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
-    let mut run: WorkflowRun = state.intelligence_client.get_json(&["runs", &owned.run_id.0], &[]).await?;
+    let mut run: WorkflowRun = state.grpc_client.get_run(&owned.run_id.0).await?;
     ensure_same_run(&owned, &run.id)?;
     run.normalize_record_ids();
     Ok(Json(run))
@@ -282,7 +281,7 @@ pub async fn get_workflow_run_graph(
     Path(run_id): Path<String>,
 ) -> Result<Json<TaskGraphResponse>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
-    Ok(Json(state.intelligence_client.get_json(&["runs", &owned.run_id.0, "graph"], &[]).await?))
+    Ok(Json(state.grpc_client.get_task_graph(&owned.run_id.0).await?))
 }
 
 #[utoipa::path(
@@ -304,8 +303,8 @@ pub async fn get_workflow_run_delegation_graph(
     let owned = authorize(&state, &auth_user, &run_id).await?;
     Ok(Json(
         state
-            .intelligence_client
-            .get_json(&["runs", &owned.run_id.0, "delegations", "graph"], &[])
+            .grpc_client
+            .get_delegation_graph(&owned.run_id.0)
             .await?,
     ))
 }
@@ -341,26 +340,7 @@ pub async fn workflow_run_events(
             .unwrap_or(0)
     });
 
-    let mut upstream = state.intelligence_client.open_event_stream(&owned.run_id.0, after_seq).await?;
-
-    let stream = async_stream::stream! {
-        let mut parser = SseParser::new();
-        loop {
-            match upstream.chunk().await {
-                Ok(Some(chunk)) => {
-                    for frame in parser.feed(&chunk) {
-                        yield Ok(frame.into_axum_event());
-                    }
-                }
-                Ok(None) => break,
-                Err(e) => {
-                    tracing::debug!(error = %e, "upstream SSE stream ended with error");
-                    break;
-                }
-            }
-        }
-    };
-
+    let stream = state.grpc_client.stream_run_events(owned.run_id.0.clone(), after_seq).await?;
     Ok(Sse::new(stream).keep_alive(KeepAlive::new().interval(Duration::from_secs(15))))
 }
 
@@ -382,24 +362,17 @@ pub async fn get_workflow_run_logs(
     Query(query): Query<LogsQuery>,
 ) -> Result<Json<LogsPageResponse>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
-    let mut params = Vec::new();
-    if let Some(c) = query.cursor {
-        params.push(("cursor", c));
-    }
-    if let Some(l) = query.limit {
-        params.push(("limit", l.to_string()));
-    }
-    if let Some(s) = query.severity {
-        params.push(("severity", s));
-    }
-    if let Some(t) = query.task_id {
-        params.push(("task_id", t));
-    }
-    if let Some(e) = query.execution_id {
-        params.push(("execution_id", e));
-    }
-    let page: LogsPageResponse =
-        state.intelligence_client.get_json(&["runs", &owned.run_id.0, "logs"], &params).await?;
+    let page: LogsPageResponse = state
+        .grpc_client
+        .get_logs(
+            &owned.run_id.0,
+            query.cursor,
+            query.limit.unwrap_or(100),
+            query.severity,
+            query.task_id,
+            query.execution_id,
+        )
+        .await?;
     for entry in &page.items {
         ensure_same_run(&owned, &entry.run_id)?;
     }
@@ -423,8 +396,7 @@ pub async fn get_workflow_run_task(
     Path((run_id, task_id)): Path<(String, String)>,
 ) -> Result<Json<WorkflowTask>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
-    let task: WorkflowTask =
-        state.intelligence_client.get_json(&["runs", &owned.run_id.0, "tasks", &task_id], &[]).await?;
+    let task: WorkflowTask = state.grpc_client.get_task(&owned.run_id.0, &task_id).await?;
     ensure_same_run(&owned, &task.run_id)?;
     Ok(Json(task))
 }
@@ -447,8 +419,8 @@ pub async fn get_workflow_run_agent(
 ) -> Result<Json<AgentExecution>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
     let agent: AgentExecution = state
-        .intelligence_client
-        .get_json(&["runs", &owned.run_id.0, "agents", &execution_id], &[])
+        .grpc_client
+        .get_agent(&owned.run_id.0, &execution_id)
         .await?;
     ensure_same_run(&owned, &agent.run_id)?;
     Ok(Json(agent))
@@ -471,10 +443,7 @@ pub async fn list_workflow_run_agents(
     Path(run_id): Path<String>,
 ) -> Result<Json<Vec<AgentExecution>>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
-    let items: Vec<AgentExecution> = state
-        .intelligence_client
-        .get_json(&["runs", &owned.run_id.0, "agents"], &[])
-        .await?;
+    let items: Vec<AgentExecution> = state.grpc_client.list_agents(&owned.run_id.0).await?;
     for a in &items {
         ensure_same_run(&owned, &a.run_id)?;
     }
@@ -499,16 +468,13 @@ pub async fn get_workflow_run_events_history(
     Query(query): Query<EventsHistoryQuery>,
 ) -> Result<Json<crate::interfaces::http::workflow_dtos::EventsHistoryPageResponse>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
-    let mut params = Vec::new();
-    if let Some(s) = query.after_seq {
-        params.push(("after_seq", s.to_string()));
-    }
-    if let Some(l) = query.limit {
-        params.push(("limit", l.to_string()));
-    }
     let page: crate::interfaces::http::workflow_dtos::EventsHistoryPageResponse = state
-        .intelligence_client
-        .get_json(&["runs", &owned.run_id.0, "events", "history"], &params)
+        .grpc_client
+        .get_events_history(
+            &owned.run_id.0,
+            query.after_seq.unwrap_or(0),
+            query.limit.unwrap_or(50),
+        )
         .await?;
     for e in &page.events {
         ensure_same_run(&owned, &e.run_id)?;
@@ -535,21 +501,19 @@ pub async fn list_workflow_run_agent_tools(
 ) -> Result<Json<crate::interfaces::http::workflow_dtos::ToolInvocationsPageResponse>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
     let agent: AgentExecution = state
-        .intelligence_client
-        .get_json(&["runs", &owned.run_id.0, "agents", &execution_id], &[])
+        .grpc_client
+        .get_agent(&owned.run_id.0, &execution_id)
         .await?;
     ensure_same_run(&owned, &agent.run_id)?;
 
-    let mut params = Vec::new();
-    if let Some(c) = query.cursor {
-        params.push(("cursor", c));
-    }
-    if let Some(l) = query.limit {
-        params.push(("limit", l.to_string()));
-    }
     let page: crate::interfaces::http::workflow_dtos::ToolInvocationsPageResponse = state
-        .intelligence_client
-        .get_json(&["runs", &owned.run_id.0, "agents", &execution_id, "tools"], &params)
+        .grpc_client
+        .list_agent_tools(
+            &owned.run_id.0,
+            &execution_id,
+            query.cursor,
+            query.limit.unwrap_or(50),
+        )
         .await?;
     for item in &page.items {
         if item.execution_id != execution_id {
@@ -578,16 +542,14 @@ pub async fn get_workflow_run_tool_output(
     Query(query): Query<ToolOutputQuery>,
 ) -> Result<Json<crate::interfaces::http::workflow_dtos::ToolOutputResponse>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
-    let mut params = Vec::new();
-    if let Some(o) = query.offset {
-        params.push(("offset", o.to_string()));
-    }
-    if let Some(l) = query.limit {
-        params.push(("limit", l.to_string()));
-    }
     let output: crate::interfaces::http::workflow_dtos::ToolOutputResponse = state
-        .intelligence_client
-        .get_json(&["runs", &owned.run_id.0, "tools", &tool_invocation_id, "output"], &params)
+        .grpc_client
+        .get_tool_output(
+            &owned.run_id.0,
+            &tool_invocation_id,
+            query.offset.unwrap_or(0) as u32,
+            query.limit.unwrap_or(1000) as u32,
+        )
         .await?;
     if output.tool_invocation_id != tool_invocation_id {
         tracing::error!(expected = %tool_invocation_id, actual = %output.tool_invocation_id, "tool output response referenced a different tool");
@@ -613,14 +575,12 @@ pub async fn get_workflow_run_delegations(
     Path(run_id): Path<String>,
 ) -> Result<Json<Vec<Delegation>>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
-    let items: Vec<Delegation> =
-        state.intelligence_client.get_json(&["runs", &owned.run_id.0, "delegations"], &[]).await?;
+    let items: Vec<Delegation> = state.grpc_client.list_delegations(&owned.run_id.0).await?;
     for d in &items {
         ensure_same_run(&owned, &d.run_id)?;
     }
     Ok(Json(items))
 }
-
 #[utoipa::path(
     get,
     path = "/api/v1/workflows/runs/{run_id}/artifacts",
@@ -638,8 +598,7 @@ pub async fn get_workflow_run_artifacts(
     Path(run_id): Path<String>,
 ) -> Result<Json<Vec<Artifact>>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
-    let items: Vec<Artifact> =
-        state.intelligence_client.get_json(&["runs", &owned.run_id.0, "artifacts"], &[]).await?;
+    let items: Vec<Artifact> = state.grpc_client.list_artifacts(&owned.run_id.0).await?;
     for a in &items {
         ensure_same_run(&owned, &a.run_id)?;
     }
@@ -663,7 +622,7 @@ pub async fn cancel_workflow_run(
     Path(run_id): Path<String>,
 ) -> Result<Json<WorkflowRun>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
-    let run: WorkflowRun = state.intelligence_client.post_json(&["runs", &owned.run_id.0, "cancel"]).await?;
+    let run: WorkflowRun = state.grpc_client.cancel_run(&owned.run_id.0).await?;
     ensure_same_run(&owned, &run.id)?;
     Ok(Json(run))
 }

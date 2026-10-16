@@ -186,7 +186,11 @@ class MarkerCheckingModel(ScriptedToolCallingFakeModel):
             }
         elif curr_agent == "systems-deep-dive":
             from src.agents.schemas import current_execution_saved_evidence_ids_var
-            exec_evs = list(current_execution_saved_evidence_ids_var.get() or []) or ["ev_0", "ev_1"]
+
+            exec_evs = list(current_execution_saved_evidence_ids_var.get() or []) or [
+                "ev_0",
+                "ev_1",
+            ]
             payload = {
                 "summary": "MARKER_DEEP_DIVE_SUMMARY",
                 "subsystem": "storage",
@@ -351,7 +355,13 @@ async def test_optional_research_failure_marks_run_degraded():
     )
     for k in range(5):
         await ledger.save_artifact(
-            Artifact(id=f"ev_{k}", run_id=run_id, type="evidence", title=f"Evidence {k}", content={"snippet": "s"})
+            Artifact(
+                id=f"ev_{k}",
+                run_id=run_id,
+                type="evidence",
+                title=f"Evidence {k}",
+                content={"snippet": "s"},
+            )
         )
     agent_runtime.set_model_factory(lambda: CompanyAlwaysFailsModel())
     saver = AsyncRedisSaver(redis_url=os.environ.get("REDIS_URL", "redis://127.0.0.1:16379"))
@@ -386,5 +396,9 @@ async def test_optional_research_failure_marks_run_degraded():
     assert completed.payload.degraded is True
     assert completed.payload.degraded_reasons == run_obj.degraded_reasons
 
-    open_execs = [e for e in await ledger.list_agent_executions_for_run(run_id) if e.status in ("pending", "running")]
+    open_execs = [
+        e
+        for e in await ledger.list_agent_executions_for_run(run_id)
+        if e.status in ("pending", "running")
+    ]
     assert open_execs == []

@@ -1,18 +1,14 @@
-import asyncio
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from langchain_core.messages import AIMessage
-from langchain_core.language_models.chat_models import BaseChatModel
 
+import pytest
+
+from src.agents.model_router import (
+    resolve_chat_model_for_role,
+    resolve_provider_credentials,
+)
 from src.agents.schemas import WorkflowRoutingDecision
 from src.agents.workflow_router import route_workflow_request
-from src.agents.model_router import (
-    resolve_provider_credentials,
-    resolve_chat_model_for_role,
-    ROLE_SLOT_MAP,
-)
 from src.orchestration.hybrid_workflow import HybridWorkflowState, build_hybrid_workflow
-from src.contracts.v1 import WorkflowRun, WorkflowTask, Artifact
 
 
 @pytest.mark.asyncio
@@ -85,7 +81,11 @@ def test_model_routing_role_slots_and_fallback():
         "model_routing": {
             "router": {
                 "primary": {"provider_key": "openai", "model": "gpt-4o-mini", "temperature": 0.0},
-                "fallback": {"provider_key": "anthropic", "model": "claude-3-5-haiku", "temperature": 0.1},
+                "fallback": {
+                    "provider_key": "anthropic",
+                    "model": "claude-3-5-haiku",
+                    "temperature": 0.1,
+                },
             }
         },
     }
@@ -108,6 +108,7 @@ async def test_hybrid_workflow_state_graph_compiles_and_plans():
     app = build_hybrid_workflow(ledger=mock_ledger)
     assert app is not None
 
+
 @pytest.mark.asyncio
 async def test_hybrid_workflow_curriculum_staged_success():
     mock_ledger = MagicMock()
@@ -117,7 +118,9 @@ async def test_hybrid_workflow_curriculum_staged_success():
     mock_ledger.list_artifacts_for_run = AsyncMock(return_value=[])
 
     from src.orchestration.hybrid_workflow import execute_curriculum_node
-    curriculum_fn = lambda s: execute_curriculum_node(s, mock_ledger)
+
+    def curriculum_fn(s):
+        return execute_curriculum_node(s, mock_ledger)
     state = HybridWorkflowState(
         run_id="run_test_curr_123",
         workspace_id="ws_test_123",
@@ -129,7 +132,9 @@ async def test_hybrid_workflow_curriculum_staged_success():
     mock_exec_rec_1 = MagicMock(id="exec_1")
     mock_exec_rec_2 = MagicMock(id="exec_2")
     mock_graph_output = {
-        "skills": [{"name": "GovTech Integration", "category": "Domain", "candidate_status": "gap"}],
+        "skills": [
+            {"name": "GovTech Integration", "category": "Domain", "candidate_status": "gap"}
+        ],
         "relations": [],
         "summary": "Knowledge graph constructed.",
     }
@@ -166,5 +171,3 @@ async def test_hybrid_workflow_curriculum_staged_success():
         assert len(saved_tasks) > 0
         completed_curr_task = saved_tasks[-1]
         assert completed_curr_task.execution_ids == ["exec_1", "exec_2"]
-
-

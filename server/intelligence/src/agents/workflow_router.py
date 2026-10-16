@@ -1,11 +1,11 @@
 import logging
 import time
 from typing import Any
-from langchain_core.messages import SystemMessage, HumanMessage
-from pydantic import BaseModel, Field
 
-from src.agents.schemas import WorkflowRoutingDecision
+from langchain_core.messages import HumanMessage, SystemMessage
+
 from src.agents.model_router import resolve_chat_model_for_role
+from src.agents.schemas import WorkflowRoutingDecision
 
 logger = logging.getLogger("mensetsu.agents.workflow_router")
 
@@ -27,6 +27,7 @@ Choose between three workflow execution modes:
 
 Also, if the company name or role title are not provided or are generic placeholders ("Target Company", "Target Role"), extract the real target company and role title directly from the prompt and resume context.
 """
+
 
 async def route_workflow_request(
     user_prompt: str,
@@ -59,7 +60,7 @@ async def route_workflow_request(
         user_content = f"""User Prompt: {user_prompt}
 Target Company: {company_name}
 Target Role: {role_title}
-Seniority: {seniority or 'Unspecified'}
+Seniority: {seniority or "Unspecified"}
 Resume excerpt: {resume_text[:1000]}
 Job Description excerpt: {job_description[:1000]}
 """
@@ -71,7 +72,9 @@ Job Description excerpt: {job_description[:1000]}
 
         decision = await structured_model.ainvoke(messages)
         dur = (time.perf_counter() - start_t) * 1000
-        logger.info(f"Workflow Router decided {decision.selected_workflow} in {dur:.1f}ms (confidence={decision.confidence})")
+        logger.info(
+            f"Workflow Router decided {decision.selected_workflow} in {dur:.1f}ms (confidence={decision.confidence})"
+        )
         return decision
     except Exception as e:
         logger.warning(f"Workflow Router evaluation failed ({e}); falling back to hybrid workflow.")
