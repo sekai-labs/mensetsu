@@ -43,13 +43,13 @@ const handleToggle = async () => {
           :to="`/interviews/${workspaceId}/learning`"
           class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium inline-block mb-1.5"
         >
-          ← Back to Syllabus
+          {{ $t('learning.backToSyllabus') }}
         </NuxtLink>
         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
           {{ currentLesson?.title || 'Lesson Overview' }}
         </h1>
         <div class="flex items-center gap-3 text-xs text-slate-500 font-mono mt-1">
-          <span>{{ currentLesson?.estimated_minutes || 30 }} mins</span>
+          <span>{{ $t('learning.mins', { count: currentLesson?.estimated_minutes || 30 }) }}</span>
           <span v-if="currentLesson?.skill">• Skill: {{ currentLesson.skill }}</span>
         </div>
       </div>
@@ -60,7 +60,7 @@ const handleToggle = async () => {
           class="px-3 py-1.5 text-xs font-medium rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
           @click="handleToggle"
         >
-          {{ currentLesson?.is_completed || currentLesson?.completed ? 'Mark Incomplete' : 'Mark Completed' }}
+          {{ currentLesson?.is_completed || currentLesson?.completed ? $t('learning.markIncomplete') : $t('learning.markCompleted') }}
         </button>
       </div>
     </div>

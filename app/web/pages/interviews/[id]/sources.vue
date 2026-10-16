@@ -61,17 +61,17 @@ const openCitation = (source: SourceCitation) => {
     <div class="border-b border-slate-200 dark:border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs font-mono text-indigo-600 dark:text-indigo-400 font-semibold mb-1">
-          <span>CITATION PROVENANCE</span>
+          <span>{{ $t('sources.badge') }}</span>
           <span>•</span>
-          <span>VERIFIED SOURCES</span>
+          <span>CITATION PROVENANCE</span>
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Verified Evidence & Source Index
+          {{ $t('sources.title') }}
         </h1>
       </div>
 
       <div class="text-xs font-mono text-slate-500">
-        {{ companyData?.sources?.length || 0 }} indexed sources
+        {{ $t('sources.indexedCount', { count: companyData?.sources?.length || 0 }) }}
       </div>
     </div>
 
@@ -79,15 +79,15 @@ const openCitation = (source: SourceCitation) => {
     <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg space-y-3 shadow-sm">
       <div class="flex items-center justify-between">
         <div class="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-          Source-Grounded Technical Q&A
+          {{ $t('sources.qaTitle') }}
         </div>
-        <span class="text-[10px] font-mono text-indigo-600 dark:text-indigo-400">Strict Citation Provenance • No Hallucinations</span>
+        <span class="text-[10px] font-mono text-indigo-600 dark:text-indigo-400">{{ $t('sources.qaBadge') }}</span>
       </div>
       <div class="flex gap-2">
         <input
           v-model="qaQuery"
           type="text"
-          placeholder="Ask a technical question against indexed research (e.g. What databases are publicly documented?)"
+          :placeholder="$t('sources.qaPlaceholder')"
           class="flex-1 text-xs px-3 py-2 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 font-mono"
           @keydown.enter="handleAskQa"
         />
@@ -97,14 +97,14 @@ const openCitation = (source: SourceCitation) => {
           :disabled="isAsking || !qaQuery.trim()"
           @click="handleAskQa"
         >
-          {{ isAsking ? 'Retrieving...' : 'Ask Evidence' }}
+          {{ isAsking ? $t('sources.askingButton') : $t('sources.askButton') }}
         </button>
       </div>
       <div v-if="qaResponse" class="p-3 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded text-xs space-y-2">
         <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
           <span>QUESTION: {{ qaResponse.query }}</span>
           <span :class="qaResponse.has_sufficient_evidence ? 'text-emerald-500 font-bold' : 'text-amber-500 font-bold'">
-            {{ qaResponse.has_sufficient_evidence ? 'EVIDENCE VERIFIED' : 'NO EVIDENCE FOUND' }}
+            {{ qaResponse.has_sufficient_evidence ? $t('sources.evidenceVerified') : $t('sources.noEvidence') }}
           </span>
         </div>
         <div class="text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">

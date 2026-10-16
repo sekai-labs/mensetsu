@@ -326,7 +326,7 @@ const formatDuration = (ms?: number | null) => {
       <div class="flex items-center gap-3 min-w-0">
         <button
           class="p-1.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          title="Back to workflows"
+          :title="$t('workflows.detail.backToWorkflows')"
           @click="router.push('/workflows')"
         >
           <ArrowLeft class="w-4 h-4" />
@@ -360,17 +360,17 @@ const formatDuration = (ms?: number | null) => {
               :class="isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'"
             />
             <span class="text-[11px] text-slate-500 hidden sm:inline">
-              {{ isConnected ? 'Live SSE' : 'Disconnected' }}
+              {{ isConnected ? $t('workflows.detail.liveSse') : $t('workflows.detail.disconnected') }}
             </span>
           </div>
 
           <div v-if="run?.progress" class="flex items-center gap-2">
-            <span class="text-slate-400 hidden sm:inline">Progress:</span>
+            <span class="text-slate-400 hidden sm:inline">{{ $t('workflows.detail.progress') }}:</span>
             <span v-if="run.progress.percentage !== null && run.progress.percentage !== undefined" class="font-bold text-slate-800 dark:text-slate-200">
               {{ run.progress.percentage }}%
             </span>
             <span v-else class="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1 py-0.2 rounded border border-amber-200 dark:border-amber-800">
-              Estimate
+              {{ $t('workflows.detail.estimate') }}
             </span>
             <span class="text-slate-500 text-[11px]">
               ({{ run.progress.completed }}/{{ run.progress.total_tasks }})
@@ -378,7 +378,7 @@ const formatDuration = (ms?: number | null) => {
           </div>
 
           <div v-if="run?.current_phase" class="hidden md:flex items-center gap-1.5">
-            <span class="text-slate-400">Phase:</span>
+            <span class="text-slate-400">{{ $t('workflows.detail.phase') }}:</span>
             <span class="font-semibold text-slate-700 dark:text-slate-300 capitalize">{{ run.current_phase }}</span>
           </div>
 
@@ -404,7 +404,7 @@ const formatDuration = (ms?: number | null) => {
               @click="store!.graphMode.value = 'tasks'"
             >
               <Workflow class="w-3.5 h-3.5" />
-              <span>Task Graph</span>
+              <span>{{ $t('workflows.detail.taskGraph') }}</span>
             </button>
             <button
               class="px-3 py-1 rounded transition-colors flex items-center gap-1.5"
@@ -412,7 +412,7 @@ const formatDuration = (ms?: number | null) => {
               @click="store!.graphMode.value = 'delegations'"
             >
               <GitFork class="w-3.5 h-3.5" />
-              <span>Delegation Graph</span>
+              <span>{{ $t('workflows.detail.delegationTree') }}</span>
             </button>
           </div>
 
@@ -563,7 +563,7 @@ const formatDuration = (ms?: number | null) => {
                 @click="activeBottomTab = 'activity'; updateQueryParams()"
               >
                 <Activity class="w-3.5 h-3.5" />
-                <span>Activity Timeline</span>
+                <span>{{ $t('workflows.detail.timeline') }}</span>
                 <ClientOnly>
                   <span class="text-[11px] text-slate-400">({{ store?.events.value.length || 0 }})</span>
                 </ClientOnly>
@@ -575,7 +575,7 @@ const formatDuration = (ms?: number | null) => {
                 @click="activeBottomTab = 'logs'; updateQueryParams()"
               >
                 <Terminal class="w-3.5 h-3.5" />
-                <span>Execution Logs</span>
+                <span>{{ $t('workflows.detail.logs') }}</span>
                 <ClientOnly>
                   <span class="text-[11px] text-slate-400">({{ store?.logs.value.length || 0 }})</span>
                 </ClientOnly>
@@ -587,7 +587,7 @@ const formatDuration = (ms?: number | null) => {
                 @click="activeBottomTab = 'artifacts'; updateQueryParams()"
               >
                 <FileText class="w-3.5 h-3.5" />
-                <span>Artifacts</span>
+                <span>{{ $t('workflows.detail.artifacts') }}</span>
                 <ClientOnly>
                   <span class="text-[11px] text-slate-400">({{ store?.artifacts.value.length || 0 }})</span>
                 </ClientOnly>

@@ -43,10 +43,17 @@ useEventListener('keydown', (e: KeyboardEvent) => {
   }
 })
 
+const { t, te } = useI18n()
+
 const isRouteActive = (subPath: string) => {
   const current = route.path
   const target = `/interviews/${props.workspaceId}/${subPath}`
   return current === target || current.startsWith(`${target}/`)
+}
+
+const itemKeyOrFallback = (key?: string, fallback?: string) => {
+  if (!key) return fallback || ''
+  return te(key) ? t(key) : (fallback || key)
 }
 </script>
 
@@ -95,7 +102,7 @@ const isRouteActive = (subPath: string) => {
         <div v-if="workspace" class="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
           <div class="flex items-center justify-between gap-1 mb-1">
             <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">
-              Current Target
+              {{ $t('navigation.targetRole') }}
             </span>
             <StatusBadge :status="status" size="xs" :show-dot="true" />
           </div>
@@ -115,7 +122,7 @@ const isRouteActive = (subPath: string) => {
             class="space-y-1"
           >
             <div class="px-2 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              {{ section.title }}
+              {{ itemKeyOrFallback(section.titleKey, section.title) }}
             </div>
 
             <nav class="space-y-0.5">
@@ -140,7 +147,7 @@ const isRouteActive = (subPath: string) => {
                       : 'text-slate-400 dark:text-slate-500',
                   ]"
                 />
-                <span class="truncate">{{ item.name }}</span>
+                <span class="truncate">{{ itemKeyOrFallback(item.nameKey, item.name) }}</span>
               </NuxtLink>
             </nav>
           </div>

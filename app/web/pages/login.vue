@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthService } from '~/features/auth/services/auth.service'
 import AppButton from '~/components/ui/AppButton.vue'
 import AppInput from '~/components/ui/AppInput.vue'
@@ -7,6 +10,7 @@ definePageMeta({
   layout: 'default',
 })
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { login, login2fa } = useAuthService()
@@ -47,7 +51,7 @@ const handleLogin = async () => {
     if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
       errorMessage.value = err.message
     } else {
-      errorMessage.value = 'Failed to sign in. Please verify your credentials.'
+      errorMessage.value = t('auth.loginFailed')
     }
   } finally {
     isLoading.value = false
@@ -60,10 +64,10 @@ const handleLogin = async () => {
     <div class="space-y-6">
       <div class="space-y-1.5 text-center">
         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Sign In
+          {{ $t('auth.signInTitle') }}
         </h1>
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          Access your technical interview preparation workspaces
+          {{ $t('auth.signInSubtitle') }}
         </p>
       </div>
 
@@ -80,7 +84,7 @@ const handleLogin = async () => {
           <AppInput
             id="email"
             v-model="email"
-            label="Email Address"
+            :label="$t('auth.email')"
             type="email"
             placeholder="engineer@company.com"
             required
@@ -89,7 +93,7 @@ const handleLogin = async () => {
           <AppInput
             id="password"
             v-model="password"
-            label="Password"
+            :label="$t('auth.password')"
             type="password"
             placeholder="••••••••••••"
             required
@@ -98,13 +102,13 @@ const handleLogin = async () => {
 
         <template v-else>
           <div class="p-3 bg-slate-50 dark:bg-slate-850 rounded border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300">
-            Two-Factor Authentication is enabled on this account. Enter the 6-digit code from your authenticator app.
+            {{ $t('auth.twoFaPrompt') }}
           </div>
 
           <AppInput
             id="2fa-code"
             v-model="twoFaCode"
-            label="Authentication Code"
+            :label="$t('auth.twoFaCode')"
             type="text"
             placeholder="123456"
             required
@@ -117,14 +121,14 @@ const handleLogin = async () => {
           size="md"
           :loading="isLoading"
         >
-          {{ requires2fa ? 'Verify & Sign In' : 'Sign In' }}
+          {{ requires2fa ? $t('auth.verifyAndSignIn') : $t('auth.signInButton') }}
         </AppButton>
       </form>
 
       <div class="pt-4 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500">
-        Don't have an account?
+        {{ $t('auth.noAccount') }}
         <NuxtLink to="/register" class="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold ml-1">
-          Register here
+          {{ $t('auth.registerHere') }}
         </NuxtLink>
       </div>
     </div>

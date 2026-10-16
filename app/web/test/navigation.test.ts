@@ -5,19 +5,19 @@ import {
 } from '../components/navigation/types'
 
 describe('Navigation Architecture & Contracts', () => {
-  it('defines all 12 workspace destinations', () => {
-    expect(ALL_WORKSPACE_NAV_ROUTES).toHaveLength(12)
+  it('defines all 11 workspace destinations', () => {
+    expect(ALL_WORKSPACE_NAV_ROUTES).toHaveLength(11)
     const expected = [
       'overview',
-      'company',
-      'research',
-      'role',
+      'match',
       'skills',
-      'knowledge',
+      'company',
+      'role',
       'sources',
       'learning',
       'questions',
       'practice',
+      'knowledge',
       'settings',
     ]
     for (const route of expected) {
@@ -28,12 +28,11 @@ describe('Navigation Architecture & Contracts', () => {
   it('groups routes into 4 semantic categories with Lucide icons', () => {
     expect(WORKSPACE_NAV_SECTIONS).toHaveLength(4)
     expect(WORKSPACE_NAV_SECTIONS.map((s) => s.title)).toEqual([
-      'Core Dossier',
-      'Deep Intelligence',
-      'Execution & Prep',
-      'Workspace Settings',
+      'Overview & Match',
+      'Company & Role',
+      'Preparation & Questions',
+      'Settings',
     ])
-
     for (const section of WORKSPACE_NAV_SECTIONS) {
       expect(section.items.length).toBeGreaterThan(0)
       for (const item of section.items) {

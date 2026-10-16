@@ -5,8 +5,8 @@ import type { WorkspaceResponse } from '~/features/interviews/models/interview.m
 import type { WorkspaceStatus, PipelinePhase } from '~/models/common.model'
 import WorkspaceSwitcher from './WorkspaceSwitcher.vue'
 import ResearchActivityIndicator from './ResearchActivityIndicator.vue'
+import LocaleSwitcher from './LocaleSwitcher.vue'
 import UserMenu from './UserMenu.vue'
-
 interface Props {
   workspaceId?: string
   workspace?: WorkspaceResponse | null
@@ -80,7 +80,7 @@ const hasWorkspaceContext = computed(() => {
           class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ml-1"
           active-class="text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50 dark:bg-indigo-950/50"
         >
-          <span>Workflows</span>
+          <span>{{ $t('navigation.workflows') }}</span>
         </NuxtLink>
       </div>
 
@@ -92,7 +92,7 @@ const hasWorkspaceContext = computed(() => {
           class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-medium rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors"
         >
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Active Run</span>
+          <span>{{ $t('navigation.activeRun') }}</span>
         </NuxtLink>
 
         <ResearchActivityIndicator
@@ -111,9 +111,9 @@ const hasWorkspaceContext = computed(() => {
           aria-label="Create New Workspace"
         >
           <Plus class="w-3.5 h-3.5" />
-          <span>New</span>
+          <span>{{ $t('navigation.new') }}</span>
         </NuxtLink>
-
+        <LocaleSwitcher />
 
         <UserMenu />
       </div>

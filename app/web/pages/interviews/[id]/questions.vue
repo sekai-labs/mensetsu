@@ -82,17 +82,20 @@ watch([searchQuery, categoryFilter, difficultyFilter], () => {
     <div class="border-b border-slate-200 dark:border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs font-mono text-indigo-600 dark:text-indigo-400 font-semibold mb-1">
-          <span>INTERVIEW QUESTION BOOK</span>
+          <span>{{ $t('questions.badge') }}</span>
           <span>•</span>
-          <span>CONTEXT GROUNDED</span>
+          <span>TECHNICAL EVALUATION RUBRICS</span>
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Question Bank & Answer Outlines
+          {{ $t('questions.title') }}
         </h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          {{ $t('questions.subtitle') }}
+        </p>
       </div>
 
       <div class="text-xs font-mono text-slate-500">
-        {{ filteredList.length }} questions available
+        {{ $t('questions.available', { count: filteredList.length }) }}
       </div>
     </div>
 
@@ -214,7 +217,7 @@ watch([searchQuery, categoryFilter, difficultyFilter], () => {
             type="button"
             class="text-xs text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 shrink-0 font-mono"
           >
-            {{ expandedQuestionId === q.id ? 'Collapse ▲' : 'Inspect ▼' }}
+            {{ expandedQuestionId === q.id ? $t('questions.collapse') : $t('questions.inspect') }}
           </button>
         </div>
 
@@ -224,12 +227,12 @@ watch([searchQuery, categoryFilter, difficultyFilter], () => {
           class="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/40 space-y-4 text-xs leading-relaxed"
         >
           <div v-if="q.interviewer_intent" class="space-y-1">
-            <span class="text-[10px] font-mono uppercase font-bold text-slate-400">Interviewer Intent & Focus</span>
+            <span class="text-[10px] font-mono uppercase font-bold text-slate-400">{{ $t('questions.intent') }}</span>
             <p class="text-slate-700 dark:text-slate-300 m-0">{{ q.interviewer_intent }}</p>
           </div>
 
           <div v-if="q.answer_outline" class="space-y-1.5">
-            <span class="text-[10px] font-mono uppercase font-bold text-slate-400">Outline Answer</span>
+            <span class="text-[10px] font-mono uppercase font-bold text-slate-400">{{ $t('questions.outline') }}</span>
             <div v-if="Array.isArray(q.answer_outline)" class="space-y-1">
               <div v-for="(pt, idx) in q.answer_outline" :key="idx" class="flex items-start gap-2 text-slate-700 dark:text-slate-300">
                 <span class="text-indigo-600 dark:text-indigo-400 font-bold">•</span>
@@ -242,21 +245,21 @@ watch([searchQuery, categoryFilter, difficultyFilter], () => {
           </div>
 
           <div v-if="q.strong_answer_rubric?.length" class="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-800">
-            <span class="text-[10px] font-mono uppercase font-bold text-emerald-600 dark:text-emerald-400">Strong Answer Criteria</span>
+            <span class="text-[10px] font-mono uppercase font-bold text-emerald-600 dark:text-emerald-400">{{ $t('questions.strongAnswer') }}</span>
             <ul class="space-y-1 list-disc pl-5 text-slate-700 dark:text-slate-300">
               <li v-for="(ru, idx) in q.strong_answer_rubric" :key="idx">{{ ru }}</li>
             </ul>
           </div>
 
           <div v-if="q.common_weaknesses?.length" class="space-y-1.5">
-            <span class="text-[10px] font-mono uppercase font-bold text-rose-600 dark:text-rose-400">Common Pitfalls & Weaknesses</span>
+            <span class="text-[10px] font-mono uppercase font-bold text-rose-600 dark:text-rose-400">{{ $t('questions.pitfalls') }}</span>
             <ul class="space-y-1 list-disc pl-5 text-slate-700 dark:text-slate-300">
               <li v-for="(cw, idx) in q.common_weaknesses" :key="idx">{{ cw }}</li>
             </ul>
           </div>
 
           <div v-if="q.follow_up_questions?.length" class="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-800">
-            <span class="text-[10px] font-mono uppercase font-bold text-slate-400">Anticipated Follow-Up Probes</span>
+            <span class="text-[10px] font-mono uppercase font-bold text-slate-400">{{ $t('questions.followUps') }}</span>
             <ul class="space-y-1 list-disc pl-5 text-slate-600 dark:text-slate-400">
               <li v-for="(fu, idx) in q.follow_up_questions" :key="idx">{{ fu }}</li>
             </ul>

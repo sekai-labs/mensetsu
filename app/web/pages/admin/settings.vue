@@ -141,11 +141,13 @@ const toggleProvider = async (p: AdminProvider) => {
   <div class="max-w-5xl mx-auto py-8 px-4 sm:px-6 space-y-8">
     <div class="border-b border-surface-border pb-5">
       <div class="flex items-center gap-2 mb-1">
-        <span class="px-2 py-0.5 text-xs font-mono font-medium bg-primary/10 text-primary border border-primary/20 rounded">Admin Studio</span>
+        <span class="px-2 py-0.5 text-xs font-mono font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded">
+          System Administration
+        </span>
       </div>
       <h1 class="text-2xl font-bold tracking-tight text-text-primary">Platform Dynamic Configuration</h1>
       <p class="text-xs text-text-muted mt-1">
-        Dynamically tune concurrency limits, LLM in-flight throttles, search providers, and platform gateways without container restarts.
+        Dynamically tune concurrency limits, LLM in-flight throttles, search providers, and platform gateways.
       </p>
     </div>
 

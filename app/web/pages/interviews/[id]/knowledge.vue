@@ -136,25 +136,25 @@ const onNodeClick = (event: { node: { data: KnowledgeSkillNode } }) => {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 shrink-0 gap-3">
       <div>
         <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Interactive Knowledge Graph
+          {{ $t('knowledge.title') }}
         </h1>
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          Topological skill dependencies, verified candidate strengths, and targeted gaps.
+          {{ $t('knowledge.subtitle') }}
         </p>
       </div>
 
       <div class="flex items-center gap-4 text-xs font-mono">
         <div class="flex items-center gap-1.5">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-          <span class="text-slate-600 dark:text-slate-400">Matched Competency</span>
+          <span class="text-slate-600 dark:text-slate-400">{{ $t('knowledge.matchedCompetency') }}</span>
         </div>
         <div class="flex items-center gap-1.5">
           <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
-          <span class="text-slate-600 dark:text-slate-400">In Progress</span>
+          <span class="text-slate-600 dark:text-slate-400">{{ $t('knowledge.inProgress') }}</span>
         </div>
         <div class="flex items-center gap-1.5">
           <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-          <span class="text-slate-600 dark:text-slate-400">Skill Gap</span>
+          <span class="text-slate-600 dark:text-slate-400">{{ $t('knowledge.skillGap') }}</span>
         </div>
       </div>
     </div>
@@ -163,7 +163,7 @@ const onNodeClick = (event: { node: { data: KnowledgeSkillNode } }) => {
       v-if="!flowElements.nodes.length"
       class="flex-1 flex items-center justify-center border border-dashed border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-400 font-mono"
     >
-      Synthesizing knowledge graph relationships...
+      {{ $t('knowledge.empty') }}
     </div>
 
     <div
@@ -186,8 +186,8 @@ const onNodeClick = (event: { node: { data: KnowledgeSkillNode } }) => {
         <button
           type="button"
           class="p-1.5 rounded text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          title="Zoom In"
-          aria-label="Zoom In"
+          :title="$t('knowledge.zoomIn')"
+          :aria-label="$t('knowledge.zoomIn')"
           @click="zoomIn"
         >
           <ZoomIn class="w-4 h-4" />
@@ -195,8 +195,8 @@ const onNodeClick = (event: { node: { data: KnowledgeSkillNode } }) => {
         <button
           type="button"
           class="p-1.5 rounded text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          title="Zoom Out"
-          aria-label="Zoom Out"
+          :title="$t('knowledge.zoomOut')"
+          :aria-label="$t('knowledge.zoomOut')"
           @click="zoomOut"
         >
           <ZoomOut class="w-4 h-4" />
@@ -204,8 +204,8 @@ const onNodeClick = (event: { node: { data: KnowledgeSkillNode } }) => {
         <button
           type="button"
           class="p-1.5 rounded text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          title="Fit View"
-          aria-label="Fit View"
+          :title="$t('knowledge.fitView')"
+          :aria-label="$t('knowledge.fitView')"
           @click="fitView"
         >
           <Maximize2 class="w-4 h-4" />

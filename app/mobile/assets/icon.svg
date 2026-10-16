@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="100%" height="100%">
+  <defs>
+    <linearGradient id="pwa-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E1B4B" />
+      <stop offset="60%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+
+    <linearGradient id="pwa-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818CF8" />
+      <stop offset="100%" stop-color="#4F46E5" />
+    </linearGradient>
+  </defs>
+
+  <!-- Adaptive Icon Rounded Mask (Squircle) -->
+  <rect width="192" height="192" rx="42" ry="42" fill="url(#pwa-bg)" />
+  <rect x="3" y="3" width="186" height="186" rx="39" ry="39" fill="none" stroke="#6366F1" stroke-width="1.5" opacity="0.4" />
+
+  <!-- Graph Constellation Nodes Behind -->
+  <g stroke="url(#pwa-accent)" stroke-width="2" stroke-linecap="round" opacity="0.6">
+    <line x1="96" y1="42" x2="48" y2="80" />
+    <line x1="96" y1="42" x2="144" y2="80" />
+    <line x1="48" y1="80" x2="70" y2="144" />
+    <line x1="144" y1="80" x2="122" y2="144" />
+    <line x1="70" y1="144" x2="122" y2="144" />
+  </g>
+
+  <!-- Kanji "面" Monogram -->
+  <g fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 58 64 L 134 64" stroke-width="9" stroke="url(#pwa-accent)" />
+    <path d="M 64 64 L 64 140 L 128 140 L 128 64" stroke-width="8" />
+    <path d="M 96 64 L 96 140" stroke-width="7" />
+    <path d="M 64 89 L 128 89" stroke-width="6" stroke="#CBD5E1" />
+    <path d="M 64 114 L 128 114" stroke-width="6" stroke="#CBD5E1" />
+    <path d="M 83 48 L 73 64" stroke-width="7" stroke="#34D399" />
+    <path d="M 109 48 L 119 64" stroke-width="7" stroke="#34D399" />
+  </g>
+
+  <!-- Verified Proof Point Dot -->
+  <circle cx="96" cy="42" r="7" fill="#10B981" />
+  <circle cx="96" cy="42" r="3.5" fill="#FFFFFF" />
+
+  <circle cx="48" cy="80" r="5" fill="#6366F1" />
+  <circle cx="144" cy="80" r="5" fill="#6366F1" />
+</svg>

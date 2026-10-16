@@ -45,12 +45,12 @@ const handleImportUrl = async () => {
 
     <div class="border-b border-slate-200 dark:border-slate-800 pb-5">
       <div class="flex items-center gap-2 text-xs font-mono text-indigo-600 dark:text-indigo-400 font-semibold mb-1">
-        <span>ROLE SPECIFICATION</span>
+        <span>{{ $t('role.badge') }}</span>
         <span>•</span>
         <span class="capitalize">{{ roleData?.seniority || 'Staff' }} Level</span>
       </div>
       <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-        {{ roleData?.title || 'Target Role Analysis' }}
+        {{ $t('role.title') }}
       </h1>
       <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
         Structured decomposition of responsibilities and core technical competency requirements.
@@ -61,7 +61,7 @@ const handleImportUrl = async () => {
     <div class="p-4 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg space-y-3 shadow-sm">
       <div class="flex items-center justify-between">
         <div class="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-          Import Job Posting from URL
+          {{ $t('role.importTitle') }}
         </div>
         <span class="text-[10px] font-mono text-slate-400">Greenhouse • Lever • Ashby • Workday • JSON-LD</span>
       </div>
@@ -69,7 +69,7 @@ const handleImportUrl = async () => {
         <input
           v-model="importUrl"
           type="url"
-          placeholder="https://boards.greenhouse.io/company/jobs/12345"
+          :placeholder="$t('role.importPlaceholder')"
           class="flex-1 text-xs px-3 py-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 font-mono"
           :disabled="isImporting"
         />
@@ -79,7 +79,7 @@ const handleImportUrl = async () => {
           :disabled="isImporting || !importUrl.trim()"
           @click="handleImportUrl"
         >
-          {{ isImporting ? 'Extracting...' : 'Extract & Ingest' }}
+          {{ isImporting ? $t('role.extractingButton') : $t('role.extractButton') }}
         </button>
       </div>
       <div v-if="importSuccess" class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
@@ -111,7 +111,7 @@ const handleImportUrl = async () => {
     <template v-else>
       <div class="space-y-4">
         <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-          Primary Architectural Responsibilities
+          {{ $t('role.responsibilitiesTitle') }}
         </h2>
         <div v-if="!roleData?.responsibilities?.length" class="p-6 border border-dashed border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-400">
           Extracting responsibilities from role specification...
@@ -135,7 +135,7 @@ const handleImportUrl = async () => {
 
     <div class="space-y-4">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-        Competency & Domain Requirements
+        {{ $t('role.requirementsTitle') }}
       </h2>
       <div v-if="!roleData?.requirements?.length" class="p-6 border border-dashed border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-400">
         Extracting requirements from role specification...
