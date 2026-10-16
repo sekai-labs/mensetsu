@@ -1241,6 +1241,7 @@ export interface components {
             /** Format: int32 */
             progress_percent: number;
             role_title: string;
+            seniority?: null | components["schemas"]["SeniorityLevel"];
             status: components["schemas"]["WorkspaceStatus"];
             /** Format: date-time */
             updated_at: string;

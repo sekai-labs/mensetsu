@@ -261,13 +261,12 @@ const handlePrevPage = () => {
 
               <td class="py-3 px-4">
                 <span
-                  class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border"
-                  :class="run.type === 'dynamic' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800' : 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'"
+                  class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border"
+                  :class="run.type === 'dynamic' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800' : (run.type === 'hybrid' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-400 dark:border-indigo-800' : 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700')"
                 >
-                  <Sparkles v-if="run.type === 'dynamic'" class="w-2.5 h-2.5 text-amber-500" />
-                  <span class="capitalize">{{ run.type }}</span>
+                  <Sparkles v-if="run.type === 'dynamic' || run.type === 'hybrid'" class="w-2.5 h-2.5" :class="run.type === 'hybrid' ? 'text-indigo-500' : 'text-amber-500'" />
+                  <span>{{ run.type }}</span>
                 </span>
-              </td>
 
 
               <td class="py-3 px-4">
