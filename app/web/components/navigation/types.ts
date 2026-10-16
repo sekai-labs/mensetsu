@@ -16,6 +16,7 @@ import {
 export interface NavItem {
   id: string
   name: string
+  nameKey?: string
   path: string
   icon: Component
   badge?: string
@@ -23,40 +24,44 @@ export interface NavItem {
 
 export interface NavSection {
   title: string
+  titleKey?: string
   items: NavItem[]
 }
 
 export const WORKSPACE_NAV_SECTIONS: NavSection[] = [
   {
-    title: 'Core Dossier',
+    title: 'Overview & Match',
+    titleKey: 'navigation.sections.overviewAndMatch',
     items: [
-      { id: 'overview', name: 'Overview', path: 'overview', icon: LayoutDashboard },
-      { id: 'company', name: 'Company Dossier', path: 'company', icon: Building2 },
-      { id: 'research', name: 'Deep Research', path: 'research', icon: Network },
-      { id: 'role', name: 'Role & JD', path: 'role', icon: FileText },
-      { id: 'match', name: 'Match Analysis', path: 'match', icon: CheckCircle2 },
+      { id: 'overview', name: 'Overview', nameKey: 'navigation.items.overview', path: 'overview', icon: LayoutDashboard },
+      { id: 'match', name: 'Match Analysis', nameKey: 'navigation.items.match', path: 'match', icon: CheckCircle2 },
+      { id: 'skills', name: 'Skill Matrix', nameKey: 'navigation.items.skills', path: 'skills', icon: GitFork },
     ],
   },
   {
-    title: 'Deep Intelligence',
+    title: 'Company & Role',
+    titleKey: 'navigation.sections.companyAndRole',
     items: [
-      { id: 'skills', name: 'Skill Map', path: 'skills', icon: GitFork },
-      { id: 'knowledge', name: 'Knowledge Graph', path: 'knowledge', icon: Network },
-      { id: 'sources', name: 'Sources & Citations', path: 'sources', icon: Quote },
+      { id: 'company', name: 'Company Dossier', nameKey: 'navigation.items.company', path: 'company', icon: Building2 },
+      { id: 'role', name: 'Role & Job Description', nameKey: 'navigation.items.role', path: 'role', icon: FileText },
+      { id: 'sources', name: 'Sources & Evidence', nameKey: 'navigation.items.sources', path: 'sources', icon: Quote },
     ],
   },
   {
-    title: 'Execution & Prep',
+    title: 'Preparation & Questions',
+    titleKey: 'navigation.sections.preparationAndQuestions',
     items: [
-      { id: 'learning', name: 'Learning Plan', path: 'learning', icon: BookOpen },
-      { id: 'questions', name: 'Question Book', path: 'questions', icon: HelpCircle },
-      { id: 'practice', name: 'Practice Cockpit', path: 'practice', icon: Code2 },
+      { id: 'learning', name: 'Study Plan', nameKey: 'navigation.items.learning', path: 'learning', icon: BookOpen },
+      { id: 'questions', name: 'Question Bank', nameKey: 'navigation.items.questions', path: 'questions', icon: HelpCircle },
+      { id: 'practice', name: 'Mock Practice', nameKey: 'navigation.items.practice', path: 'practice', icon: Code2 },
+      { id: 'knowledge', name: 'Knowledge Graph', nameKey: 'navigation.items.knowledge', path: 'knowledge', icon: Network },
     ],
   },
   {
-    title: 'Workspace Settings',
+    title: 'Settings',
+    titleKey: 'navigation.sections.settings',
     items: [
-      { id: 'settings', name: 'Workspace Settings', path: 'settings', icon: Settings },
+      { id: 'settings', name: 'Settings', nameKey: 'navigation.items.settings', path: 'settings', icon: Settings },
     ],
   },
 ]

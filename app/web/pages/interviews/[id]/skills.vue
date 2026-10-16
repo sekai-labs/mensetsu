@@ -60,22 +60,21 @@ const filteredNodes = computed(() => {
     <div class="border-b border-slate-200 dark:border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs font-mono text-indigo-600 dark:text-indigo-400 font-semibold mb-1">
-          <span>COMPETENCY TAXONOMY</span>
+          <span>{{ $t('skills.badge') }}</span>
           <span>•</span>
-          <span>SKILL INVENTORY</span>
+          <span>COMPETENCY READINESS</span>
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Skill Map & Category Readiness
+          {{ $t('skills.title') }}
         </h1>
       </div>
-
 
       <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <div class="relative w-full sm:w-56">
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search skills..."
+            :placeholder="$t('skills.searchPlaceholder')"
             class="w-full px-3 py-1.5 text-xs rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
         </div>
@@ -87,7 +86,7 @@ const filteredNodes = computed(() => {
             :class="statusFilter === 'all' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
             @click="statusFilter = 'all'"
           >
-            All ({{ stats.total }})
+            {{ $t('match.filters.all') }} ({{ stats.total }})
           </button>
           <button
             type="button"
@@ -95,7 +94,7 @@ const filteredNodes = computed(() => {
             :class="statusFilter === 'matched' ? 'bg-emerald-600 text-white' : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'"
             @click="statusFilter = 'matched'"
           >
-            Matched ({{ stats.matched }})
+            {{ $t('skills.matched') }} ({{ stats.matched }})
           </button>
           <button
             type="button"
@@ -103,7 +102,7 @@ const filteredNodes = computed(() => {
             :class="statusFilter === 'in_progress' ? 'bg-sky-600 text-white' : 'text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/40'"
             @click="statusFilter = 'in_progress'"
           >
-            In Progress ({{ stats.inProgress }})
+            {{ $t('skills.inProgress') }} ({{ stats.inProgress }})
           </button>
           <button
             type="button"
@@ -111,7 +110,7 @@ const filteredNodes = computed(() => {
             :class="statusFilter === 'gap' ? 'bg-amber-600 text-white' : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40'"
             @click="statusFilter = 'gap'"
           >
-            Gap ({{ stats.gap }})
+            {{ $t('skills.gap') }} ({{ stats.gap }})
           </button>
         </div>
       </div>
@@ -128,7 +127,7 @@ const filteredNodes = computed(() => {
           : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
         @click="activeCategory = cat"
       >
-        {{ cat.replace(/_/g, ' ') }}
+        {{ cat === 'all' ? $t('skills.allCategories') : cat.replace(/_/g, ' ') }}
       </button>
     </div>
 
@@ -155,7 +154,7 @@ const filteredNodes = computed(() => {
               'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800': getSkillNodeStatusCategory(node) === 'gap',
             }"
           >
-            {{ getSkillNodeStatusCategory(node) === 'matched' ? 'MATCHED' : (getSkillNodeStatusCategory(node) === 'in_progress' ? 'IN PROGRESS' : 'GAP') }}
+            {{ getSkillNodeStatusCategory(node) === 'matched' ? $t('skills.matched') : (getSkillNodeStatusCategory(node) === 'in_progress' ? $t('skills.inProgress') : $t('skills.gap')) }}
           </span>
         </div>
 

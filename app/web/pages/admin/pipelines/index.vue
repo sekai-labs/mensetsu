@@ -13,11 +13,16 @@ const { data: pipelinesData } = await useAsyncData('admin-pipelines', () => list
 <template>
   <div class="space-y-6">
     <div class="border-b border-slate-200 dark:border-slate-800 pb-5">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="px-2 py-0.5 text-xs font-mono font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded">
+          System Administration
+        </span>
+      </div>
       <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-        Durable Pipeline Executions
+        Pipeline Telemetry & Asynchronous Jobs
       </h1>
       <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-        Monitor asynchronous research workflows, Temporal activities, and step-level telemetry.
+        Monitor background research workflows, temporal activity progress, and runtime states.
       </p>
     </div>
 

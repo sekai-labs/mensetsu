@@ -123,7 +123,7 @@ const handleLogout = async () => {
         @click="isOpen = false"
       >
         <LayoutDashboard class="w-4 h-4 text-slate-400" />
-        <span>Dashboard</span>
+        <span>{{ $t('navigation.items.overview') }}</span>
       </NuxtLink>
       <NuxtLink
         to="/workflows"
@@ -132,7 +132,7 @@ const handleLogout = async () => {
         @click="isOpen = false"
       >
         <Workflow class="w-4 h-4 text-slate-400" />
-        <span>Workflow Studio</span>
+        <span>{{ $t('navigation.workflows') }}</span>
       </NuxtLink>
 
       <NuxtLink
@@ -142,7 +142,7 @@ const handleLogout = async () => {
         @click="isOpen = false"
       >
         <Settings class="w-4 h-4 text-slate-400" />
-        <span>Account & 2FA</span>
+        <span>{{ $t('navigation.accountAnd2fa') }}</span>
       </NuxtLink>
 
       <NuxtLink
@@ -153,7 +153,7 @@ const handleLogout = async () => {
         @click="isOpen = false"
       >
         <Shield class="w-4 h-4 text-slate-400" />
-        <span>Pipeline Admin</span>
+        <span>{{ $t('navigation.pipelineAdmin') }}</span>
       </NuxtLink>
 
 
@@ -167,7 +167,7 @@ const handleLogout = async () => {
         @click="handleLogout"
       >
         <LogOut class="w-4 h-4 text-rose-500" />
-        <span>Sign Out</span>
+        <span>{{ $t('navigation.signOut') }}</span>
       </button>
     </div>
   </div>
@@ -178,13 +178,13 @@ const handleLogout = async () => {
       to="/login"
       class="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors px-2.5 py-1"
     >
-      Sign In
+      {{ $t('navigation.signIn') }}
     </NuxtLink>
     <NuxtLink
       to="/register"
       class="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 transition-colors px-2.5 py-1 rounded-md shadow-sm"
     >
-      Register
+      {{ $t('navigation.register') }}
     </NuxtLink>
   </div>
 </template>

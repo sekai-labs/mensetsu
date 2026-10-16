@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { ref, computed, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useInterviewService } from '~/features/interviews/services/interview.service'
 
 definePageMeta({
   layout: 'workspace',
 })
 
+const { t } = useI18n()
 const route = useRoute()
 const workspaceId = computed(() => String(route.params.id))
 const { getWorkspaceQuestions } = useInterviewService()
@@ -64,19 +67,17 @@ onUnmounted(() => {
 
 <template>
   <div class="space-y-6">
-
     <div class="border-b border-slate-200 dark:border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs font-mono text-indigo-600 dark:text-indigo-400 font-semibold mb-1">
-          <span>PRACTICE COCKPIT</span>
+          <span>{{ $t('practice.badge') }}</span>
           <span>•</span>
-          <span>FOCUSED SIMULATION</span>
+          <span>TIMED TECHNICAL PRACTICE</span>
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Interactive Interview Practice & Scratchpad
+          {{ $t('practice.title') }}
         </h1>
       </div>
-
 
       <div class="flex items-center gap-3">
         <div class="flex items-center gap-2 px-3 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-mono">
@@ -87,7 +88,7 @@ onUnmounted(() => {
             class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium ml-1"
             @click="toggleTimer"
           >
-            {{ isTimerRunning ? 'Pause' : 'Start' }}
+            {{ isTimerRunning ? $t('practice.pause') : $t('practice.start') }}
           </button>
         </div>
 
@@ -115,7 +116,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-
     <div v-if="activeQuestion" class="space-y-6">
       <div class="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm space-y-3">
         <div class="flex items-center gap-2">
@@ -132,24 +132,23 @@ onUnmounted(() => {
         </h2>
 
         <p v-if="activeQuestion.interviewer_intent" class="text-xs text-slate-500 m-0 leading-relaxed">
-          <span class="font-medium text-slate-700 dark:text-slate-300">Target Invariants: </span>
+          <span class="font-medium text-slate-700 dark:text-slate-300">{{ $t('practice.targetInvariants') }}: </span>
           {{ activeQuestion.interviewer_intent }}
         </p>
       </div>
 
-
       <div class="space-y-2">
         <div class="flex items-center justify-between">
           <label class="text-xs font-mono font-bold uppercase tracking-wider text-slate-500">
-            Candidate System Design Scratchpad & Notes
+            {{ $t('practice.scratchpadTitle') }}
           </label>
-          <span class="text-[11px] text-slate-400">Auto-saved in memory</span>
+          <span class="text-[11px] text-slate-400">{{ $t('practice.autoSaved') }}</span>
         </div>
 
         <textarea
           v-model="candidateNotes"
           rows="10"
-          placeholder="Jot down architectural nodes, API request/response contracts, consensus protocols, and latency budgets..."
+          :placeholder="$t('practice.scratchpadPlaceholder')"
           class="block w-full rounded-md border text-xs p-4 font-mono leading-relaxed bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
         ></textarea>
       </div>

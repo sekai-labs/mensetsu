@@ -28,16 +28,16 @@ const recentWorkspaces = computed(() => {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Workspace Dashboard
+          {{ $t('dashboard.title') }}
         </h1>
         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Welcome back, {{ user?.name || user?.email || 'Engineer' }}. Review active preparations and evidence dossiers.
+          {{ $t('dashboard.welcome', { name: user?.name || user?.email || 'Engineer' }) }}
         </p>
       </div>
 
       <NuxtLink to="/interviews/new">
         <AppButton size="sm">
-          + New Preparation Workspace
+          {{ $t('dashboard.newWorkspace') }}
         </AppButton>
       </NuxtLink>
     </div>
@@ -45,25 +45,25 @@ const recentWorkspaces = computed(() => {
 
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
       <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
-        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-500">Total Workspaces</div>
+        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-500">{{ $t('dashboard.activeWorkspaces') }}</div>
         <div class="text-2xl font-bold font-mono tracking-tight text-slate-900 dark:text-white mt-1">
           {{ stats.total }}
         </div>
       </div>
       <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
-        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-500">Ready Dossiers</div>
+        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-500">{{ $t('dashboard.completedWorkspaces') }}</div>
         <div class="text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400 mt-1">
           {{ stats.ready }}
         </div>
       </div>
       <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
-        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-500">In Pipeline</div>
+        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-500">{{ $t('dashboard.analyzing') }}</div>
         <div class="text-2xl font-bold font-mono tracking-tight text-indigo-600 dark:text-indigo-400 mt-1">
           {{ stats.active }}
         </div>
       </div>
       <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
-        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-500">Requires Review</div>
+        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-500">{{ $t('dashboard.attentionNeeded') }}</div>
         <div class="text-2xl font-bold font-mono tracking-tight text-rose-600 dark:text-rose-400 mt-1">
           {{ stats.failed }}
         </div>
@@ -74,10 +74,10 @@ const recentWorkspaces = computed(() => {
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-          Active Preparations
+          {{ $t('dashboard.activePreparations') }}
         </h2>
         <NuxtLink to="/interviews" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
-          View all ({{ stats.total }}) →
+          {{ $t('dashboard.viewAll', { count: stats.total }) }}
         </NuxtLink>
       </div>
 
@@ -91,11 +91,11 @@ const recentWorkspaces = computed(() => {
 
       <div v-else-if="!recentWorkspaces.length" class="p-10 border border-dashed border-slate-300 dark:border-slate-800 rounded-lg text-center space-y-3">
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          You don't have any interview preparation workspaces yet.
+          {{ $t('dashboard.empty') }}
         </p>
         <NuxtLink to="/interviews/new">
           <AppButton size="sm">
-            Create Your First Workspace
+            {{ $t('dashboard.createFirst') }}
           </AppButton>
         </NuxtLink>
       </div>
@@ -128,7 +128,7 @@ const recentWorkspaces = computed(() => {
           <div class="flex items-center gap-3 shrink-0">
             <NuxtLink :to="`/interviews/${ws.id}/overview`">
               <AppButton variant="secondary" size="xs">
-                Open Workspace →
+                {{ $t('dashboard.openWorkspace') }}
               </AppButton>
             </NuxtLink>
           </div>

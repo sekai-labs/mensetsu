@@ -11,6 +11,7 @@
     "test": "vitest run --dir test"
   },
   "dependencies": {
+    "@nuxtjs/i18n": "^10.6.0",
     "@vue-flow/core": "^1.48.2",
     "@vueuse/core": "^12.8.2",
     "ioredis": "^6.0.0",

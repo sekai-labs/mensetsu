@@ -152,10 +152,10 @@ const handlePrevPage = () => {
       <div>
         <h1 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <Workflow class="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-          <span>Workflow Execution Studio</span>
+          <span>{{ $t('workflows.title') }}</span>
         </h1>
         <p class="text-xs text-slate-500 mt-1">
-          Monitor deterministic pipelines and dynamic multi-agent orchestrations.
+          {{ $t('workflows.subtitle') }}
         </p>
       </div>
 
@@ -164,7 +164,7 @@ const handlePrevPage = () => {
         @click="isCreateDialogOpen = true"
       >
         <Plus class="w-4 h-4" />
-        <span>New Workflow Run</span>
+        <span>{{ $t('workflows.newRun') }}</span>
       </button>
     </div>
 
@@ -178,7 +178,7 @@ const handlePrevPage = () => {
             v-model="filterStatus"
             class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2.5 py-1 text-xs text-slate-700 dark:text-slate-300 font-mono"
           >
-            <option value="all">All Statuses</option>
+            <option value="all">{{ $t('workflows.allStatuses') }}</option>
             <option value="running">Running</option>
             <option value="completed">Completed</option>
             <option value="failed">Failed</option>
@@ -193,9 +193,9 @@ const handlePrevPage = () => {
             v-model="filterType"
             class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2.5 py-1 text-xs text-slate-700 dark:text-slate-300 font-mono"
           >
-            <option value="all">All Types</option>
-            <option value="static">Static Pipelines</option>
-            <option value="dynamic">Dynamic Autonomous</option>
+            <option value="all">{{ $t('workflows.allTypes') }}</option>
+            <option value="static">{{ $t('workflows.staticPipelines') }}</option>
+            <option value="dynamic">{{ $t('workflows.dynamicAutonomous') }}</option>
           </select>
         </div>
       </div>
@@ -205,7 +205,7 @@ const handlePrevPage = () => {
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Filter by name, ID, phase..."
+          :placeholder="$t('workflows.searchPlaceholder')"
           class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded pl-8 pr-3 py-1 text-xs text-slate-700 dark:text-slate-300 font-mono placeholder:text-slate-400"
         />
         <Search class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
@@ -216,7 +216,7 @@ const handlePrevPage = () => {
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-xs">
       <div v-if="pending" class="p-12 text-center text-xs text-slate-400 flex items-center justify-center gap-2 font-mono">
         <Loader2 class="w-4 h-4 animate-spin text-indigo-500" />
-        <span>Loading workflow runs...</span>
+        <span>{{ $t('workflows.loading') }}</span>
       </div>
 
       <div v-else-if="error" class="p-8 text-center text-xs text-rose-500 font-mono">
@@ -225,9 +225,9 @@ const handlePrevPage = () => {
 
       <div v-else-if="filteredRuns.length === 0" class="p-12 text-center space-y-3">
         <Workflow class="w-8 h-8 text-slate-400 mx-auto" />
-        <div class="text-xs text-slate-500 font-medium">No workflow runs found.</div>
+        <div class="text-xs text-slate-500 font-medium">{{ $t('workflows.emptyTitle') }}</div>
         <p class="text-xs text-slate-400 max-w-sm mx-auto">
-          Start a new workflow run or adjust active filters above to inspect agent activity.
+          {{ $t('workflows.emptyDesc') }}
         </p>
       </div>
 
@@ -235,14 +235,14 @@ const handlePrevPage = () => {
         <table class="w-full text-left border-collapse text-xs">
           <thead>
             <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/50 text-[11px] font-mono uppercase text-slate-500 sticky top-0">
-              <th class="py-2.5 px-4 font-semibold">Workflow / ID</th>
-              <th class="py-2.5 px-4 font-semibold">Type</th>
-              <th class="py-2.5 px-4 font-semibold">Status</th>
-              <th class="py-2.5 px-4 font-semibold">Progress / Phase</th>
-              <th class="py-2.5 px-4 font-semibold">Tasks (Done/Total)</th>
-              <th class="py-2.5 px-4 font-semibold">Started</th>
-              <th class="py-2.5 px-4 font-semibold">Duration</th>
-              <th class="py-2.5 px-4 font-semibold text-right">Action</th>
+              <th class="py-2.5 px-4 font-semibold">{{ $t('workflows.table.workflowId') }}</th>
+              <th class="py-2.5 px-4 font-semibold">{{ $t('workflows.table.type') }}</th>
+              <th class="py-2.5 px-4 font-semibold">{{ $t('workflows.table.status') }}</th>
+              <th class="py-2.5 px-4 font-semibold">{{ $t('workflows.table.progressPhase') }}</th>
+              <th class="py-2.5 px-4 font-semibold">{{ $t('workflows.table.tasks') }}</th>
+              <th class="py-2.5 px-4 font-semibold">{{ $t('workflows.table.started') }}</th>
+              <th class="py-2.5 px-4 font-semibold">{{ $t('workflows.table.duration') }}</th>
+              <th class="py-2.5 px-4 font-semibold text-right">{{ $t('workflows.table.action') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono text-xs">
@@ -335,7 +335,7 @@ const handlePrevPage = () => {
 
       <div class="p-3 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-mono text-slate-500">
         <div>
-          Showing {{ filteredRuns.length }} runs
+          {{ $t('workflows.showingRuns', { count: filteredRuns.length }) }}
         </div>
         <div class="flex items-center gap-2">
           <button
@@ -344,14 +344,14 @@ const handlePrevPage = () => {
             @click="handlePrevPage"
           >
             <ChevronLeft class="w-3.5 h-3.5" />
-            <span>Previous</span>
+            <span>{{ $t('common.previous') }}</span>
           </button>
           <button
             class="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 disabled:opacity-40 flex items-center gap-1"
             :disabled="!nextCursor"
             @click="handleNextPage"
           >
-            <span>Next</span>
+            <span>{{ $t('common.next') }}</span>
             <ChevronRight class="w-3.5 h-3.5" />
           </button>
         </div>

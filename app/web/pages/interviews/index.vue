@@ -26,16 +26,16 @@ const filteredWorkspaces = computed(() => {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          All Workspaces
+          {{ $t('workspaces.title') }}
         </h1>
         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Target companies, roles, and engineering dossiers
+          {{ $t('workspaces.subtitle') }}
         </p>
       </div>
 
       <NuxtLink to="/interviews/new">
         <AppButton size="sm">
-          + New Workspace
+          {{ $t('workspaces.newWorkspace') }}
         </AppButton>
       </NuxtLink>
     </div>
@@ -45,7 +45,7 @@ const filteredWorkspaces = computed(() => {
       <div class="w-full sm:w-72">
         <AppInput
           v-model="searchQuery"
-          placeholder="Search company or role..."
+          :placeholder="$t('workspaces.searchPlaceholder')"
         />
       </div>
 
@@ -75,7 +75,7 @@ const filteredWorkspaces = computed(() => {
     </div>
 
     <div v-else-if="!filteredWorkspaces.length" class="p-12 text-center border border-dashed border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-400">
-      No workspaces matching current filters.
+      {{ $t('workspaces.empty') }}
     </div>
 
     <div v-else class="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
@@ -113,7 +113,7 @@ const filteredWorkspaces = computed(() => {
 
           <NuxtLink :to="`/interviews/${ws.id}/overview`">
             <AppButton variant="secondary" size="xs">
-              Open Workspace →
+              {{ $t('workspaces.openWorkspace') }}
             </AppButton>
           </NuxtLink>
         </div>

@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthService } from '~/features/auth/services/auth.service'
-import { isValidEmail, validatePasswordStrength } from '~/features/auth/utils/auth.util'
 import AppButton from '~/components/ui/AppButton.vue'
 import AppInput from '~/components/ui/AppInput.vue'
 
@@ -8,6 +10,7 @@ definePageMeta({
   layout: 'default',
 })
 
+const { t } = useI18n()
 const router = useRouter()
 const { register } = useAuthService()
 
@@ -19,18 +22,6 @@ const errorMessage = ref('')
 
 const handleRegister = async () => {
   errorMessage.value = ''
-
-  if (!isValidEmail(email.value.trim())) {
-    errorMessage.value = 'Please provide a valid email address.'
-    return
-  }
-
-  const strength = validatePasswordStrength(password.value)
-  if (!strength.valid) {
-    errorMessage.value = 'Password must be at least 8 characters long and contain numbers or special characters.'
-    return
-  }
-
   isLoading.value = true
   try {
     await register({
@@ -43,7 +34,7 @@ const handleRegister = async () => {
     if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
       errorMessage.value = err.message
     } else {
-      errorMessage.value = 'Failed to register account. Please try again.'
+      errorMessage.value = 'Failed to register account. Please check your information.'
     }
   } finally {
     isLoading.value = false
@@ -56,10 +47,10 @@ const handleRegister = async () => {
     <div class="space-y-6">
       <div class="space-y-1.5 text-center">
         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Create Account
+          {{ $t('auth.createAccountTitle') }}
         </h1>
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          Start structured interview preparation with real evidence
+          {{ $t('auth.createAccountSubtitle') }}
         </p>
       </div>
 
@@ -75,7 +66,7 @@ const handleRegister = async () => {
         <AppInput
           id="name"
           v-model="name"
-          label="Full Name"
+          :label="$t('auth.fullName')"
           type="text"
           placeholder="Ada Lovelace"
           required
@@ -84,7 +75,7 @@ const handleRegister = async () => {
         <AppInput
           id="email"
           v-model="email"
-          label="Work or Personal Email"
+          :label="$t('auth.emailWorkOrPersonal')"
           type="email"
           placeholder="engineer@company.com"
           required
@@ -93,7 +84,7 @@ const handleRegister = async () => {
         <AppInput
           id="password"
           v-model="password"
-          label="Password (min 8 characters)"
+          :label="$t('auth.passwordHint')"
           type="password"
           placeholder="••••••••••••"
           required
@@ -105,14 +96,14 @@ const handleRegister = async () => {
           size="md"
           :loading="isLoading"
         >
-          Create Account
+          {{ $t('auth.createAccountButton') }}
         </AppButton>
       </form>
 
       <div class="pt-4 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500">
-        Already have an account?
+        {{ $t('auth.alreadyHaveAccount') }}
         <NuxtLink to="/login" class="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold ml-1">
-          Sign in here
+          {{ $t('auth.signInHere') }}
         </NuxtLink>
       </div>
     </div>

@@ -60,18 +60,18 @@ const handleToggle = async (lessonId: string) => {
     <div class="border-b border-slate-200 dark:border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs font-mono text-indigo-600 dark:text-indigo-400 font-semibold mb-1">
-          <span>PREREQUISITE-ORDERED SYLLABUS</span>
+          <span>{{ $t('learning.badge') }}</span>
           <span>•</span>
-          <span>CURATED CURRICULUM</span>
+          <span>PREREQUISITE-ORDERED CURRICULUM</span>
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Learning Plan & Technical Lessons
+          {{ $t('learning.title') }}
         </h1>
       </div>
 
       <div class="flex items-center gap-3">
         <div class="text-right">
-          <div class="text-[10px] font-mono uppercase text-slate-400">Completion</div>
+          <div class="text-[10px] font-mono uppercase text-slate-400">{{ $t('learning.completion') }}</div>
           <div class="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
             {{ progress.percentage }}%
           </div>
@@ -81,7 +81,7 @@ const handleToggle = async (lessonId: string) => {
 
 
     <div v-if="!learningUnits?.length" class="p-8 text-center border border-dashed border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-400">
-      Synthesizing customized syllabus for target role...
+      {{ $t('learning.empty') }}
     </div>
 
     <div v-else class="space-y-4">

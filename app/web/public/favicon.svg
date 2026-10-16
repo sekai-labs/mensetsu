@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="fav-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#1E1B4B" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded Squircle -->
+  <rect width="32" height="32" rx="7" ry="7" fill="url(#fav-bg)" />
+
+  <!-- Technical Inner Stroke -->
+  <rect x="1" y="1" width="30" height="30" rx="6" ry="6" fill="none" stroke="#818CF8" stroke-width="0.8" opacity="0.6" />
+
+  <!-- Micro Kanji "面" Monogram -->
+  <g fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top bar -->
+    <path d="M 8 10 L 24 10" stroke-width="2" stroke="#818CF8" />
+    <!-- Outer box -->
+    <path d="M 9 10 L 9 24 L 23 24 L 23 10" stroke-width="1.8" />
+    <!-- Vertical divider -->
+    <path d="M 16 10 L 16 24" stroke-width="1.6" />
+    <!-- Middle crossbars -->
+    <path d="M 9 15 L 23 15" stroke-width="1.2" stroke="#CBD5E1" />
+    <path d="M 9 19 L 23 19" stroke-width="1.2" stroke="#CBD5E1" />
+    <!-- Slanted top accents -->
+    <path d="M 13 7 L 11 10" stroke-width="1.5" stroke="#34D399" />
+    <path d="M 19 7 L 21 10" stroke-width="1.5" stroke="#34D399" />
+  </g>
+
+  <!-- Verified Proof Point Dot -->
+  <circle cx="24" cy="8" r="2.5" fill="#10B981" stroke="#0F172A" stroke-width="0.8" />
+</svg>

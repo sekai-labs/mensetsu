@@ -17,10 +17,17 @@ const props = withDefaults(defineProps<Props>(), {
 
 const route = useRoute()
 
+const { t, te } = useI18n()
+
 const isRouteActive = (subPath: string) => {
   const current = route.path
   const target = `/interviews/${props.workspaceId}/${subPath}`
   return current === target || current.startsWith(`${target}/`)
+}
+
+const itemKeyOrFallback = (key?: string, fallback?: string) => {
+  if (!key) return fallback || ''
+  return te(key) ? t(key) : (fallback || key)
 }
 </script>
 
@@ -37,7 +44,7 @@ const isRouteActive = (subPath: string) => {
       >
         <div class="flex items-center justify-between gap-1">
           <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">
-            Target Focus
+            {{ $t('navigation.targetRole') }}
           </span>
           <StatusBadge :status="status" size="xs" :show-dot="true" />
         </div>
@@ -68,7 +75,7 @@ const isRouteActive = (subPath: string) => {
         >
 
           <h2 class="px-2.5 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            {{ section.title }}
+            {{ itemKeyOrFallback(section.titleKey, section.title) }}
           </h2>
 
 
@@ -80,8 +87,8 @@ const isRouteActive = (subPath: string) => {
               class="group flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all"
               :class="[
                 isRouteActive(item.path)
-                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold border-l-2 border-indigo-600 pl-2 shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white',
+                  ? 'bg-slate-100 dark:bg-slate-800/60 font-semibold text-slate-900 dark:text-white border-l-2 border-indigo-600 pl-2'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-white',
               ]"
               :aria-current="isRouteActive(item.path) ? 'page' : undefined"
             >
@@ -94,7 +101,7 @@ const isRouteActive = (subPath: string) => {
                     : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300',
                 ]"
               />
-              <span class="truncate">{{ item.name }}</span>
+              <span class="truncate">{{ itemKeyOrFallback(item.nameKey, item.name) }}</span>
 
               <span
                 v-if="item.badge"
@@ -112,8 +119,8 @@ const isRouteActive = (subPath: string) => {
             to="/workflows"
             class="group flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white transition-all"
           >
-            <span class="font-mono text-indigo-600 dark:text-indigo-400 font-bold">⚡</span>
-            <span class="truncate">Execution Studio</span>
+            <span class="font-mono text-slate-500 dark:text-slate-400 font-bold">⚡</span>
+            <span class="truncate">{{ $t('navigation.workflowRuns') }}</span>
           </NuxtLink>
         </div>
       </nav>

@@ -99,18 +99,18 @@ const openSourceById = (sourceId?: string) => {
     <div class="border-b border-slate-200 dark:border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs font-mono text-indigo-600 dark:text-indigo-400 font-semibold mb-1">
-          <span>TECHNICAL DOSSIER</span>
+          <span>{{ $t('company.badge') }}</span>
           <span>•</span>
           <span class="capitalize">{{ companyData?.company_name || 'Target Organization' }}</span>
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Architectural Dossier & Engineering Profile
+          {{ $t('company.title') }}
         </h1>
       </div>
 
 
       <div class="flex items-center gap-3">
-        <span class="text-xs text-slate-400 font-mono">Font Size:</span>
+        <span class="text-xs text-slate-400 font-mono">{{ $t('company.fontSize') }}:</span>
         <div class="flex items-center gap-1 border border-slate-200 dark:border-slate-700 rounded p-0.5 bg-white dark:bg-slate-900">
           <button
             type="button"
