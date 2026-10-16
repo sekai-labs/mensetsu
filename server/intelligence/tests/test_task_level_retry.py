@@ -161,7 +161,9 @@ async def test_task_level_retry_before_run_failure():
     assert retry_ev.payload.next_attempt == 2
     assert retry_ev.payload.delay_ms == 1000
     reprompts = [
-        e for e in events if e.type == "agent.activity" and e.payload.activity_type == "output_reprompt"
+        e
+        for e in events
+        if e.type == "agent.activity" and e.payload.activity_type == "output_reprompt"
     ]
     assert len(reprompts) == MAX_MISSING_OUTPUT_TOOL_NUDGES
 
@@ -178,6 +180,8 @@ async def test_single_plain_text_reply_is_reprompted_without_task_retry():
     event_types = [e.type for e in events]
     assert "task.retrying" not in event_types
     reprompts = [
-        e for e in events if e.type == "agent.activity" and e.payload.activity_type == "output_reprompt"
+        e
+        for e in events
+        if e.type == "agent.activity" and e.payload.activity_type == "output_reprompt"
     ]
     assert len(reprompts) == 1

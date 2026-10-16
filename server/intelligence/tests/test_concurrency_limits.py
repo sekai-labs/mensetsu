@@ -134,7 +134,9 @@ def isolated_runtime(monkeypatch):
 
 
 async def run_one(runtime, gauge, run_id, agent_id, release=None, delay_s=0.05):
-    model = SlowFakeModel(gauge=gauge, run_id=run_id, agent_id=agent_id, release=release, delay_s=delay_s)
+    model = SlowFakeModel(
+        gauge=gauge, run_id=run_id, agent_id=agent_id, release=release, delay_s=delay_s
+    )
     return await runtime.execute_agent_loop(
         agent_id=agent_id,
         objective="Concurrency probe",
@@ -148,7 +150,10 @@ async def run_one(runtime, gauge, run_id, agent_id, release=None, delay_s=0.05):
 @pytest.mark.asyncio
 async def test_global_per_run_and_per_agent_limits_are_never_exceeded(isolated_runtime):
     runtime, limits, _ = isolated_runtime(
-        global_limit=3, per_run_limit=2, llm_inflight_limit=10, agent_limit=lambda a: 1 if a == "probe-solo" else 3
+        global_limit=3,
+        per_run_limit=2,
+        llm_inflight_limit=10,
+        agent_limit=lambda a: 1 if a == "probe-solo" else 3,
     )
     gauge = Gauge()
     jobs = []
@@ -191,7 +196,9 @@ async def test_parallelism_still_happens_within_limits(isolated_runtime):
     gauge = Gauge()
     release = asyncio.Event()
     agents = ("probe-gamma", "probe-alpha", "probe-beta")
-    tasks = [asyncio.create_task(run_one(runtime, gauge, "run_par", a, release=release)) for a in agents]
+    tasks = [
+        asyncio.create_task(run_one(runtime, gauge, "run_par", a, release=release)) for a in agents
+    ]
     for _ in range(200):
         if gauge.current.get("run:run_par", 0) == 3:
             break
@@ -208,7 +215,9 @@ async def test_cancellation_releases_slots_and_run_map(isolated_runtime):
     )
     gauge = Gauge()
     blocker = asyncio.Event()
-    holder = asyncio.create_task(run_one(runtime, gauge, "run_cancel", "probe-alpha", release=blocker))
+    holder = asyncio.create_task(
+        run_one(runtime, gauge, "run_cancel", "probe-alpha", release=blocker)
+    )
     waiter = asyncio.create_task(run_one(runtime, gauge, "run_cancel_2", "probe-alpha"))
     for _ in range(200):
         if gauge.current.get("global", 0) == 1:
@@ -236,7 +245,9 @@ async def test_waiting_longer_than_notice_threshold_emits_activity(isolated_runt
     limits.wait_notice_s = 0.05
     gauge = Gauge()
     release = asyncio.Event()
-    holder = asyncio.create_task(run_one(runtime, gauge, "run_wait", "probe-alpha", release=release))
+    holder = asyncio.create_task(
+        run_one(runtime, gauge, "run_wait", "probe-alpha", release=release)
+    )
     for _ in range(200):
         if gauge.current.get("global", 0) == 1:
             break
@@ -246,7 +257,11 @@ async def test_waiting_longer_than_notice_threshold_emits_activity(isolated_runt
     release.set()
     await asyncio.gather(holder, waiter)
 
-    waits = [p for t, p in ledger.events if t == "agent.activity" and p.get("activity_type") == "waiting_for_slot"]
+    waits = [
+        p
+        for t, p in ledger.events
+        if t == "agent.activity" and p.get("activity_type") == "waiting_for_slot"
+    ]
     assert len(waits) == 1
     assert "Waiting for execution slot (global limit 1)" in waits[0]["description"]
 
@@ -257,14 +272,22 @@ async def test_short_waits_emit_no_activity(isolated_runtime):
         global_limit=1, per_run_limit=4, llm_inflight_limit=4, agent_limit=lambda a: 4
     )
     gauge = Gauge()
-    await asyncio.gather(*(run_one(runtime, gauge, "run_short", "probe-alpha", delay_s=0.02) for _ in range(3)))
-    waits = [p for t, p in ledger.events if t == "agent.activity" and p.get("activity_type") == "waiting_for_slot"]
+    await asyncio.gather(
+        *(run_one(runtime, gauge, "run_short", "probe-alpha", delay_s=0.02) for _ in range(3))
+    )
+    waits = [
+        p
+        for t, p in ledger.events
+        if t == "agent.activity" and p.get("activity_type") == "waiting_for_slot"
+    ]
     assert waits == []
 
 
 @pytest.mark.asyncio
 async def test_nested_delegation_does_not_take_global_or_run_slots():
-    limits = ConcurrencyLimits(global_limit=1, per_run_limit=1, llm_inflight_limit=1, agent_limit=lambda a: 1)
+    limits = ConcurrencyLimits(
+        global_limit=1, per_run_limit=1, llm_inflight_limit=1, agent_limit=lambda a: 1
+    )
 
     async def child():
         async with limits.execution_slot("run_nested", "systems-deep-dive"):

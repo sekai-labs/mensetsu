@@ -119,19 +119,15 @@ def generate_workflows_v1_schema() -> dict:
 def main():
 
     repo_root = Path(__file__).resolve().parents[4]
-    
-    packages_schema_path = repo_root / "packages" / "contracts" / "schema" / "workflows.v1.json"
-    packages_schema_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    api_schema_path = repo_root / "server" / "api" / "contracts" / "schema" / "workflows.v1.json"
-    api_schema_path.parent.mkdir(parents=True, exist_ok=True)
+
+    schema_path = repo_root / "contracts" / "rest" / "schema" / "workflows.v1.json"
+    schema_path.parent.mkdir(parents=True, exist_ok=True)
 
     schema = generate_workflows_v1_schema()
     serialized = json.dumps(schema, indent=2) + "\n"
-    
-    packages_schema_path.write_text(serialized)
-    api_schema_path.write_text(serialized)
-    print(f"Exported schema to {packages_schema_path} and {api_schema_path}")
+
+    schema_path.write_text(serialized)
+    print(f"Exported schema to {schema_path}")
 
 
 if __name__ == "__main__":

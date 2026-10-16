@@ -1,5 +1,6 @@
 import os
 from typing import Any
+
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 
@@ -15,6 +16,7 @@ ROLE_SLOT_MAP = {
     "curriculum": "generation",
     "interview-generation": "generation",
 }
+
 
 def resolve_provider_credentials(
     provider_key: str,
@@ -114,15 +116,21 @@ def resolve_chat_model_for_role(
         p_model = (legacy or {}).get("model_chat") or os.environ.get("OPENAI_MODEL", "gpt-4o")
         p_temp = 0.2
 
-    p_key, p_base = resolve_provider_credentials(p_provider, user_providers, system_providers, legacy)
+    p_key, p_base = resolve_provider_credentials(
+        p_provider, user_providers, system_providers, legacy
+    )
     primary_model = create_model_instance(p_provider, p_model, p_temp, p_key, p_base, timeout_s)
 
     if fallback_def and isinstance(fallback_def, dict) and fallback_def.get("model"):
         f_provider = fallback_def.get("provider_key", "openai")
         f_model = fallback_def.get("model")
         f_temp = float(fallback_def.get("temperature", 0.2))
-        f_key, f_base = resolve_provider_credentials(f_provider, user_providers, system_providers, legacy)
-        fallback_model = create_model_instance(f_provider, f_model, f_temp, f_key, f_base, timeout_s)
+        f_key, f_base = resolve_provider_credentials(
+            f_provider, user_providers, system_providers, legacy
+        )
+        fallback_model = create_model_instance(
+            f_provider, f_model, f_temp, f_key, f_base, timeout_s
+        )
         return primary_model.with_fallbacks([fallback_model])
 
     return primary_model

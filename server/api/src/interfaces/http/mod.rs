@@ -2,7 +2,6 @@ pub mod admin;
 pub mod auth;
 pub mod extractors;
 pub mod health;
-pub mod intelligence_client;
 pub mod middleware;
 pub mod settings;
 pub mod setup;

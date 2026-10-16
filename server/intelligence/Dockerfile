@@ -17,9 +17,9 @@ RUN chown -R appuser:appuser /app
 USER appuser
 ENV PYTHONPATH="/app"
 ENV PATH="/app/.venv/bin:$PATH"
-ENV INTELLIGENCE_PORT=8001
+ENV INTELLIGENCE_PORT=50051
 ENV INTELLIGENCE_HOST=0.0.0.0
 
-EXPOSE 8001
+EXPOSE 50051
 
 CMD ["python", "-m", "src.main"]

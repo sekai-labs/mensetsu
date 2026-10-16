@@ -758,7 +758,7 @@ mod tests {
 
     fn fixture(name: &str) -> String {
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("contracts/fixtures/workflows.v1")
+            .join("../../contracts/rest/fixtures/workflows.v1")
             .join(name);
         std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {}: {e}", path.display()))
     }
@@ -769,7 +769,7 @@ mod tests {
 
     #[test]
     fn every_fixture_deserializes_into_its_dto() {
-        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("contracts/fixtures/workflows.v1");
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../contracts/rest/fixtures/workflows.v1");
         let mut seen: Vec<String> = std::fs::read_dir(&dir)
             .unwrap()
             .map(|e| e.unwrap().file_name().into_string().unwrap())
@@ -842,7 +842,7 @@ mod tests {
 
     #[test]
     fn event_types_match_schema() {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("contracts/schema/workflows.v1.json");
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../contracts/rest/schema/workflows.v1.json");
         let schema: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
         let mut from_schema: Vec<String> = schema["$defs"]
             .as_object()

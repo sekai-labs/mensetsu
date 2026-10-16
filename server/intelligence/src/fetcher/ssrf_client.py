@@ -35,9 +35,10 @@ def reject_placeholder_domain(url: str) -> None:
     hostname = (urlparse(url).hostname or "").rstrip(".").lower()
     if not hostname:
         return
-    is_placeholder = any(
-        hostname == d or hostname.endswith(f".{d}") for d in PLACEHOLDER_DOMAINS
-    ) or hostname.rsplit(".", 1)[-1] in PLACEHOLDER_TLDS
+    is_placeholder = (
+        any(hostname == d or hostname.endswith(f".{d}") for d in PLACEHOLDER_DOMAINS)
+        or hostname.rsplit(".", 1)[-1] in PLACEHOLDER_TLDS
+    )
     if is_placeholder:
         raise PlaceholderDomainError(
             f"'{hostname}' is a reserved placeholder domain with no real company content. "

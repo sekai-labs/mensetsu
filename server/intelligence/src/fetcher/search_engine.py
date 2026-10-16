@@ -26,7 +26,6 @@ class SearchResult:
     discovery_timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
-
 class TokenBucketRateLimiter:
     def __init__(self, rate: float = 1.0, burst: float = 2.0):
         self.rate = rate
@@ -72,6 +71,7 @@ class AgentSearchEngine:
         self.history: list[dict[str, Any]] = []
         self._cache: dict[str, list[SearchResult]] = {}
         self.last_search_blocked: bool = False
+
     async def search(
         self,
         query: str,
@@ -102,7 +102,11 @@ class AgentSearchEngine:
 
         providers = [
             ("searxng", self.searxng_url, lambda: self._search_searxng(clean_q, limit)),
-            ("tavily", self.tavily_api_key, lambda: self._search_tavily(clean_q, limit, search_depth)),
+            (
+                "tavily",
+                self.tavily_api_key,
+                lambda: self._search_tavily(clean_q, limit, search_depth),
+            ),
             ("brave", self.brave_api_key, lambda: self._search_brave(clean_q, limit)),
             ("serpapi", self.serpapi_api_key, lambda: self._search_serpapi(clean_q, limit)),
         ]
@@ -115,7 +119,9 @@ class AgentSearchEngine:
                 found = await call()
             except Exception as e:
                 blocked_count += 1
-                logger.warning(f"provider blocked: {name} failed for '{clean_q}': {e}. Falling back.")
+                logger.warning(
+                    f"provider blocked: {name} failed for '{clean_q}': {e}. Falling back."
+                )
                 continue
             if found is None:
                 blocked_count += 1

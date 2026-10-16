@@ -36,9 +36,9 @@ use crate::{
     },
     interfaces::http::{
         extractors::authenticated_user::AuthenticatedUser,
-        intelligence_client::CreateRunPayload,
         workflow_dtos::WorkflowRun,
     },
+    interfaces::grpc::{CreateRunPayload, GrpcClient, ResumePlanPayload},
     shared::{config::AppConfig, error::AppError},
 };
 
@@ -49,7 +49,7 @@ pub struct AppState {
     pub identity_service: std::sync::Arc<crate::contexts::identity::application::IdentityService>,
     pub workspace_service: std::sync::Arc<crate::contexts::workspace::application::WorkspaceService>,
     pub workflow_service: std::sync::Arc<crate::contexts::workflow::application::WorkflowService>,
-    pub intelligence_client: std::sync::Arc<crate::interfaces::http::intelligence_client::IntelligenceClient>,
+    pub grpc_client: std::sync::Arc<GrpcClient>,
 }
 
 pub fn workspace_routes(state: AppState) -> Router {
@@ -273,7 +273,7 @@ pub(crate) async fn start_workspace_run(
         workflow_mode: workspace.workflow_mode,
         llm_config: resolve_llm_config(state, user_id).await?,
     };
-    state.intelligence_client.create_run(&payload, idempotency_key).await
+    state.grpc_client.create_run(&payload, idempotency_key).await
 }
 pub(crate) async fn resolve_llm_config(
     state: &AppState,
@@ -495,12 +495,12 @@ pub async fn update_workspace_objective(
             .replace("workflow_run:", "")
             .replace('`', "");
 
-        let resume_payload = crate::interfaces::http::intelligence_client::ResumePlanPayload {
+        let resume_payload = ResumePlanPayload {
             prompt: payload.prompt.clone(),
         };
 
         let _ = state
-            .intelligence_client
+            .grpc_client
             .resume_plan(&run_id, &resume_payload)
             .await
             .map_err(|e| {

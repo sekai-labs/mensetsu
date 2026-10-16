@@ -78,9 +78,7 @@ class SurrealDirectClient:
                 content=full_query.encode("utf-8", "ignore"),
             )
             if resp.status_code >= 400:
-                raise SurrealQueryError(
-                    f"SurrealDB HTTP {resp.status_code}: {resp.text[:500]}"
-                )
+                raise SurrealQueryError(f"SurrealDB HTTP {resp.status_code}: {resp.text[:500]}")
             results = resp.json()
             failures = [
                 (idx, item.get("result") or item.get("detail"))

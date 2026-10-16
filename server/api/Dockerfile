@@ -9,21 +9,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-ARG CARGO_BUILD_JOBS=2
-ENV CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS}
+WORKDIR /app/server/api
 
-WORKDIR /app
+COPY server/api/Cargo.toml server/api/Cargo.lock server/api/build.rs ./
+COPY server/api/src ./src
+COPY contracts/grpc/proto /app/contracts/grpc/proto
 
-COPY Cargo.toml Cargo.lock ./
-
-RUN mkdir src && \
-    echo 'fn main() {}' > src/main.rs && \
-    cargo build --release && \
-    rm -rf src target/release/deps/mensetsu_api* target/release/mensetsu-api* target/release/.fingerprint/mensetsu-api-*
-
-COPY src ./src
-
-RUN cargo build --release --bin mensetsu-api
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/app/server/api/target \
+    cargo build --release --bin mensetsu-api && \
+    cp /app/server/api/target/release/mensetsu-api /usr/local/bin/mensetsu-api
 
 FROM debian:trixie-slim AS runner
 
@@ -35,7 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN useradd -m -u 1000 appuser
 
 WORKDIR /app
-COPY --from=builder /app/target/release/mensetsu-api /usr/local/bin/mensetsu-api
+COPY --from=builder /usr/local/bin/mensetsu-api /usr/local/bin/mensetsu-api
 
 USER appuser
 
@@ -44,7 +40,7 @@ ENV HOST=0.0.0.0
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=5s --timeout=3s --start-period=30s --retries=6 \
   CMD curl -f http://localhost:3000/health/live || exit 1
 
 CMD ["mensetsu-api"]

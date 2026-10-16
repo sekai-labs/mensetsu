@@ -13,7 +13,7 @@
     "paths": {
       "~/*": ["./*"],
       "@/*": ["./*"],
-      "@mensetsu/contracts": ["../../server/api/contracts/src/index.ts"]
+      "@mensetsu/contracts": ["../../contracts/rest/src/index.ts"]
     }
   },
   "include": [

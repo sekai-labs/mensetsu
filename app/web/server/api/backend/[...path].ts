@@ -13,8 +13,10 @@ export default defineEventHandler(async (event) => {
   const session = tokenId ? await sessionManager.getSession(tokenId) : null
 
   const method = event.method
+  const authHeader = getRequestHeader(event, 'authorization')
+  const token = session?.accessToken || (authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined)
   const headers = buildProxyHeaders({
-    accessToken: session?.accessToken,
+    accessToken: token,
     contentType: getRequestHeader(event, 'content-type'),
     accept: getRequestHeader(event, 'accept'),
     lastEventId: getRequestHeader(event, 'last-event-id'),

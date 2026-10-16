@@ -1,8 +1,6 @@
-import asyncio
-import collections
-from datetime import datetime, timezone
 import logging
 import time
+from datetime import datetime, timezone
 from typing import Annotated, Any
 
 from langgraph.graph import END, START, StateGraph
@@ -11,13 +9,6 @@ from pydantic import BaseModel, Field
 
 from src.agents.runtime import agent_runtime
 from src.agents.workflow_router import route_workflow_request
-
-def check_lease() -> None:
-    from src.agents.runtime import current_lost_lease_var
-    lost_ev = current_lost_lease_var.get()
-    if lost_ev and lost_ev.is_set():
-        raise RuntimeError("Worker lost redis lease during execution. Aborting.")
-
 from src.contracts.v1 import Artifact, PlanTaskItem, WorkflowProgress, WorkflowTask
 from src.orchestration.dynamic_workflow import (
     PLANNABLE_AGENTS,
@@ -27,6 +18,13 @@ from src.orchestration.dynamic_workflow import (
 )
 from src.orchestration.ledger import SurrealLedgerRepository
 
+
+def check_lease() -> None:
+    from src.agents.runtime import current_lost_lease_var
+
+    lost_ev = current_lost_lease_var.get()
+    if lost_ev and lost_ev.is_set():
+        raise RuntimeError("Worker lost redis lease during execution. Aborting.")
 logger = logging.getLogger("mensetsu.orchestration.hybrid_workflow")
 
 class HybridWorkflowState(BaseModel):
@@ -61,7 +59,7 @@ class HybridWorkflowState(BaseModel):
 
 def build_hybrid_workflow(checkpointer=None, ledger: SurrealLedgerRepository | None = None):
     if ledger is None:
-        from src.orchestration.router import default_ledger
+        from src.orchestration.shared import default_ledger
         ledger = default_ledger
 
     async def set_run_phase(run_id: str, phase: str, progress: int | None = None, completed: int = 0, total: int = 6) -> None:
@@ -176,19 +174,7 @@ def build_hybrid_workflow(checkpointer=None, ledger: SurrealLedgerRepository | N
             payload={"task_id": plan_task.id, "attempt": 1, "assigned_agent": "planner"},
         )
 
-        planner_input = {
-            "company_name": state.company_name,
-            "role_title": state.role_title,
-            "company_urls": state.company_urls,
-            "resume_summary": state.parsed_resume.get("summary", ""),
-            "candidate_skills": state.parsed_resume.get("extracted_skills", []),
-            "job_description": state.job_description,
-            "user_prompt": state.user_prompt or "",
-            "completed_tasks": state.completed_task_ids,
-            "plan_revision": state.plan_revision,
-        }
-
-        plan_task_id = f"task_plan_{state.run_id[:8]}_v{state.plan_revision}"
+        _plan_task_id = f"task_plan_{state.run_id[:8]}_v{state.plan_revision}"
         planned_tasks = [
             {
                 "id": f"task_company_{state.run_id[:8]}",

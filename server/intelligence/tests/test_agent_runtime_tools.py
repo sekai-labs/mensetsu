@@ -160,10 +160,18 @@ class ScriptedToolCallingFakeModel(BaseChatModel):
 
             if target_cls == AgentTaskOutput:
                 from src.agents.schemas import current_saved_evidence_ids_var
+
                 saved_evs = list(current_saved_evidence_ids_var.get() or []) or ["art_ev_0"]
                 output_payload = {
                     "summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-                    "claims": [{"statement": "Acme uses Python and Rust.", "category": "architecture", "confidence": 0.95, "evidence_ids": saved_evs[:1]}],
+                    "claims": [
+                        {
+                            "statement": "Acme uses Python and Rust.",
+                            "category": "architecture",
+                            "confidence": 0.95,
+                            "evidence_ids": saved_evs[:1],
+                        }
+                    ],
                     "tools_used": ["web_search", "read_source", "delegate_task", "save_evidence"],
                     "status": "completed",
                     "confidence": 0.95,
@@ -317,7 +325,10 @@ class ScriptedToolCallingFakeModel(BaseChatModel):
                 target_cls, output_payload = shape_curriculum_payload(output_payload, messages)
             elif curr_agent == "systems-deep-dive":
                 from src.agents.schemas import current_execution_saved_evidence_ids_var
-                exec_evs = list(current_execution_saved_evidence_ids_var.get() or []) or saved_evs[:2]
+
+                exec_evs = (
+                    list(current_execution_saved_evidence_ids_var.get() or []) or saved_evs[:2]
+                )
                 output_payload["subsystem"] = "storage"
                 output_payload["findings"] = ["Compaction latency", "Replication throughput"]
                 output_payload["evidence_ids"] = exec_evs[:2]
@@ -489,7 +500,8 @@ async def test_empty_model_reply_is_reprompted_for_output_tool_within_execution(
     reprompts = [
         e
         for e in events.events
-        if e.type == "agent.activity" and getattr(e.payload, "activity_type", None) == "output_reprompt"
+        if e.type == "agent.activity"
+        and getattr(e.payload, "activity_type", None) == "output_reprompt"
     ]
     assert len(reprompts) == 1
 

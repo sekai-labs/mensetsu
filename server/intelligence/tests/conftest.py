@@ -39,7 +39,6 @@ def resume_model():
     agent_runtime.set_model_factory(None)
 
 
-
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_isolated_surrealdb_session():
 

@@ -1,14 +1,6 @@
-use axum::http::StatusCode;
-use serde_json::json;
-
-mod common {
-    pub const TEST_INTERNAL_TOKEN: &str = "test-internal-service-token";
-}
-
 #[tokio::test]
 async fn test_prompt_based_workspace_and_byok_precedence() {
     // Tests that creating a workspace with prompt sets workflow_mode to hybrid and persists
-    let client = reqwest::Client::new();
     use mensetsu_api::contexts::workspace::domain::{Workspace, SeniorityLevel};
     use mensetsu_api::contexts::identity::domain::UserId;
     let uid = UserId("usr_test_123".into());

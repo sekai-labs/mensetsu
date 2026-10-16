@@ -24,7 +24,13 @@ def final_output() -> AIMessage:
         tool_calls=[
             {
                 "name": "AgentTaskOutput",
-                "args": {"summary": "Done.", "claims": [], "tools_used": [], "status": "completed", "confidence": 0.9},
+                "args": {
+                    "summary": "Done.",
+                    "claims": [],
+                    "tools_used": [],
+                    "status": "completed",
+                    "confidence": 0.9,
+                },
                 "id": f"tc_out_{uuid.uuid4().hex[:6]}",
                 "type": "tool_call",
             }
@@ -35,7 +41,9 @@ def final_output() -> AIMessage:
 def tool_call(name: str, args: dict) -> AIMessage:
     return AIMessage(
         content="",
-        tool_calls=[{"name": name, "args": args, "id": f"tc_{uuid.uuid4().hex[:6]}", "type": "tool_call"}],
+        tool_calls=[
+            {"name": name, "args": args, "id": f"tc_{uuid.uuid4().hex[:6]}", "type": "tool_call"}
+        ],
     )
 
 
@@ -145,7 +153,11 @@ class ChildBlocksForeverModel(LifecycleModel):
                     ChatGeneration(
                         message=tool_call(
                             "delegate_task",
-                            {"target_agent_id": CHILD, "objective": "Deep dive", "reason": "Needs depth"},
+                            {
+                                "target_agent_id": CHILD,
+                                "objective": "Deep dive",
+                                "reason": "Needs depth",
+                            },
                         )
                     )
                 ]
@@ -177,16 +189,26 @@ async def test_parent_wall_timeout_closes_delegated_child_and_delegation(lifecyc
     monkeypatch.setattr(
         runtime_module.ExecutionBudgetClock,
         "paused",
-        lambda self, reason: contextlib.nullcontext() if reason == "delegated child wait" else real_paused(self, reason),
+        lambda self, reason: (
+            contextlib.nullcontext()
+            if reason == "delegated child wait"
+            else real_paused(self, reason)
+        ),
     )
     started = asyncio.get_running_loop().time()
     with pytest.raises(AgentExecutionError, match="wall-time budget exceeded"):
         await runtime.execute_agent_loop(
-            agent_id=PARENT, objective="Parent", task_id="task_life", run_id=run_id, input_data={},
+            agent_id=PARENT,
+            objective="Parent",
+            task_id="task_life",
+            run_id=run_id,
+            input_data={},
             model_override=model,
         )
     assert asyncio.get_running_loop().time() - started < 8.0
-    await assert_child_and_delegation_closed(ledger, run_id, "ended before delegated child finished")
+    await assert_child_and_delegation_closed(
+        ledger, run_id, "ended before delegated child finished"
+    )
 
 
 @pytest.mark.asyncio
@@ -198,7 +220,11 @@ async def test_parent_cancellation_closes_delegated_child_and_delegation(lifecyc
     runtime = AutonomousAgentRuntime(ledger=ledger)
     parent = asyncio.create_task(
         runtime.execute_agent_loop(
-            agent_id=PARENT, objective="Parent", task_id="task_life2", run_id=run_id, input_data={},
+            agent_id=PARENT,
+            objective="Parent",
+            task_id="task_life2",
+            run_id=run_id,
+            input_data={},
             model_override=model,
         )
     )
@@ -210,7 +236,9 @@ async def test_parent_cancellation_closes_delegated_child_and_delegation(lifecyc
     parent.cancel()
     with pytest.raises(asyncio.CancelledError):
         await parent
-    await assert_child_and_delegation_closed(ledger, run_id, "ended before delegated child finished")
+    await assert_child_and_delegation_closed(
+        ledger, run_id, "ended before delegated child finished"
+    )
 
 
 @pytest.mark.asyncio
@@ -219,11 +247,17 @@ async def test_late_delegation_is_refused(lifecycle):
     ledger, run_id = await new_run()
     model = LifecycleModel()
     exec_rec, _ = await AutonomousAgentRuntime(ledger=ledger).execute_agent_loop(
-        agent_id=PARENT, objective="Parent", task_id="task_late", run_id=run_id, input_data={},
+        agent_id=PARENT,
+        objective="Parent",
+        task_id="task_late",
+        run_id=run_id,
+        input_data={},
         model_override=model,
     )
     assert exec_rec.status == "completed"
-    assert any("Not enough budget left to delegate; finish your research" in r for r in model.tool_results)
+    assert any(
+        "Not enough budget left to delegate; finish your research" in r for r in model.tool_results
+    )
     assert await ledger.list_delegations_for_run(run_id) == []
     assert all(e.agent_id != CHILD for e in await ledger.list_agent_executions_for_run(run_id))
 
@@ -233,14 +267,22 @@ async def test_child_wait_does_not_consume_parent_budget(lifecycle, monkeypatch)
     lifecycle(parent_wall_s=6, child_wall_s=30)
     monkeypatch.setattr(runtime_module, "DELEGATION_PARENT_RESERVE_S", -60.0)
     ledger, run_id = await new_run()
-    model = LifecycleModel(parent_pre_delegate_sleep_s=0.5, child_sleep_s=12.0, parent_post_delegate_sleep_s=0.5)
+    model = LifecycleModel(
+        parent_pre_delegate_sleep_s=0.5, child_sleep_s=12.0, parent_post_delegate_sleep_s=0.5
+    )
     exec_rec, _ = await AutonomousAgentRuntime(ledger=ledger).execute_agent_loop(
-        agent_id=PARENT, objective="Parent", task_id="task_pause", run_id=run_id, input_data={},
+        agent_id=PARENT,
+        objective="Parent",
+        task_id="task_pause",
+        run_id=run_id,
+        input_data={},
         model_override=model,
     )
     assert exec_rec.status == "completed"
     assert exec_rec.budgets_used.wall_time_ms > 12000
-    child = next(e for e in await ledger.list_agent_executions_for_run(run_id) if e.agent_id == CHILD)
+    child = next(
+        e for e in await ledger.list_agent_executions_for_run(run_id) if e.agent_id == CHILD
+    )
     assert child.status == "completed"
     assert (await ledger.list_delegations_for_run(run_id))[0].status == "completed"
 
@@ -331,10 +373,15 @@ async def test_execution_slot_wait_does_not_consume_wall_budget(lifecycle):
     assert exec_rec.status == "completed"
     assert exec_rec.budgets_used.wall_time_ms < 3000
 
+
 @pytest.mark.asyncio
 async def test_provider_slot_wait_does_not_consume_wall_budget(lifecycle, monkeypatch, caplog):
     lifecycle(parent_wall_s=3, child_wall_s=10)
-    monkeypatch.setattr(runtime_module, "agent_limits", ConcurrencyLimits(llm_inflight_limit=1, agent_limit=lambda a: 4))
+    monkeypatch.setattr(
+        runtime_module,
+        "agent_limits",
+        ConcurrencyLimits(llm_inflight_limit=1, agent_limit=lambda a: 4),
+    )
     ledger, run_id = await new_run()
     limits = runtime_module.agent_limits
     limits._bind_loop()
@@ -381,7 +428,6 @@ async def test_provider_slot_wait_does_not_consume_wall_budget(lifecycle, monkey
     assert any("excluded from wall budget" in m and "provider slot wait" in m for m in messages)
 
 
-
 @pytest.mark.asyncio
 async def test_run_end_sweep_closes_open_records():
     from src.contracts.v1 import AgentExecution, Delegation, ToolInvocation
@@ -389,17 +435,29 @@ async def test_run_end_sweep_closes_open_records():
     ledger, run_id = await new_run()
     for eid, agent in (("exec_sweep_p", PARENT), ("exec_sweep_c", CHILD)):
         await ledger.save_agent_execution(
-            AgentExecution(id=eid, run_id=run_id, task_id="task_sweep", agent_id=agent, status="running")
+            AgentExecution(
+                id=eid, run_id=run_id, task_id="task_sweep", agent_id=agent, status="running"
+            )
         )
     await ledger.save_delegation(
         Delegation(
-            id="del_sweep_1", run_id=run_id, parent_execution_id="exec_sweep_p", child_execution_id="exec_sweep_c",
-            parent_agent_id=PARENT, child_agent_id=CHILD, delegation_task_id="task_sweep",
-            objective="o", reason="r", depth=1, status="running",
+            id="del_sweep_1",
+            run_id=run_id,
+            parent_execution_id="exec_sweep_p",
+            child_execution_id="exec_sweep_c",
+            parent_agent_id=PARENT,
+            child_agent_id=CHILD,
+            delegation_task_id="task_sweep",
+            objective="o",
+            reason="r",
+            depth=1,
+            status="running",
         )
     )
     await ledger.save_tool_invocation(
-        ToolInvocation(id="tool_sweep_1", execution_id="exec_sweep_c", tool_name="web_search", status="running"),
+        ToolInvocation(
+            id="tool_sweep_1", execution_id="exec_sweep_c", tool_name="web_search", status="running"
+        ),
         run_id=run_id,
     )
 
@@ -411,7 +469,11 @@ async def test_run_end_sweep_closes_open_records():
     types = [e.type for e in await all_events(ledger, run_id)]
     assert types.count("agent.failed") == 2
     assert "delegation.failed" in types and "tool.failed" in types
-    assert await ledger.sweep_run_to_terminal(run_id, reason="again") == {"executions": 0, "tools": 0, "delegations": 0}
+    assert await ledger.sweep_run_to_terminal(run_id, reason="again") == {
+        "executions": 0,
+        "tools": 0,
+        "delegations": 0,
+    }
 
 
 @pytest.mark.asyncio
@@ -419,24 +481,43 @@ async def test_save_finding_links_existing_evidence_and_rejects_unknown(lifecycl
     lifecycle(parent_wall_s=60, child_wall_s=30)
     ledger, run_id = await new_run()
     await ledger.save_artifact(
-        Artifact(id="ev_known_1", run_id=run_id, type="evidence", title="E", content={"snippet": "s"})
+        Artifact(
+            id="ev_known_1", run_id=run_id, type="evidence", title="E", content={"snippet": "s"}
+        )
     )
     from src.contracts.v1 import AgentExecution
 
     runtime = AutonomousAgentRuntime(ledger=ledger)
-    execution = AgentExecution(id="exec_find_1", run_id=run_id, task_id="task_find", agent_id=PARENT)
+    execution = AgentExecution(
+        id="exec_find_1", run_id=run_id, task_id="task_find", agent_id=PARENT
+    )
     tools = {
         t.name: t
         for t in runtime.create_tools_for_execution(
-            execution=execution, run_id=run_id, depth=0, ancestors=[PARENT], tool_call_callback=None, model_override=None
+            execution=execution,
+            run_id=run_id,
+            depth=0,
+            ancestors=[PARENT],
+            tool_call_callback=None,
+            model_override=None,
         )
     }
     ok = await tools["save_finding"].ainvoke(
-        {"category": "architecture", "claim": "Uses Raft", "confidence": 0.9, "evidence_ids": ["ev_known_1"]}
+        {
+            "category": "architecture",
+            "claim": "Uses Raft",
+            "confidence": 0.9,
+            "evidence_ids": ["ev_known_1"],
+        }
     )
     assert "linked to ev_known_1" in ok
     bad = await tools["save_finding"].ainvoke(
-        {"category": "architecture", "claim": "Uses Paxos", "confidence": 0.9, "evidence_ids": ["ev_missing"]}
+        {
+            "category": "architecture",
+            "claim": "Uses Paxos",
+            "confidence": 0.9,
+            "evidence_ids": ["ev_missing"],
+        }
     )
     assert "do not exist in this run" in bad
     findings = [e for e in await all_events(ledger, run_id) if e.type == "finding.saved"]

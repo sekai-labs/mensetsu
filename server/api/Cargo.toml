@@ -31,7 +31,13 @@ aes-gcm = "0.10.3"
 base64 = "0.22"
 hex = "0.4.3"
 totp-rs = { version = "6.0.0", features = ["qr", "gen_secret"] }
+tonic = "0.12"
+prost = "0.13"
+dashmap = "6.1"
 
+[build-dependencies]
+tonic-build = "0.12"
+protoc-bin-vendored = "3.1.0"
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
 parking_lot = "0.12"

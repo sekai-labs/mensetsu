@@ -34,7 +34,9 @@ class RedisStreamJobQueue:
 
     async def get_client(self) -> aioredis.Redis:
         if self.client is None:
-            self.client = aioredis.from_url(self.redis_url, decode_responses=True, **REDIS_CLIENT_OPTIONS)
+            self.client = aioredis.from_url(
+                self.redis_url, decode_responses=True, **REDIS_CLIENT_OPTIONS
+            )
 
             try:
                 await self.client.xgroup_create(
@@ -60,7 +62,9 @@ class RedisStreamJobQueue:
             await client.zadd(delay_key, {json.dumps(job_msg): due_ts})
             return f"delayed:{due_ts}"
 
-        msg_id = await client.xadd(name=self.stream_key, fields=job_msg, maxlen=10000, approximate=True)
+        msg_id = await client.xadd(
+            name=self.stream_key, fields=job_msg, maxlen=10000, approximate=True
+        )
         return msg_id
 
     PROMOTION_LUA = """
@@ -217,6 +221,7 @@ end
         client = await self.get_client()
         key = f"mensetsu:cancel:{run_id}"
         await client.set(key, "1", ex=86400)
+
     async def publish_event(self, run_id: str, event_json: str) -> None:
         client = await self.get_client()
         channel = f"mensetsu:events:{run_id}"

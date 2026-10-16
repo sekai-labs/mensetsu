@@ -1933,7 +1933,7 @@ export interface OutputData {
 }
 
 
-export type WorkflowType = 'static' | 'dynamic'
+export type WorkflowType = 'static' | 'dynamic' | 'hybrid'
 export type RunStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
 export type TaskStatus =
   | 'pending'

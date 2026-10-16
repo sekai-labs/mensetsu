@@ -149,7 +149,11 @@ class FaultyModel(ScriptedToolCallingFakeModel):
             }
         elif curr_agent == "systems-deep-dive":
             from src.agents.schemas import current_execution_saved_evidence_ids_var
-            exec_evs = list(current_execution_saved_evidence_ids_var.get() or []) or ["ev_0", "ev_1"]
+
+            exec_evs = list(current_execution_saved_evidence_ids_var.get() or []) or [
+                "ev_0",
+                "ev_1",
+            ]
             output_payload = {
                 "summary": "Deep dive recovered summary",
                 "subsystem": "storage",

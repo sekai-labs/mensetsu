@@ -27,15 +27,10 @@ fn main() {
     json.push('\n');
 
     let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
-    let packages_contracts_dir = repo_root.join("packages").join("contracts");
-    fs::create_dir_all(&packages_contracts_dir).expect("Failed to create packages/contracts dir");
-    let packages_out_path = packages_contracts_dir.join("openapi.json");
-    fs::write(&packages_out_path, &json).expect("Failed to write packages/contracts/openapi.json");
-    println!("Exported deterministic OpenAPI spec to {}", packages_out_path.display());
+    let rest_contracts_dir = repo_root.join("contracts").join("rest");
+    fs::create_dir_all(&rest_contracts_dir).expect("Failed to create contracts/rest dir");
+    let out_path = rest_contracts_dir.join("openapi.json");
+    fs::write(&out_path, &json).expect("Failed to write contracts/rest/openapi.json");
+    println!("Exported deterministic OpenAPI spec to {}", out_path.display());
 
-    let api_contracts_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("contracts");
-    fs::create_dir_all(&api_contracts_dir).expect("Failed to create server/api/contracts dir");
-    let api_out_path = api_contracts_dir.join("openapi.json");
-    fs::write(&api_out_path, &json).expect("Failed to write server/api/contracts/openapi.json");
-    println!("Exported deterministic OpenAPI spec to {}", api_out_path.display());
 }

@@ -9,7 +9,7 @@ pub struct AppConfig {
     pub surreal_pass: String,
     pub surreal_ns: String,
     pub surreal_db: String,
-    pub intelligence_url: String,
+    pub intelligence_grpc_url: String,
     pub cors_origins: Vec<String>,
     pub jwt_secret: String,
     pub access_token_ttl_seconds: i64,
@@ -31,7 +31,8 @@ impl AppConfig {
             surreal_pass: env::var("SURREAL_PASS").unwrap_or_else(|_| "root".to_string()),
             surreal_ns: env::var("SURREAL_NS").unwrap_or_else(|_| "mensetsu".to_string()),
             surreal_db: env::var("SURREAL_DB").unwrap_or_else(|_| "production".to_string()),
-            intelligence_url: env::var("INTELLIGENCE_URL").unwrap_or_else(|_| "http://127.0.0.1:8001".to_string()),
+            intelligence_grpc_url: env::var("INTELLIGENCE_GRPC_ENDPOINT")
+                .unwrap_or_else(|_| "http://127.0.0.1:50051".to_string()),
             cors_origins: env::var("CORS_ORIGIN")
                 .unwrap_or_else(|_| "http://localhost:3000,http://localhost:3001".to_string())
                 .split(',')

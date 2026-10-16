@@ -35,16 +35,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let wf_repo = std::sync::Arc::new(contexts::workflow::infrastructure::SurrealWorkflowRunRepository::new((*db.client).clone()));
     let workflow_service = std::sync::Arc::new(contexts::workflow::application::WorkflowService::new(wf_repo, ws_repo));
-
-    let intelligence_client = std::sync::Arc::new(mensetsu_api::interfaces::http::intelligence_client::IntelligenceClient::new(&config)?);
-
+    tracing::info!("Connecting to Intelligence gRPC at {}", config.intelligence_grpc_url);
+    let grpc_client = std::sync::Arc::new(mensetsu_api::interfaces::grpc::GrpcClient::connect(&config).await?);
+    tracing::info!("Successfully connected to Intelligence gRPC service");
     let state = AppState {
         db,
         config: config.clone(),
         identity_service,
         workspace_service,
         workflow_service,
-        intelligence_client,
+        grpc_client,
     };
     let app = create_router(state);
     let addr = format!("{}:{}", config.host, config.port);

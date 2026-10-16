@@ -153,7 +153,12 @@ class ConcurrencyLimits:
                         held(self._global, f"global limit {self.global_limit}", on_wait, notice_s)
                     )
                     await stack.enter_async_context(
-                        held(run_slot.semaphore, f"per-run limit {self.per_run_limit}", on_wait, notice_s)
+                        held(
+                            run_slot.semaphore,
+                            f"per-run limit {self.per_run_limit}",
+                            on_wait,
+                            notice_s,
+                        )
                     )
                 await stack.enter_async_context(
                     held(agent_sem, f"{agent_id} limit {agent_max}", on_wait, notice_s)
@@ -169,7 +174,9 @@ class ConcurrencyLimits:
 
     @contextlib.asynccontextmanager
     async def provider_slot(
-        self, provider: str, wait_scope: Callable[[], contextlib.AbstractContextManager] | None = None
+        self,
+        provider: str,
+        wait_scope: Callable[[], contextlib.AbstractContextManager] | None = None,
     ) -> AsyncIterator[None]:
         self._bind_loop()
         sem = self._providers.get(provider)

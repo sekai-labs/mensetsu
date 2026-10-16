@@ -14,12 +14,12 @@ import type {
   Artifact,
 } from '../models/generated/workflows.v1'
 
-const schemaPath = path.resolve(__dirname, '../../../server/api/contracts/schema/workflows.v1.json')
+const schemaPath = path.resolve(__dirname, '../../../contracts/rest/schema/workflows.v1.json')
 const rawSchema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'))
 const ajv = new Ajv({ strict: false, allErrors: true })
 ajv.addSchema(rawSchema, 'workflows.v1.json')
 
-const fixturesDir = path.resolve(__dirname, '../../../server/api/contracts/fixtures/workflows.v1')
+const fixturesDir = path.resolve(__dirname, '../../../contracts/rest/fixtures/workflows.v1')
 
 function validateSample(defName: string, data: unknown) {
   const validate = ajv.getSchema(`workflows.v1.json#/$defs/${defName}`)

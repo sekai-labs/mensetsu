@@ -6,7 +6,7 @@ from src.contracts.export_schema import generate_workflows_v1_schema
 
 def test_workflows_v1_schema_is_not_stale():
     repo_root = Path(__file__).resolve().parents[3]
-    schema_path = repo_root / "server" / "api" / "contracts" / "schema" / "workflows.v1.json"
+    schema_path = repo_root / "contracts" / "rest" / "schema" / "workflows.v1.json"
 
     assert schema_path.exists(), f"Committed schema file does not exist at {schema_path}"
 

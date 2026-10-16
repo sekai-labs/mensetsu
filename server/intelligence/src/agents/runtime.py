@@ -156,10 +156,9 @@ def build_llm_retry_middleware(label: str):
                 if ctx_ledger:
                     with contextlib.suppress(Exception):
                         parts = label.split(" ")
-                        exec_id = parts[1] if len(parts) > 1 else None
-                        agent_id = parts[2].strip("()") if len(parts) > 2 else None
-                        # Emit agent retry activity event so it's captured in UI logs & timeline
-                        run_id = getattr(request, "run_id", None)
+                        _exec_id = parts[1] if len(parts) > 1 else None
+                        _agent_id = parts[2].strip("()") if len(parts) > 2 else None
+                        _run_id = getattr(request, "run_id", None)
                 with budget_pause("llm retry backoff"):
                     await asyncio.sleep(wait_s)
         raise RuntimeError("Unreachable model retry loop")
@@ -971,7 +970,7 @@ class AutonomousAgentRuntime:
 
         class ActivityMiddleware(AgentMiddleware):
             async def abefore_model(self, state: Any, runtime: Any = None) -> Any:
-                msgs = state.get("messages", []) if isinstance(state, dict) else []
+                _msgs = state.get("messages", []) if isinstance(state, dict) else []
                 step_num = exec_rec.budgets_used.model_calls + 1
                 await self_ledger.append_event_transactional(
                     run_id=run_id,

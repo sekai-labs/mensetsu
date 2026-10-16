@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+package mensetsu.control.v1;
+
+message CreateRunCommand {
+  string workspace_id = 1;
+  string user_id = 2;
+  string workflow_id = 3;
+  string company_name = 4;
+  string role_title = 5;
+  repeated string company_urls = 6;
+  string resume_text = 7;
+  optional string resume_pdf_base64 = 8;
+  optional string resume_filename = 9;
+  string job_description = 10;
+  optional string jd_url = 11;
+  optional string seniority = 12;
+  optional string user_prompt = 13;
+  optional string workflow_mode = 14;
+  optional string llm_config_json = 15;
+}
+
+message ResumePlanCommand {
+  string run_id = 1;
+  string prompt = 2;
+}
+
+message ListWorkflowsCommand {}
+
+message ListRunsCommand {
+  repeated string run_ids = 1;
+  optional string workspace_id = 2;
+  optional string status = 3;
+  optional string run_type = 4;
+  uint32 limit = 5;
+  optional string cursor = 6;
+}
+
+message GetRunCommand {
+  string run_id = 1;
+}
+
+message CancelRunCommand {
+  string run_id = 1;
+}
+
+message GetTaskCommand {
+  string run_id = 1;
+  string task_id = 2;
+}
+
+message ListAgentsCommand {
+  string run_id = 1;
+}
+
+message GetAgentCommand {
+  string run_id = 1;
+  string execution_id = 2;
+}
+
+message ListAgentToolsCommand {
+  string run_id = 1;
+  string execution_id = 2;
+  optional string cursor = 3;
+  uint32 limit = 4;
+}
+
+message GetToolOutputCommand {
+  string run_id = 1;
+  string tool_invocation_id = 2;
+  uint32 offset = 3;
+  uint32 limit = 4;
+}
+
+message ListDelegationsCommand {
+  string run_id = 1;
+}
+
+message ListArtifactsCommand {
+  string run_id = 1;
+}
+
+message GetLogsCommand {
+  string run_id = 1;
+  optional string cursor = 2;
+  uint32 limit = 3;
+  optional string severity = 4;
+  optional string task_id = 5;
+  optional string execution_id = 6;
+}
+
+message GetTaskGraphCommand {
+  string run_id = 1;
+}
+
+message GetDelegationGraphCommand {
+  string run_id = 1;
+}
+
+message GetEventsHistoryCommand {
+  string run_id = 1;
+  int64 after_seq = 2;
+  uint32 limit = 3;
+}
+
+message PingControlCommand {
+  int64 timestamp = 1;
+}
+
+message ControlCommand {
+  string correlation_id = 1;
+  oneof command {
+    CreateRunCommand create_run = 2;
+    ResumePlanCommand resume_plan = 3;
+    ListWorkflowsCommand list_workflows = 4;
+    ListRunsCommand list_runs = 5;
+    GetRunCommand get_run = 6;
+    CancelRunCommand cancel_run = 7;
+    GetTaskCommand get_task = 8;
+    ListAgentsCommand list_agents = 9;
+    GetAgentCommand get_agent = 10;
+    ListAgentToolsCommand list_agent_tools = 11;
+    GetToolOutputCommand get_tool_output = 12;
+    ListDelegationsCommand list_delegations = 13;
+    ListArtifactsCommand list_artifacts = 14;
+    GetLogsCommand get_logs = 15;
+    GetTaskGraphCommand get_task_graph = 16;
+    GetDelegationGraphCommand get_delegation_graph = 17;
+    GetEventsHistoryCommand get_events_history = 18;
+    PingControlCommand ping = 19;
+  }
+}
+
+message ControlDataEnvelope {
+  string correlation_id = 1;
+  uint32 status_code = 2;
+  string error_message = 3;
+  bool is_end_of_stream = 4;
+  string payload_json = 5;
+  bytes binary_chunk = 6;
+}
+
+service DataControlService {
+  rpc StreamControl(stream ControlCommand) returns (stream ControlDataEnvelope);
+}

@@ -1,3 +1,5 @@
+mod mock_grpc_server;
+
 use axum::{
     body::Body,
     http::{Request, StatusCode},
@@ -20,12 +22,27 @@ use tower::ServiceExt;
 const TEST_INTERNAL_TOKEN: &str = "test-internal-service-token";
 
 async fn setup_test_app() -> (axum::Router, AppConfig, DatabasePool) {
-    setup_test_app_with_upstream("http://127.0.0.1:9").await
+    let run_json = serde_json::json!({
+        "id": "run_test_123",
+        "workflow_id": "interview-preparation-hybrid",
+        "workflow_name": "Hybrid",
+        "workspace_id": "ws_test_123",
+        "user_id": "usr_test_123",
+        "type": "hybrid",
+        "status": "pending",
+        "current_phase": "queued",
+        "plan_revision": 1,
+        "last_seq": 0,
+        "created_at": "2026-10-12T10:00:00Z",
+        "updated_at": "2026-10-12T10:00:00Z"
+    }).to_string();
+    let (url, _handle) = mock_grpc_server::start_mock_grpc_server(run_json).await;
+    setup_test_app_with_upstream(&url).await
 }
 
 async fn setup_test_app_with_upstream(intelligence_url: &str) -> (axum::Router, AppConfig, DatabasePool) {
     let mut config = AppConfig::from_env();
-    config.intelligence_url = intelligence_url.to_string();
+    config.intelligence_grpc_url = intelligence_url.to_string();
     config.internal_service_token = TEST_INTERNAL_TOKEN.to_string();
     let db = DatabasePool::connect(&config)
         .await
@@ -64,9 +81,10 @@ async fn setup_test_app_with_upstream(intelligence_url: &str) -> (axum::Router, 
     let wf_repo = Arc::new(mensetsu_api::contexts::workflow::infrastructure::SurrealWorkflowRunRepository::new((*db.client).clone()));
     let workflow_service = Arc::new(mensetsu_api::contexts::workflow::application::WorkflowService::new(wf_repo, ws_repo));
 
-    let intelligence_client = Arc::new(
-        mensetsu_api::interfaces::http::intelligence_client::IntelligenceClient::new(&config)
-            .expect("IntelligenceClient should initialize"),
+    let grpc_client = Arc::new(
+        mensetsu_api::interfaces::grpc::GrpcClient::connect(&config)
+            .await
+            .expect("GrpcClient should initialize"),
     );
 
     let state = AppState {
@@ -75,7 +93,7 @@ async fn setup_test_app_with_upstream(intelligence_url: &str) -> (axum::Router, 
         identity_service,
         workspace_service,
         workflow_service,
-        intelligence_client,
+        grpc_client,
     };
 
     let app = create_router(state);
