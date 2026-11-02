@@ -187,8 +187,9 @@ fun AuthScreen(
                                         )
                                     )
                                 }
-                                if (response.requires2fa == true && !response.tempToken.isNullOrBlank()) {
-                                    temp2faToken = response.tempToken
+                                val tempToken = response.tempToken
+                                if (response.requires2fa == true && !tempToken.isNullOrBlank()) {
+                                    temp2faToken = tempToken
                                     show2faDialog = true
                                     isLoading = false
                                 } else {
