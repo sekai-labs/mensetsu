@@ -254,8 +254,8 @@ namespace Mensetsu.Views
                                 matchMetric.Text = $"Match: {pct}%";
                                 gapsMetric.Text = $"Gaps: {m.Gaps?.Count ?? 0}";
 
-                                strengthsList.ItemsSource = m.Strengths?.Select(s => $"{s.Skill}: {s.Evidence}").ToList();
-                                gapsList.ItemsSource = m.Gaps?.Select(g => $"{g.Skill}: {g.Gap}").ToList();
+                                strengthsList.ItemsSource = m.Strengths?.Select(s => $"{s.Skill}: {s.EvidenceQuote}").ToList();
+                                gapsList.ItemsSource = m.Gaps?.Select(g => $"{g.Skill}: {g.RequirementQuote}").ToList();
                                 risksList.ItemsSource = m.Risks?.ToList();
                             }
                         }
