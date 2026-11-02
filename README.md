@@ -48,7 +48,7 @@ Each client has its own toolchain:
 
 Generated API clients live in `contracts/native`; the Android Gradle module at `app/mobile/android/contracts` compiles the generated Kotlin sources without duplicating them. Keep `Cargo.lock`, Xcode projects and schemes, and Visual Studio projects: they are build inputs. Cargo `target/` and .NET `bin/`/`obj/` are disposable outputs.
 
-The GitHub-only native workflow builds and uploads artifacts for all five platforms, then runs real UI smoke tests against a reachable Rust API. Set the GitHub repository variable `NATIVE_SMOKE_API_URL` to a test API accessible from hosted runners. Without it, the artifacts can build but the smoke stage fails. iOS and macOS archives are unsigned; distributing installable Apple builds requires Apple signing and provisioning outside this workflow.
+The GitHub-only native workflow builds and uploads artifacts for all five platforms. To also run real UI smoke tests, set the GitHub repository variable `NATIVE_SMOKE_API_URL` to a test Rust API accessible from hosted runners. Without it, the UI tests are skipped; the builds still run. iOS and macOS archives are unsigned; distributing installable Apple builds requires Apple signing and provisioning outside this workflow.
 
 ## Private PDF résumés
 
@@ -58,6 +58,6 @@ PDFs go directly from the client to a private S3-compatible bucket through a sho
 
 ## GitHub builds
 
-Codeberg is the source repository; your existing synchronization brings code to GitHub. GitHub alone holds `.github/workflows/` and publishes the `api`, `intelligence`, `worker`, and `web` images to `ghcr.io`. Native builds upload an APK, an iOS simulator app, a Linux binary, an unsigned macOS app, and a Windows executable bundle as GitHub Actions artifacts. Pull requests build images without publishing. Keep the GitHub-only workflows out of Codeberg and ensure the existing sync preserves them: a force-push mirror over GitHub `main` would overwrite them.
+Codeberg is the source repository; its synchronization brings code to GitHub. GitHub alone holds `.github/workflows/` and publishes the `api`, `intelligence`, `worker`, and `web` images to `ghcr.io`. Native builds upload an APK, an iOS simulator app, a Linux binary, an unsigned macOS app, and a Windows executable bundle as GitHub Actions artifacts. Pull requests build images without publishing. The current sync replaced GitHub `main` after a Codeberg push and removed the GitHub-only workflows. Configure it to preserve GitHub commits before relying on automatic builds; keep the workflows out of Codeberg.
 
 Licensed under [Apache-2.0](LICENSE).

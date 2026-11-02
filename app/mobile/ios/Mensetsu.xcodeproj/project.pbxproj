@@ -37,8 +37,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		E1000001 /* Mensetsu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mensetsu.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		E1000002 /* MensetsuUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MensetsuUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1000011 /* Mensetsu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mensetsu.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1000012 /* MensetsuUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MensetsuUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B1000001 /* MensetsuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MensetsuApp.swift; sourceTree = "<group>"; };
 		B1000002 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		B1000003 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
@@ -114,8 +114,8 @@
 		G1000004 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				E1000001 /* Mensetsu.app */,
-				E1000002 /* MensetsuUITests.xctest */,
+				E1000011 /* Mensetsu.app */,
+				E1000012 /* MensetsuUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -196,7 +196,7 @@
 				P1000001 /* MensetsuContracts */,
 			);
 			productName = Mensetsu;
-			productReference = E1000001 /* Mensetsu.app */;
+			productReference = E1000011 /* Mensetsu.app */;
 			productType = "com.apple.product-type.application";
 		};
 		E1000002 /* MensetsuUITests */ = {
@@ -214,7 +214,7 @@
 			);
 			name = MensetsuUITests;
 			productName = MensetsuUITests;
-			productReference = E1000002 /* MensetsuUITests.xctest */;
+			productReference = E1000012 /* MensetsuUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
