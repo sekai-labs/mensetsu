@@ -1,0 +1,25 @@
+package org.mensetsu.app
+
+import android.app.Application
+import org.mensetsu.app.core.network.NetworkManager
+import org.mensetsu.app.core.storage.TokenStorage
+
+class MensetsuApplication : Application() {
+    lateinit var tokenStorage: TokenStorage
+        private set
+
+    lateinit var networkManager: NetworkManager
+        private set
+
+    override fun onCreate() {
+        super.onCreate()
+        instance = this
+        tokenStorage = TokenStorage(this)
+        networkManager = NetworkManager(tokenStorage)
+    }
+
+    companion object {
+        lateinit var instance: MensetsuApplication
+            private set
+    }
+}

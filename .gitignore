@@ -11,9 +11,13 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
+.gradle/
+app/mobile/android/local.properties
+contracts/native/csharp/**/bin/
+contracts/native/csharp/**/obj/
+app/desktop/windows/**/bin/
+app/desktop/windows/**/obj/
+contracts/native/rust/Cargo.lock
 build/
 
 .env

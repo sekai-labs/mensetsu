@@ -1,0 +1,497 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 55;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1000001 /* MensetsuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001 /* MensetsuApp.swift */; };
+		A1000002 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000002 /* AppConfig.swift */; };
+		A1000003 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000003 /* AccessibilityIdentifiers.swift */; };
+		A1000004 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000004 /* KeychainStore.swift */; };
+		A1000005 /* TokenManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000005 /* TokenManager.swift */; };
+		A1000006 /* NetworkClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000006 /* NetworkClient.swift */; };
+		A1000007 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000007 /* AuthService.swift */; };
+		A1000008 /* WorkspaceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000008 /* WorkspaceService.swift */; };
+		A1000009 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000009 /* AppTheme.swift */; };
+		A1000010 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000010 /* AuthView.swift */; };
+		A1000011 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000011 /* AuthViewModel.swift */; };
+		A1000012 /* WorkspaceListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000012 /* WorkspaceListView.swift */; };
+		A1000013 /* CreateWorkspaceSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000013 /* CreateWorkspaceSheet.swift */; };
+		A1000014 /* WorkspaceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000014 /* WorkspaceDetailView.swift */; };
+		A1000015 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000015 /* SettingsView.swift */; };
+		A1000016 /* MensetsuContracts in Frameworks */ = {isa = PBXBuildFile; productRef = P1000001 /* MensetsuContracts */; };
+		A1000020 /* MensetsuUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000020 /* MensetsuUITests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C1000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 01000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E1000001;
+			remoteInfo = Mensetsu;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		E1000001 /* Mensetsu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mensetsu.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1000002 /* MensetsuUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MensetsuUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B1000001 /* MensetsuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MensetsuApp.swift; sourceTree = "<group>"; };
+		B1000002 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		B1000003 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
+		B1000004 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		B1000005 /* TokenManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenManager.swift; sourceTree = "<group>"; };
+		B1000006 /* NetworkClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkClient.swift; sourceTree = "<group>"; };
+		B1000007 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		B1000008 /* WorkspaceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceService.swift; sourceTree = "<group>"; };
+		B1000009 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
+		B1000010 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		B1000011 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
+		B1000012 /* WorkspaceListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceListView.swift; sourceTree = "<group>"; };
+		B1000013 /* CreateWorkspaceSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateWorkspaceSheet.swift; sourceTree = "<group>"; };
+		B1000014 /* WorkspaceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceDetailView.swift; sourceTree = "<group>"; };
+		B1000015 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B1000019 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B1000020 /* MensetsuUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MensetsuUITests.swift; sourceTree = "<group>"; };
+		B1000021 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F1000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000016 /* MensetsuContracts in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		G1000001 = {
+			isa = PBXGroup;
+			children = (
+				G1000002 /* Mensetsu */,
+				G1000003 /* MensetsuUITests */,
+				G1000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		G1000002 /* Mensetsu */ = {
+			isa = PBXGroup;
+			children = (
+				B1000001 /* MensetsuApp.swift */,
+				B1000019 /* Info.plist */,
+				G1000005 /* Config */,
+				G1000006 /* Common */,
+				G1000007 /* Auth */,
+				G1000008 /* Network */,
+				G1000009 /* Services */,
+				G1000010 /* UI */,
+			);
+			path = Mensetsu;
+			sourceTree = "<group>";
+		};
+		G1000003 /* MensetsuUITests */ = {
+			isa = PBXGroup;
+			children = (
+				B1000020 /* MensetsuUITests.swift */,
+				B1000021 /* Info.plist */,
+			);
+			path = MensetsuUITests;
+			sourceTree = "<group>";
+		};
+		G1000004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E1000001 /* Mensetsu.app */,
+				E1000002 /* MensetsuUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		G1000005 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				B1000002 /* AppConfig.swift */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		G1000006 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				B1000003 /* AccessibilityIdentifiers.swift */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		G1000007 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				B1000004 /* KeychainStore.swift */,
+				B1000005 /* TokenManager.swift */,
+				B1000007 /* AuthService.swift */,
+				B1000011 /* AuthViewModel.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		G1000008 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				B1000006 /* NetworkClient.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
+		G1000009 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				B1000008 /* WorkspaceService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		G1000010 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				B1000009 /* AppTheme.swift */,
+				B1000010 /* AuthView.swift */,
+				B1000012 /* WorkspaceListView.swift */,
+				B1000013 /* CreateWorkspaceSheet.swift */,
+				B1000014 /* WorkspaceDetailView.swift */,
+				B1000015 /* SettingsView.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E1000001 /* Mensetsu */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C1000002 /* Build configuration list for PBXNativeTarget "Mensetsu" */;
+			buildPhases = (
+				S1000001 /* Sources */,
+				F1000001 /* Frameworks */,
+				R1000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Mensetsu;
+			packageProductDependencies = (
+				P1000001 /* MensetsuContracts */,
+			);
+			productName = Mensetsu;
+			productReference = E1000001 /* Mensetsu.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E1000002 /* MensetsuUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C1000003 /* Build configuration list for PBXNativeTarget "MensetsuUITests" */;
+			buildPhases = (
+				S1000002 /* Sources */,
+				F1000002 /* Frameworks */,
+				R1000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D1000001 /* PBXTargetDependency */,
+			);
+			name = MensetsuUITests;
+			productName = MensetsuUITests;
+			productReference = E1000002 /* MensetsuUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		01000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					E1000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					E1000002 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = E1000001;
+					};
+				};
+			};
+			buildConfigurationList = C1000004 /* Build configuration list for PBXProject "Mensetsu" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = G1000001;
+			packageReferences = (
+				X1000001 /* XCLocalSwiftPackageReference "swift" */,
+			);
+			productRefGroup = G1000004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E1000001 /* Mensetsu */,
+				E1000002 /* MensetsuUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		R1000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		R1000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		S1000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000001 /* MensetsuApp.swift in Sources */,
+				A1000002 /* AppConfig.swift in Sources */,
+				A1000003 /* AccessibilityIdentifiers.swift in Sources */,
+				A1000004 /* KeychainStore.swift in Sources */,
+				A1000005 /* TokenManager.swift in Sources */,
+				A1000006 /* NetworkClient.swift in Sources */,
+				A1000007 /* AuthService.swift in Sources */,
+				A1000008 /* WorkspaceService.swift in Sources */,
+				A1000009 /* AppTheme.swift in Sources */,
+				A1000010 /* AuthView.swift in Sources */,
+				A1000011 /* AuthViewModel.swift in Sources */,
+				A1000012 /* WorkspaceListView.swift in Sources */,
+				A1000013 /* CreateWorkspaceSheet.swift in Sources */,
+				A1000014 /* WorkspaceDetailView.swift in Sources */,
+				A1000015 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		S1000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000020 /* MensetsuUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D1000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E1000001 /* Mensetsu */;
+			targetProxy = C1000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		BC100001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		BC100002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		BC100003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Mensetsu/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.mensetsu.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BC100004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Mensetsu/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.mensetsu.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		BC100005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MensetsuUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.mensetsu.ios.MensetsuUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Mensetsu;
+			};
+			name = Debug;
+		};
+		BC100006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MensetsuUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.mensetsu.ios.MensetsuUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Mensetsu;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C1000002 /* Build configuration list for PBXNativeTarget "Mensetsu" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BC100003 /* Debug */,
+				BC100004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C1000003 /* Build configuration list for PBXNativeTarget "MensetsuUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BC100005 /* Debug */,
+				BC100006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C1000004 /* Build configuration list for PBXProject "Mensetsu" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BC100001 /* Debug */,
+				BC100002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		X1000001 /* XCLocalSwiftPackageReference "swift" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../contracts/native/swift";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		P1000001 /* MensetsuContracts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = X1000001 /* XCLocalSwiftPackageReference "swift" */;
+			productName = MensetsuContracts;
+		};
+/* End XCSwiftPackageProductDependency section */
+
+	};
+	rootObject = 01000001 /* Project object */;
+}

@@ -12,8 +12,8 @@ help:
 	@echo "  make dev-ai          - Run Python intelligence HTTP API locally"
 	@echo "  make dev-worker      - Run Python intelligence durable worker locally"
 	@echo "  make dev-web         - Run Nuxt web client locally"
-	@echo "  make contracts       - Export Rust OpenAPI and regenerate TypeScript contracts"
-	@echo "  make contracts-check - Fail if committed contracts differ from a fresh regeneration"
+	@echo "  make contracts       - Export Rust OpenAPI and regenerate TypeScript and native contracts"
+	@echo "  make contracts-check - Fail if committed contracts differ from fresh regeneration"
 	@echo "  make schema-parity   - Fail if schema.surql and infra/migrations produce different schemas (needs SurrealDB)"
 	@echo "  make test            - Run all test suites"
 	@echo "  make check           - Typecheck, lint, and verify contracts and schema parity"
@@ -71,17 +71,19 @@ contracts: api-target-owner
 	./contracts/grpc/scripts/gen-proto.sh
 	cd server/api && cargo run --quiet --bin export-openapi
 	cd $(CONTRACTS_DIR) && bun install --frozen-lockfile && bun run generate
+	./contracts/rest/scripts/generate-native.sh
 	cd server/intelligence && PYTHONPATH=. uv run python src/contracts/export_schema.py
 	cp $(CONTRACTS_DIR)/src/generated/workflows.v1.ts app/web/models/generated/workflows.v1.ts
 	@echo "All API DTOs, schemas, and contracts generated and exported to contracts/rest, contracts/grpc, and app/web."
 
 contracts-check:
 	@set -e; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
-	cp -R $(CONTRACTS_DIR)/openapi.json $(CONTRACTS_DIR)/src server/intelligence/src/grpc/v1 "$$tmp/"; \
+	cp -R $(CONTRACTS_DIR)/openapi.json $(CONTRACTS_DIR)/src server/intelligence/src/grpc/v1 contracts/native "$$tmp/"; \
 	$(MAKE) --no-print-directory contracts; \
 	diff -u "$$tmp/openapi.json" $(CONTRACTS_DIR)/openapi.json; \
 	diff -ru "$$tmp/src" $(CONTRACTS_DIR)/src; \
-	diff -ru "$$tmp/v1" server/intelligence/src/grpc/v1; \
+	diff -ru --exclude=__pycache__ --exclude='*.pyc' "$$tmp/v1" server/intelligence/src/grpc/v1; \
+	diff -ru --exclude=bin --exclude=obj --exclude=target --exclude=Cargo.lock "$$tmp/native" contracts/native; \
 	echo "contracts up to date"
 
 schema-parity:
