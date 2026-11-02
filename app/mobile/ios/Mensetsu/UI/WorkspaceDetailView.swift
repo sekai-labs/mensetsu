@@ -280,7 +280,7 @@ public struct WorkspaceDetailView: View {
                                         Text(g.skill)
                                             .font(.system(size: 15, weight: .semibold))
                                         Spacer()
-                                        Text(g.severity.uppercased())
+                                        Text(g.importance.uppercased())
                                             .font(.system(size: 10, weight: .bold))
                                             .foregroundColor(AppColors.amberDark)
                                             .padding(.horizontal, 6)
@@ -288,8 +288,8 @@ public struct WorkspaceDetailView: View {
                                             .background(AppColors.amberLight)
                                             .cornerRadius(4)
                                     }
-                                    if !g.missingEvidence.isEmpty {
-                                        Text(g.missingEvidence)
+                                    if !g.recommendedFocus.isEmpty {
+                                        Text(g.recommendedFocus)
                                             .font(.system(size: 13))
                                             .foregroundColor(AppColors.slate600)
                                     }
