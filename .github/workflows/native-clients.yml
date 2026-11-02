@@ -171,9 +171,10 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '9.0.x'
-      - uses: microsoft/setup-msbuild@v2
+      - uses: microsoft/setup-msbuild@v3
         with:
           vs-version: '[17.0,18.0)'
+          msbuild-architecture: x64
       - name: Build unpackaged WinUI 3 client
         shell: pwsh
         run: |
