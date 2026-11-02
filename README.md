@@ -44,7 +44,7 @@ Each client has its own toolchain:
 | iOS | `app/mobile/ios` | Xcode on macOS; an unsigned simulator app can be built without signing credentials |
 | Linux | `app/desktop/linux` | Rust, GTK4, libsecret; `cargo build --manifest-path app/desktop/linux/Cargo.toml` |
 | macOS | `app/desktop/macos` | Xcode on macOS; unsigned `.app` archive |
-| Windows | `app/desktop/windows` | .NET and Windows SDK; `dotnet build app/desktop/windows/Mensetsu.sln -p:Platform=x64` |
+| Windows | `app/desktop/windows` | Visual Studio 2022 with the Windows SDK and .NET 9 SDK; `msbuild app/desktop/windows/Mensetsu.sln -restore -p:Platform=x64` |
 
 Generated API clients live in `contracts/native`; the Android Gradle module at `app/mobile/android/contracts` compiles the generated Kotlin sources without duplicating them. Keep `Cargo.lock`, Xcode projects and schemes, and Visual Studio projects: they are build inputs. Cargo `target/` and .NET `bin/`/`obj/` are disposable outputs.
 

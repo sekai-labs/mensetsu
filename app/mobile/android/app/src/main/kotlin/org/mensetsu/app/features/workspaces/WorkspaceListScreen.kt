@@ -74,10 +74,7 @@ fun WorkspaceListScreen(
         when (selectedFilter) {
             "ready" -> workspaces.filter { it.status == WorkspaceStatus.ready }
             "processing" -> workspaces.filter {
-                it.status == WorkspaceStatus.running ||
-                        it.status == WorkspaceStatus.pending ||
-                        it.status == WorkspaceStatus.queued ||
-                        it.status == WorkspaceStatus.dispatched
+                it.status == WorkspaceStatus.processing || it.status == WorkspaceStatus.pending
             }
             else -> workspaces
         }
@@ -306,7 +303,7 @@ fun WorkspaceCard(
 fun StatusChip(status: WorkspaceStatus) {
     val (bgColor, textColor, label) = when (status) {
         WorkspaceStatus.ready -> Triple(Color(0xFFECFDF5), Color(0xFF059669), "READY")
-        WorkspaceStatus.running, WorkspaceStatus.dispatched -> Triple(Color(0xFFEEF2FF), Color(0xFF4F46E5), "RUNNING")
+        WorkspaceStatus.processing -> Triple(Color(0xFFEEF2FF), Color(0xFF4F46E5), "PROCESSING")
         WorkspaceStatus.failed -> Triple(Color(0xFFFFF1F2), Color(0xFFE11D48), "FAILED")
         else -> Triple(Color(0xFFFFFBEB), Color(0xFFD97706), status.value.uppercase())
     }
