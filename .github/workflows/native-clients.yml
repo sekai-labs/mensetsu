@@ -38,7 +38,8 @@ jobs:
         run: |
           chmod +x app/mobile/android/gradlew
           if ! app/mobile/android/gradlew -p app/mobile/android testDebugUnitTest assembleDebug > "$RUNNER_TEMP/android-build.log" 2>&1; then
-            tail -n 30 "$RUNNER_TEMP/android-build.log" | while IFS= read -r line; do echo "::error::$line"; done
+            grep -E 'FAILURE:|What went wrong:|Execution failed|A failure occurred|Android resource linking failed|error:|^e: ' "$RUNNER_TEMP/android-build.log" | tail -n 8 | while IFS= read -r line; do echo "::error::$line"; done || true
+            echo "::error::$(tail -n 1 "$RUNNER_TEMP/android-build.log")"
             exit 1
           fi
       - name: Upload Android APK artifact
@@ -74,7 +75,8 @@ jobs:
           test -n "$simulator_id" && test "$simulator_id" != null
           derived_data="$RUNNER_TEMP/mensetsu-ios"
           if ! xcodebuild build-for-testing -project app/mobile/ios/Mensetsu.xcodeproj -scheme Mensetsu -destination "platform=iOS Simulator,id=$simulator_id" CODE_SIGNING_ALLOWED=NO -derivedDataPath "$derived_data" > "$RUNNER_TEMP/ios-build.log" 2>&1; then
-            tail -n 20 "$RUNNER_TEMP/ios-build.log" | while IFS= read -r line; do echo "::error::$line"; done
+            grep -E 'error:|fatal error:|^e: ' "$RUNNER_TEMP/ios-build.log" | tail -n 8 | while IFS= read -r line; do echo "::error::$line"; done || true
+            echo "::error::$(tail -n 1 "$RUNNER_TEMP/ios-build.log")"
             exit 1
           fi
           mkdir -p build/ios
