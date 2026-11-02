@@ -177,20 +177,6 @@ struct OverviewTabView: View {
                     )
                 }
                 
-                // Job Description Preview if available
-                if let jd = ws.jobDescription, !jd.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Job Description Requirements")
-                            .font(.headline)
-                        Text(jd)
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .padding(14)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(NSColor.controlBackgroundColor))
-                            .cornerRadius(6)
-                    }
-                }
             } else {
                 Text("No workspace data found.")
                     .foregroundColor(.secondary)
@@ -264,7 +250,7 @@ struct MatchAnalysisTabView: View {
                                 Text(s.skill)
                                     .font(.subheadline)
                                     .fontWeight(.semibold)
-                                Text(s.evidence)
+                                Text(s.evidenceQuote)
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -291,7 +277,7 @@ struct MatchAnalysisTabView: View {
                                         .font(.subheadline)
                                         .fontWeight(.semibold)
                                     Spacer()
-                                    Text(g.severity)
+                                    Text(g.importance)
                                         .font(.caption2)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
@@ -299,7 +285,7 @@ struct MatchAnalysisTabView: View {
                                         .foregroundColor(.orange)
                                         .cornerRadius(4)
                                 }
-                                Text(g.remediation)
+                                Text(g.recommendedFocus)
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
