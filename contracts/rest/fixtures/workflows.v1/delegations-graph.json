@@ -1,37 +1,37 @@
 {
   "nodes": [
     {
-      "id": "exec_f6823c699665",
+      "id": "exec_ab2e48e96c2f",
       "label": "technical-research",
       "type": "agent",
       "data": {
         "status": "completed",
-        "task_id": "task_tech_run_49cb",
+        "task_id": "task_tech_run_c2c8",
         "agent_id": "technical-research"
       }
     },
     {
-      "id": "exec_400f6b3e4980",
+      "id": "exec_7006cbcb6838",
       "label": "evidence-evaluator",
       "type": "agent",
       "data": {
         "status": "completed",
-        "task_id": "task_tech_run_49cb",
+        "task_id": "task_tech_run_c2c8",
         "agent_id": "evidence-evaluator"
       }
     }
   ],
   "edges": [
     {
-      "id": "del_edge_del_5c1b0361ad72",
-      "source": "exec_f6823c699665",
-      "target": "exec_400f6b3e4980",
+      "id": "del_edge_del_f9c5f020146a",
+      "source": "exec_ab2e48e96c2f",
+      "target": "exec_7006cbcb6838",
       "kind": "delegation",
       "data": {
-        "delegation_id": "del_5c1b0361ad72",
+        "delegation_id": "del_f9c5f020146a",
         "objective": "Audit candidate evidence coverage",
         "status": "completed",
-        "created_at": "2026-10-14T15:32:14.576417Z",
+        "created_at": "2026-11-01T15:29:52.286412Z",
         "parent_agent_id": "technical-research",
         "child_agent_id": "evidence-evaluator"
       }

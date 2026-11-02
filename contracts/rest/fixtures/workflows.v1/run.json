@@ -1,5 +1,5 @@
 {
-  "id": "run_49cb2d6d970b4a1abbfe8cf49d6bbda9",
+  "id": "run_c2c8749edfc343bb832508c099492114",
   "workflow_id": "interview-preparation-static",
   "workflow_name": "Static Interview Preparation Workflow",
   "workspace_id": "ws_e2e_test",
@@ -24,12 +24,12 @@
     "phase_index": 9,
     "phase_count": 9
   },
-  "last_seq": 310,
-  "started_at": "2026-10-14T15:31:52.850784Z",
-  "completed_at": "2026-10-14T15:34:16.418897Z",
-  "duration_ms": 143568.113,
-  "created_at": "2026-10-14T15:31:52.169197Z",
-  "updated_at": "2026-10-14T15:34:17.800133Z",
+  "last_seq": 477,
+  "started_at": "2026-11-01T15:29:24.775562Z",
+  "completed_at": "2026-11-01T15:33:30.328728Z",
+  "duration_ms": 245553.166,
+  "created_at": "2026-11-01T15:29:23.356755Z",
+  "updated_at": "2026-11-01T15:33:31.440088Z",
   "error_message": null,
   "degraded": false,
   "degraded_reasons": []
