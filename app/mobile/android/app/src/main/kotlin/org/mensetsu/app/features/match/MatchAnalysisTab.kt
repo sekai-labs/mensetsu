@@ -117,7 +117,7 @@ fun MatchAnalysisTab(match: MatchAnalysis?) {
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = s.evidence,
+                            text = s.evidenceQuote,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -156,7 +156,7 @@ fun MatchAnalysisTab(match: MatchAnalysis?) {
                                 shape = MaterialTheme.shapes.extraSmall
                             ) {
                                 Text(
-                                    text = g.severity.uppercase(),
+                                    text = g.importance.uppercase(),
                                     color = Color(0xFFD97706),
                                     style = MaterialTheme.typography.labelSmall,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -165,7 +165,7 @@ fun MatchAnalysisTab(match: MatchAnalysis?) {
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = g.remediation,
+                            text = g.recommendedFocus,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
