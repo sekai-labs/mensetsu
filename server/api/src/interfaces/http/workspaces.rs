@@ -12,6 +12,7 @@ use axum::{
     Json, Router,
 };
 use serde::{de::DeserializeOwned, Deserialize};
+use uuid::Uuid;
 
 pub use auth_check::verify_workspace_owner;
 pub use event_handlers::workspace_events;
@@ -50,6 +51,7 @@ pub struct AppState {
     pub workspace_service: std::sync::Arc<crate::contexts::workspace::application::WorkspaceService>,
     pub workflow_service: std::sync::Arc<crate::contexts::workflow::application::WorkflowService>,
     pub grpc_client: std::sync::Arc<GrpcClient>,
+    pub storage: std::sync::Arc<crate::contexts::workspace::infrastructure::storage::ResumeObjectStore>,
 }
 
 pub fn workspace_routes(state: AppState) -> Router {
@@ -87,60 +89,220 @@ pub async fn create_workspace(
     Json(payload): Json<CreateWorkspaceRequestDto>,
 ) -> std::result::Result<(StatusCode, Json<WorkspaceResponseDto>), AppError> {
     let user_id = auth_user.user_id;
+    let clean_uid = user_id.0.replace("user:", "").replace('`', "");
+
+    // If resume_upload_id is provided:
+    // 1. Disallow simultaneous nonblank resume_text
+    // 2. Validate upload record (owned, completed, unattached)
+    let mut validated_upload: Option<(String, String)> = None; // (filename, object_key)
+
+    if let Some(upload_id_raw) = &payload.resume_upload_id {
+        let clean_upload_id = upload_id_raw.replace("resume_upload:", "").replace('`', "");
+        if Uuid::parse_str(&clean_upload_id).is_err() {
+            return Err(AppError::Validation("Invalid resume_upload_id format".to_string()));
+        }
+
+        if let Some(text) = &payload.resume_text {
+            if !text.trim().is_empty() {
+                return Err(AppError::Validation(
+                    "Cannot provide both resume_upload_id and resume_text simultaneously".to_string(),
+                ));
+            }
+        }
+
+        let db = &state.db.client;
+        let mut upload_res = db
+            .query("SELECT user_id, filename, object_key, status, workspace_id FROM type::record('resume_upload', $upload_id);")
+            .bind(("upload_id", clean_upload_id.clone()))
+            .await
+            .map_err(|e| AppError::Database(format!("Failed to lookup upload: {e}")))?;
+
+        let rows: Vec<serde_json::Value> = upload_res.take(0).unwrap_or_default();
+        let row = rows
+            .into_iter()
+            .next()
+            .ok_or_else(|| AppError::NotFound(format!("Resume upload {clean_upload_id} not found")))?;
+
+        let record_uid = match row.get("user_id") {
+            Some(serde_json::Value::String(s)) => s.replace("user:", "").replace('`', ""),
+            Some(serde_json::Value::Object(map)) => map
+                .get("id")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .replace("user:", "")
+                .replace('`', ""),
+            _ => String::new(),
+        };
+
+        if record_uid != clean_uid {
+            return Err(AppError::Forbidden("You do not own this resume upload".to_string()));
+        }
+
+        let status = row.get("status").and_then(|v| v.as_str()).unwrap_or("");
+        if status != "completed" {
+            return Err(AppError::Conflict(format!(
+                "Resume upload status is '{status}', expected 'completed'"
+            )));
+        }
+
+        if let Some(ws_val) = row.get("workspace_id") {
+            if !ws_val.is_null() {
+                return Err(AppError::Conflict(
+                    "Resume upload is already attached to another workspace".to_string(),
+                ));
+            }
+        }
+
+        let filename = row
+            .get("filename")
+            .and_then(|v| v.as_str())
+            .unwrap_or("resume.pdf")
+            .to_string();
+        let object_key = row
+            .get("object_key")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| AppError::Validation("Resume upload missing object_key".to_string()))?
+            .to_string();
+
+        validated_upload = Some((filename, object_key));
+    }
+
+    // Build domain workspace first (validates invariants without saving to DB yet)
     let workspace = state
         .workspace_service
-        .create_workspace(user_id.clone(), payload.clone())
-        .await?;
+        .build_workspace(user_id.clone(), &payload)?;
 
     let db = &state.db.client;
     let ws_id = workspace.id.0.clone();
-    db.query("UPDATE type::record('workspace', $ws_id) SET company_urls = $company_urls;")
-        .bind(("ws_id", ws_id.clone()))
-        .bind(("company_urls", payload.company_urls.clone()))
-        .await
-        .and_then(|res| res.check())
-        .map_err(|e| AppError::Database(format!("Failed to save company URLs: {e}")))?;
 
-    if payload.resume_text.is_some() || payload.resume_pdf_base64.is_some() {
-        let res_id = format!("res_{ws_id}");
-        let query = "
-            UPSERT type::record('resume', $id) SET
+    let seniority_str = workspace
+        .seniority
+        .as_ref()
+        .map(|s| serde_json::to_value(s).unwrap_or_default().as_str().unwrap_or("").to_string());
+    let target_date_str = workspace.target_date.as_ref().map(|d| d.to_rfc3339());
+
+    // Execute workspace + upload attachment + resume + job_description in a single SurrealDB transaction
+    let mut statements = vec!["BEGIN TRANSACTION;".to_string()];
+
+    if payload.resume_upload_id.is_some() {
+        statements.push(
+            "LET $updated_uploads = (UPDATE type::record('resume_upload', $upload_id) SET
+                status = 'attached',
                 workspace_id = type::record('workspace', $ws_id),
-                raw_text = $raw_text,
-                source_pdf_base64 = $source_pdf_base64,
+                updated_at = time::now()
+             WHERE user_id = type::record('user', $user_id)
+               AND status = 'completed'
+               AND (workspace_id = NONE OR workspace_id = NULL)
+               AND object_key = $source_object_key);
+             IF array::len($updated_uploads) != 1 THEN
+                 THROW 'Resume upload CAS attachment conflict: upload was not completed or already attached';
+             END;".to_string(),
+        );
+    }
+
+    statements.push(
+        "UPSERT type::record('workspace', $ws_id) SET
+            user_id = type::record('user', $user_id),
+            company_name = $company_name,
+            role_title = $role_title,
+            status = $status,
+            current_phase = $current_phase,
+            progress_percent = $progress_percent,
+            seniority = $seniority,
+            target_date = $target_date,
+            prep_time_weeks = $prep_time_weeks,
+            user_prompt = $user_prompt,
+            current_objective = $current_objective,
+            workflow_mode = $workflow_mode,
+            company_urls = $company_urls,
+            created_at = type::datetime($created_at),
+            updated_at = type::datetime($updated_at);".to_string(),
+    );
+
+    if payload.resume_upload_id.is_some() {
+        statements.push(
+            "UPSERT type::record('resume', $res_id) SET
+                workspace_id = type::record('workspace', $ws_id),
+                raw_text = '',
+                source_upload_id = type::record('resume_upload', $upload_id),
+                source_object_key = $source_object_key,
                 source_filename = $source_filename,
                 parsed_skills = [],
                 experience = [],
-                education = [];
-        ";
-        db.query(query)
-            .bind(("id", res_id))
-            .bind(("ws_id", ws_id.clone()))
-            .bind(("raw_text", payload.resume_text.clone().unwrap_or_default()))
-            .bind(("source_pdf_base64", payload.resume_pdf_base64.clone()))
-            .bind(("source_filename", payload.resume_filename.clone()))
-            .await
-            .and_then(|res| res.check())
-            .map_err(|e| AppError::Database(format!("Failed to save resume: {e}")))?;
+                education = [],
+                created_at = time::now();".to_string(),
+        );
+    } else if payload.resume_text.is_some() {
+        statements.push(
+            "UPSERT type::record('resume', $res_id) SET
+                workspace_id = type::record('workspace', $ws_id),
+                raw_text = $raw_text,
+                parsed_skills = [],
+                experience = [],
+                education = [],
+                created_at = time::now();".to_string(),
+        );
     }
 
     if payload.job_description.is_some() || payload.jd_url.is_some() {
-        let jd_id = format!("jd_{ws_id}");
-        let query = "
-            UPSERT type::record('job_description', $id) SET
+        statements.push(
+            "UPSERT type::record('job_description', $jd_id) SET
                 workspace_id = type::record('workspace', $ws_id),
-                raw_text = $raw_text,
+                raw_text = $jd_raw_text,
                 jd_url = $jd_url,
-                requirements = [];
-        ";
-        let _ = db
-            .query(query)
-            .bind(("id", jd_id))
-            .bind(("ws_id", ws_id.clone()))
-            .bind(("raw_text", payload.job_description.clone().unwrap_or_default()))
-            .bind(("jd_url", payload.jd_url.clone()))
-            .await
-            .map_err(|e| AppError::Database(format!("Failed to save JD: {e}")))?;
+                requirements = [];".to_string(),
+        );
+    }
+
+    statements.push("COMMIT TRANSACTION;".to_string());
+
+    let tx_sql = statements.join("\n");
+
+    let mut query_builder = db.query(&tx_sql)
+        .bind(("ws_id", ws_id.clone()))
+        .bind(("user_id", clean_uid.clone()))
+        .bind(("company_name", workspace.company_name.clone()))
+        .bind(("role_title", workspace.role_title.clone()))
+        .bind(("status", "pending"))
+        .bind(("current_phase", "preparing_input"))
+        .bind(("progress_percent", 0i64))
+        .bind(("seniority", seniority_str))
+        .bind(("target_date", target_date_str))
+        .bind(("prep_time_weeks", workspace.prep_time_weeks.map(|w| w as i64)))
+        .bind(("user_prompt", workspace.user_prompt.clone()))
+        .bind(("current_objective", workspace.current_objective.clone()))
+        .bind(("workflow_mode", workspace.workflow_mode.clone()))
+        .bind(("company_urls", payload.company_urls.clone()))
+        .bind(("created_at", workspace.created_at.to_rfc3339()))
+        .bind(("updated_at", workspace.updated_at.to_rfc3339()))
+        .bind(("res_id", format!("res_{ws_id}")))
+        .bind(("jd_id", format!("jd_{ws_id}")))
+        .bind(("raw_text", payload.resume_text.clone().unwrap_or_default()))
+        .bind(("jd_raw_text", payload.job_description.clone().unwrap_or_default()))
+        .bind(("jd_url", payload.jd_url.clone()));
+
+    if let Some(upload_id_raw) = &payload.resume_upload_id {
+        let clean_upload_id = upload_id_raw.replace("resume_upload:", "").replace('`', "");
+        let (upload_filename, upload_object_key) = validated_upload.as_ref().unwrap();
+        query_builder = query_builder
+            .bind(("upload_id", clean_upload_id))
+            .bind(("source_filename", upload_filename.clone()))
+            .bind(("source_object_key", upload_object_key.clone()));
+    }
+
+    let mut tx_res = query_builder
+        .await
+        .map_err(|e| AppError::Database(format!("Transaction execution failed: {e}")))?;
+
+    let errors = tx_res.take_errors();
+    if !errors.is_empty() {
+        let error_msg = format!("{:?}", errors);
+        if error_msg.contains("attachment conflict") {
+            return Err(AppError::Conflict("Failed to attach resume upload: upload is no longer in completed state".to_string()));
+        }
+        return Err(AppError::Database(format!(
+            "Workspace creation transaction failed: {error_msg}"
+        )));
     }
 
     let mut status = workspace.status;
@@ -214,7 +376,7 @@ struct StoredWorkspace {
 #[derive(Default, Deserialize)]
 struct StoredResume {
     raw_text: Option<String>,
-    source_pdf_base64: Option<String>,
+    source_upload_id: Option<serde_json::Value>,
     source_filename: Option<String>,
 }
 
@@ -241,7 +403,7 @@ pub(crate) async fn start_workspace_run(
         .client
         .query(
             "SELECT company_name, role_title, seniority, company_urls, user_prompt, workflow_mode FROM type::record('workspace', $ws_id);
-             SELECT raw_text, source_pdf_base64, source_filename FROM type::record('resume', $res_id);
+             SELECT raw_text, source_upload_id, source_filename FROM type::record('resume', $res_id);
              SELECT raw_text, jd_url FROM type::record('job_description', $jd_id);",
         )
         .bind(("ws_id", workspace_id.to_string()))
@@ -256,6 +418,15 @@ pub(crate) async fn start_workspace_run(
     let jd: StoredJobDescription =
         parse_stored(res.take(2).map_err(|e| AppError::Database(e.to_string()))?)?.unwrap_or_default();
 
+    let resume_upload_id = resume.source_upload_id.and_then(|val| match val {
+        serde_json::Value::String(s) => Some(s.replace("resume_upload:", "").replace('`', "")),
+        serde_json::Value::Object(map) => map
+            .get("id")
+            .and_then(|v| v.as_str())
+            .map(|s| s.replace("resume_upload:", "").replace('`', "")),
+        _ => None,
+    });
+
     let payload = CreateRunPayload {
         workspace_id: workspace_id.to_string(),
         user_id: user_id.0.clone(),
@@ -264,7 +435,7 @@ pub(crate) async fn start_workspace_run(
         role_title: workspace.role_title,
         company_urls: workspace.company_urls.unwrap_or_default(),
         resume_text: resume.raw_text.unwrap_or_default(),
-        resume_pdf_base64: resume.source_pdf_base64,
+        resume_upload_id,
         resume_filename: resume.source_filename,
         job_description: jd.raw_text.unwrap_or_default(),
         jd_url: jd.jd_url,

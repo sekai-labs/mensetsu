@@ -7,7 +7,7 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class CreateRunCommand(_message.Message):
-    __slots__ = ("workspace_id", "user_id", "workflow_id", "company_name", "role_title", "company_urls", "resume_text", "resume_pdf_base64", "resume_filename", "job_description", "jd_url", "seniority", "user_prompt", "workflow_mode", "llm_config_json")
+    __slots__ = ("workspace_id", "user_id", "workflow_id", "company_name", "role_title", "company_urls", "resume_text", "resume_filename", "job_description", "jd_url", "seniority", "user_prompt", "workflow_mode", "llm_config_json", "resume_upload_id")
     WORKSPACE_ID_FIELD_NUMBER: _ClassVar[int]
     USER_ID_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_ID_FIELD_NUMBER: _ClassVar[int]
@@ -15,7 +15,6 @@ class CreateRunCommand(_message.Message):
     ROLE_TITLE_FIELD_NUMBER: _ClassVar[int]
     COMPANY_URLS_FIELD_NUMBER: _ClassVar[int]
     RESUME_TEXT_FIELD_NUMBER: _ClassVar[int]
-    RESUME_PDF_BASE64_FIELD_NUMBER: _ClassVar[int]
     RESUME_FILENAME_FIELD_NUMBER: _ClassVar[int]
     JOB_DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     JD_URL_FIELD_NUMBER: _ClassVar[int]
@@ -23,6 +22,7 @@ class CreateRunCommand(_message.Message):
     USER_PROMPT_FIELD_NUMBER: _ClassVar[int]
     WORKFLOW_MODE_FIELD_NUMBER: _ClassVar[int]
     LLM_CONFIG_JSON_FIELD_NUMBER: _ClassVar[int]
+    RESUME_UPLOAD_ID_FIELD_NUMBER: _ClassVar[int]
     workspace_id: str
     user_id: str
     workflow_id: str
@@ -30,7 +30,6 @@ class CreateRunCommand(_message.Message):
     role_title: str
     company_urls: _containers.RepeatedScalarFieldContainer[str]
     resume_text: str
-    resume_pdf_base64: str
     resume_filename: str
     job_description: str
     jd_url: str
@@ -38,7 +37,8 @@ class CreateRunCommand(_message.Message):
     user_prompt: str
     workflow_mode: str
     llm_config_json: str
-    def __init__(self, workspace_id: _Optional[str] = ..., user_id: _Optional[str] = ..., workflow_id: _Optional[str] = ..., company_name: _Optional[str] = ..., role_title: _Optional[str] = ..., company_urls: _Optional[_Iterable[str]] = ..., resume_text: _Optional[str] = ..., resume_pdf_base64: _Optional[str] = ..., resume_filename: _Optional[str] = ..., job_description: _Optional[str] = ..., jd_url: _Optional[str] = ..., seniority: _Optional[str] = ..., user_prompt: _Optional[str] = ..., workflow_mode: _Optional[str] = ..., llm_config_json: _Optional[str] = ...) -> None: ...
+    resume_upload_id: str
+    def __init__(self, workspace_id: _Optional[str] = ..., user_id: _Optional[str] = ..., workflow_id: _Optional[str] = ..., company_name: _Optional[str] = ..., role_title: _Optional[str] = ..., company_urls: _Optional[_Iterable[str]] = ..., resume_text: _Optional[str] = ..., resume_filename: _Optional[str] = ..., job_description: _Optional[str] = ..., jd_url: _Optional[str] = ..., seniority: _Optional[str] = ..., user_prompt: _Optional[str] = ..., workflow_mode: _Optional[str] = ..., llm_config_json: _Optional[str] = ..., resume_upload_id: _Optional[str] = ...) -> None: ...
 
 class ResumePlanCommand(_message.Message):
     __slots__ = ("run_id", "prompt")

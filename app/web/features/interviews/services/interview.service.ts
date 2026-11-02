@@ -2,6 +2,9 @@ import { useApiClient } from '~/services/api.client'
 import type {
   WorkspaceResponse,
   CreateWorkspaceRequest,
+  CreateResumeUploadRequestDto,
+  CreateResumeUploadResponseDto,
+  CompleteResumeUploadResponseDto,
   MatchAnalysisResponse,
   CompanyResearchResponse,
   LearningUnitResponse,
@@ -24,6 +27,43 @@ export const useInterviewService = () => {
       method: 'POST',
       body: payload,
     })
+  }
+  const createResumeUpload = async (
+    payload: CreateResumeUploadRequestDto
+  ): Promise<CreateResumeUploadResponseDto> => {
+    return await request<CreateResumeUploadResponseDto>('/api/v1/resume-uploads', {
+      method: 'POST',
+      body: payload,
+    })
+  }
+
+  const completeResumeUpload = async (
+    uploadId: string
+  ): Promise<CompleteResumeUploadResponseDto> => {
+    const cleanUploadId = uploadId.replace(/^resume_upload:/, '').replace(/`/g, '')
+    return await request<CompleteResumeUploadResponseDto>(
+      `/api/v1/resume-uploads/${cleanUploadId}/complete`,
+      {
+        method: 'POST',
+      }
+    )
+  }
+  const uploadResumeFileToSignedUrl = async (
+    uploadUrl: string,
+    file: File | Blob
+  ): Promise<void> => {
+    const res = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/pdf',
+      },
+      body: file,
+      credentials: 'omit',
+      redirect: 'error',
+    })
+    if (!res.ok) {
+      throw new Error(`Direct storage upload failed with status ${res.status}`)
+    }
   }
 
   const listWorkspaces = async (): Promise<WorkspaceResponse[]> => {
@@ -153,5 +193,8 @@ export const useInterviewService = () => {
     importJobDescriptionUrl,
     getWorkspaceSources,
     getWorkspaceClaims,
+    createResumeUpload,
+    completeResumeUpload,
+    uploadResumeFileToSignedUrl,
   }
 }

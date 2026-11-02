@@ -123,7 +123,7 @@
     "pdfUpload": "PDFアップロード",
     "resumePlaceholder": "経歴書のテキストやマークダウンを貼り付けてください...",
     "dropzone": "PDFファイルを選択またはドラッグ＆ドロップ",
-    "dropzoneLimit": "最大 10MB の PDF",
+    "dropzoneLimit": "最大 5 MiB の PDF",
     "continueJd": "募集要項の入力に進む",
     "jdTitle": "募集要項 (Job Description)",
     "jdDesc": "募集要項を貼り付けて、正確なマッチングマトリクスと重要ギャップを算出します。",

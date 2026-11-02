@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package mensetsu.resume.v1;
+
+service ResumeStorageService {
+  rpc GetResumeDownloadUrl(GetResumeDownloadUrlRequest) returns (GetResumeDownloadUrlResponse);
+}
+
+message GetResumeDownloadUrlRequest {
+  string workspace_id = 1;
+  string user_id = 2;
+  string resume_upload_id = 3;
+}
+
+message GetResumeDownloadUrlResponse {
+  string url = 1;
+  string filename = 2;
+  uint64 size_bytes = 3;
+}

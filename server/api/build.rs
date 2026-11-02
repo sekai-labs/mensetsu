@@ -4,6 +4,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed={proto_dir}/control.proto");
     println!("cargo:rerun-if-changed={proto_dir}/streaming.proto");
     println!("cargo:rerun-if-changed={proto_dir}/health.proto");
+    println!("cargo:rerun-if-changed={proto_dir}/resume_storage.proto");
 
     tonic_build::configure()
         .build_server(true)
@@ -13,6 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 format!("{proto_dir}/health.proto"),
                 format!("{proto_dir}/control.proto"),
                 format!("{proto_dir}/streaming.proto"),
+                format!("{proto_dir}/resume_storage.proto"),
             ],
             &[proto_dir],
         )?;

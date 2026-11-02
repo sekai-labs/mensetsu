@@ -74,6 +74,7 @@ fn build_clear_cookies() -> Vec<String> {
 #[utoipa::path(
     post,
     path = "/api/v1/auth/register",
+    security(()),
     request_body = RegisterRequestDto,
     responses(
         (status = 201, description = "Registration successful", body = AuthResponseDto),
@@ -121,6 +122,7 @@ pub async fn register(
 #[utoipa::path(
     post,
     path = "/api/v1/auth/login",
+    security(()),
     request_body = LoginRequestDto,
     responses(
         (status = 200, description = "Login response or 2FA challenge", body = LoginResponseDto),
@@ -171,6 +173,7 @@ pub async fn login(
 #[utoipa::path(
     post,
     path = "/api/v1/auth/login-2fa",
+    security(()),
     request_body = Login2faRequestDto,
     responses(
         (status = 200, description = "Authenticated with 2FA", body = AuthResponseDto),
@@ -275,6 +278,7 @@ pub async fn disable_2fa(
 #[utoipa::path(
     post,
     path = "/api/v1/auth/refresh",
+    security(()),
     request_body(content = Option<RefreshTokenRequestDto>),
     responses(
         (status = 200, description = "Token refreshed", body = TokenResponseDto),

@@ -123,7 +123,7 @@
     "pdfUpload": "PDF Upload",
     "resumePlaceholder": "Paste raw resume text, markdown, or experience summary...",
     "dropzone": "Click to browse or drop resume PDF",
-    "dropzoneLimit": "PDF up to 10MB",
+    "dropzoneLimit": "PDF up to 5 MiB",
     "continueJd": "Continue to Job Description",
     "jdTitle": "Target Job Description",
     "jdDesc": "Paste the job posting to calculate an exact Match Matrix and identify critical qualification gaps.",

@@ -16,6 +16,11 @@ pub struct AppConfig {
     pub refresh_token_ttl_seconds: i64,
     pub encryption_key: String,
     pub internal_service_token: String,
+    pub s3_bucket: String,
+    pub aws_region: String,
+    pub s3_endpoint_internal: Option<String>,
+    pub s3_endpoint_public: Option<String>,
+    pub api_grpc_bind: String,
 }
 
 impl AppConfig {
@@ -52,6 +57,11 @@ impl AppConfig {
             internal_service_token: env::var("INTERNAL_SERVICE_TOKEN")
                 .map(|t| t.trim().to_string())
                 .unwrap_or_default(),
+            s3_bucket: env::var("S3_BUCKET").unwrap_or_else(|_| "mensetsu-resumes".to_string()),
+            aws_region: env::var("AWS_REGION").unwrap_or_else(|_| "us-east-1".to_string()),
+            s3_endpoint_internal: env::var("S3_ENDPOINT_INTERNAL").ok().filter(|s| !s.is_empty()),
+            s3_endpoint_public: env::var("S3_ENDPOINT_PUBLIC").ok().filter(|s| !s.is_empty()),
+            api_grpc_bind: env::var("API_GRPC_BIND").unwrap_or_else(|_| "127.0.0.1:50052".to_string()),
         }
     }
 

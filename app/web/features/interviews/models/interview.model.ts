@@ -1,5 +1,6 @@
 import type {
   CreateWorkspaceRequest as ContractCreateWorkspaceRequest,
+  Schemas,
 } from '@mensetsu/contracts'
 import type {
   WorkspaceStatus,
@@ -9,6 +10,9 @@ import type {
 
 export type { WorkspaceStatus, PipelinePhase, SeniorityLevel }
 export type CreateWorkspaceRequest = ContractCreateWorkspaceRequest
+export type CreateResumeUploadRequestDto = Schemas['CreateResumeUploadRequestDto']
+export type CreateResumeUploadResponseDto = Schemas['CreateResumeUploadResponseDto']
+export type CompleteResumeUploadResponseDto = Schemas['CompleteResumeUploadResponseDto']
 
 export interface WorkspaceResponse {
   id: string

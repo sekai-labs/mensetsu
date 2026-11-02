@@ -5,6 +5,7 @@ pub mod health;
 pub mod middleware;
 pub mod settings;
 pub mod setup;
+pub mod resume_uploads;
 pub mod sse_parser;
 pub mod workflow_dtos;
 pub mod workflows;
@@ -53,6 +54,7 @@ use crate::{
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiInfoModifier),
     paths(
         auth::register,
         auth::login,
@@ -64,10 +66,23 @@ use crate::{
         auth::logout,
         auth::logout_all,
         auth::me,
+        resume_uploads::create_resume_upload,
+        resume_uploads::complete_resume_upload,
         workspaces::create_workspace,
         workspaces::list_workspaces,
         workspaces::get_workspace,
         workspaces::toggle_learning_unit_completed,
+        workspaces::learning_handlers::get_workspace_match,
+        workspaces::learning_handlers::get_workspace_knowledge,
+        workspaces::learning_handlers::get_workspace_learning,
+        workspaces::learning_handlers::get_workspace_questions,
+        workspaces::research_handlers::get_workspace_company,
+        workspaces::event_handlers::workspace_events,
+        workspaces::role_handlers::get_workspace_role,
+        workspaces::role_handlers::import_job_description_url,
+        workspaces::research_handlers::get_workspace_sources,
+        workspaces::research_handlers::get_workspace_claims,
+        workspaces::research_handlers::ask_workspace_knowledge_qa,
         settings::get_profile,
         settings::get_llm_settings,
         settings::upsert_llm_setting,
@@ -116,6 +131,11 @@ use crate::{
             CreateWorkspaceRequestDto,
             WorkspaceResponseDto,
             WorkspaceProgressEventDto,
+            workspaces::role_handlers::ImportJdUrlRequestDto,
+            workspaces::research_handlers::KnowledgeQaRequestDto,
+            resume_uploads::CreateResumeUploadRequestDto,
+            resume_uploads::CreateResumeUploadResponseDto,
+            resume_uploads::CompleteResumeUploadResponseDto,
             StrengthEvidence,
             GapEvidence,
             WordingImprovement,
@@ -188,6 +208,33 @@ use crate::{
 )]
 pub struct ApiDoc;
 
+struct ApiInfoModifier;
+
+impl utoipa::Modify for ApiInfoModifier {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        openapi.info.license = Some(
+            utoipa::openapi::info::LicenseBuilder::new()
+                .name("Apache-2.0")
+                .identifier(Some("Apache-2.0"))
+                .build(),
+        );
+        if let Some(components) = openapi.components.as_mut() {
+            components.add_security_scheme(
+                "bearerAuth",
+                utoipa::openapi::security::SecurityScheme::Http(
+                    utoipa::openapi::security::Http::new(
+                        utoipa::openapi::security::HttpAuthScheme::Bearer,
+                    ),
+                ),
+            );
+        }
+        openapi.security = Some(vec![utoipa::openapi::security::SecurityRequirement::new(
+            "bearerAuth",
+            Vec::<String>::new(),
+        )]);
+    }
+}
+
 pub fn create_router(state: AppState) -> Router {
     let origins: Vec<HeaderValue> = state
         .config
@@ -224,6 +271,12 @@ pub fn create_router(state: AppState) -> Router {
         .merge(settings::settings_routes(state.clone()))
         .merge(admin::admin_routes(state.clone()))
         .merge(workspaces::workspace_routes(state.clone()))
+        .merge(
+            Router::new()
+                .route("/api/v1/resume-uploads", axum::routing::post(resume_uploads::create_resume_upload))
+                .route("/api/v1/resume-uploads/{upload_id}/complete", axum::routing::post(resume_uploads::complete_resume_upload))
+                .with_state(state.clone()),
+        )
         .merge(workflows::workflow_routes(state))
         .layer(axum::middleware::from_fn(middleware::correlation_id_middleware))
         .layer(

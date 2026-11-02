@@ -34,6 +34,9 @@ totp-rs = { version = "6.0.0", features = ["qr", "gen_secret"] }
 tonic = "0.12"
 prost = "0.13"
 dashmap = "6.1"
+aws-config = "1.12"
+aws-sdk-s3 = "1.149"
+subtle = "2.6"
 
 [build-dependencies]
 tonic-build = "0.12"

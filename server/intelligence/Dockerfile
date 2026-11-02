@@ -1,4 +1,6 @@
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+FROM python:3.12-slim-trixie AS runtime
+
+RUN pip install --no-cache-dir uv==0.12.3
 
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
@@ -21,5 +23,8 @@ ENV INTELLIGENCE_PORT=50051
 ENV INTELLIGENCE_HOST=0.0.0.0
 
 EXPOSE 50051
-
+FROM runtime AS intelligence
 CMD ["python", "-m", "src.main"]
+
+FROM runtime AS worker
+CMD ["python", "-m", "src.worker"]

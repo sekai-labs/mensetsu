@@ -47,11 +47,12 @@ def merge_dict(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
 class StaticWorkflowState(BaseModel):
     run_id: str
     workspace_id: str
+    user_id: str = ""
     company_name: str
     role_title: str
     company_urls: list[str] = Field(default_factory=list)
     resume_text: str = ""
-    resume_pdf_base64: str | None = None
+    resume_upload_id: str | None = None
     resume_filename: str | None = None
     job_description: str = ""
     jd_url: str | None = None
@@ -75,7 +76,11 @@ def build_static_workflow(
     if mode not in ("full", "normalize_only", "outputs_only"):
         raise ValueError(f"Unknown static workflow mode '{mode}'.")
     if checkpointer is None:
-        raise ValueError("Checkpointer is required to compile static workflow.")
+        if mode == "normalize_only":
+            from langgraph.checkpoint.memory import MemorySaver
+            checkpointer = MemorySaver()
+        else:
+            raise ValueError("Checkpointer is required to compile static workflow.")
     ledger = ledger or SurrealLedgerRepository(db_client=db_client)
     from src.agents.runtime import current_ledger_var
 
@@ -176,20 +181,107 @@ def build_static_workflow(
             },
         )
 
-        from src.generation.documents import extract_resume_pdf_text
+        from src.generation.documents import extract_resume_pdf_bytes
+        from src.generation.persistence import persist_record
         from src.generation.resume import parse_resume_activity
 
         try:
             resume_text = state.resume_text.strip()
-            resume_source = "text"
-            if not resume_text and state.resume_pdf_base64:
-                resume_text = extract_resume_pdf_text(
-                    state.resume_pdf_base64, state.resume_filename
+            resume_source = "text" if resume_text else None
+
+            if state.resume_upload_id:
+                # Fetch resume via authenticated internal gRPC to Rust ResumeStorageService
+                import os
+                from urllib.parse import urlparse
+                import grpc
+                import httpx
+                from src.grpc.v1 import resume_storage_pb2, resume_storage_pb2_grpc
+                from src.orchestration.auth import get_internal_token
+
+                grpc_endpoint = (
+                    os.environ.get("API_GRPC_ENDPOINT")
+                    or os.environ.get("API_GRPC_BIND")
+                    or "api:50052"
+                )
+                if grpc_endpoint.startswith("http://"):
+                    grpc_endpoint = grpc_endpoint[len("http://") :]
+                elif grpc_endpoint.startswith("https://"):
+                    grpc_endpoint = grpc_endpoint[len("https://") :]
+
+                internal_token = get_internal_token()
+                channel = grpc.aio.insecure_channel(grpc_endpoint)
+                try:
+                    stub = resume_storage_pb2_grpc.ResumeStorageServiceStub(channel)
+                    metadata = (("authorization", f"Bearer {internal_token}"),)
+                    req = resume_storage_pb2.GetResumeDownloadUrlRequest(
+                        workspace_id=state.workspace_id,
+                        user_id=state.user_id,
+                        resume_upload_id=state.resume_upload_id,
+                    )
+                    resp = await stub.GetResumeDownloadUrl(req, metadata=metadata, timeout=10.0)
+                except grpc.RpcError as rpc_err:
+                    code = rpc_err.code()
+                    details = rpc_err.details()
+                    raise RuntimeError(f"Resume storage gRPC error ({code.name}): {details}") from rpc_err
+                finally:
+                    await channel.close()
+
+                download_url = resp.url
+                declared_filename = resp.filename
+                declared_size = resp.size_bytes
+
+                allowed_origin = os.environ.get("S3_DOWNLOAD_ALLOWED_ORIGIN", "").rstrip("/")
+                if not allowed_origin:
+                    raise ValueError("S3_DOWNLOAD_ALLOWED_ORIGIN is unset or empty; refusing download.")
+
+                parsed_url = urlparse(download_url)
+                actual_origin = f"{parsed_url.scheme}://{parsed_url.netloc}".rstrip("/")
+                if actual_origin != allowed_origin:
+                    raise ValueError(
+                        f"Download URL origin '{actual_origin}' does not strictly match allowed origin '{allowed_origin}'."
+                    )
+
+                # Stream up to 5 MiB + 1 bytes with no redirects
+                max_allowed = 5 * 1024 * 1024
+                async with httpx.AsyncClient(follow_redirects=False, timeout=30.0, trust_env=False) as client:
+                    async with client.stream("GET", download_url) as stream_resp:
+                        if stream_resp.status_code != 200:
+                            raise RuntimeError(
+                                f"Failed to download resume from S3 (HTTP {stream_resp.status_code})"
+                            )
+                        content_chunks: list[bytes] = []
+                        total_downloaded = 0
+                        async for chunk in stream_resp.aiter_bytes():
+                            total_downloaded += len(chunk)
+                            if total_downloaded > max_allowed:
+                                raise ValueError(f"Downloaded resume exceeds {max_allowed} bytes limit.")
+                            content_chunks.append(chunk)
+                        pdf_bytes = b"".join(content_chunks)
+
+                if len(pdf_bytes) != declared_size:
+                    raise ValueError(
+                        f"Downloaded size ({len(pdf_bytes)} bytes) does not match declared size ({declared_size} bytes)."
+                    )
+
+                resume_text = extract_resume_pdf_bytes(
+                    pdf_bytes, filename=state.resume_filename or declared_filename
                 )
                 resume_source = "pdf"
-            if not resume_text:
+
+                # Persist real extracted text to existing resume.raw_text before any LLM calls
+                await persist_record(
+                    db_client=db,
+                    table="resume",
+                    record_id=f"res_{state.workspace_id}",
+                    fields={
+                        "workspace_id": state.workspace_id,
+                        "raw_text": resume_text,
+                    },
+                )
+            elif not resume_text:
                 resume_text = f"Candidate applying for {state.role_title} at {state.company_name}. Background in software engineering and technology."
                 resume_source = "default"
+
             job_description = state.job_description.strip()
             jd_evidence_id = None
             if not job_description and state.jd_url:

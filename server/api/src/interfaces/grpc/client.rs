@@ -8,6 +8,9 @@ pub mod proto {
     pub mod health {
         tonic::include_proto!("grpc.health.v1");
     }
+    pub mod resume {
+        tonic::include_proto!("mensetsu.resume.v1");
+    }
 }
 
 use std::sync::Arc;
@@ -40,7 +43,7 @@ pub struct CreateRunPayload {
     pub role_title: String,
     pub company_urls: Vec<String>,
     pub resume_text: String,
-    pub resume_pdf_base64: Option<String>,
+    pub resume_upload_id: Option<String>,
     pub resume_filename: Option<String>,
     pub job_description: String,
     pub jd_url: Option<String>,
@@ -272,7 +275,7 @@ impl GrpcClient {
             role_title: payload.role_title.clone(),
             company_urls: payload.company_urls.clone(),
             resume_text: payload.resume_text.clone(),
-            resume_pdf_base64: payload.resume_pdf_base64.clone(),
+            resume_upload_id: payload.resume_upload_id.clone(),
             resume_filename: payload.resume_filename.clone(),
             job_description: payload.job_description.clone(),
             jd_url: payload.jd_url.clone(),

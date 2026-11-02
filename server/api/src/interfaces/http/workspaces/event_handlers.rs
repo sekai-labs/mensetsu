@@ -12,6 +12,11 @@ use super::AppState;
 use crate::interfaces::http::extractors::authenticated_user::AuthenticatedUser;
 use crate::shared::error::AppError;
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces/{id}/events",
+    responses((status = 200, description = "Server-sent workspace progress events"), (status = 403))
+)]
 pub async fn workspace_events(
     State(state): State<AppState>,
     auth_user: AuthenticatedUser,

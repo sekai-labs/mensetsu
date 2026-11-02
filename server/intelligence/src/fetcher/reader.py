@@ -237,7 +237,3 @@ class SafeReaderFetcher:
                 access_status=access_status,
                 structured_data=structured_data,
             )
-
-    async def fetch_markdown(self, url: str) -> tuple[str, str]:
-        doc = await self.fetch_document(url)
-        return doc.title, doc.markdown

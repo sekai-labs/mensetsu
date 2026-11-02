@@ -10,6 +10,11 @@ use crate::interfaces::http::extractors::authenticated_user::AuthenticatedUser;
 use crate::shared::error::AppError;
 use crate::shared::record_id::normalize_record_fields;
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces/{id}/company",
+    responses((status = 200, body = serde_json::Value), (status = 403))
+)]
 pub async fn get_workspace_company(
     State(state): State<AppState>,
     auth_user: AuthenticatedUser,
@@ -125,6 +130,11 @@ pub async fn get_workspace_company(
     })))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces/{id}/sources",
+    responses((status = 200, body = serde_json::Value), (status = 403))
+)]
 pub async fn get_workspace_sources(
     State(state): State<AppState>,
     auth_user: AuthenticatedUser,
@@ -149,6 +159,11 @@ pub async fn get_workspace_sources(
     })))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces/{id}/claims",
+    responses((status = 200, body = serde_json::Value), (status = 403))
+)]
 pub async fn get_workspace_claims(
     State(state): State<AppState>,
     auth_user: AuthenticatedUser,
@@ -173,12 +188,18 @@ pub async fn get_workspace_claims(
     })))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
 pub struct KnowledgeQaRequestDto {
     pub query: String,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/workspaces/{id}/qa",
+    request_body = KnowledgeQaRequestDto,
+    responses((status = 200, body = serde_json::Value), (status = 403))
+)]
 pub async fn ask_workspace_knowledge_qa(
     State(state): State<AppState>,
     auth_user: AuthenticatedUser,

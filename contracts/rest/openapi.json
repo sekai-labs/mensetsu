@@ -310,6 +310,63 @@
         ],
         "type": "object"
       },
+      "CompleteResumeUploadResponseDto": {
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "upload_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_id",
+          "status"
+        ],
+        "type": "object"
+      },
+      "CreateResumeUploadRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "content_type": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "size_bytes": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "filename",
+          "size_bytes",
+          "content_type"
+        ],
+        "type": "object"
+      },
+      "CreateResumeUploadResponseDto": {
+        "properties": {
+          "expires_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "upload_id": {
+            "type": "string"
+          },
+          "upload_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_id",
+          "upload_url",
+          "expires_at"
+        ],
+        "type": "object"
+      },
       "CreateWorkspaceRequestDto": {
         "additionalProperties": false,
         "properties": {
@@ -351,19 +408,13 @@
               "null"
             ]
           },
-          "resume_filename": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "resume_pdf_base64": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "resume_text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resume_upload_id": {
             "type": [
               "string",
               "null"
@@ -927,6 +978,24 @@
         ],
         "type": "object"
       },
+      "ImportJdUrlRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "custom_title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "type": "object"
+      },
       "InterviewQuestion": {
         "properties": {
           "answer_outline": {
@@ -1035,6 +1104,18 @@
         "required": [
           "nodes",
           "edges"
+        ],
+        "type": "object"
+      },
+      "KnowledgeQaRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "query": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
         ],
         "type": "object"
       },
@@ -2714,12 +2795,19 @@
         ],
         "type": "string"
       }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "scheme": "bearer",
+        "type": "http"
+      }
     }
   },
   "info": {
     "description": "",
     "license": {
-      "name": ""
+      "identifier": "Apache-2.0",
+      "name": "Apache-2.0"
     },
     "title": "mensetsu-api",
     "version": "0.1.0"
@@ -2843,6 +2931,9 @@
             "description": "Invalid credentials or account suspended"
           }
         },
+        "security": [
+          {}
+        ],
         "tags": [
           "auth"
         ]
@@ -2876,6 +2967,9 @@
             "description": "Invalid or expired 2FA code"
           }
         },
+        "security": [
+          {}
+        ],
         "tags": [
           "auth"
         ]
@@ -2978,6 +3072,9 @@
             "description": "Invalid or expired refresh token"
           }
         },
+        "security": [
+          {}
+        ],
         "tags": [
           "auth"
         ]
@@ -3014,8 +3111,106 @@
             "description": "Email already registered"
           }
         },
+        "security": [
+          {}
+        ],
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/resume-uploads": {
+      "post": {
+        "operationId": "create_resume_upload",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResumeUploadRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateResumeUploadResponseDto"
+                }
+              }
+            },
+            "description": "Upload initiated"
+          },
+          "400": {
+            "description": "Invalid request payload"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "502": {
+            "description": "Storage failure"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "resume_uploads"
+        ]
+      }
+    },
+    "/api/v1/resume-uploads/{upload_id}/complete": {
+      "post": {
+        "operationId": "complete_resume_upload",
+        "parameters": [
+          {
+            "description": "Upload ID",
+            "in": "path",
+            "name": "upload_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteResumeUploadResponseDto"
+                }
+              }
+            },
+            "description": "Upload completed"
+          },
+          "400": {
+            "description": "Invalid object or validation failed"
+          },
+          "403": {
+            "description": "Forbidden: not the owner"
+          },
+          "404": {
+            "description": "Upload record not found"
+          },
+          "409": {
+            "description": "Upload conflict or missing staging object"
+          },
+          "502": {
+            "description": "Storage failure"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "resume_uploads"
         ]
       }
     },
@@ -4042,6 +4237,204 @@
         ]
       }
     },
+    "/api/v1/workspaces/{id}/claims": {
+      "get": {
+        "operationId": "get_workspace_claims",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspaces::research_handlers"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{id}/company": {
+      "get": {
+        "operationId": "get_workspace_company",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspaces::research_handlers"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{id}/events": {
+      "get": {
+        "operationId": "workspace_events",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Server-sent workspace progress events"
+          },
+          "403": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspaces::event_handlers"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{id}/import-jd": {
+      "post": {
+        "operationId": "import_job_description_url",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportJdUrlRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspaces::role_handlers"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{id}/knowledge": {
+      "get": {
+        "operationId": "get_workspace_knowledge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeGraphResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspaces::learning_handlers"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{id}/learning": {
+      "get": {
+        "operationId": "get_workspace_learning",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LearningUnit"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspaces::learning_handlers"
+        ]
+      }
+    },
     "/api/v1/workspaces/{id}/learning/{lesson_id}/toggle": {
       "put": {
         "operationId": "toggle_learning_unit_completed",
@@ -4080,8 +4473,183 @@
           "workspaces"
         ]
       }
+    },
+    "/api/v1/workspaces/{id}/match": {
+      "get": {
+        "operationId": "get_workspace_match",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspaces::learning_handlers"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{id}/qa": {
+      "post": {
+        "operationId": "ask_workspace_knowledge_qa",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeQaRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspaces::research_handlers"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{id}/questions": {
+      "get": {
+        "operationId": "get_workspace_questions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InterviewQuestion"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspaces::learning_handlers"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{id}/role": {
+      "get": {
+        "operationId": "get_workspace_role",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspaces::role_handlers"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{id}/sources": {
+      "get": {
+        "operationId": "get_workspace_sources",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspaces::research_handlers"
+        ]
+      }
     }
   },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
   "tags": [
     {
       "description": "Interview workspace endpoints",

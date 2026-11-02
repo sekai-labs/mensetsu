@@ -39,11 +39,12 @@ def merge_results(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
 class DynamicWorkflowState(BaseModel):
     run_id: str
     workspace_id: str
+    user_id: str = ""
     company_name: str
     role_title: str
     company_urls: list[str] = Field(default_factory=list)
     resume_text: str = ""
-    resume_pdf_base64: str | None = None
+    resume_upload_id: str | None = None
     resume_filename: str | None = None
     job_description: str = ""
     jd_url: str | None = None
@@ -612,11 +613,12 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
             StaticWorkflowState(
                 run_id=state.run_id,
                 workspace_id=state.workspace_id,
+                user_id=state.user_id,
                 company_name=state.company_name,
                 role_title=state.role_title,
                 company_urls=state.company_urls,
                 resume_text=state.resume_text,
-                resume_pdf_base64=state.resume_pdf_base64,
+                resume_upload_id=state.resume_upload_id,
                 resume_filename=state.resume_filename,
                 job_description=state.job_description,
                 jd_url=state.jd_url,
@@ -634,7 +636,7 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
             "job_description": normalized["job_description"],
             "parsed_resume": normalized["parsed_resume"],
             "jd_evidence_id": jd_evidence_id,
-            "resume_pdf_base64": None,
+            "resume_upload_id": None,
         }
 
     builder = StateGraph(DynamicWorkflowState)

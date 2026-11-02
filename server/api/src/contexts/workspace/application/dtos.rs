@@ -19,8 +19,7 @@ pub struct CreateWorkspaceRequestDto {
     pub target_date: Option<chrono::DateTime<chrono::Utc>>,
     pub prep_time_weeks: Option<u8>,
     pub resume_text: Option<String>,
-    pub resume_pdf_base64: Option<String>,
-    pub resume_filename: Option<String>,
+    pub resume_upload_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate, ToSchema)]

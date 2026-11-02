@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useInterviewService } from '~/features/interviews/services/interview.service'
 import type { SeniorityLevel } from '~/models/common.model'
+import type { CreateWorkspaceRequest } from '~/features/interviews/models/interview.model'
 import AppButton from '~/components/ui/AppButton.vue'
 import AppInput from '~/components/ui/AppInput.vue'
 import { Building2, Briefcase, FileText, Link2, UploadCloud, ChevronRight, Check } from 'lucide-vue-next'
@@ -14,7 +15,7 @@ definePageMeta({
 
 const { t } = useI18n()
 const router = useRouter()
-const { createWorkspace } = useInterviewService()
+const { createWorkspace, createResumeUpload, completeResumeUpload, uploadResumeFileToSignedUrl } = useInterviewService()
 
 const isSubmitting = ref<boolean>(false)
 const errorMessage = ref<string>('')
@@ -28,9 +29,12 @@ const urlsInput = ref<string>('')
 const resumeMode = ref<'paste' | 'upload'>('paste')
 const resumeText = ref<string>('')
 const jdText = ref<string>('')
-const resumeFileName = ref<string | null>(null)
-const resumePdfBase64 = ref<string | null>(null)
+const resumeFile = ref<File | null>(null)
+const resumeFileName = computed(() => resumeFile.value?.name ?? null)
+const isDragging = ref<boolean>(false)
 const notes = ref<string>('')
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MiB
 
 const seniorityLevels: Array<{ value: SeniorityLevel; label: string; desc: string }> = [
   { value: 'junior', label: 'Junior', desc: '0-2 yrs' },
@@ -41,38 +45,73 @@ const seniorityLevels: Array<{ value: SeniorityLevel; label: string; desc: strin
   { value: 'lead', label: 'Lead', desc: 'Management' },
 ]
 
-const hasResume = computed(() => resumeText.value.trim().length > 0 || Boolean(resumePdfBase64.value))
+const isCurrentResumeValid = computed(() => {
+  if (resumeMode.value === 'paste') {
+    return resumeText.value.trim().length > 0
+  }
+  return resumeFile.value !== null
+})
+
+const hasResume = computed(() => isCurrentResumeValid.value)
 
 const step1Valid = computed(() => companyName.value.trim().length > 0 && roleTitle.value.trim().length > 0)
 const step2Valid = computed(() => true)
-const step3Valid = computed(() => hasResume.value)
+const step3Valid = computed(() => isCurrentResumeValid.value)
 const step4Valid = computed(() => true)
 
 const canSubmit = computed(() => {
-  return step1Valid.value && hasResume.value && !isSubmitting.value
+  return step1Valid.value && isCurrentResumeValid.value && !isSubmitting.value
 })
 
-const handleFileUpload = async (e: Event) => {
+const validateAndSetFile = (file: File) => {
+  const isPdfMime = file.type === 'application/pdf'
+  const hasPdfExt = file.name.toLowerCase().endsWith('.pdf')
+  if (!isPdfMime && !hasPdfExt) {
+    errorMessage.value = 'Please select a PDF document (.pdf).'
+    return
+  }
+  if (file.size <= 0) {
+    errorMessage.value = 'File cannot be empty.'
+    return
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    errorMessage.value = 'File size exceeds maximum limit of 5 MiB.'
+    return
+  }
+
+  errorMessage.value = ''
+  resumeFile.value = file
+}
+
+const handleDragOver = (e: DragEvent) => {
+  e.preventDefault()
+  isDragging.value = true
+}
+
+const handleDragLeave = (e: DragEvent) => {
+  e.preventDefault()
+  isDragging.value = false
+}
+
+const handleDrop = (e: DragEvent) => {
+  e.preventDefault()
+  isDragging.value = false
+  const files = e.dataTransfer?.files
+  if (!files || files.length === 0) return
+  const file = files[0]
+  if (file) {
+    validateAndSetFile(file)
+  }
+}
+
+const handleFileUpload = (e: Event) => {
   const target = e.target
   if (!target || !(target instanceof HTMLInputElement) || !target.files || target.files.length === 0) {
     return
   }
   const file = target.files[0]
   if (!file) return
-  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-    errorMessage.value = 'Please upload a PDF document.'
-    return
-  }
-  resumeFileName.value = file.name
-  const reader = new FileReader()
-  reader.onload = () => {
-    const result = reader.result
-    if (typeof result === 'string') {
-      const commaIdx = result.indexOf(',')
-      resumePdfBase64.value = commaIdx >= 0 ? result.slice(commaIdx + 1) : result
-    }
-  }
-  reader.readAsDataURL(file)
+  validateAndSetFile(file)
 }
 
 const goToNextStep = () => {
@@ -80,8 +119,12 @@ const goToNextStep = () => {
     errorMessage.value = 'Please enter both company name and role title.'
     return
   }
-  if (currentStep.value === 3 && !hasResume.value) {
-    errorMessage.value = 'Please provide candidate resume text or upload a PDF.'
+  if (currentStep.value === 3 && !isCurrentResumeValid.value) {
+    if (resumeMode.value === 'paste') {
+      errorMessage.value = 'Please provide candidate resume text.'
+    } else {
+      errorMessage.value = 'Please upload a PDF document (up to 5 MiB).'
+    }
     return
   }
   errorMessage.value = ''
@@ -91,14 +134,19 @@ const goToNextStep = () => {
 }
 
 const handleSubmit = async () => {
+  if (isSubmitting.value) return
   errorMessage.value = ''
   if (!step1Valid.value) {
     errorMessage.value = 'Please provide target company and role title.'
     currentStep.value = 1
     return
   }
-  if (!hasResume.value) {
-    errorMessage.value = 'Please provide candidate resume text or upload a resume PDF.'
+  if (!isCurrentResumeValid.value) {
+    if (resumeMode.value === 'paste') {
+      errorMessage.value = 'Please provide candidate resume text.'
+    } else {
+      errorMessage.value = 'Please upload a resume PDF (up to 5 MiB).'
+    }
     currentStep.value = 3
     return
   }
@@ -110,24 +158,55 @@ const handleSubmit = async () => {
       .map((u) => u.trim())
       .filter((u) => u.length > 0)
 
-    const payload = {
+    let resumeUploadId: string | undefined = undefined
+
+    if (resumeMode.value === 'upload') {
+      const file = resumeFile.value
+      if (!file) {
+        throw new Error('Please select a resume PDF file.')
+      }
+
+      // Step 1: Request presigned upload URL from BFF
+      const presignRes = await createResumeUpload({
+        filename: file.name,
+        size_bytes: file.size,
+        content_type: 'application/pdf',
+      })
+
+      // Step 2: Binary PUT file bytes directly to opaque signed URL without auth/cookies
+      await uploadResumeFileToSignedUrl(presignRes.upload_url, file)
+
+      // Step 3: Complete upload confirmation
+      const completeRes = await completeResumeUpload(presignRes.upload_id)
+      if (completeRes.status !== 'completed') {
+        throw new Error('Résumé upload was not confirmed by storage.')
+      }
+      resumeUploadId = completeRes.upload_id
+    }
+
+    const payload: CreateWorkspaceRequest = {
       company_name: companyName.value.trim(),
       role_title: roleTitle.value.trim(),
       workflow_mode: 'hybrid',
       company_urls: urls,
       seniority: seniority.value,
-      resume_text: resumeText.value.trim() || undefined,
-      resume_pdf_base64: resumePdfBase64.value || undefined,
-      resume_filename: resumeFileName.value || undefined,
+      resume_text: resumeMode.value === 'paste' ? resumeText.value.trim() : undefined,
+      resume_upload_id: resumeMode.value === 'upload' ? resumeUploadId : undefined,
       job_description: jdText.value.trim() || undefined,
       prompt: notes.value.trim() || undefined,
     }
 
-    const ws = await createWorkspace(payload as any)
+    const ws = await createWorkspace(payload)
     const cleanId = ws.id.replace(/^workspace:/, '').replace(/`/g, '')
     router.push(`/interviews/${cleanId}/overview`)
-  } catch (err: any) {
-    errorMessage.value = err?.data?.error?.message || err?.message || 'Failed to create workspace. Please check inputs.'
+  } catch (err: unknown) {
+    if (err && typeof err === 'object') {
+      const apiErr = err as { data?: { error?: { message?: string } }; message?: string }
+      errorMessage.value =
+        apiErr.data?.error?.message || apiErr.message || 'Failed to create workspace. Please check inputs.'
+    } else {
+      errorMessage.value = 'Failed to create workspace. Please check inputs.'
+    }
   } finally {
     isSubmitting.value = false
   }
@@ -423,16 +502,30 @@ const handleSubmit = async () => {
 
         <!-- Mode: Upload PDF -->
         <div v-else class="space-y-2">
-          <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 transition rounded-lg p-8 flex flex-col items-center justify-center text-center cursor-pointer bg-slate-50/50 dark:bg-slate-850/50">
+          <div
+            class="border-2 border-dashed transition rounded-lg p-8 flex flex-col items-center justify-center text-center cursor-pointer"
+            :class="[
+              isDragging
+                ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30 ring-2 ring-indigo-400'
+                : 'border-slate-300 dark:border-slate-700 hover:border-indigo-500 bg-slate-50/50 dark:bg-slate-850/50'
+            ]"
+            @dragover="handleDragOver"
+            @dragleave="handleDragLeave"
+            @drop="handleDrop"
+          >
             <input
               type="file"
               accept=".pdf,application/pdf"
               @change="handleFileUpload"
               class="hidden"
               id="resume-upload"
+              data-testid="resume-file-input"
             />
             <label for="resume-upload" class="cursor-pointer w-full h-full flex flex-col items-center justify-center">
-              <UploadCloud class="w-10 h-10 text-slate-400 mb-2" />
+              <UploadCloud
+                class="w-10 h-10 mb-2 transition-colors"
+                :class="isDragging ? 'text-indigo-600 dark:text-indigo-400 scale-110' : 'text-slate-400'"
+              />
               <span v-if="resumeFileName" class="text-xs font-mono font-medium text-indigo-600 dark:text-indigo-400">
                 {{ resumeFileName }}
               </span>

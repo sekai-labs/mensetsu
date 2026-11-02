@@ -39,6 +39,11 @@ struct SkillRelationRow {
     relation: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces/{id}/match",
+    responses((status = 200, body = serde_json::Value), (status = 403))
+)]
 pub async fn get_workspace_match(
     State(state): State<AppState>,
     auth_user: AuthenticatedUser,
@@ -68,6 +73,11 @@ pub async fn get_workspace_match(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces/{id}/knowledge",
+    responses((status = 200, body = KnowledgeGraphResponse), (status = 403))
+)]
 pub async fn get_workspace_knowledge(
     State(state): State<AppState>,
     auth_user: AuthenticatedUser,
@@ -107,6 +117,11 @@ pub async fn get_workspace_knowledge(
     Ok(Json(KnowledgeGraphResponse { nodes, edges }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces/{id}/learning",
+    responses((status = 200, body = Vec<LearningUnit>), (status = 403))
+)]
 pub async fn get_workspace_learning(
     State(state): State<AppState>,
     auth_user: AuthenticatedUser,
@@ -173,6 +188,11 @@ pub async fn toggle_learning_unit_completed(
     })))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces/{id}/questions",
+    responses((status = 200, body = Vec<InterviewQuestion>), (status = 403))
+)]
 pub async fn get_workspace_questions(
     State(state): State<AppState>,
     auth_user: AuthenticatedUser,

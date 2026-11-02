@@ -123,7 +123,7 @@
     "pdfUpload": "Téléversement PDF",
     "resumePlaceholder": "Collez le texte brut de votre CV ou en markdown...",
     "dropzone": "Cliquez pour parcourir ou glissez-déposez le CV en PDF",
-    "dropzoneLimit": "PDF jusqu'à 10 Mo",
+    "dropzoneLimit": "PDF jusqu'à 5 Mio",
     "continueJd": "Continuer vers la fiche de poste",
     "jdTitle": "Fiche de poste cible",
     "jdDesc": "Collez la fiche de poste pour calculer une matrice de correspondance exacte et identifier les lacunes critiques.",

@@ -30,13 +30,13 @@ logger = logging.getLogger("mensetsu.orchestration.hybrid_workflow")
 class HybridWorkflowState(BaseModel):
     run_id: str
     workspace_id: str
+    user_id: str = ""
     company_name: str
     role_title: str
     company_urls: list[str] = Field(default_factory=list)
     resume_text: str = ""
-    resume_pdf_base64: str | None = None
+    resume_upload_id: str | None = None
     resume_filename: str | None = None
-    job_description: str = ""
     jd_url: str | None = None
     seniority: str | None = None
     user_prompt: str | None = None
@@ -131,26 +131,38 @@ def build_hybrid_workflow(checkpointer=None, ledger: SurrealLedgerRepository | N
             },
         )
 
-        norm_task_id = f"task_normalize_{state.run_id[:8]}"
-        existing_tasks = await ledger.list_tasks_for_run(state.run_id)
-        norm_task = next((t for t in existing_tasks if t.id == norm_task_id), None)
-        parsed_cv: dict[str, Any] = {}
-        if norm_task and norm_task.status == "completed":
-            parsed_cv = (norm_task.output_data or {}).get("parsed_cv", {})
-        else:
-            parsed_cv = {
-                "extracted_skills": ["distributed systems", "backend engineering", "cloud architecture", "microservices"],
-                "candidate_name": "Applicant",
-                "summary": state.resume_text[:300] if state.resume_text else "Candidate summary",
-            }
+        from src.orchestration.static_workflow import StaticWorkflowState, build_static_workflow
+
+        normalize_graph = build_static_workflow(
+            checkpointer=checkpointer, ledger=ledger, db_client=ledger.db, mode="normalize_only"
+        )
+        normalized = await normalize_graph.ainvoke(
+            StaticWorkflowState(
+                run_id=state.run_id,
+                workspace_id=state.workspace_id,
+                user_id=state.user_id,
+                company_name=resolved_company,
+                role_title=resolved_role,
+                company_urls=state.company_urls,
+                resume_text=state.resume_text,
+                resume_upload_id=state.resume_upload_id,
+                resume_filename=state.resume_filename,
+                job_description=state.job_description,
+                jd_url=state.jd_url,
+                seniority=state.seniority,
+            ),
+            config={"configurable": {"thread_id": f"{state.run_id}__normalize"}},
+        )
 
         return {
             "company_name": resolved_company,
             "role_title": resolved_role,
-            "parsed_resume": parsed_cv,
+            "resume_text": normalized.get("resume_text", state.resume_text),
+            "job_description": normalized.get("job_description", state.job_description),
+            "parsed_resume": normalized.get("parsed_resume", {}),
             "jd_evidence_id": f"art_jd_{state.run_id[:8]}" if state.jd_url and not state.job_description.strip() else None,
+            "resume_upload_id": None,
         }
-
     async def planner_node(state: HybridWorkflowState) -> dict[str, Any]:
         check_lease()
         await set_run_phase(state.run_id, "planning", 15)

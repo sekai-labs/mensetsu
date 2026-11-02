@@ -41,6 +41,11 @@ async fn app_with_upstream(intelligence_grpc_url: &str) -> (Router, DatabasePool
             .await
             .expect("GrpcClient must connect"),
     );
+    let storage = Arc::new(
+        mensetsu_api::contexts::workspace::infrastructure::storage::ResumeObjectStore::from_config(&config)
+            .await
+            .expect("S3 signer should initialize"),
+    );
     let state = AppState {
         db: db.clone(),
         config: config.clone(),
@@ -56,6 +61,7 @@ async fn app_with_upstream(intelligence_grpc_url: &str) -> (Router, DatabasePool
             ws_repo,
         )),
         grpc_client,
+        storage,
     };
     (create_router(state), db)
 }

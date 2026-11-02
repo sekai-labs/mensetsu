@@ -1,6 +1,9 @@
 use mensetsu_api::{
     contexts,
-    interfaces::http::{create_router, workspaces::AppState},
+    interfaces::{
+        grpc::{proto::resume::resume_storage_service_server::ResumeStorageServiceServer, resume_storage::ResumeStorageGrpcService},
+        http::{create_router, workspaces::AppState},
+    },
     shared::config::AppConfig,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -16,6 +19,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Connecting to SurrealDB at {}", config.surreal_url);
 
     let db = contexts::workspace::infrastructure::db::DatabasePool::connect(&config).await?;
+    let storage = std::sync::Arc::new(
+        contexts::workspace::infrastructure::storage::ResumeObjectStore::from_config(&config).await?,
+    );
     let user_repo = std::sync::Arc::new(contexts::identity::infrastructure::SurrealUserRepository::new(db.client.clone()));
     let session_repo = std::sync::Arc::new(contexts::identity::infrastructure::SurrealAuthSessionRepository::new(db.client.clone()));
     let hasher = std::sync::Arc::new(contexts::identity::domain::hasher::Argon2PasswordHasher::new());
@@ -38,6 +44,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Connecting to Intelligence gRPC at {}", config.intelligence_grpc_url);
     let grpc_client = std::sync::Arc::new(mensetsu_api::interfaces::grpc::GrpcClient::connect(&config).await?);
     tracing::info!("Successfully connected to Intelligence gRPC service");
+    let grpc_service = ResumeStorageGrpcService::new(
+        db.clone(),
+        storage.clone(),
+        &config.internal_service_token,
+    );
     let state = AppState {
         db,
         config: config.clone(),
@@ -45,6 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         workspace_service,
         workflow_service,
         grpc_client,
+        storage,
     };
     let app = create_router(state);
     let addr = format!("{}:{}", config.host, config.port);
@@ -52,6 +64,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Mensetsu Core API listening on {}", addr);
     tracing::info!("OpenAPI Swagger UI at http://{}/swagger-ui", addr);
 
-    axum::serve(listener, app).await?;
-    Ok(())
+    let grpc_addr: std::net::SocketAddr = config.api_grpc_bind.parse()?;
+    let grpc_server = tonic::transport::Server::builder()
+        .add_service(ResumeStorageServiceServer::new(grpc_service))
+        .serve(grpc_addr);
+    tracing::info!(%grpc_addr, "Internal resume gRPC service listening");
+    tokio::select! {
+        result = axum::serve(listener, app) => result?,
+        result = grpc_server => result?,
+    }
+    Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, "API server stopped").into())
 }

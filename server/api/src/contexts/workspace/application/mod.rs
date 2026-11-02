@@ -15,22 +15,29 @@ impl WorkspaceService {
         Self { repository }
     }
 
+    pub fn build_workspace(
+        &self,
+        user_id: UserId,
+        dto: &CreateWorkspaceRequestDto,
+    ) -> Result<Workspace> {
+        Workspace::new(
+            user_id,
+            dto.company_name.clone().unwrap_or_default(),
+            dto.role_title.clone().unwrap_or_default(),
+            dto.seniority.clone(),
+            dto.target_date,
+            dto.prep_time_weeks,
+            dto.prompt.clone(),
+            dto.workflow_mode.clone(),
+        )
+    }
+
     pub async fn create_workspace(
         &self,
         user_id: UserId,
         dto: CreateWorkspaceRequestDto,
     ) -> Result<Workspace> {
-        let workspace = Workspace::new(
-            user_id,
-            dto.company_name.unwrap_or_default(),
-            dto.role_title.unwrap_or_default(),
-            dto.seniority,
-            dto.target_date,
-            dto.prep_time_weeks,
-            dto.prompt,
-            dto.workflow_mode,
-        )?;
-
+        let workspace = self.build_workspace(user_id, &dto)?;
         self.repository.save(&workspace).await?;
         Ok(workspace)
     }

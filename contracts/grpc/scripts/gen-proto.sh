@@ -20,7 +20,8 @@ uv run python -m grpc_tools.protoc \
   --pyi_out="${PY_OUT_DIR}" \
   "${PROTO_DIR}"/health.proto \
   "${PROTO_DIR}"/control.proto \
-  "${PROTO_DIR}"/streaming.proto
+  "${PROTO_DIR}"/streaming.proto \
+  "${PROTO_DIR}"/resume_storage.proto
 
 # Fix relative imports in generated grpc files if needed
 sed -i -E 's/^import ([a-zA-Z0-9_]+_pb2) as/from . import \1 as/' "${PY_OUT_DIR}"/*_pb2_grpc.py 2>/dev/null || true

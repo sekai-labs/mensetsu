@@ -52,8 +52,8 @@ class DataControlServicer(control_pb2_grpc.DataControlServiceServicer):
                         role_title=c.role_title or "Target Role",
                         company_urls=list(c.company_urls),
                         resume_text=c.resume_text or "",
-                        resume_pdf_base64=c.resume_pdf_base64
-                        if c.HasField("resume_pdf_base64")
+                        resume_upload_id=c.resume_upload_id
+                        if c.HasField("resume_upload_id")
                         else None,
                         resume_filename=c.resume_filename
                         if c.HasField("resume_filename")

@@ -86,6 +86,11 @@ async fn setup_test_app_with_upstream(intelligence_url: &str) -> (axum::Router, 
             .await
             .expect("GrpcClient should initialize"),
     );
+    let storage = Arc::new(
+        mensetsu_api::contexts::workspace::infrastructure::storage::ResumeObjectStore::from_config(&config)
+            .await
+            .expect("S3 signer should initialize"),
+    );
 
     let state = AppState {
         db: db.clone(),
@@ -94,6 +99,7 @@ async fn setup_test_app_with_upstream(intelligence_url: &str) -> (axum::Router, 
         workspace_service,
         workflow_service,
         grpc_client,
+        storage,
     };
 
     let app = create_router(state);

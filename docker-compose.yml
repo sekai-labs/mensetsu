@@ -50,13 +50,45 @@ services:
       timeout: 3s
       retries: 5
 
+  minio:
+    image: bitnamilegacy/minio:2025.7.23-debian-12-r5@sha256:6dabb4a2088c9a79908de3bc05f4586c23ad2182c8908e7e3acbf61c1467fb20
+    container_name: mensetsu-minio
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${AWS_ACCESS_KEY_ID:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      - MINIO_API_CORS_ALLOW_ORIGIN=${S3_CORS_ORIGIN:-http://localhost:3001}
+    volumes:
+      - minio_data:/bitnami/minio/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  minio-init:
+    image: bitnamilegacy/minio:2025.7.23-debian-12-r5@sha256:6dabb4a2088c9a79908de3bc05f4586c23ad2182c8908e7e3acbf61c1467fb20
+    container_name: mensetsu-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-minioadmin}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      - S3_BUCKET=${S3_BUCKET:-mensetsu-resumes}
+    volumes:
+      - ./infra/minio-init.sh:/minio-init.sh:ro
+    entrypoint: ["/bin/sh", "/minio-init.sh"]
+    restart: "no"
+
   api:
     container_name: mensetsu-api
     build:
       context: .
       dockerfile: server/api/Dockerfile
-    expose:
-      - "3000"
     ports:
       - "3000:3000"
     healthcheck:
@@ -77,21 +109,36 @@ services:
       - SURREAL_DB=production
       - INTELLIGENCE_GRPC_ENDPOINT=http://intelligence:50051
       - CORS_ORIGIN=http://localhost:3000,http://localhost:3001
+      - API_GRPC_BIND=0.0.0.0:50052
+      - S3_BUCKET=${S3_BUCKET:-mensetsu-resumes}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-minioadmin}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      - S3_ENDPOINT_INTERNAL=http://minio:9000
+      - S3_ENDPOINT_PUBLIC=${S3_ENDPOINT_PUBLIC:-http://localhost:9000}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
       - RUST_LOG=info,tower_http=info
+    expose:
+      - "3000"
+      - "50052"
     depends_on:
       surrealdb:
         condition: service_healthy
       intelligence:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
     restart: unless-stopped
     mem_limit: 512m
     cpus: 1.0
-
   intelligence:
     container_name: mensetsu-intelligence
     build:
       context: ./server/intelligence
       dockerfile: Dockerfile
+      target: intelligence
     expose:
       - "50051"
     env_file:
@@ -103,6 +150,9 @@ services:
       - REDIS_URL=redis://redis:6379
       - CHECKPOINT_TTL_MINUTES=180
       - SEARXNG_URL=http://searxng:8080
+      - API_GRPC_ENDPOINT=http://api:50052
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
+      - S3_DOWNLOAD_ALLOWED_ORIGIN=http://minio:9000
     healthcheck:
       test: ["CMD", "python", "-c", "import grpc; c=grpc.insecure_channel('127.0.0.1:50051'); grpc.channel_ready_future(c).result(timeout=2)"]
       interval: 5s
@@ -124,7 +174,7 @@ services:
     build:
       context: ./server/intelligence
       dockerfile: Dockerfile
-    command: ["python", "-m", "src.worker"]
+      target: worker
     env_file:
       - .env
     environment:
@@ -132,12 +182,19 @@ services:
       - REDIS_URL=redis://redis:6379
       - CHECKPOINT_TTL_MINUTES=180
       - SEARXNG_URL=http://searxng:8080
+      - API_GRPC_ENDPOINT=http://api:50052
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
+      - S3_DOWNLOAD_ALLOWED_ORIGIN=http://minio:9000
     depends_on:
       surrealdb:
         condition: service_healthy
       redis:
         condition: service_healthy
       searxng:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      api:
         condition: service_healthy
     restart: unless-stopped
     mem_limit: 2g
@@ -165,3 +222,4 @@ services:
 volumes:
   surreal_data:
   redis_data:
+  minio_data:

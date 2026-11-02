@@ -9,6 +9,11 @@ use super::AppState;
 use crate::interfaces::http::extractors::authenticated_user::AuthenticatedUser;
 use crate::shared::error::AppError;
 
+#[utoipa::path(
+    get,
+    path = "/api/v1/workspaces/{id}/role",
+    responses((status = 200, body = serde_json::Value), (status = 403))
+)]
 pub async fn get_workspace_role(
     State(state): State<AppState>,
     auth_user: AuthenticatedUser,
@@ -72,13 +77,19 @@ pub async fn get_workspace_role(
     })))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ImportJdUrlRequestDto {
     pub url: String,
     pub custom_title: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/workspaces/{id}/import-jd",
+    request_body = ImportJdUrlRequestDto,
+    responses((status = 200, body = serde_json::Value), (status = 403))
+)]
 pub async fn import_job_description_url(
     State(state): State<AppState>,
     auth_user: AuthenticatedUser,
