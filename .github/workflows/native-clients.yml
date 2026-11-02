@@ -27,7 +27,7 @@ env:
 
 jobs:
   android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v5
@@ -37,7 +37,10 @@ jobs:
       - name: Build Android APK
         run: |
           chmod +x app/mobile/android/gradlew
-          app/mobile/android/gradlew -p app/mobile/android testDebugUnitTest assembleDebug
+          if ! app/mobile/android/gradlew -p app/mobile/android testDebugUnitTest assembleDebug > "$RUNNER_TEMP/android-build.log" 2>&1; then
+            tail -n 30 "$RUNNER_TEMP/android-build.log" | while IFS= read -r line; do echo "::error::$line"; done
+            exit 1
+          fi
       - name: Upload Android APK artifact
         uses: actions/upload-artifact@v4
         with:
