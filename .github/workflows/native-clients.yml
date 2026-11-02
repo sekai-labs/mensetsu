@@ -184,17 +184,23 @@ jobs:
             Select-String -Path $buildLog -Pattern 'error' | Select-Object -Last 12 | ForEach-Object { Write-Output "::error::$($_.Line)" }
             exit 1
           }
+      - name: Publish self-contained Windows application
+        shell: pwsh
+        run: |
+          $publishDir = (New-Item -ItemType Directory -Force -Path build/windows/publish).FullName
+          $publishLog = "$env:RUNNER_TEMP\mensetsu-windows-publish.log"
+          msbuild app/desktop/windows/src/Mensetsu/Mensetsu.csproj /restore /target:Publish /p:Platform=x64 /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true "/p:PublishDir=$publishDir/" 2>&1 | Tee-Object -FilePath $publishLog
+          if ($LASTEXITCODE -ne 0) {
+            Select-String -Path $publishLog -Pattern 'error' | Select-Object -Last 12 | ForEach-Object { Write-Output "::error::$($_.Line)" }
+            exit 1
+          }
+          if (-not (Test-Path (Join-Path $publishDir 'Mensetsu.exe'))) { throw 'WinUI executable not published' }
+          if (-not (Test-Path (Join-Path $publishDir 'coreclr.dll'))) { throw '.NET runtime not included in published app' }
       - name: Package Windows executable and dependencies
         shell: pwsh
         run: |
-          $binDir = Get-ChildItem -Directory -Recurse app/desktop/windows/src/Mensetsu/bin -Filter "win-x64" | Select-Object -First 1
-          if (-not $binDir) {
-            $app = Get-ChildItem app/desktop/windows/src/Mensetsu/bin -Filter Mensetsu.exe -Recurse | Select-Object -First 1
-            if (-not $app) { throw 'WinUI executable not built' }
-            $binDir = $app.Directory
-          }
-          New-Item -ItemType Directory -Force -Path build/windows | Out-Null
-          Compress-Archive -Path "$($binDir.FullName)\*" -DestinationPath build/windows/mensetsu-win-x64.zip
+          $publishDir = (Get-Item build/windows/publish).FullName
+          Compress-Archive -Path "$publishDir\*" -DestinationPath build/windows/mensetsu-win-x64.zip
       - name: Upload Windows package archive
         uses: actions/upload-artifact@v4
         with:
@@ -210,8 +216,6 @@ jobs:
         if: env.MENSETSU_API_URL != ''
         shell: pwsh
         run: |
-          $app = Get-ChildItem app/desktop/windows/src/Mensetsu/bin -Filter Mensetsu.exe -Recurse | Select-Object -First 1
-          if (-not $app) { throw 'WinUI executable not built' }
-          $env:MENSETSU_APP_EXE = $app.FullName
+          $env:MENSETSU_APP_EXE = (Get-Item build/windows/publish/Mensetsu.exe).FullName
           $env:MENSETSU_TEST_PDF_PATH = "$((Get-Item .).FullName)\fixtures\resume-text.pdf"
           dotnet test app/desktop/windows/tests/Mensetsu.AutomationSmoke/Mensetsu.AutomationSmoke.csproj --no-build -p:Platform=x64
