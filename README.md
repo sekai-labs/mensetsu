@@ -58,6 +58,6 @@ PDFs go directly from the client to a private S3-compatible bucket through a sho
 
 ## GitHub builds
 
-Codeberg is the source repository; your existing synchronization brings code to GitHub. GitHub alone holds `.github/workflows/` and publishes the `api`, `intelligence`, `worker`, and `web` images to `ghcr.io`. Native builds upload an APK, an iOS simulator app, a Linux binary, an unsigned macOS app, and a Windows executable bundle as GitHub Actions artifacts. Pull requests build images without publishing. Keep the GitHub-only workflows out of Codeberg and ensure the existing sync preserves them: a force-push mirror over GitHub `main` would overwrite them.
+Codeberg is the source repository; its synchronization brings code to GitHub. GitHub alone holds `.github/workflows/` and publishes the `api`, `intelligence`, `worker`, and `web` images to `ghcr.io`. Native builds upload an APK, an iOS simulator app, a Linux binary, an unsigned macOS app, and a Windows executable bundle as GitHub Actions artifacts. Pull requests build images without publishing. The current sync replaced GitHub `main` after a Codeberg push and removed the GitHub-only workflows. Configure it to preserve GitHub commits before relying on automatic builds; keep the workflows out of Codeberg.
 
 Licensed under [Apache-2.0](LICENSE).

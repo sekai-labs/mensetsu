@@ -81,9 +81,9 @@ public final class AuthViewModel: ObservableObject {
                         password: password
                     )
                     let loginRes = try await APIClient.shared.login(dto: req)
-                    if loginRes.requires2fa {
+                    if loginRes.requires2fa == true {
                         self.requires2fa = true
-                        self.challengeToken = loginRes.challengeToken
+                        self.challengeToken = loginRes.tempToken
                         self.isLoading = false
                     } else {
                         self.currentUser = loginRes.user
@@ -114,8 +114,8 @@ public final class AuthViewModel: ObservableObject {
         Task {
             do {
                 let req = Login2faRequestDto(
-                    challengeToken: token,
-                    code: totpCode.trimmingCharacters(in: .whitespaces)
+                    code: totpCode.trimmingCharacters(in: .whitespaces),
+                    tempToken: token
                 )
                 let auth = try await APIClient.shared.login2fa(dto: req)
                 self.currentUser = auth.user
