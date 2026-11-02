@@ -312,7 +312,7 @@ public final class APIClient {
             requiresAuth: false
         )
         
-        if response.requires2fa {
+        if response.requires2fa == true {
             return response
         }
         

@@ -152,12 +152,11 @@ namespace Mensetsu.ViewModels
                 var success = await _apiService.ToggleLearningUnitAsync(_workspaceId, lessonId);
                 if (success)
                 {
-                    // Find unit and toggle its completed state in local list
                     var unit = _learningUnits.FirstOrDefault(u => u.Id == lessonId);
                     if (unit != null)
                     {
-                        var current = unit.CompletedOption.IsSet && unit.CompletedOption.Value == true;
-                        unit.CompletedOption = new Option<bool?>(!current);
+                        var current = unit.Completed == true;
+                        unit.Completed = !current;
                     }
                     UpdateLearningUnitsList();
                     OnPropertyChanged(nameof(FilteredLearningUnits));
