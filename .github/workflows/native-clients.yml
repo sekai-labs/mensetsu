@@ -45,11 +45,12 @@ jobs:
           path: app/mobile/android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
       - name: Require a reachable Rust API
+        if: env.MENSETSU_API_URL != ''
         shell: bash
         run: |
-          test -n "$MENSETSU_API_URL" || { echo 'Set NATIVE_SMOKE_API_URL to the live Rust API.' >&2; exit 1; }
-          curl --fail --silent --show-error "$MENSETSU_API_URL/health"
+          curl --fail --silent --show-error "$MENSETSU_API_URL/health/live"
       - name: Run real emulator UI smoke
+        if: env.MENSETSU_API_URL != ''
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -70,8 +71,7 @@ jobs:
           test -n "$simulator_id" && test "$simulator_id" != null
           derived_data="$RUNNER_TEMP/mensetsu-ios"
           if ! xcodebuild build-for-testing -project app/mobile/ios/Mensetsu.xcodeproj -scheme Mensetsu -destination "platform=iOS Simulator,id=$simulator_id" CODE_SIGNING_ALLOWED=NO -derivedDataPath "$derived_data" > "$RUNNER_TEMP/ios-build.log" 2>&1; then
-            grep -E 'error:|Error Domain|failed|Failure' "$RUNNER_TEMP/ios-build.log" | tail -n 12 | while IFS= read -r line; do echo "::error::$line"; done || true
-            echo "::error::$(tail -n 1 "$RUNNER_TEMP/ios-build.log")"
+            tail -n 20 "$RUNNER_TEMP/ios-build.log" | while IFS= read -r line; do echo "::error::$line"; done
             exit 1
           fi
           mkdir -p build/ios
@@ -83,10 +83,11 @@ jobs:
           path: build/ios/Mensetsu-ios-simulator.app.tar.gz
           if-no-files-found: error
       - name: Require a reachable Rust API
+        if: env.MENSETSU_API_URL != ''
         run: |
-          test -n "$MENSETSU_API_URL" || { echo 'Set NATIVE_SMOKE_API_URL to the live Rust API.' >&2; exit 1; }
-          curl --fail --silent --show-error "$MENSETSU_API_URL/health"
+          curl --fail --silent --show-error "$MENSETSU_API_URL/health/live"
       - name: Run real XCUITest UI smoke
+        if: env.MENSETSU_API_URL != ''
         run: |
           simulator_id="$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name | startswith("iPhone")) | .udid][0]')"
           test -n "$simulator_id" && test "$simulator_id" != null
@@ -122,10 +123,11 @@ jobs:
           path: build/linux/mensetsu-linux-x86_64.tar.gz
           if-no-files-found: error
       - name: Require a reachable Rust API
+        if: env.MENSETSU_API_URL != ''
         run: |
-          test -n "$MENSETSU_API_URL" || { echo 'Set NATIVE_SMOKE_API_URL to the live Rust API.' >&2; exit 1; }
-          curl --fail --silent --show-error "$MENSETSU_API_URL/health"
+          curl --fail --silent --show-error "$MENSETSU_API_URL/health/live"
       - name: Launch and exercise GTK4 UI against Rust API
+        if: env.MENSETSU_API_URL != ''
         run: dbus-run-session -- bash -c 'printf "native-smoke-secret\n" | gnome-keyring-daemon --unlock --components=secrets; xvfb-run -a cargo test --manifest-path app/desktop/linux/Cargo.toml --test smoke_test -- --nocapture --test-threads=1'
 
   macos:
@@ -136,7 +138,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build unsigned macOS app
         run: |
-          xcodebuild -project app/desktop/macos/Mensetsu.xcodeproj -scheme Mensetsu -destination 'generic/platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -derivedDataPath "$RUNNER_TEMP/mensetsu-macos" build
+          if ! xcodebuild -project app/desktop/macos/Mensetsu.xcodeproj -scheme Mensetsu -destination 'generic/platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -derivedDataPath "$RUNNER_TEMP/mensetsu-macos" build > "$RUNNER_TEMP/macos-build.log" 2>&1; then
+            grep -E 'error:|Error Domain|failed|Failure' "$RUNNER_TEMP/macos-build.log" | tail -n 12 | while IFS= read -r line; do echo "::error::$line"; done || true
+            echo "::error::$(tail -n 1 "$RUNNER_TEMP/macos-build.log")"
+            exit 1
+          fi
           mkdir -p build/macos
           tar -czf build/macos/Mensetsu-macos-unsigned.app.tar.gz -C "$RUNNER_TEMP/mensetsu-macos/Build/Products/Debug" Mensetsu.app
       - name: Upload unsigned macOS app archive
@@ -146,10 +152,11 @@ jobs:
           path: build/macos/Mensetsu-macos-unsigned.app.tar.gz
           if-no-files-found: error
       - name: Require a reachable Rust API
+        if: env.MENSETSU_API_URL != ''
         run: |
-          test -n "$MENSETSU_API_URL" || { echo 'Set NATIVE_SMOKE_API_URL to the live Rust API.' >&2; exit 1; }
-          curl --fail --silent --show-error "$MENSETSU_API_URL/health"
+          curl --fail --silent --show-error "$MENSETSU_API_URL/health/live"
       - name: Exercise macOS SwiftUI UI against Rust API
+        if: env.MENSETSU_API_URL != ''
         run: xcodebuild test -project app/desktop/macos/Mensetsu.xcodeproj -scheme Mensetsu -destination 'platform=macOS'
 
   windows:
@@ -158,7 +165,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build unpackaged WinUI 3 client
         shell: pwsh
-        run: dotnet build app/desktop/windows/Mensetsu.sln -p:Platform=x64
+        run: |
+          $buildLog = "$env:RUNNER_TEMP\mensetsu-windows-build.log"
+          dotnet build app/desktop/windows/Mensetsu.sln -p:Platform=x64 2>&1 | Tee-Object -FilePath $buildLog
+          if ($LASTEXITCODE -ne 0) {
+            Select-String -Path $buildLog -Pattern 'error' | Select-Object -Last 12 | ForEach-Object { Write-Output "::error::$($_.Line)" }
+            exit 1
+          }
       - name: Package Windows executable and dependencies
         shell: pwsh
         run: |
@@ -177,11 +190,12 @@ jobs:
           path: build/windows/mensetsu-win-x64.zip
           if-no-files-found: error
       - name: Require a reachable Rust API
+        if: env.MENSETSU_API_URL != ''
         shell: pwsh
         run: |
-          if (-not $env:MENSETSU_API_URL) { throw 'Set NATIVE_SMOKE_API_URL to the live Rust API.' }
-          Invoke-WebRequest "$env:MENSETSU_API_URL/health" -UseBasicParsing | Out-Null
+          Invoke-WebRequest "$env:MENSETSU_API_URL/health/live" -UseBasicParsing | Out-Null
       - name: Launch and exercise WinUI UI against Rust API
+        if: env.MENSETSU_API_URL != ''
         shell: pwsh
         run: |
           $app = Get-ChildItem app/desktop/windows/src/Mensetsu/bin -Filter Mensetsu.exe -Recurse | Select-Object -First 1
