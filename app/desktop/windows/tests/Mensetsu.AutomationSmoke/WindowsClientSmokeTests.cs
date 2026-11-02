@@ -407,9 +407,9 @@ namespace Mensetsu.AutomationSmoke
                 var detailScreen = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.WorkspaceDetailScreen)), TimeSpan.FromSeconds(25)).Result;
                 Assert.NotNull(detailScreen);
 
-                var detailTitle = Retry.WhileNull(() => detailScreen.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.DetailTitle)), TimeSpan.FromSeconds(5)).Result;
-                Assert.NotNull(detailTitle);
-                Assert.Contains("PDF Quantum Systems", detailTitle.Name);
+                var companyName = Retry.WhileNull(() => detailScreen.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.OverviewCompanyName)), TimeSpan.FromSeconds(5)).Result;
+                Assert.NotNull(companyName);
+                Assert.Contains("PDF Quantum Systems", companyName.Name);
             }
             finally
             {
