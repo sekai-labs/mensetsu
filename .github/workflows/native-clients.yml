@@ -165,14 +165,20 @@ jobs:
         run: xcodebuild test -project app/desktop/macos/Mensetsu.xcodeproj -scheme Mensetsu -destination 'platform=macOS'
 
   windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '9.0.x'
+      - uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: '[17.0,18.0)'
       - name: Build unpackaged WinUI 3 client
         shell: pwsh
         run: |
           $buildLog = "$env:RUNNER_TEMP\mensetsu-windows-build.log"
-          dotnet build app/desktop/windows/Mensetsu.sln -p:Platform=x64 2>&1 | Tee-Object -FilePath $buildLog
+          msbuild app/desktop/windows/Mensetsu.sln /restore /p:Platform=x64 2>&1 | Tee-Object -FilePath $buildLog
           if ($LASTEXITCODE -ne 0) {
             Select-String -Path $buildLog -Pattern 'error' | Select-Object -Last 12 | ForEach-Object { Write-Output "::error::$($_.Line)" }
             exit 1
@@ -207,4 +213,4 @@ jobs:
           if (-not $app) { throw 'WinUI executable not built' }
           $env:MENSETSU_APP_EXE = $app.FullName
           $env:MENSETSU_TEST_PDF_PATH = "$((Get-Item .).FullName)\fixtures\resume-text.pdf"
-          dotnet test app/desktop/windows/tests/Mensetsu.AutomationSmoke/Mensetsu.AutomationSmoke.csproj -p:Platform=x64
+          dotnet test app/desktop/windows/tests/Mensetsu.AutomationSmoke/Mensetsu.AutomationSmoke.csproj --no-build -p:Platform=x64
