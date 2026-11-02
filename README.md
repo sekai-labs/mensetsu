@@ -48,7 +48,7 @@ Each client has its own toolchain:
 
 Generated API clients live in `contracts/native`; the Android Gradle module at `app/mobile/android/contracts` compiles the generated Kotlin sources without duplicating them. Keep `Cargo.lock`, Xcode projects and schemes, and Visual Studio projects: they are build inputs. Cargo `target/` and .NET `bin/`/`obj/` are disposable outputs.
 
-The GitHub-only native workflow builds and uploads artifacts for all five platforms, then runs real UI smoke tests against a reachable Rust API. Set the GitHub repository variable `NATIVE_SMOKE_API_URL` to a test API accessible from hosted runners. Without it, the artifacts can build but the smoke stage fails. iOS and macOS archives are unsigned; distributing installable Apple builds requires Apple signing and provisioning outside this workflow.
+The GitHub-only native workflow builds and uploads artifacts for all five platforms. To also run real UI smoke tests, set the GitHub repository variable `NATIVE_SMOKE_API_URL` to a test Rust API accessible from hosted runners. Without it, the UI tests are skipped; the builds still run. iOS and macOS archives are unsigned; distributing installable Apple builds requires Apple signing and provisioning outside this workflow.
 
 ## Private PDF résumés
 
