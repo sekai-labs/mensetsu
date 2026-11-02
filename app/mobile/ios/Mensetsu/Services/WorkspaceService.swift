@@ -172,7 +172,7 @@ public final class WorkspaceService: WorkspaceServiceProtocol {
                         continuation.resume(throwing: error)
                         return
                     }
-                    guard let codableResp = codableResp, let value = codableResp.value else {
+                    guard let value = codableResp?.value, !(value is NSNull) else {
                         continuation.resume(returning: nil)
                         return
                     }
@@ -196,7 +196,7 @@ public final class WorkspaceService: WorkspaceServiceProtocol {
                         continuation.resume(throwing: error)
                         return
                     }
-                    guard let codableResp = codableResp, let value = codableResp.value else {
+                    guard let value = codableResp?.value, !(value is NSNull) else {
                         continuation.resume(returning: nil)
                         return
                     }
