@@ -1,63 +1,97 @@
 # Mensetsu (面接)
 
-Mensetsu helps you prepare for a *specific* technical interview. Give it a résumé, a job description, and a target company; it researches the company with citations, shows where your experience matches the role, maps what you need to learn, and builds practice questions. Research runs in the background, so you can return to a workspace as its evidence and study plan take shape.
+[![Container images pipeline](https://github.com/sekai-labs/mensetsu/actions/workflows/images.yml/badge.svg?branch=main)](https://github.com/sekai-labs/mensetsu/actions/workflows/images.yml) [![Native clients pipeline](https://github.com/sekai-labs/mensetsu/actions/workflows/native-clients.yml/badge.svg?branch=main)](https://github.com/sekai-labs/mensetsu/actions/workflows/native-clients.yml)
 
-The [web app](app/web) is built with Nuxt. A [Rust API](server/api) owns accounts, workspaces, permissions, storage, and the OpenAPI contract. A [Python service and worker](server/intelligence) handle research and analysis. SurrealDB stores workspace and graph data, Redis coordinates jobs and web sessions, and private S3-compatible storage holds uploaded PDFs. Clients never receive the internal service token or a raw web-session access token.
+[![Rust API](https://img.shields.io/badge/API-Rust-555555?logo=rust&logoColor=white)](server/api) [![Python worker](https://img.shields.io/badge/Worker-Python-555555?logo=python&logoColor=white)](server/intelligence) [![Nuxt web](https://img.shields.io/badge/Web-Nuxt-555555?logo=nuxt&logoColor=white)](app/web) [![SurrealDB](https://img.shields.io/badge/Data-SurrealDB-555555)](docker-compose.yml) [![Redis](https://img.shields.io/badge/Jobs-Redis-555555?logo=redis&logoColor=white)](docker-compose.yml)
 
-You can also use native clients for [Android and iOS](app/mobile) or [Linux, macOS, and Windows](app/desktop). They use the Rust API directly; there is no Flutter client.
+**Self-hosted, evidence-backed preparation for technical interviews.** Mensetsu brings a résumé, a target role, and company research into one workspace. It connects claims to sources, highlights experience gaps, and turns those gaps into a learning path and interview practice.
 
-## Run it locally
+The web app and five native clients connect to a Rust API; a separate Python worker runs research and analysis. You deploy the services and control where candidate data is stored.
 
-If you already have a Mensetsu database with inline PDF résumés, follow [the migration steps](#private-pdf-r%C3%A9sum%C3%A9s) **before starting the new API**.
+Build badges report GitHub mirror workflows on `main`; they may not reflect the latest [Codeberg source](https://codeberg.org/sekai-labs/mensetsu).
 
-Docker Compose is the shortest path. Copy the template, set strong values for `JWT_SECRET`, `ENCRYPTION_KEY`, `INTERNAL_SERVICE_TOKEN`, and `SEARXNG_SECRET` in `.env`, then start the stack:
+## What you can do
 
-```bash
-cp .env.example .env
-docker compose up -d --build
-```
+- Create a workspace from a PDF résumé, job description, company, and target role.
+- Review company research with source links and inspect how your experience matches role requirements.
+- Explore skills and knowledge relationships, follow a learning path, and practice with targeted questions.
+- Track background research runs and return to the workspace as results arrive.
 
-Open the web app at **http://localhost:3001**. The API health endpoint is **http://localhost:3000/health/live**; SurrealDB listens on port 8000, and the local MinIO API and console listen on ports 9000 and 9001. Do not expose the sample database or storage credentials outside local development. Stop the stack with `docker compose down` (add `-v` only if you deliberately want to delete its data).
+AI-generated material can be wrong. Check important claims against their cited sources before relying on them.
 
-For local development, you will need Rust, Bun, Python 3.12+, and `uv`. `make infra-up` starts SurrealDB and Redis. The API, web app, intelligence gRPC service, and worker run separately with `make dev-api`, `make dev-web`, `make dev-ai`, and `make dev-worker`. Research and PDF uploads also need SearXNG and MinIO; `docker compose up -d searxng minio minio-init` starts those services against the same `.env`.
+## Quick start: local deployment
 
-## Contracts and checks
+**Requirements:** Docker Engine with Compose v2 and credentials for an OpenAI-compatible model endpoint. The supplied Compose configuration is for local development, **not** an internet-facing production deployment.
 
-Rust exports the public REST/OpenAPI schema; protobuf files in [`contracts/grpc/proto/v1`](contracts/grpc/proto/v1) define service-to-service gRPC. TypeScript and the Kotlin, Swift, Rust, and C# native clients are generated from those sources. After changing an exposed API, run `make contracts`, then `make contracts-check`. Generation uses Docker and OpenAPI Generator 7.15.0. `make schema-parity` checks the SurrealDB migrations against the current schema and requires a running database.
+1. Create a local configuration file:
 
-Run the application tests with `make test`, or use `make test-api`, `make test-ai`, and `make test-web` for one service. `make check` also checks contracts, schema parity, and source linting.
+   ```bash
+   cp .env.example .env
+   ```
 
-**Browser end-to-end tests erase the configured SurrealDB database and flush Redis.** Use only a disposable test environment. Inspect the reset without changing data, or run the suite, respectively:
+2. Edit `.env`. Set unique values for `JWT_SECRET`, `ENCRYPTION_KEY`, `INTERNAL_SERVICE_TOKEN`, and `SEARXNG_SECRET`. Set `LLM_OPENAI_BASE_URL`, `LLM_OPENAI_API_KEY`, and `LLM_DEFAULT_MODEL` for the model you intend to use. The worker refuses to start without the model base URL and key. The template's MinIO credentials are development defaults; replace them for any shared deployment.
+
+3. Build and start the services:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+4. Open **http://localhost:3001** and complete the first-run administrator setup. The API health check is **http://localhost:3000/health/live**. If a service does not start, inspect it with `docker compose ps` and `docker compose logs <service>`.
+
+Stop the stack with `docker compose down`. Do **not** add `-v` unless you intend to delete the database, Redis, and object-storage volumes.
+
+### Hosting beyond localhost
+
+The sample Compose file publishes the API, SurrealDB, and Redis ports and configures development database credentials. Do not expose it unchanged to the internet. For a shared or public deployment, configure TLS and allowed origins, restrict internal service access, replace all sample credentials, protect the object store, and arrange persistent storage and backups. Uploaded résumés contain personal data; secure and retain them accordingly.
+
+PDF uploads use short-lived signed URLs to private S3-compatible storage. Set `S3_ENDPOINT_PUBLIC` to an HTTPS endpoint reachable by the **browser or native device** at the same hostname used in the signed URL; the default `localhost:9000` only works on the machine running the local stack. See the [system architecture](docs/architecture/system-overview.md) for service boundaries.
+
+**Existing deployments:** If your database contains legacy inline/base64 PDF résumés, run [`infra/verify_and_migrate.sh`](infra/verify_and_migrate.sh) with the matching database and object-store configuration **before starting the updated API**. It verifies each migrated object before dropping the old field and stops on a missing or corrupt record. Back up your data first.
+
+## Native clients
+
+Android, iOS, Linux, macOS, and Windows clients are in [`app/mobile`](app/mobile) and [`app/desktop`](app/desktop). On first launch, enter the **Rust API origin**, for example `https://api.example.org`—not the web app URL or an `/api/v1` path. Remote servers require HTTPS; loopback HTTP is for local development. `localhost` on a phone or another computer refers to that device, not your server. You can change servers from settings or the sign-in screen; switching signs out the current session.
+
+| Platform | Source | Build requirements |
+| --- | --- | --- |
+| Android | [`app/mobile/android`](app/mobile/android) | JDK 17, Android SDK 34, Gradle |
+| iOS | [`app/mobile/ios`](app/mobile/ios) | Xcode on macOS |
+| Linux | [`app/desktop/linux`](app/desktop/linux) | Rust, GTK4, libsecret |
+| macOS | [`app/desktop/macos`](app/desktop/macos) | Xcode on macOS |
+| Windows | [`app/desktop/windows`](app/desktop/windows) | Visual Studio 2022, Windows SDK, .NET 9 SDK |
+
+Apple distribution builds require your own signing and provisioning. Native builds use generated API clients from [`contracts/native`](contracts/native).
+
+## Architecture
+
+| Component | Responsibility |
+| --- | --- |
+| [`app/web`](app/web) | Nuxt web UI; proxies API requests and manages browser sessions |
+| [`server/api`](server/api) | Rust API; identity, authorization, workspaces, storage access, and OpenAPI |
+| [`server/intelligence`](server/intelligence) | Python intelligence service and worker; research and analysis |
+| [`contracts`](contracts) | REST/OpenAPI and internal gRPC contracts; generated client code |
+| SurrealDB, Redis, SearXNG, S3-compatible storage | Workspace data, job coordination, web search, and private PDF objects |
+
+The [architecture overview](docs/architecture/system-overview.md) covers service communication and workflow execution.
+
+## Development and verification
+
+Local development requires Rust, Bun, Python 3.12+, `uv`, and Docker Compose for supporting services. Copy and configure `.env` as above. `make infra-up` starts SurrealDB and Redis; research and uploads additionally need SearXNG and MinIO (`docker compose up -d searxng minio minio-init`). Start the applications in separate terminals with `make dev-api`, `make dev-ai`, `make dev-worker`, and `make dev-web`.
+
+Run `make test` for the API, intelligence, and web suites. Run `make contracts` after changing the Rust REST contract or gRPC definitions; `make contracts-check` verifies generated output. `make check` also checks schema parity against a running SurrealDB instance and performs source checks. Contract generation requires Docker and OpenAPI Generator.
+
+**Warning:** `make e2e` resets its configured SurrealDB database and flushes Redis. Use a disposable environment only. To inspect the reset before running the browser suite:
 
 ```bash
 RESET_DRY_RUN=1 MENSETSU_ALLOW_RESET=1 make e2e-reset
 MENSETSU_ALLOW_RESET=1 make e2e
 ```
 
-## Native builds
+## Contributing
 
-Each client has its own toolchain:
+Issues and pull requests are welcome. Include a reproducible description, the affected client or service, and the checks you ran. For API changes, regenerate and include the affected contracts and clients. Do not submit real résumés, credentials, or other personal data in issues or test fixtures; use synthetic data.
 
-| Platform | Source | Build requirement |
-| --- | --- | --- |
-| Android | `app/mobile/android` | JDK 17, Android SDK 34; Gradle builds a debug APK |
-| iOS | `app/mobile/ios` | Xcode on macOS; an unsigned simulator app can be built without signing credentials |
-| Linux | `app/desktop/linux` | Rust, GTK4, libsecret; `cargo build --manifest-path app/desktop/linux/Cargo.toml` |
-| macOS | `app/desktop/macos` | Xcode on macOS; unsigned `.app` archive |
-| Windows | `app/desktop/windows` | Visual Studio 2022 with the Windows SDK and .NET 9 SDK; `msbuild app/desktop/windows/Mensetsu.sln -restore -p:Platform=x64` |
+## License
 
-Generated API clients live in `contracts/native`; the Android Gradle module at `app/mobile/android/contracts` compiles the generated Kotlin sources without duplicating them. Keep `Cargo.lock`, Xcode projects and schemes, and Visual Studio projects: they are build inputs. Cargo `target/` and .NET `bin/`/`obj/` are disposable outputs.
-
-The GitHub-only native workflow builds and uploads artifacts for all five platforms. To also run real UI smoke tests, set the GitHub repository variable `NATIVE_SMOKE_API_URL` to a test Rust API accessible from hosted runners. Without it, the UI tests are skipped; the builds still run. iOS and macOS archives are unsigned; distributing installable Apple builds requires Apple signing and provisioning outside this workflow.
-
-## Private PDF résumés
-
-PDFs go directly from the client to a private S3-compatible bucket through a short-lived signed `PUT`. Rust authorizes the upload and checks the size, type, and PDF header before attaching it to a workspace. The Python worker obtains a short-lived signed download through authenticated internal gRPC when it needs to extract text. Workspace JSON does not carry PDF bytes or base64. Local MinIO's public signing endpoint must be reachable by the browser or device at the *exact* hostname in the signed URL; set `S3_ENDPOINT_PUBLIC` to a shared HTTPS hostname for remote devices.
-
-**Migrating existing data:** If your database has older inline/base64 PDF records, start SurrealDB and the private bucket, configure the matching host-side S3 and SurrealDB environment, and run `bash infra/verify_and_migrate.sh` **before starting the new API**. It copies PDFs to private storage, verifies the objects, and only drops the old field after every record is accounted for. On a corrupt or missing record it stops without dropping data; fix that record and rerun. The API refuses to start while legacy PDF rows remain.
-
-## GitHub builds
-
-Codeberg is the source repository; its synchronization brings code to GitHub. GitHub alone holds `.github/workflows/` and publishes the `api`, `intelligence`, `worker`, and `web` images to `ghcr.io`. Native builds upload an APK, an iOS simulator app, a Linux binary, an unsigned macOS app, and a Windows executable bundle as GitHub Actions artifacts. Pull requests build images without publishing. The current sync replaced GitHub `main` after a Codeberg push and removed the GitHub-only workflows. Configure it to preserve GitHub commits before relying on automatic builds; keep the workflows out of Codeberg.
-
-Licensed under [Apache-2.0](LICENSE).
+Mensetsu is licensed under [Apache-2.0](LICENSE).
