@@ -9,12 +9,14 @@ pub struct AuthView {
 }
 
 impl AuthView {
-    pub fn new<FSuccess>(
+    pub fn new<FSuccess, FChangeServer>(
         api: ApiService,
         on_success: FSuccess,
+        on_change_server: FChangeServer,
     ) -> Self
     where
         FSuccess: Fn() + 'static,
+        FChangeServer: Fn() + 'static,
     {
         let container = Box::new(Orientation::Vertical, 16);
         container.set_widget_name(ids::AUTH_VIEW);
@@ -219,6 +221,14 @@ impl AuthView {
         container.append(&two_fa_submit);
         container.append(&submit_button);
         container.append(&error_label);
+
+        let change_server_btn = Button::with_label("Change Server");
+        change_server_btn.set_widget_name("auth_change_server_button");
+        change_server_btn.add_css_class("flat");
+        change_server_btn.connect_clicked(move |_| {
+            on_change_server();
+        });
+        container.append(&change_server_btn);
 
         Self { container }
     }

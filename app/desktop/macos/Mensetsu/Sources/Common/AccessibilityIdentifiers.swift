@@ -6,6 +6,12 @@
 import Foundation
 
 public enum AccessibilityIdentifiers {
+    // Server Endpoint Setup (First Launch)
+    public static let serverSetupScreen = "server_setup_screen"
+    public static let inputServerUrl = "input_server_url"
+    public static let buttonSaveServerUrl = "button_save_server_url"
+    public static let serverUrlErrorMessage = "server_url_error_message"
+
     // Auth Screen
     public static let authScreen = "auth_screen"
     public static let tabLogin = "tab_login"
@@ -94,6 +100,10 @@ public enum AccessibilityIdentifiers {
     
     // Settings Screen
     public static let settingsScreen = "settings_screen"
+    public static let settingsInputServerUrl = "settings_input_server_url"
+    public static let settingsButtonSaveServerUrl = "settings_button_save_server_url"
+    public static let settingsServerUrlErrorMessage = "settings_server_url_error_message"
+    public static let settingsButtonDone = "settings_button_done"
     public static let llmProvidersList = "llm_providers_list"
     public static let llmProviderRowPrefix = "llm_provider_row_"
     public static let llmConfigureKeyPrefix = "llm_configure_key_"

@@ -22,24 +22,25 @@ namespace Mensetsu
 
         private static void ConfigureServices(IServiceCollection services)
         {
-            // Base API Uri
-            var baseUri = new Uri(AppConfig.BaseApiUrl);
-
             // Token storage and session
             services.AddSingleton<ISecureTokenStore, CredentialLockerTokenStore>();
             services.AddSingleton<IAuthSession, AuthSession>();
+
+            // Server endpoint storage & dynamic context
+            services.AddSingleton<IServerEndpointStore, FileServerEndpointStore>();
+            services.AddSingleton<IEndpointContext, EndpointContext>();
 
             // HTTP Handler with Bearer auth + serialized refresh + 1x retry
             services.AddTransient<AuthenticatedHttpClientHandler>(sp =>
             {
                 var session = sp.GetRequiredService<IAuthSession>();
-                return new AuthenticatedHttpClientHandler(session, baseUri);
+                var endpointContext = sp.GetRequiredService<IEndpointContext>();
+                return new AuthenticatedHttpClientHandler(session, endpointContext);
             });
 
             // Mensetsu API Client using AuthenticatedHttpClientHandler
             services.AddHttpClient<IMensetsuApiService, MensetsuApiService>(client =>
             {
-                client.BaseAddress = baseUri;
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
             }).AddHttpMessageHandler<AuthenticatedHttpClientHandler>();

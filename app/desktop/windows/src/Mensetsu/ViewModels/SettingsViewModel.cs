@@ -9,10 +9,13 @@ namespace Mensetsu.ViewModels
     public class SettingsViewModel : ViewModelBase
     {
         private readonly IMensetsuApiService _apiService;
+        private readonly IEndpointContext _endpointContext;
 
         private bool _isLoading;
         private string? _errorMessage;
+        private string? _statusMessage;
 
+        private string _serverUrl = string.Empty;
         private string _inputProvider = "anthropic";
         private string _inputApiKey = string.Empty;
         private bool _isSaving;
@@ -20,10 +23,13 @@ namespace Mensetsu.ViewModels
         public ObservableCollection<LlmConfigItemDto> Providers { get; } = new();
 
         public event Action? BackRequested;
+        public event Action? ServerEndpointChanged;
 
-        public SettingsViewModel(IMensetsuApiService apiService)
+        public SettingsViewModel(IMensetsuApiService apiService, IEndpointContext endpointContext)
         {
             _apiService = apiService;
+            _endpointContext = endpointContext;
+            _serverUrl = _endpointContext.CurrentEndpoint ?? string.Empty;
         }
 
         public bool IsLoading
@@ -36,6 +42,18 @@ namespace Mensetsu.ViewModels
         {
             get => _errorMessage;
             set => SetProperty(ref _errorMessage, value);
+        }
+
+        public string? StatusMessage
+        {
+            get => _statusMessage;
+            set => SetProperty(ref _statusMessage, value);
+        }
+
+        public string ServerUrl
+        {
+            get => _serverUrl;
+            set => SetProperty(ref _serverUrl, value);
         }
 
         public string InputProvider
@@ -56,10 +74,34 @@ namespace Mensetsu.ViewModels
             set => SetProperty(ref _isSaving, value);
         }
 
+        public void SaveServerUrl()
+        {
+            ErrorMessage = null;
+            StatusMessage = null;
+            try
+            {
+                var formatted = AppConfig.ValidateAndFormatUrl(ServerUrl);
+                var previous = _endpointContext.CurrentEndpoint;
+                _endpointContext.SetEndpoint(formatted);
+                ServerUrl = formatted;
+                StatusMessage = "Server URL updated. Active session cleared.";
+
+                if (!string.Equals(previous, formatted, StringComparison.OrdinalIgnoreCase))
+                {
+                    ServerEndpointChanged?.Invoke();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+            }
+        }
+
         public async Task LoadSettingsAsync()
         {
             IsLoading = true;
             ErrorMessage = null;
+            ServerUrl = _endpointContext.CurrentEndpoint ?? string.Empty;
 
             try
             {
@@ -93,6 +135,7 @@ namespace Mensetsu.ViewModels
 
             IsSaving = true;
             ErrorMessage = null;
+            StatusMessage = null;
 
             try
             {

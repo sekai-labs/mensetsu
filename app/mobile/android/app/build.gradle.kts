@@ -19,7 +19,6 @@ android {
             useSupportLibrary = true
         }
 
-        buildConfigField("String", "DEFAULT_BASE_URL", "\"http://10.0.2.2:3000\"")
     }
 
     buildTypes {
@@ -29,9 +28,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-        }
-        debug {
-            buildConfigField("String", "DEFAULT_BASE_URL", "\"http://10.0.2.2:3000\"")
         }
     }
 
@@ -47,7 +43,6 @@ android {
 
     buildFeatures {
         compose = true
-        buildConfig = true
     }
 
     composeOptions {

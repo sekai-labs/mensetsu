@@ -47,7 +47,7 @@ impl WorkspaceListView {
 
         let settings_btn = Button::with_label("Settings");
         settings_btn.set_widget_name(ids::SETTINGS_BUTTON);
-
+        settings_btn.add_css_class("settings-button");
         let logout_btn = Button::with_label("Log Out");
         logout_btn.set_widget_name(ids::LOGOUT_BUTTON);
         logout_btn.add_css_class("destructive-action");

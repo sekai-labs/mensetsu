@@ -93,4 +93,13 @@ public final class AuthViewModel: ObservableObject {
         errorMessage = nil
         isLoading = false
     }
+
+    public func resetSessionForServerChange(newServerUrl: String) async throws {
+        isLoading = true
+        defer { isLoading = false }
+        try await authService.clearSession()
+        NetworkClient.shared.setBaseUrl(newServerUrl)
+        authState = .unauthenticated
+        errorMessage = nil
+    }
 }

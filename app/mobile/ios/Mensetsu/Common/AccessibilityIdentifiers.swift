@@ -6,6 +6,18 @@
 import Foundation
 
 public enum AccessibilityID {
+    // Server Endpoint Setup (First Launch)
+    public static let serverSetupScreen = "server_setup_screen"
+    public static let inputServerUrl = "input_server_url"
+    public static let buttonSaveServerUrl = "button_save_server_url"
+    public static let serverUrlErrorMessage = "server_url_error_message"
+
+    // Server Change (Settings / Pre-auth)
+    public static let settingsServerUrlInput = "settings_input_server_url"
+    public static let settingsSaveServerUrlButton = "settings_button_save_server_url"
+    public static let openServerSettingsButton = "open_server_settings_button"
+    public static let serverSettingsSheet = "server_settings_sheet"
+
     // Auth
     public static let authScreen = "auth_screen"
     public static let authModeSegment = "auth_mode_segment"

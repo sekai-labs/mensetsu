@@ -67,4 +67,12 @@ pub mod ids {
     pub const SETTINGS_KEY_INPUT: &str = "settings_key_input";
     pub const SETTINGS_SAVE_BUTTON: &str = "settings_save_button";
     pub const SETTINGS_LIST: &str = "settings_list";
+    // Server Endpoint Setup & Settings
+    pub const SERVER_SETUP_SCREEN: &str = "server_setup_screen";
+    pub const INPUT_SERVER_URL: &str = "input_server_url";
+    pub const BUTTON_SAVE_SERVER_URL: &str = "button_save_server_url";
+    pub const SERVER_URL_ERROR_MESSAGE: &str = "server_url_error_message";
+    pub const SETTINGS_INPUT_SERVER_URL: &str = "settings_input_server_url";
+    pub const SETTINGS_BUTTON_SAVE_SERVER_URL: &str = "settings_button_save_server_url";
+    pub const SETTINGS_SERVER_URL_ERROR_MESSAGE: &str = "settings_server_url_error_message";
 }

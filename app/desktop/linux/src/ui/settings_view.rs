@@ -12,12 +12,14 @@ pub struct SettingsView {
 }
 
 impl SettingsView {
-    pub fn new<FBack>(
+    pub fn new<FBack, FServerChanged>(
         api: ApiService,
         on_back: FBack,
+        on_server_changed: FServerChanged,
     ) -> Self
     where
         FBack: Fn() + 'static,
+        FServerChanged: Fn() + 'static,
     {
         let container = Box::new(Orientation::Vertical, 12);
         container.set_widget_name(ids::SETTINGS_VIEW);
@@ -31,7 +33,7 @@ impl SettingsView {
         let back_btn = Button::with_label("← Back");
         back_btn.set_widget_name(ids::SETTINGS_BACK_BUTTON);
 
-        let title = Label::new(Some("LLM Provider Settings"));
+        let title = Label::new(Some("Settings"));
         title.add_css_class("title-2");
         title.set_hexpand(true);
         title.set_halign(gtk4::Align::Start);
@@ -42,6 +44,83 @@ impl SettingsView {
         back_btn.connect_clicked(move |_| {
             on_back();
         });
+
+        // Server Endpoint Section
+        let server_box = Box::new(Orientation::Vertical, 8);
+        let server_title = Label::new(Some("Rust API Server Endpoint"));
+        server_title.set_halign(gtk4::Align::Start);
+        server_title.add_css_class("heading");
+
+        let server_desc = Label::new(Some(
+            "Changing the server resets your active session and credentials so tokens do not leak.",
+        ));
+        server_desc.set_wrap(true);
+        server_desc.set_halign(gtk4::Align::Start);
+        server_desc.add_css_class("dim-label");
+
+        let server_entry = Entry::new();
+        server_entry.set_widget_name(ids::SETTINGS_INPUT_SERVER_URL);
+        let current_base = api.get_base_url();
+        server_entry.set_text(&current_base);
+        server_entry.set_placeholder_text(Some("https://api.example.com"));
+
+        let server_error_label = Label::new(None);
+        server_error_label.set_widget_name(ids::SETTINGS_SERVER_URL_ERROR_MESSAGE);
+        server_error_label.add_css_class("error");
+        server_error_label.set_visible(false);
+
+        let save_server_btn = Button::with_label("Change Server");
+        save_server_btn.set_widget_name(ids::SETTINGS_BUTTON_SAVE_SERVER_URL);
+        save_server_btn.add_css_class("suggested-action");
+
+        server_box.append(&server_title);
+        server_box.append(&server_desc);
+        server_box.append(&server_entry);
+        server_box.append(&server_error_label);
+        server_box.append(&save_server_btn);
+
+        // Server change action
+        {
+            let api = api.clone();
+            let server_entry = server_entry.clone();
+            let server_error = server_error_label.clone();
+            let on_server_changed = Rc::new(on_server_changed);
+
+            save_server_btn.connect_clicked(move |_| {
+                let raw = server_entry.text().to_string();
+                match crate::endpoint_config::validate_and_normalize_url(&raw) {
+                    Ok(normalized) => {
+                        server_error.set_visible(false);
+                        let api = api.clone();
+                        let on_server_changed = on_server_changed.clone();
+                        let server_error = server_error.clone();
+
+                        glib::MainContext::default().spawn_local(async move {
+                            // 1. Reset in-memory tokens, keyring refresh token, and set new URL
+                            if let Err(e) = api.set_base_url(normalized.clone()).await {
+                                server_error.set_text(&format!("Failed to reset session for new server: {e}"));
+                                server_error.set_visible(true);
+                                return;
+                            }
+
+                            // 2. Persist only after session reset succeeds
+                            if let Err(e) = crate::endpoint_config::set_persisted_server_url(&normalized) {
+                                server_error.set_text(&format!("Failed to save configuration: {e}"));
+                                server_error.set_visible(true);
+                                return;
+                            }
+
+                            // 3. Navigate away
+                            on_server_changed();
+                        });
+                    }
+                    Err(e) => {
+                        server_error.set_text(&e.to_string());
+                        server_error.set_visible(true);
+                    }
+                }
+            });
+        }
 
         // Form to configure provider key
         let form_box = Box::new(Orientation::Vertical, 8);
@@ -65,7 +144,6 @@ impl SettingsView {
         form_box.append(&provider_entry);
         form_box.append(&key_entry);
         form_box.append(&save_btn);
-
         // Current settings list
         let current_title = Label::new(Some("Configured Providers:"));
         current_title.set_halign(gtk4::Align::Start);
@@ -82,6 +160,7 @@ impl SettingsView {
         status_label.set_visible(false);
 
         container.append(&header);
+        container.append(&server_box);
         container.append(&form_box);
         container.append(&status_label);
         container.append(&current_title);

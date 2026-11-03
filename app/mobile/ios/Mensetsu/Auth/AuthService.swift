@@ -11,6 +11,7 @@ public protocol AuthServiceProtocol {
     func register(name: String, email: String, password: String) async throws -> UserResponseDto
     func login2FA(code: String, tempToken: String) async throws -> UserResponseDto
     func logout() async throws
+    func clearSession() async throws
     func checkSession() async throws -> UserResponseDto?
 }
 
@@ -126,6 +127,10 @@ public final class AuthService: AuthServiceProtocol {
         try await client.tokenManager.clear()
         MensetsuContractsAPI.customHeaders.removeValue(forKey: "Authorization")
         if let serverError { throw serverError }
+    }
+
+    public func clearSession() async throws {
+        try await client.clearSession()
     }
 
     public func checkSession() async throws -> UserResponseDto? {

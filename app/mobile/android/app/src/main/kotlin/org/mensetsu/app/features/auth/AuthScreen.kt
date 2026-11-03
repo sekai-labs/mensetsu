@@ -21,15 +21,16 @@ import org.mensetsu.app.core.tags.AppTestTags
 import org.mensetsu.contracts.models.Login2faRequestDto
 import org.mensetsu.contracts.models.LoginRequestDto
 import org.mensetsu.contracts.models.RegisterRequestDto
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthScreen(
     networkManager: NetworkManager,
-    onAuthSuccess: () -> Unit
+    onAuthSuccess: () -> Unit,
+    onChangeServer: () -> Unit = {}
 ) {
-    var isRegisterTab by remember { mutableStateOf(false) }
-    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -47,7 +48,15 @@ fun AuthScreen(
         modifier = Modifier.testTag(AppTestTags.AUTH_SCREEN),
         topBar = {
             TopAppBar(
-                title = { Text("Mensetsu Interview Studio") }
+                title = { Text("Mensetsu Interview Studio") },
+                actions = {
+                    IconButton(
+                        onClick = onChangeServer,
+                        modifier = Modifier.testTag(AppTestTags.BUTTON_SETTINGS)
+                    ) {
+                        Icon(Icons.Default.Settings, contentDescription = "Server Settings")
+                    }
+                }
             )
         }
     ) { padding ->

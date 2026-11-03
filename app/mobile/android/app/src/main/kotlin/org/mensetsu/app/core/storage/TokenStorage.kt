@@ -55,4 +55,8 @@ class TokenStorage(context: Context) {
             basePrefs.edit().putString(KEY_CUSTOM_BASE_URL, url.trim().trimEnd('/')).apply()
         }
     }
+
+    fun clearCustomBaseUrl() {
+        basePrefs.edit().remove(KEY_CUSTOM_BASE_URL).apply()
+    }
 }

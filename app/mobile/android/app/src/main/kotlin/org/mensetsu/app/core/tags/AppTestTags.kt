@@ -72,4 +72,12 @@ object AppTestTags {
     const val SETTINGS_PROVIDER_PREFIX = "settings_provider_"
     const val SETTINGS_KEY_INPUT = "settings_key_input"
     const val SETTINGS_SAVE_BUTTON = "settings_save_button"
+
+    // Server Endpoint Setup & Settings
+    const val SERVER_SETUP_SCREEN = "server_setup_screen"
+    const val INPUT_SERVER_URL = "input_server_url"
+    const val BUTTON_SAVE_SERVER_URL = "button_save_server_url"
+    const val SERVER_URL_ERROR_MESSAGE = "server_url_error_message"
+    const val SETTINGS_INPUT_SERVER_URL = "settings_input_server_url"
+    const val SETTINGS_BUTTON_SAVE_SERVER_URL = "settings_button_save_server_url"
 }

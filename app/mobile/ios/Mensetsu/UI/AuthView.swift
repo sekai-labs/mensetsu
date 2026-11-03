@@ -14,7 +14,7 @@ public struct AuthView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var twoFaCode = ""
-
+    @State private var showingServerSettings = false
     public init(viewModel: AuthViewModel) {
         self.viewModel = viewModel
     }
@@ -50,6 +50,26 @@ public struct AuthView: View {
                         authFormCard
                     }
 
+                    // Pre-auth server setting trigger
+                    Button(action: {
+                        showingServerSettings = true
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "server.rack")
+                                .font(.system(size: 13))
+                            Text("Server: \(AppConfig.apiBaseUrl.isEmpty ? "Not configured" : AppConfig.apiBaseUrl)")
+                                .font(.system(size: 13, weight: .medium))
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        .foregroundColor(AppColors.slate600)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color(UIColor.systemBackground))
+                        .cornerRadius(8)
+                    }
+                    .accessibilityIdentifier(AccessibilityID.openServerSettingsButton)
+
                     Spacer()
                 }
                 .padding(.horizontal, 20)
@@ -61,6 +81,9 @@ public struct AuthView: View {
                         .scaleEffect(1.5)
                         .accessibilityIdentifier(AccessibilityID.authLoadingIndicator)
                 }
+            }
+            .sheet(isPresented: $showingServerSettings) {
+                SettingsView(authViewModel: viewModel)
             }
             .navigationBarHidden(true)
         }

@@ -41,8 +41,9 @@ public enum APIError: LocalizedError {
 public actor TokenStorage {
     public static let shared = TokenStorage()
     
-    // Access token kept in memory only
+    // Access token kept in memory only, tagged by current session epoch
     private var memoryAccessToken: String?
+    private var currentEpoch: UInt64 = 0
     
     private init() {}
     
@@ -54,7 +55,19 @@ public actor TokenStorage {
         return self.memoryAccessToken
     }
     
-    public func clearTokens() throws {
+    public func commitTokensIfEpochMatches(epoch: UInt64, accessToken: String, refreshToken: String) throws -> Bool {
+        guard self.currentEpoch == epoch else {
+            return false
+        }
+        guard KeychainManager.shared.saveRefreshToken(refreshToken) else {
+            throw APIError.secureStorageUnavailable
+        }
+        self.memoryAccessToken = accessToken
+        return true
+    }
+
+    public func clearTokens(newEpoch: UInt64) throws {
+        self.currentEpoch = newEpoch
         self.memoryAccessToken = nil
         guard KeychainManager.shared.deleteRefreshToken() else {
             throw APIError.secureStorageUnavailable
@@ -69,11 +82,38 @@ public final class APIClient {
     private let s3Session: URLSession
     private let refreshLock = NSLock()
     private var refreshTask: Task<String, Error>?
+    private var sessionEpoch: UInt64 = 0
+    private var currentRefreshTaskId: UInt64 = 0
+    private var nextRefreshTaskId: UInt64 = 0
     
     public var baseURL: String {
-        return AppConfig.apiBaseUrl
+        let url = AppConfig.apiBaseUrl
+        MensetsuContractsAPI.basePath = url
+        return url
     }
     
+    /// Resets the in-memory tokens, Keychain items, and contracts headers to isolate sessions across servers.
+    /// Throws APIError.secureStorageUnavailable if Keychain deletion fails, ensuring no credential leaks.
+    /// Cancels in-flight refresh tasks and increments session epoch to prevent any race condition
+    /// from re-persisting old-server credentials.
+    public func resetSession() async throws {
+        let newEpoch: UInt64
+        let inFlightTask: Task<String, Error>?
+
+        refreshLock.lock()
+        sessionEpoch &+= 1
+        newEpoch = sessionEpoch
+        inFlightTask = refreshTask
+        refreshTask = nil
+        currentRefreshTaskId = 0
+        refreshLock.unlock()
+        inFlightTask?.cancel()
+
+        try await TokenStorage.shared.clearTokens(newEpoch: newEpoch)
+        MensetsuContractsAPI.customHeaders.removeValue(forKey: "Authorization")
+        MensetsuContractsAPI.basePath = baseURL
+    }
+
     private final class NoRedirectDelegate: NSObject, URLSessionTaskDelegate {
         func urlSession(
             _ session: URLSession,
@@ -235,15 +275,24 @@ public final class APIClient {
     
     public func serializedRefreshToken() async throws -> String {
         refreshLock.lock()
+        let currentEpoch = sessionEpoch
         if let existingTask = refreshTask {
             refreshLock.unlock()
             return try await existingTask.value
         }
         
+        nextRefreshTaskId &+= 1
+        let taskId = nextRefreshTaskId
+        currentRefreshTaskId = taskId
+
         let task = Task<String, Error> {
             defer {
                 self.refreshLock.lock()
-                self.refreshTask = nil
+                // Only clear refreshTask if active task ID still matches this task
+                if self.currentRefreshTaskId == taskId {
+                    self.refreshTask = nil
+                    self.currentRefreshTaskId = 0
+                }
                 self.refreshLock.unlock()
             }
             
@@ -270,10 +319,35 @@ public final class APIClient {
             }
             let tokenResponse = try JSONDecoder().decode(TokenResponseDto.self, from: data)
             
-            guard KeychainManager.shared.saveRefreshToken(tokenResponse.refreshToken) else {
-                throw APIError.secureStorageUnavailable
+            if Task.isCancelled {
+                throw APIError.unauthorized
             }
-            await TokenStorage.shared.setAccessToken(tokenResponse.accessToken)
+
+            // Atomically check epoch inside TokenStorage actor:
+            // If resetSession occurred at any point prior to commit, commit is rejected
+            // and old tokens are never written to Keychain or memory.
+            let committed = try await TokenStorage.shared.commitTokensIfEpochMatches(
+                epoch: currentEpoch,
+                accessToken: tokenResponse.accessToken,
+                refreshToken: tokenResponse.refreshToken
+            )
+
+            guard committed, !Task.isCancelled else {
+                throw APIError.unauthorized
+            }
+
+            // Final verify under refreshLock: if epoch bumped during actor write, purge immediately
+            self.refreshLock.lock()
+            let isStale = (self.sessionEpoch != currentEpoch)
+            self.refreshLock.unlock()
+
+            if isStale {
+                _ = KeychainManager.shared.deleteRefreshToken()
+                await TokenStorage.shared.setAccessToken(nil)
+                MensetsuContractsAPI.customHeaders.removeValue(forKey: "Authorization")
+                throw APIError.unauthorized
+            }
+
             MensetsuContractsAPI.customHeaders["Authorization"] = "Bearer \(tokenResponse.accessToken)"
             return tokenResponse.accessToken
         }
@@ -281,7 +355,6 @@ public final class APIClient {
         refreshLock.unlock()
         return try await task.value
     }
-    
     // MARK: - Auth API Methods
     
     public func register(dto: RegisterRequestDto) async throws -> AuthResponseDto {
@@ -354,8 +427,7 @@ public final class APIClient {
         } catch {
             serverError = error
         }
-        try await TokenStorage.shared.clearTokens()
-        MensetsuContractsAPI.customHeaders.removeValue(forKey: "Authorization")
+        try await resetSession()
         if let serverError { throw serverError }
     }
     // MARK: - Workspaces API Methods

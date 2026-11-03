@@ -36,6 +36,9 @@ namespace Mensetsu.Views
         {
             switch (ViewModel.CurrentView)
             {
+                case ServerSetupViewModel setupVm:
+                    host.Content = new ServerSetupView { DataContext = setupVm };
+                    break;
                 case AuthViewModel authVm:
                     host.Content = new AuthView { DataContext = authVm };
                     break;

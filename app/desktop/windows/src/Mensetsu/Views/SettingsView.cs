@@ -37,7 +37,7 @@ namespace Mensetsu.Views
 
             var title = new TextBlock
             {
-                Text = "LLM Provider Settings",
+                Text = "Settings",
                 FontSize = 22,
                 FontWeight = Microsoft.UI.Text.FontWeights.Bold,
                 VerticalAlignment = VerticalAlignment.Center
@@ -48,51 +48,85 @@ namespace Mensetsu.Views
             Grid.SetRow(headerGrid, 0);
             rootGrid.Children.Add(headerGrid);
 
-            // Form / Controls
-            var formStack = new StackPanel { Spacing = 12, Margin = new Thickness(0, 16, 0, 16), MaxWidth = 500, HorizontalAlignment = HorizontalAlignment.Left };
+            // Scrollable Settings Content
+            var scrollViewer = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+            var contentStack = new StackPanel { Spacing = 24, Margin = new Thickness(0, 16, 0, 16), MaxWidth = 600, HorizontalAlignment = HorizontalAlignment.Left };
 
             var errorBanner = new InfoBar { Severity = InfoBarSeverity.Error, IsOpen = false };
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(errorBanner, AutomationIds.SettingsErrorBanner);
-            formStack.Children.Add(errorBanner);
+            contentStack.Children.Add(errorBanner);
+
+            var statusBanner = new InfoBar { Severity = InfoBarSeverity.Success, IsOpen = false };
+            contentStack.Children.Add(statusBanner);
 
             var loadingRing = new ProgressRing { IsActive = false, Visibility = Visibility.Collapsed, HorizontalAlignment = HorizontalAlignment.Left };
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(loadingRing, AutomationIds.SettingsLoadingIndicator);
-            formStack.Children.Add(loadingRing);
+            contentStack.Children.Add(loadingRing);
+
+            // Section 1: Server Endpoint Configuration
+            var serverSection = new StackPanel { Spacing = 8 };
+            serverSection.Children.Add(new TextBlock { Text = "Rust API Server Endpoint", FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            serverSection.Children.Add(new TextBlock { Text = "Configure the base URL of your self-hosted API. Changing this resets your session.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 });
+
+            var serverUrlBox = new TextBox { Header = "API Base URL", PlaceholderText = "https://api.example.org" };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(serverUrlBox, AutomationIds.SettingsServerUrlInput);
+            serverSection.Children.Add(serverUrlBox);
+
+            var saveServerBtn = new Button { Content = "Update Server URL" };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(saveServerBtn, AutomationIds.SettingsServerUrlSaveButton);
+            serverSection.Children.Add(saveServerBtn);
+
+            contentStack.Children.Add(serverSection);
+
+            // Section 2: LLM Provider Keys
+            var llmSection = new StackPanel { Spacing = 12 };
+            llmSection.Children.Add(new TextBlock { Text = "LLM Provider Configuration", FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
 
             var providerBox = new TextBox { Header = "Provider Name", PlaceholderText = "e.g. anthropic, openai, groq", Text = "anthropic" };
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(providerBox, AutomationIds.SettingsProviderInput);
-            formStack.Children.Add(providerBox);
+            llmSection.Children.Add(providerBox);
 
             var keyBox = new PasswordBox { Header = "API Key" };
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(keyBox, AutomationIds.SettingsKeyInput);
-            formStack.Children.Add(keyBox);
+            llmSection.Children.Add(keyBox);
 
-            var saveBtn = new Button { Content = "Save Provider Key" };
-            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(saveBtn, AutomationIds.SettingsSaveButton);
-            formStack.Children.Add(saveBtn);
-
-            Grid.SetRow(formStack, 1);
-            rootGrid.Children.Add(formStack);
+            var saveLlmBtn = new Button { Content = "Save Provider Key" };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(saveLlmBtn, AutomationIds.SettingsSaveButton);
+            llmSection.Children.Add(saveLlmBtn);
 
             // Providers List
-            var listStack = new StackPanel { Spacing = 8 };
-            listStack.Children.Add(new TextBlock { Text = "Configured Providers", FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            var listStack = new StackPanel { Spacing = 8, Margin = new Thickness(0, 8, 0, 0) };
+            listStack.Children.Add(new TextBlock { Text = "Configured Providers", FontSize = 16, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
 
             var listView = new ListView { SelectionMode = ListViewSelectionMode.None };
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(listView, AutomationIds.LlmProvidersList);
             listStack.Children.Add(listView);
+            llmSection.Children.Add(listStack);
 
-            Grid.SetRow(listStack, 2);
-            rootGrid.Children.Add(listStack);
+            contentStack.Children.Add(llmSection);
+
+            scrollViewer.Content = contentStack;
+            Grid.SetRow(scrollViewer, 1);
+            rootGrid.Children.Add(scrollViewer);
 
             Content = rootGrid;
 
             // Events
             backBtn.Click += (s, e) => { ViewModel?.GoBack(); };
+            serverUrlBox.TextChanged += (s, e) => { if (ViewModel != null) ViewModel.ServerUrl = serverUrlBox.Text; };
+            saveServerBtn.Click += (s, e) =>
+            {
+                if (ViewModel != null)
+                {
+                    ViewModel.ServerUrl = serverUrlBox.Text;
+                    ViewModel.SaveServerUrl();
+                }
+            };
+
             providerBox.TextChanged += (s, e) => { if (ViewModel != null) ViewModel.InputProvider = providerBox.Text; };
             keyBox.PasswordChanged += (s, e) => { if (ViewModel != null) ViewModel.InputApiKey = keyBox.Password; };
 
-            saveBtn.Click += async (s, e) =>
+            saveLlmBtn.Click += async (s, e) =>
             {
                 if (ViewModel != null)
                 {
@@ -107,6 +141,7 @@ namespace Mensetsu.Views
             {
                 if (ViewModel != null)
                 {
+                    serverUrlBox.Text = ViewModel.ServerUrl ?? string.Empty;
                     listView.ItemsSource = ViewModel.Providers;
                     ViewModel.PropertyChanged += (ps, pe) =>
                     {
@@ -114,6 +149,18 @@ namespace Mensetsu.Views
                         {
                             errorBanner.IsOpen = !string.IsNullOrEmpty(ViewModel.ErrorMessage);
                             errorBanner.Message = ViewModel.ErrorMessage ?? "";
+                        }
+                        else if (pe.PropertyName == nameof(SettingsViewModel.StatusMessage))
+                        {
+                            statusBanner.IsOpen = !string.IsNullOrEmpty(ViewModel.StatusMessage);
+                            statusBanner.Message = ViewModel.StatusMessage ?? "";
+                        }
+                        else if (pe.PropertyName == nameof(SettingsViewModel.ServerUrl))
+                        {
+                            if (serverUrlBox.Text != ViewModel.ServerUrl)
+                            {
+                                serverUrlBox.Text = ViewModel.ServerUrl ?? string.Empty;
+                            }
                         }
                         else if (pe.PropertyName == nameof(SettingsViewModel.IsLoading) || pe.PropertyName == nameof(SettingsViewModel.IsSaving))
                         {

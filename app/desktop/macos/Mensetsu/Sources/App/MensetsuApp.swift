@@ -12,7 +12,9 @@ struct MensetsuApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if authViewModel.isAuthenticated {
+                if !authViewModel.isServerConfigured {
+                    ServerSetupView(viewModel: authViewModel)
+                } else if authViewModel.isAuthenticated {
                     MainSplitView(authViewModel: authViewModel)
                 } else {
                     AuthView(viewModel: authViewModel)

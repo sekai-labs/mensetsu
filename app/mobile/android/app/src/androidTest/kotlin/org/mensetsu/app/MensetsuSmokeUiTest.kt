@@ -34,15 +34,35 @@ class MensetsuSmokeUiTest {
     private val targetBaseUrl: String
         get() {
             val args = InstrumentationRegistry.getArguments()
-            return args.getString("API_BASE_URL") ?: BuildConfig.DEFAULT_BASE_URL
+            return args.getString("API_BASE_URL")
+                ?: "http://10.0.2.2:3000"
         }
 
     @Before
     fun setup() {
         val app = composeTestRule.activity.application as MensetsuApplication
-        // Point to configured live API URL (supports Android emulator loopback http://10.0.2.2:3000 or custom)
-        app.networkManager.setBaseUrl(targetBaseUrl)
         app.networkManager.clearSession()
+    }
+
+    private fun ensureConnected(endpointUrl: String = targetBaseUrl) {
+        val app = composeTestRule.activity.application as MensetsuApplication
+        // If on Auth screen but saved endpoint does not match desired target URL, switch server via pre-auth settings UI
+        if (composeTestRule.onAllNodesWithTag(AppTestTags.AUTH_SCREEN).fetchSemanticsNodes().isNotEmpty()) {
+            if (app.networkManager.getBaseUrl() != endpointUrl) {
+                composeTestRule.onNodeWithTag(AppTestTags.BUTTON_SETTINGS).performClick()
+                composeTestRule.waitUntil(timeoutMillis = 5_000) {
+                    composeTestRule.onAllNodesWithTag(AppTestTags.SERVER_SETUP_SCREEN).fetchSemanticsNodes().isNotEmpty()
+                }
+            }
+        }
+        // If on Server Setup screen, enter the endpoint and connect
+        if (composeTestRule.onAllNodesWithTag(AppTestTags.SERVER_SETUP_SCREEN).fetchSemanticsNodes().isNotEmpty()) {
+            composeTestRule.onNodeWithTag(AppTestTags.INPUT_SERVER_URL).performTextReplacement(endpointUrl)
+            composeTestRule.onNodeWithTag(AppTestTags.BUTTON_SAVE_SERVER_URL).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 10_000) {
+                composeTestRule.onAllNodesWithTag(AppTestTags.AUTH_SCREEN).fetchSemanticsNodes().isNotEmpty()
+            }
+        }
     }
 
     @Test
@@ -56,6 +76,7 @@ class MensetsuSmokeUiTest {
         val targetRole = "Staff Android Engineer"
         val testResumeText = "Built high-performance Android Jetpack Compose native applications and Kotlin OkHttp services."
         val testJobDesc = "Seeking Staff Android Engineer with strong Jetpack Compose, OkHttp, and Kotlin coroutines experience."
+        ensureConnected()
 
         // 1. Switch to Register tab
         composeTestRule.onNodeWithTag(AppTestTags.AUTH_TAB_REGISTER).performClick()
@@ -152,18 +173,55 @@ class MensetsuSmokeUiTest {
 
     @Test
     fun testNetworkErrorStateSmoke() {
-        val app = composeTestRule.activity.application as MensetsuApplication
-        // Set an unreachable port to test real error handling
-        app.networkManager.setBaseUrl("http://127.0.0.1:59999")
+        val unreachableUrl = "http://127.0.0.1:59999"
+        // Configure the unreachable endpoint through pre-auth Change Server UI
+        ensureConnected(unreachableUrl)
 
-        composeTestRule.onNodeWithTag(AppTestTags.AUTH_INPUT_EMAIL).performTextInput("error_test@example.com")
-        composeTestRule.onNodeWithTag(AppTestTags.AUTH_INPUT_PASSWORD).performTextInput("password123")
-        composeTestRule.onNodeWithTag(AppTestTags.AUTH_BUTTON_SUBMIT).performClick()
+        try {
+            composeTestRule.onNodeWithTag(AppTestTags.AUTH_INPUT_EMAIL).performTextInput("error_test@example.com")
+            composeTestRule.onNodeWithTag(AppTestTags.AUTH_INPUT_PASSWORD).performTextInput("password123")
+            composeTestRule.onNodeWithTag(AppTestTags.AUTH_BUTTON_SUBMIT).performClick()
 
-        // Verify error text is displayed
-        composeTestRule.waitUntil(timeoutMillis = 10_000) {
-            composeTestRule.onAllNodesWithTag(AppTestTags.AUTH_ERROR_TEXT).fetchSemanticsNodes().isNotEmpty()
+            // Verify error text is displayed
+            composeTestRule.waitUntil(timeoutMillis = 10_000) {
+                composeTestRule.onAllNodesWithTag(AppTestTags.AUTH_ERROR_TEXT).fetchSemanticsNodes().isNotEmpty()
+            }
+            composeTestRule.onNodeWithTag(AppTestTags.AUTH_ERROR_TEXT).assertIsDisplayed()
+        } finally {
+            // Restore target endpoint fixture so subsequent tests are cleanly isolated
+            ensureConnected(targetBaseUrl)
         }
-        composeTestRule.onNodeWithTag(AppTestTags.AUTH_ERROR_TEXT).assertIsDisplayed()
+    }
+
+    @Test
+    fun testEndpointValidationAndFirstLaunchFlow() {
+        val app = composeTestRule.activity.application as MensetsuApplication
+        // Clear saved endpoint and storage to simulate clean fresh launch
+        app.networkManager.setBaseUrl(null)
+        app.networkManager.clearSession()
+
+        // Recreate activity so AppNavigation state recomputes from unconfigured storage
+        composeTestRule.activityRule.scenario.recreate()
+
+        // Verify server setup screen is immediately displayed on fresh unconfigured launch
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithTag(AppTestTags.SERVER_SETUP_SCREEN).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithTag(AppTestTags.SERVER_SETUP_SCREEN).assertIsDisplayed()
+
+        // Test invalid remote HTTP entry (must require HTTPS for remote servers)
+        composeTestRule.onNodeWithTag(AppTestTags.INPUT_SERVER_URL).performTextReplacement("http://api.insecure.com")
+        composeTestRule.onNodeWithTag(AppTestTags.BUTTON_SAVE_SERVER_URL).performClick()
+        composeTestRule.onNodeWithTag(AppTestTags.SERVER_URL_ERROR_MESSAGE).assertIsDisplayed()
+
+        // Enter valid localhost/emulator URL
+        composeTestRule.onNodeWithTag(AppTestTags.INPUT_SERVER_URL).performTextReplacement(targetBaseUrl)
+        composeTestRule.onNodeWithTag(AppTestTags.BUTTON_SAVE_SERVER_URL).performClick()
+
+        // Verify landing on Auth screen
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithTag(AppTestTags.AUTH_SCREEN).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithTag(AppTestTags.AUTH_SCREEN).assertIsDisplayed()
     }
 }

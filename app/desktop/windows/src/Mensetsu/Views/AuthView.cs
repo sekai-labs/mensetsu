@@ -95,6 +95,16 @@ namespace Mensetsu.Views
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(registerBtn, AutomationIds.AuthRegisterButton);
             stack.Children.Add(registerBtn);
 
+            // Change Server button (allows pre-auth reconfiguration if server is unreachable)
+            var changeServerBtn = new HyperlinkButton
+            {
+                Content = "Change Server URL",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 8, 0, 0)
+            };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(changeServerBtn, AutomationIds.AuthChangeServerButton);
+            stack.Children.Add(changeServerBtn);
+
             // Loading indicator
             var progress = new ProgressRing { IsActive = false, Visibility = Visibility.Collapsed };
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(progress, AutomationIds.AuthLoadingIndicator);
@@ -102,6 +112,11 @@ namespace Mensetsu.Views
 
             rootGrid.Children.Add(stack);
             Content = rootGrid;
+
+            changeServerBtn.Click += (s, e) =>
+            {
+                ViewModel?.ChangeServer();
+            };
 
             // Wire UI events
             loginTabBtn.Click += (s, e) =>

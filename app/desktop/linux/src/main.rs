@@ -1,8 +1,8 @@
 use gtk4::prelude::*;
 use gtk4::Application;
-use std::env;
 
 mod api_service;
+mod endpoint_config;
 mod app_root;
 mod secure_store;
 mod test_ids;
@@ -13,13 +13,11 @@ use app_root::AppRoot;
 
 const APP_ID: &str = "com.sekailabs.mensetsu.linux";
 
-pub fn get_api_base_url() -> String {
-    env::var("MENSETSU_API_URL").unwrap_or_else(|_| "http://127.0.0.1:3000".to_string())
-}
-
 fn build_ui(app: &Application) {
-    let base_url = get_api_base_url();
-    let api = ApiService::new(base_url);
+    // If a saved config exists, use it; otherwise start unconfigured with empty placeholder.
+    // AppRoot detects if endpoint is configured; if not, it presents ServerSetupView immediately.
+    let initial_base_url = endpoint_config::resolve_initial_url().unwrap_or_default();
+    let api = ApiService::new(initial_base_url);
     let root = AppRoot::new(api);
     root.window.set_application(Some(app));
     root.window.present();

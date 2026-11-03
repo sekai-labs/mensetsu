@@ -7,7 +7,7 @@ use crate::secure_store::KeyringStore;
 
 #[derive(Clone)]
 pub struct ApiService {
-    pub base_url: String,
+    base_url: Arc<std::sync::RwLock<String>>,
     // Access token kept in memory only
     access_token: Arc<RwLock<Option<String>>>,
     // Refresh token serialized lock and persistent store
@@ -34,11 +34,27 @@ pub enum ApiError {
 impl ApiService {
     pub fn new(base_url: String) -> Self {
         Self {
-            base_url,
+            base_url: Arc::new(std::sync::RwLock::new(base_url)),
             access_token: Arc::new(RwLock::new(None)),
             refresh_lock: Arc::new(Mutex::new(())),
             keyring: Arc::new(KeyringStore::new()),
         }
+    }
+
+    pub fn get_base_url(&self) -> String {
+        self.base_url.read().unwrap().clone()
+    }
+
+    pub async fn set_base_url(&self, new_url: String) -> Result<(), ApiError> {
+        // Fail-closed security: Always require successful keyring deletion
+        // and in-memory token clearing before updating the endpoint URL.
+        // If the keyring is inaccessible or locked, fail immediately to prevent
+        // old credentials from later being refreshed against a different host.
+        let _refresh_guard = self.refresh_lock.lock().await;
+        self.clear_tokens().await?;
+        let mut guard = self.base_url.write().unwrap();
+        *guard = new_url;
+        Ok(())
     }
 
     pub async fn is_logged_in(&self) -> bool {
@@ -66,7 +82,7 @@ impl ApiService {
 
     fn config(&self, token: Option<&str>) -> Configuration {
         let mut cfg = Configuration::new();
-        cfg.base_path = self.base_url.clone();
+        cfg.base_path = self.get_base_url();
         if let Some(t) = token {
             cfg.bearer_access_token = Some(t.to_string());
         }

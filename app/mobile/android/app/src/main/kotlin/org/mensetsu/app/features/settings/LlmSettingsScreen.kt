@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.mensetsu.app.core.network.EndpointValidator
 import org.mensetsu.app.core.network.NetworkManager
 import org.mensetsu.app.core.tags.AppTestTags
 import org.mensetsu.contracts.models.LlmConfigItemDto
@@ -28,16 +29,20 @@ import org.mensetsu.contracts.models.UpsertLlmConfigRequestDto
 @Composable
 fun LlmSettingsScreen(
     networkManager: NetworkManager,
-    onBack: (() -> Unit)? = null
+    onBack: (() -> Unit)? = null,
+    onEndpointChanged: (() -> Unit)? = null
 ) {
     var settings by remember { mutableStateOf<List<LlmConfigItemDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
     var editingConfig by remember { mutableStateOf<LlmConfigItemDto?>(null) }
 
-    val coroutineScope = rememberCoroutineScope()
+    // Server Endpoint configuration state
+    var endpointInput by remember { mutableStateOf(networkManager.getBaseUrl()) }
+    var endpointError by remember { mutableStateOf<String?>(null) }
+    var endpointSuccessMessage by remember { mutableStateOf<String?>(null) }
 
+    val coroutineScope = rememberCoroutineScope()
     fun loadSettings() {
         isLoading = true
         errorMessage = null
@@ -74,125 +79,217 @@ fun LlmSettingsScreen(
             )
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            when {
-                isLoading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                }
-                errorMessage != null -> {
-                    Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = errorMessage ?: "Error loading settings",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(onClick = { loadSettings() }) {
-                                Text("Retry")
-                            }
-                        }
-                    }
-                }
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+            // Server Endpoint Configuration section is ALWAYS rendered so users can reconfigure the server
+            // even when the backend is offline or LLM settings fail to load.
+            item {
+                Text(
+                    text = "Server Configuration",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Configured self-hosted Rust API endpoint. Changing this clears credentials and resets your session.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
                     ) {
-                        item {
+                        if (endpointError != null) {
                             Text(
-                                text = "LLM Provider Configuration",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Configure underlying LLM provider keys for research synthesis and interview questions.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = endpointError ?: "",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.testTag(AppTestTags.SERVER_URL_ERROR_MESSAGE)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                         }
-
-                        items(settings, key = { it.provider }) { config ->
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag("${AppTestTags.SETTINGS_PROVIDER_PREFIX}${config.provider}")
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = config.provider.uppercase(),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        if (config.hasKey) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(
-                                                    Icons.Default.Check,
-                                                    contentDescription = "Active",
-                                                    tint = Color(0xFF059669),
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(
-                                                    text = config.maskedKey ?: "Key Configured",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = Color(0xFF059669)
-                                                )
-                                            }
+                        if (endpointSuccessMessage != null) {
+                            Text(
+                                text = endpointSuccessMessage ?: "",
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        OutlinedTextField(
+                            value = endpointInput,
+                            onValueChange = {
+                                endpointInput = it
+                                endpointError = null
+                                endpointSuccessMessage = null
+                            },
+                            label = { Text("Server Base URL") },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag(AppTestTags.SETTINGS_INPUT_SERVER_URL)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = {
+                                endpointError = null
+                                endpointSuccessMessage = null
+                                when (val res = EndpointValidator.validate(endpointInput)) {
+                                    is EndpointValidator.ValidationResult.Valid -> {
+                                        val newUrl = res.normalizedUrl
+                                        if (networkManager.getBaseUrl() == newUrl) {
+                                            endpointSuccessMessage = "Server URL unchanged."
                                         } else {
-                                            Text(
-                                                text = "Not Configured",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.outline
-                                            )
-                                        }
-                                        if (!config.modelChat.isNullOrBlank()) {
-                                            Spacer(modifier = Modifier.height(2.dp))
-                                            Text(
-                                                text = "Chat Model: ${config.modelChat}",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
+                                            networkManager.setBaseUrl(newUrl)
+                                            endpointInput = newUrl
+                                            onEndpointChanged?.invoke()
                                         }
                                     }
-
-                                    Button(
-                                        onClick = { editingConfig = config },
-                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Edit,
-                                            contentDescription = "Edit Key",
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text("Set Key")
+                                    is EndpointValidator.ValidationResult.Invalid -> {
+                                        endpointError = res.reason
                                     }
                                 }
-                            }
+                            },
+                            modifier = Modifier.testTag(AppTestTags.SETTINGS_BUTTON_SAVE_SERVER_URL)
+                        ) {
+                            Text("Update Server URL")
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(16.dp))
+                Divider()
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "LLM Provider Configuration",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Configure underlying LLM provider keys for research synthesis and interview questions.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
             }
+
+            // LLM Settings section handles loading and error states locally without hiding server settings
+            when {
+                isLoading -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                }
+                errorMessage != null -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = errorMessage ?: "Error loading settings",
+                                     color = MaterialTheme.colorScheme.error
+                                 )
+                                 Spacer(modifier = Modifier.height(16.dp))
+                                 Button(onClick = { loadSettings() }) {
+                                     Text("Retry")
+                                 }
+                             }
+                         }
+                     }
+                 }
+                 else -> {
+                     items(settings, key = { it.provider }) { config ->
+                         Card(
+                             modifier = Modifier
+                                 .fillMaxWidth()
+                                 .testTag("${AppTestTags.SETTINGS_PROVIDER_PREFIX}${config.provider}")
+                         ) {
+                             Row(
+                                 modifier = Modifier
+                                     .fillMaxWidth()
+                                     .padding(16.dp),
+                                 horizontalArrangement = Arrangement.SpaceBetween,
+                                 verticalAlignment = Alignment.CenterVertically
+                             ) {
+                                 Column(modifier = Modifier.weight(1f)) {
+                                     Text(
+                                         text = config.provider.uppercase(),
+                                         style = MaterialTheme.typography.titleMedium,
+                                         fontWeight = FontWeight.Bold
+                                     )
+                                     Spacer(modifier = Modifier.height(4.dp))
+                                     if (config.hasKey) {
+                                         Row(verticalAlignment = Alignment.CenterVertically) {
+                                             Icon(
+                                                 Icons.Default.Check,
+                                                 contentDescription = "Active",
+                                                 tint = Color(0xFF059669),
+                                                 modifier = Modifier.size(16.dp)
+                                             )
+                                             Spacer(modifier = Modifier.width(4.dp))
+                                             Text(
+                                                 text = config.maskedKey ?: "Key Configured",
+                                                 style = MaterialTheme.typography.bodySmall,
+                                                 color = Color(0xFF059669)
+                                             )
+                                         }
+                                     } else {
+                                         Text(
+                                             text = "Not Configured",
+                                             style = MaterialTheme.typography.bodySmall,
+                                             color = MaterialTheme.colorScheme.outline
+                                         )
+                                     }
+                                     if (!config.modelChat.isNullOrBlank()) {
+                                         Spacer(modifier = Modifier.height(2.dp))
+                                         Text(
+                                             text = "Chat Model: ${config.modelChat}",
+                                             style = MaterialTheme.typography.labelSmall,
+                                             color = MaterialTheme.colorScheme.onSurfaceVariant
+                                         )
+                                     }
+                                 }
+
+                                 Button(
+                                     onClick = { editingConfig = config },
+                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                 ) {
+                                     Icon(
+                                         Icons.Default.Edit,
+                                         contentDescription = "Edit Key",
+                                         modifier = Modifier.size(16.dp)
+                                     )
+                                     Spacer(modifier = Modifier.width(6.dp))
+                                     Text("Set Key")
+                                 }
+                             }
+                         }
+                     }
+                 }
+             }
         }
     }
-
     if (editingConfig != null) {
         val config = editingConfig!!
         var apiKey by remember { mutableStateOf("") }

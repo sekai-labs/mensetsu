@@ -9,6 +9,10 @@ import MensetsuContracts
 
 @MainActor
 public final class AuthViewModel: ObservableObject {
+    @Published public var isServerConfigured: Bool = AppConfig.isConfigured
+    @Published public var serverUrlInput: String = ""
+    @Published public var serverUrlError: String?
+
     @Published public var isAuthenticated: Bool = false
     @Published public var currentUser: UserResponseDto?
     @Published public var isLoading: Bool = false
@@ -27,11 +31,53 @@ public final class AuthViewModel: ObservableObject {
     @Published public var challengeToken: String?
     @Published public var totpCode: String = ""
     
+    // Settings Sheet presentation
+    @Published public var isShowingSettings: Bool = false
+
     public init() {
-        checkExistingAuth()
+        if AppConfig.isConfigured {
+            checkExistingAuth()
+        } else {
+            self.isAuthenticated = false
+        }
+    }
+
+    public func saveServerEndpoint() async -> Bool {
+        serverUrlError = nil
+        do {
+            let validated = try AppConfig.normalizeAndValidateUrl(serverUrlInput)
+            // Clear any lingering tokens before saving URL so no stale credentials reach the newly configured server
+            try await APIClient.shared.resetSession()
+            AppConfig.savedServerUrl = validated
+            isServerConfigured = true
+            isAuthenticated = false
+            currentUser = nil
+            serverUrlInput = ""
+            clearForm()
+            return true
+        } catch {
+            serverUrlError = error.localizedDescription
+            return false
+        }
+    }
+
+    public func changeServerEndpoint(to newUrl: String) async throws {
+        let validated = try AppConfig.normalizeAndValidateUrl(newUrl)
+        // Clear current server session and tokens first. If secure storage fails,
+        // throws error and blocks server switch to prevent credential leakage.
+        try await APIClient.shared.resetSession()
+        AppConfig.savedServerUrl = validated
+        isServerConfigured = true
+        isAuthenticated = false
+        currentUser = nil
+        clearForm()
     }
     
     public func checkExistingAuth() {
+        guard AppConfig.isConfigured else {
+            self.isAuthenticated = false
+            return
+        }
         if KeychainManager.shared.getRefreshToken() != nil {
             Task {
                 do {
@@ -47,6 +93,10 @@ public final class AuthViewModel: ObservableObject {
     }
     
     public func submitAuth() {
+        guard AppConfig.isConfigured else {
+            errorMessage = "Server endpoint is not configured."
+            return
+        }
         errorMessage = nil
         guard !email.trimmingCharacters(in: .whitespaces).isEmpty else {
             errorMessage = "Email cannot be empty."
@@ -100,6 +150,10 @@ public final class AuthViewModel: ObservableObject {
     }
     
     public func submit2faChallenge() {
+        guard AppConfig.isConfigured else {
+            errorMessage = "Server endpoint is not configured."
+            return
+        }
         errorMessage = nil
         guard let token = challengeToken, !token.isEmpty else {
             errorMessage = "Challenge token missing."
@@ -154,7 +208,7 @@ public final class AuthViewModel: ObservableObject {
         }
     }
     
-    private func clearForm() {
+    public func clearForm() {
         email = ""
         password = ""
         name = ""
