@@ -2,6 +2,13 @@ namespace Mensetsu.Common
 {
     public static class AutomationIds
     {
+        // Server setup screen (first launch & change server)
+        public const string ServerSetupScreen = "server_setup_screen";
+        public const string ServerUrlInput = "input_server_url";
+        public const string SaveServerUrlButton = "button_save_server_url";
+        public const string ServerUrlErrorBanner = "server_url_error_message";
+        public const string CancelServerUrlButton = "button_cancel_server_url";
+
         // Auth screen
         public const string AuthScreen = "auth_screen";
         public const string AuthLoginTab = "auth_login_tab";
@@ -13,6 +20,7 @@ namespace Mensetsu.Common
         public const string AuthRegisterButton = "auth_register_button";
         public const string AuthErrorBanner = "auth_error_banner";
         public const string AuthLoadingIndicator = "auth_loading_indicator";
+        public const string AuthChangeServerButton = "auth_change_server_button";
 
         // 2FA challenge
         public const string TwoFaScreen = "2fa_screen";
@@ -94,6 +102,8 @@ namespace Mensetsu.Common
         public const string SettingsLoadingIndicator = "settings_loading_indicator";
         public const string SettingsErrorBanner = "settings_error_banner";
         public const string SettingsBackButton = "settings_back_button";
+        public const string SettingsServerUrlInput = "settings_input_server_url";
+        public const string SettingsServerUrlSaveButton = "settings_button_save_server_url";
         public const string LlmProvidersList = "llm_providers_list";
         public const string SettingsProviderInput = "settings_provider_input";
         public const string SettingsKeyInput = "settings_key_input";

@@ -12,7 +12,10 @@ use mensetsu_linux::app_root::AppRoot;
 use mensetsu_linux::test_ids::ids;
 use mensetsu_contracts::models::UpsertLlmConfigRequestDto;
 use gtk4::prelude::*;
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
+
+static UI_TEST_MUTEX: Mutex<()> = Mutex::new(());
 
 /// Helper to recursively search for a widget by widget_name (accessibility ID)
 fn find_widget_by_name(parent: &gtk4::Widget, name: &str) -> Option<gtk4::Widget> {
@@ -47,6 +50,7 @@ where
 
 #[test]
 fn gtk_ui_automation_smoke_test() {
+    let _ui_lock = UI_TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
@@ -56,8 +60,16 @@ fn gtk_ui_automation_smoke_test() {
 
     let main_context = glib::MainContext::default();
     let _guard = main_context.acquire();
+    // The test runner reads the target API URL from test environment fixture,
+    // but configures the app endpoint exclusively via persisted configuration fixture
+    // rather than runtime env injection.
+    let fixture_url = std::env::var("MENSETSU_API_URL").unwrap_or_else(|_| "http://127.0.0.1:3000".to_string());
+    let temp_dir = tempfile::tempdir().unwrap();
+    let prev_xdg = std::env::var("XDG_CONFIG_HOME").ok();
+    std::env::set_var("XDG_CONFIG_HOME", temp_dir.path());
+    mensetsu_linux::endpoint_config::set_persisted_server_url(&fixture_url).unwrap();
 
-    let base_url = std::env::var("MENSETSU_API_URL").unwrap_or_else(|_| "http://127.0.0.1:3000".to_string());
+    let base_url = mensetsu_linux::endpoint_config::resolve_initial_url().expect("Persisted fixture must resolve");
     let api = ApiService::new(base_url);
 
     // Build the full root app
@@ -69,8 +81,6 @@ fn gtk_ui_automation_smoke_test() {
 
     // Pump loop to process initial auth checks
     let _ = wait_for(&main_context, Duration::from_millis(500), || stack.visible_child_name() == Some("auth".into()));
-
-    // 1. Fill registration inputs
     let unique = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis();
     let email = format!("gtk_ui_{unique}@example.com");
     let name = "GTK UI Smoke Tester";
@@ -285,6 +295,12 @@ fn gtk_ui_automation_smoke_test() {
         "API outage must show authentication error instead of sample content");
     let offline_stack = offline.window.child().unwrap().downcast::<gtk4::Stack>().unwrap();
     assert_eq!(offline_stack.visible_child_name(), Some("auth".into()));
+
+    if let Some(val) = prev_xdg {
+        std::env::set_var("XDG_CONFIG_HOME", val);
+    } else {
+        std::env::remove_var("XDG_CONFIG_HOME");
+    }
 }
 
 #[tokio::test]
@@ -375,4 +391,123 @@ async fn api_integration_smoke_test() {
     assert!(err.is_err(), "Network failure must return error rather than mock success");
 
     api.logout().await.expect("Final logout should revoke credentials");
+}
+
+#[test]
+fn endpoint_validation_and_normalization_test() {
+    use mensetsu_linux::endpoint_config::{validate_and_normalize_url, EndpointConfigError};
+
+    // Empty
+    assert!(matches!(validate_and_normalize_url(""), Err(EndpointConfigError::EmptyUrl)));
+    assert!(matches!(validate_and_normalize_url("   "), Err(EndpointConfigError::EmptyUrl)));
+
+    // Insecure HTTP on remote host
+    assert!(matches!(
+        validate_and_normalize_url("http://remote.api.mensetsu.com"),
+        Err(EndpointConfigError::InsecureHttp)
+    ));
+
+    // 0.0.0.0 rejected for HTTP
+    assert!(matches!(
+        validate_and_normalize_url("http://0.0.0.0:3000"),
+        Err(EndpointConfigError::InsecureHttp)
+    ));
+
+    // Userinfo, query, fragment, subpath rejected
+    assert!(matches!(
+        validate_and_normalize_url("https://user:pass@api.mensetsu.com"),
+        Err(EndpointConfigError::UserinfoNotAllowed)
+    ));
+    assert!(matches!(
+        validate_and_normalize_url("https://api.mensetsu.com?foo=bar"),
+        Err(EndpointConfigError::QueryNotAllowed)
+    ));
+    assert!(matches!(
+        validate_and_normalize_url("https://api.mensetsu.com#hash"),
+        Err(EndpointConfigError::FragmentNotAllowed)
+    ));
+    assert!(matches!(
+        validate_and_normalize_url("https://api.mensetsu.com/api/v1"),
+        Err(EndpointConfigError::PathNotAllowed)
+    ));
+
+    // Loopback allows HTTP
+    assert_eq!(
+        validate_and_normalize_url("http://127.0.0.1:3000/").unwrap(),
+        "http://127.0.0.1:3000"
+    );
+    assert_eq!(
+        validate_and_normalize_url("http://localhost:8080/").unwrap(),
+        "http://localhost:8080"
+    );
+
+    // HTTPS normalized (trailing slashes stripped)
+    assert_eq!(
+        validate_and_normalize_url("https://api.mensetsu.com/").unwrap(),
+        "https://api.mensetsu.com"
+    );
+    assert_eq!(
+        validate_and_normalize_url("https://api.mensetsu.com///").unwrap(),
+        "https://api.mensetsu.com"
+    );
+}
+
+#[test]
+fn first_launch_prompts_for_url_when_unconfigured_and_resumes_when_persisted() {
+    let _ui_lock = UI_TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    // Point XDG_CONFIG_HOME to empty temp dir so no saved file is found
+    let temp_dir = tempfile::tempdir().unwrap();
+    let prev_xdg = std::env::var("XDG_CONFIG_HOME").ok();
+    std::env::set_var("XDG_CONFIG_HOME", temp_dir.path());
+    gtk4::init().expect("GTK4 display required");
+    let main_context = glib::MainContext::default();
+    let _guard = main_context.acquire();
+
+    assert_eq!(
+        mensetsu_linux::endpoint_config::resolve_initial_url(),
+        None,
+        "Unconfigured first launch must have no initial URL"
+    );
+
+    let api = ApiService::new(String::new());
+    let app_root = AppRoot::new(api);
+    let stack = app_root.window.child().unwrap().downcast::<gtk4::Stack>().unwrap();
+    let root_widget = app_root.window.upcast::<gtk4::Widget>();
+
+    while main_context.iteration(false) {}
+
+    // Fresh install with no config must show server_setup_screen
+    assert_eq!(
+        stack.visible_child_name(),
+        Some("setup".into()),
+        "Unconfigured first launch must present server_setup_screen before auth"
+    );
+    assert!(
+        find_widget_by_name(&root_widget, ids::SERVER_SETUP_SCREEN).is_some(),
+        "SERVER_SETUP_SCREEN must exist on first launch"
+    );
+    assert!(
+        find_widget_by_name(&root_widget, ids::INPUT_SERVER_URL).is_some(),
+        "INPUT_SERVER_URL must exist on server setup screen"
+    );
+
+    // Persist a server URL to disk (as done via setup UI)
+    mensetsu_linux::endpoint_config::set_persisted_server_url("https://api.example.org///").unwrap();
+    assert_eq!(
+        mensetsu_linux::endpoint_config::resolve_initial_url(),
+        Some("https://api.example.org".to_string()),
+        "a saved endpoint must be restored on subsequent launch"
+    );
+    assert_eq!(
+        mensetsu_linux::endpoint_config::get_persisted_server_url().as_deref(),
+        Some("https://api.example.org"),
+        "persisted server URL must match normalized value"
+    );
+
+    // Restore environment
+    if let Some(val) = prev_xdg {
+        std::env::set_var("XDG_CONFIG_HOME", val);
+    } else {
+        std::env::remove_var("XDG_CONFIG_HOME");
+    }
 }

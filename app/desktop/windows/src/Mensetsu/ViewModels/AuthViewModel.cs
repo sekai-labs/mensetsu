@@ -22,6 +22,12 @@ namespace Mensetsu.ViewModels
         private string? _errorMessage;
 
         public event Action? Authenticated;
+        public event Action? ChangeServerRequested;
+
+        public void ChangeServer()
+        {
+            ChangeServerRequested?.Invoke();
+        }
 
         public AuthViewModel(IMensetsuApiService apiService, IAuthSession session)
         {

@@ -16,9 +16,8 @@ using Xunit;
 namespace Mensetsu.AutomationSmoke
 {
     /// <summary>
-    /// Real Windows UI Automation (UIA3) smoke test driving the unpackaged Mensetsu WinUI 3 application process.
     /// Interacts directly with platform controls via AutomationProperties.AutomationId against a live Rust backend:
-    /// 1. Launches Mensetsu.exe process with MENSETSU_API_URL configured
+    /// 1. Sets server endpoint via onboarding UI or Auth pre-login Change Server UI (never injected into app runtime env)
     /// 2. Switches to Register mode, enters name/email/password, clicks Register
     /// 3. In Workspace list, opens Create Workspace dialog
     /// 4. Enters target company, role, resume text, and job description, clicks Submit
@@ -27,8 +26,15 @@ namespace Mensetsu.AutomationSmoke
     /// 7. Navigates back, clicks Logout, asserts return to AuthScreen
     /// 8. Verifies real network error assertion in UI error banner
     /// </summary>
-    public class WindowsClientSmokeTests
+    [CollectionDefinition("WindowsSmokeTestCollection", DisableParallelization = true)]
+    public class WindowsSmokeTestCollectionDefinition { }
+
+    [Collection("WindowsSmokeTestCollection")]
+    public class WindowsClientSmokeTests : IDisposable
     {
+        private static readonly object FileLock = new object();
+        private readonly byte[]? _originalEndpointBackup;
+        private readonly bool _hadOriginalEndpoint;
         private readonly string _apiUrl;
         private readonly string _appExePath;
 
@@ -47,6 +53,90 @@ namespace Mensetsu.AutomationSmoke
                 var baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 _appExePath = Path.GetFullPath(Path.Combine(baseDir, @"..\..\..\..\..\src\Mensetsu\bin\x64\Debug\net9.0-windows10.0.19041.0\win-x64\Mensetsu.exe"));
             }
+
+            // Back up exact bytes of any pre-existing user endpoint file so test runs preserve developer state
+            var path = GetSavedEndpointFilePath();
+            if (File.Exists(path))
+            {
+                _hadOriginalEndpoint = true;
+                _originalEndpointBackup = File.ReadAllBytes(path);
+            }
+            else
+            {
+                _hadOriginalEndpoint = false;
+                _originalEndpointBackup = null;
+            }
+        }
+
+        public void Dispose()
+        {
+            // Restore original developer state upon test completion
+            lock (FileLock)
+            {
+                var path = GetSavedEndpointFilePath();
+                if (_hadOriginalEndpoint && _originalEndpointBackup != null)
+                {
+                    var dir = Path.GetDirectoryName(path);
+                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+                    File.WriteAllBytes(path, _originalEndpointBackup);
+                }
+                else if (!_hadOriginalEndpoint && File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+        }
+
+        private static string GetSavedEndpointFilePath()
+        {
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            return Path.Combine(appData, "Mensetsu", "server_endpoint.txt");
+        }
+
+        private static void EnsureConfiguredAndOnAuthView(Window window, string targetEndpoint)
+        {
+            var normalizedTarget = targetEndpoint.Trim().TrimEnd('/');
+
+            // Check if app is on first-launch ServerSetupScreen
+            var setupScreen = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.ServerSetupScreen)), TimeSpan.FromSeconds(3)).Result;
+            if (setupScreen != null)
+            {
+                var urlInput = window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.ServerUrlInput))?.AsTextBox();
+                var saveBtn = window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.SaveServerUrlButton))?.AsButton();
+                Assert.NotNull(urlInput);
+                Assert.NotNull(saveBtn);
+                urlInput.Text = targetEndpoint;
+                saveBtn.Invoke();
+            }
+
+            var authScreen = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.AuthScreen)), TimeSpan.FromSeconds(10)).Result;
+            Assert.NotNull(authScreen);
+
+            // Check if saved server differs from target; if so, reconfigure via pre-login Change Server button
+            var savedPath = GetSavedEndpointFilePath();
+            var currentPersisted = File.Exists(savedPath) ? File.ReadAllText(savedPath).Trim().TrimEnd('/') : null;
+            if (!string.Equals(currentPersisted, normalizedTarget, StringComparison.OrdinalIgnoreCase))
+            {
+                var changeServerBtn = window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.AuthChangeServerButton))?.AsButton();
+                Assert.NotNull(changeServerBtn);
+                changeServerBtn.Invoke();
+
+                var setupScreenReconfig = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.ServerSetupScreen)), TimeSpan.FromSeconds(5)).Result;
+                Assert.NotNull(setupScreenReconfig);
+
+                var urlInput = window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.ServerUrlInput))?.AsTextBox();
+                var saveBtn = window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.SaveServerUrlButton))?.AsButton();
+                Assert.NotNull(urlInput);
+                Assert.NotNull(saveBtn);
+                urlInput.Text = targetEndpoint;
+                saveBtn.Invoke();
+
+                authScreen = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.AuthScreen)), TimeSpan.FromSeconds(10)).Result;
+                Assert.NotNull(authScreen);
+            }
         }
 
         [Fact]
@@ -64,12 +154,12 @@ namespace Mensetsu.AutomationSmoke
                 throw new FileNotFoundException($"Mensetsu application binary not found at '{_appExePath}'. Build Mensetsu.sln first.", _appExePath);
             }
 
+
             var startInfo = new ProcessStartInfo
             {
                 FileName = _appExePath,
                 UseShellExecute = false
             };
-            startInfo.EnvironmentVariables["MENSETSU_API_URL"] = _apiUrl;
 
             using var app = Application.Launch(startInfo);
             using var automation = new UIA3Automation();
@@ -78,6 +168,8 @@ namespace Mensetsu.AutomationSmoke
             {
                 var window = app.GetMainWindow(automation, TimeSpan.FromSeconds(15));
                 Assert.NotNull(window);
+
+                EnsureConfiguredAndOnAuthView(window, _apiUrl);
 
                 var randomSuffix = Guid.NewGuid().ToString("N")[..8];
                 var testEmail = $"uia_win_{randomSuffix}@example.com";
@@ -220,14 +312,11 @@ namespace Mensetsu.AutomationSmoke
                 throw new FileNotFoundException($"Mensetsu application binary not found at '{_appExePath}'.", _appExePath);
             }
 
-            // Launch app pointing to an unreachable port to trigger a live network error
             var startInfo = new ProcessStartInfo
             {
                 FileName = _appExePath,
                 UseShellExecute = false
             };
-            startInfo.EnvironmentVariables["MENSETSU_API_URL"] = "http://127.0.0.1:59999";
-
             using var app = Application.Launch(startInfo);
             using var automation = new UIA3Automation();
 
@@ -236,6 +325,8 @@ namespace Mensetsu.AutomationSmoke
                 var window = app.GetMainWindow(automation, TimeSpan.FromSeconds(15));
                 Assert.NotNull(window);
 
+                // Reconfigure to unreachable endpoint via UI (never direct disk overwrite or app env injection)
+                EnsureConfiguredAndOnAuthView(window, "http://127.0.0.1:59999");
                 // Attempt to sign in against unreachable server
                 var emailField = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.AuthEmailInput))?.AsTextBox(), TimeSpan.FromSeconds(10)).Result;
                 Assert.NotNull(emailField);
@@ -291,16 +382,13 @@ namespace Mensetsu.AutomationSmoke
 
             var fixturePath = Environment.GetEnvironmentVariable("MENSETSU_TEST_PDF_PATH")
                 ?? throw new InvalidOperationException("Set MENSETSU_TEST_PDF_PATH to a real PDF fixture.");
-            Assert.True(File.Exists(fixturePath), $"Real fixture not found at {fixturePath}");
 
             var startInfo = new ProcessStartInfo
             {
                 FileName = _appExePath,
                 UseShellExecute = false
             };
-            startInfo.EnvironmentVariables["MENSETSU_API_URL"] = _apiUrl;
             startInfo.EnvironmentVariables["MENSETSU_TEST_PDF_PATH"] = fixturePath;
-
             using var app = Application.Launch(startInfo);
             using var automation = new UIA3Automation();
 
@@ -309,6 +397,7 @@ namespace Mensetsu.AutomationSmoke
                 var window = app.GetMainWindow(automation, TimeSpan.FromSeconds(15));
                 Assert.NotNull(window);
 
+                EnsureConfiguredAndOnAuthView(window, _apiUrl);
                 var randomSuffix = Guid.NewGuid().ToString("N")[..8];
                 var testEmail = $"uia_pdf_{randomSuffix}@example.com";
                 var testPassword = "Password123!";
@@ -421,6 +510,115 @@ namespace Mensetsu.AutomationSmoke
                 {
                     app.Kill();
                 }
+            }
+        }
+
+        [Fact]
+        public void Windows_UIAutomation_First_Launch_Server_Setup_And_Settings_Flow()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                throw new PlatformNotSupportedException("Real Windows UIAutomation testing requires Windows OS with desktop session.");
+            }
+
+            if (!File.Exists(_appExePath))
+            {
+                throw new FileNotFoundException($"Mensetsu application binary not found at '{_appExePath}'.", _appExePath);
+            }
+
+            // Ensure any previously saved endpoint file is removed so this behaves like a clean fresh install
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var savedEndpointFile = Path.Combine(appData, "Mensetsu", "server_endpoint.txt");
+            if (File.Exists(savedEndpointFile))
+            {
+                try { File.Delete(savedEndpointFile); } catch { }
+            }
+
+            // Ensure clean environment without any runtime API URL overrides
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = _appExePath,
+                UseShellExecute = false
+            };
+            using var app = Application.Launch(startInfo);
+            using var automation = new UIA3Automation();
+
+            try
+            {
+                var window = app.GetMainWindow(automation, TimeSpan.FromSeconds(15));
+                Assert.NotNull(window);
+
+                // 1. Fresh install prompts for URL (server_setup_screen)
+                var setupScreen = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.ServerSetupScreen)), TimeSpan.FromSeconds(10)).Result;
+                Assert.NotNull(setupScreen);
+
+                var urlInput = window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.ServerUrlInput))?.AsTextBox();
+                Assert.NotNull(urlInput);
+
+                var saveBtn = window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.SaveServerUrlButton))?.AsButton();
+                Assert.NotNull(saveBtn);
+
+                // 2. Validate invalid input displays error
+                // Test invalid scheme/format
+                urlInput.Text = "not-a-valid-url";
+                saveBtn.Invoke();
+
+                var errorBanner = Retry.WhileNull(() =>
+                {
+                    var banner = window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.ServerUrlErrorBanner));
+                    if (banner != null && (banner.IsAvailable || !string.IsNullOrEmpty(banner.Name))) return banner;
+                    return null;
+                }, TimeSpan.FromSeconds(5)).Result;
+                Assert.NotNull(errorBanner);
+
+                // Test non-root path rejection
+                urlInput.Text = _apiUrl.TrimEnd('/') + "/api/v1";
+                saveBtn.Invoke();
+                Assert.NotNull(window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.ServerUrlErrorBanner)));
+
+                // Test query/fragment rejection
+                urlInput.Text = _apiUrl.TrimEnd('/') + "/?";
+                saveBtn.Invoke();
+                Assert.NotNull(window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.ServerUrlErrorBanner)));
+
+                // 3. Enter valid URL origin and save -> enters Auth screen
+                urlInput.Text = _apiUrl;
+                saveBtn.Invoke();
+
+                var authScreen = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.AuthScreen)), TimeSpan.FromSeconds(10)).Result;
+                Assert.NotNull(authScreen);
+
+                // Assert endpoint was persisted to disk
+                Assert.True(File.Exists(savedEndpointFile), "Saved endpoint file should exist after saving valid URL.");
+                var savedText = File.ReadAllText(savedEndpointFile).Trim();
+                Assert.Equal(_apiUrl.TrimEnd('/'), savedText);
+            }
+            finally
+            {
+                try { app.Close(); } catch { app.Kill(); }
+            }
+
+            // 4. Relaunch reuses URL (should open AuthScreen directly without setup prompt)
+            using var relaunchApp = Application.Launch(startInfo);
+            try
+            {
+                var relaunchWindow = relaunchApp.GetMainWindow(automation, TimeSpan.FromSeconds(15));
+                Assert.NotNull(relaunchWindow);
+
+                var authScreen = Retry.WhileNull(() => relaunchWindow.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.AuthScreen)), TimeSpan.FromSeconds(10)).Result;
+                Assert.NotNull(authScreen);
+
+                // Test changing server via pre-auth Change Server button
+                var changeServerBtn = relaunchWindow.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.AuthChangeServerButton))?.AsButton();
+                Assert.NotNull(changeServerBtn);
+                changeServerBtn.Invoke();
+
+                var setupScreen = Retry.WhileNull(() => relaunchWindow.FindFirstDescendant(cf => cf.ByAutomationId(AutomationIds.ServerSetupScreen)), TimeSpan.FromSeconds(5)).Result;
+                Assert.NotNull(setupScreen);
+            }
+            finally
+            {
+                try { relaunchApp.Close(); } catch { relaunchApp.Kill(); }
             }
         }
     }

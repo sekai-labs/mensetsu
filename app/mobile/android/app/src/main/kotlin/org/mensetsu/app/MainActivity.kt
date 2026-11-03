@@ -14,6 +14,7 @@ import org.mensetsu.app.core.theme.LightColorScheme
 import org.mensetsu.app.core.theme.AppTypography
 import org.mensetsu.app.features.auth.AuthScreen
 import org.mensetsu.app.features.settings.LlmSettingsScreen
+import org.mensetsu.app.features.settings.ServerSetupScreen
 import org.mensetsu.app.features.workspaces.WorkspaceDetailScreen
 import org.mensetsu.app.features.workspaces.WorkspaceListScreen
 
@@ -24,7 +25,6 @@ class MainActivity : ComponentActivity() {
 
         val app = application as MensetsuApplication
         val networkManager = app.networkManager
-
         setContent {
             val isDark = isSystemInDarkTheme()
             MaterialTheme(
@@ -43,6 +43,7 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed class Screen {
+    data object ServerSetup : Screen()
     data object Auth : Screen()
     data object WorkspaceList : Screen()
     data class WorkspaceDetail(val workspaceId: String) : Screen()
@@ -51,10 +52,13 @@ sealed class Screen {
 
 @Composable
 fun AppNavigation(networkManager: org.mensetsu.app.core.network.NetworkManager) {
-    // Determine initial screen based on whether an access or refresh token exists
+    // If no endpoint is configured, prompt on first launch.
+    // If configured and tokens exist, go directly to WorkspaceList; otherwise to Auth.
     var currentScreen by remember {
         mutableStateOf<Screen>(
-            if (networkManager.getAccessToken() != null || networkManager.getRefreshToken() != null) {
+            if (!networkManager.isEndpointConfigured()) {
+                Screen.ServerSetup
+            } else if (networkManager.getAccessToken() != null || networkManager.getRefreshToken() != null) {
                 Screen.WorkspaceList
             } else {
                 Screen.Auth
@@ -63,11 +67,22 @@ fun AppNavigation(networkManager: org.mensetsu.app.core.network.NetworkManager) 
     }
 
     when (val screen = currentScreen) {
+        is Screen.ServerSetup -> {
+            ServerSetupScreen(
+                networkManager = networkManager,
+                onEndpointSaved = {
+                    currentScreen = Screen.Auth
+                }
+            )
+        }
         is Screen.Auth -> {
             AuthScreen(
                 networkManager = networkManager,
                 onAuthSuccess = {
                     currentScreen = Screen.WorkspaceList
+                },
+                onChangeServer = {
+                    currentScreen = Screen.ServerSetup
                 }
             )
         }
@@ -99,6 +114,9 @@ fun AppNavigation(networkManager: org.mensetsu.app.core.network.NetworkManager) 
                 networkManager = networkManager,
                 onBack = {
                     currentScreen = Screen.WorkspaceList
+                },
+                onEndpointChanged = {
+                    currentScreen = Screen.Auth
                 }
             )
         }

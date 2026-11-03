@@ -130,7 +130,7 @@ public struct WorkspaceListView: View {
                 })
             }
             .sheet(isPresented: $showingSettingsSheet) {
-                SettingsView()
+                SettingsView(authViewModel: authViewModel)
             }
             .task {
                 await viewModel.loadWorkspaces()

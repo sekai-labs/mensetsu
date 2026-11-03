@@ -17,7 +17,7 @@ public actor TokenManager {
     private var inMemoryAccessToken: String?
     private let keychainStore: SecureTokenStoring
     private var refreshTask: Task<String, Error>?
-
+    private var epoch: UInt64 = 0
     public init(keychainStore: SecureTokenStoring) {
         self.keychainStore = keychainStore
     }
@@ -43,6 +43,7 @@ public actor TokenManager {
     }
 
     public func clear() throws {
+        epoch &+= 1
         inMemoryAccessToken = nil
         refreshTask?.cancel()
         refreshTask = nil
@@ -64,7 +65,10 @@ public actor TokenManager {
             throw APIError.unauthorized("No refresh token stored")
         }
 
+        let startEpoch = self.epoch
+
         let task = Task<String, Error> {
+            try Task.checkCancellation()
             let requestDto = RefreshTokenRequestDto(refreshToken: storedRefresh)
 
             let response: TokenResponseDto = try await withCheckedThrowingContinuation { continuation in
@@ -81,8 +85,8 @@ public actor TokenManager {
                 }
             }
 
-            // Securely persist rotated refresh token
-            try await self.setRefreshToken(response.refreshToken)
+            try Task.checkCancellation()
+            try await self.persistRefreshToken(response.refreshToken, expectedEpoch: startEpoch)
             return response.accessToken
         }
 
@@ -90,13 +94,33 @@ public actor TokenManager {
 
         do {
             let newAccessToken = try await task.value
+            guard self.isValidEpoch(startEpoch) else {
+                throw APIError.unauthorized("Session cleared during token refresh")
+            }
             self.inMemoryAccessToken = newAccessToken
             self.clearRefreshTask()
             return newAccessToken
         } catch {
             self.clearRefreshTask()
-            try? self.clear()
+            if self.isValidEpoch(startEpoch) {
+                try? self.clear()
+            }
             throw error
+        }
+    }
+
+    private func isValidEpoch(_ expectedEpoch: UInt64) -> Bool {
+        return self.epoch == expectedEpoch
+    }
+
+    private func persistRefreshToken(_ token: String?, expectedEpoch: UInt64) throws {
+        guard self.epoch == expectedEpoch else {
+            throw APIError.unauthorized("Session cleared during token refresh")
+        }
+        if let token = token, !token.isEmpty {
+            try keychainStore.saveRefreshToken(token)
+        } else {
+            try keychainStore.clearRefreshToken()
         }
     }
 }

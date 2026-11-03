@@ -124,7 +124,7 @@ public struct MainSplitView: View {
                 
                 Divider()
                 
-                // Bottom Toolbar: New Workspace
+                // Bottom Toolbar: New Workspace & Settings
                 HStack {
                     Button(action: {
                         workspacesViewModel.isShowingCreateSheet = true
@@ -136,6 +136,16 @@ public struct MainSplitView: View {
                     .accessibilityIdentifier(AccessibilityIdentifiers.buttonNewWorkspace)
                     
                     Spacer()
+
+                    Button(action: {
+                        authViewModel.isShowingSettings = true
+                    }) {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 14))
+                    }
+                    .buttonStyle(.plain)
+                    .help("Settings")
+                    .accessibilityIdentifier(AccessibilityIdentifiers.buttonSettings)
                 }
                 .padding(12)
                 .background(Color(NSColor.controlBackgroundColor))
@@ -165,6 +175,9 @@ public struct MainSplitView: View {
         }
         .sheet(isPresented: $workspacesViewModel.isShowingCreateSheet) {
             NewWorkspaceSheet(viewModel: workspacesViewModel)
+        }
+        .sheet(isPresented: $authViewModel.isShowingSettings) {
+            SettingsView(authViewModel: authViewModel)
         }
     }
     

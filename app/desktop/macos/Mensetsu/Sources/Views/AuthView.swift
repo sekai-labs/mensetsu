@@ -103,6 +103,27 @@ public struct AuthView: View {
             }
             .frame(maxWidth: 320)
             
+            // Server Endpoint Configuration button (accessible even if login fails)
+            HStack {
+                Spacer()
+                Button(action: {
+                    viewModel.isShowingSettings = true
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "server.rack")
+                        Text("Server: \(AppConfig.apiBaseUrl.isEmpty ? "Not configured" : AppConfig.apiBaseUrl)")
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier(AccessibilityIdentifiers.buttonSettings)
+                Spacer()
+            }
+            .frame(maxWidth: 320)
+
             Spacer()
         }
         .padding(32)
@@ -110,6 +131,9 @@ public struct AuthView: View {
         .accessibilityIdentifier(AccessibilityIdentifiers.authScreen)
         .sheet(isPresented: $viewModel.requires2fa) {
             TwoFactorChallengeSheet(viewModel: viewModel)
+        }
+        .sheet(isPresented: $viewModel.isShowingSettings) {
+            SettingsView(authViewModel: viewModel)
         }
     }
 }

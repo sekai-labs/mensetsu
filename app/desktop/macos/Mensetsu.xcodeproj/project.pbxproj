@@ -18,6 +18,8 @@
 		AA0100092CE0000100000009 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0100092CE0000100000009 /* AuthView.swift */; };
 		AA0100102CE0000100000010 /* MainSplitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0100102CE0000100000010 /* MainSplitView.swift */; };
 		AA0100112CE0000100000011 /* WorkspaceViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0100112CE0000100000011 /* WorkspaceViews.swift */; };
+		AA0100132CE0000100000013 /* ServerSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0100142CE0000100000014 /* ServerSetupView.swift */; };
+		AA0100142CE0000100000014 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0100152CE0000100000015 /* SettingsView.swift */; };
 		AA0100122CE0000100000012 /* MensetsuContracts in Frameworks */ = {isa = PBXBuildFile; productRef = CC0100012CE0000100000001 /* MensetsuContracts */; };
 		AA0200012CE0000200000001 /* MensetsuUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0200012CE0000200000001 /* MensetsuUITests.swift */; };
 /* End PBXBuildFile section */
@@ -46,6 +48,8 @@
 		BB0100092CE0000100000009 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
 		BB0100102CE0000100000010 /* MainSplitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainSplitView.swift; sourceTree = "<group>"; };
 		BB0100112CE0000100000011 /* WorkspaceViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceViews.swift; sourceTree = "<group>"; };
+		BB0100142CE0000100000014 /* ServerSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSetupView.swift; sourceTree = "<group>"; };
+		BB0100152CE0000100000015 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		BB0100122CE0000100000012 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BB0100132CE0000100000013 /* Mensetsu.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Mensetsu.entitlements; sourceTree = "<group>"; };
 		BB0200012CE0000200000001 /* MensetsuUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MensetsuUITests.swift; sourceTree = "<group>"; };
@@ -145,6 +149,8 @@
 				BB0100092CE0000100000009 /* AuthView.swift */,
 				BB0100102CE0000100000010 /* MainSplitView.swift */,
 				BB0100112CE0000100000011 /* WorkspaceViews.swift */,
+				BB0100142CE0000100000014 /* ServerSetupView.swift */,
+				BB0100152CE0000100000015 /* SettingsView.swift */,
 			);
 			path = Sources/Views;
 			sourceTree = "<group>";
@@ -255,6 +261,8 @@
 				AA0100092CE0000100000009 /* AuthView.swift in Sources */,
 				AA0100102CE0000100000010 /* MainSplitView.swift in Sources */,
 				AA0100112CE0000100000011 /* WorkspaceViews.swift in Sources */,
+				AA0100132CE0000100000013 /* ServerSetupView.swift in Sources */,
+				AA0100142CE0000100000014 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -47,6 +47,10 @@ public final class NetworkClient {
         MensetsuContractsAPI.basePath = url
     }
 
+    public func clearSession() async throws {
+        try await tokenManager.clear()
+        MensetsuContractsAPI.customHeaders.removeValue(forKey: "Authorization")
+    }
     /// Executes an API request with bearer authentication and automatic single retry on 401.
     public func executeWithAuthRetry<T>(
         request: @escaping (_ accessToken: String) async throws -> T

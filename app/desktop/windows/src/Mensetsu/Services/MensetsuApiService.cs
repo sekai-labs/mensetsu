@@ -46,17 +46,31 @@ namespace Mensetsu.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IAuthSession _session;
+        private readonly IEndpointContext _endpointContext;
         private readonly JsonSerializerOptions _jsonOptions;
 
-        public MensetsuApiService(HttpClient httpClient, IAuthSession session)
+        public MensetsuApiService(HttpClient httpClient, IAuthSession session, IEndpointContext endpointContext)
         {
             _httpClient = httpClient;
             _session = session;
+            _endpointContext = endpointContext;
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
+        }
+
+        private Uri GetRequestUri(string relativePath)
+        {
+            var baseEndpoint = _endpointContext.CurrentEndpoint;
+            if (string.IsNullOrEmpty(baseEndpoint))
+            {
+                throw new InvalidOperationException("Server API endpoint is not configured. Please configure the server URL first.");
+            }
+            var cleanBase = baseEndpoint.TrimEnd('/');
+            var cleanRelative = relativePath.StartsWith("/") ? relativePath : "/" + relativePath;
+            return new Uri(cleanBase + cleanRelative, UriKind.Absolute);
         }
 
         private static string CleanId(string id) => id.Replace("workspace:", "").Replace("`", "");
@@ -65,7 +79,7 @@ namespace Mensetsu.Services
         {
             var req = new LoginRequestDto(email, password);
             var content = new StringContent(JsonSerializer.Serialize(req, _jsonOptions), Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync("/api/v1/auth/login", content, cancellationToken);
+            var response = await _httpClient.PostAsync(GetRequestUri("/api/v1/auth/login"), content, cancellationToken);
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -89,7 +103,7 @@ namespace Mensetsu.Services
         {
             var req = new RegisterRequestDto(email, name, password);
             var content = new StringContent(JsonSerializer.Serialize(req, _jsonOptions), Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync("/api/v1/auth/register", content, cancellationToken);
+            var response = await _httpClient.PostAsync(GetRequestUri("/api/v1/auth/register"), content, cancellationToken);
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -113,7 +127,7 @@ namespace Mensetsu.Services
         {
             var req = new Login2faRequestDto(code, tempToken);
             var content = new StringContent(JsonSerializer.Serialize(req, _jsonOptions), Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync("/api/v1/auth/login-2fa", content, cancellationToken);
+            var response = await _httpClient.PostAsync(GetRequestUri("/api/v1/auth/login-2fa"), content, cancellationToken);
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -140,7 +154,7 @@ namespace Mensetsu.Services
 
             var req = new RefreshTokenRequestDto(new Option<string?>(rt));
             var content = new StringContent(JsonSerializer.Serialize(req, _jsonOptions), Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync("/api/v1/auth/refresh", content, cancellationToken);
+            var response = await _httpClient.PostAsync(GetRequestUri("/api/v1/auth/refresh"), content, cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {
@@ -160,7 +174,7 @@ namespace Mensetsu.Services
         {
             try
             {
-                await _httpClient.PostAsync("/api/v1/auth/logout", null, cancellationToken);
+                await _httpClient.PostAsync(GetRequestUri("/api/v1/auth/logout"), null, cancellationToken);
             }
             catch
             {
@@ -174,7 +188,7 @@ namespace Mensetsu.Services
 
         public async Task<UserResponseDto?> GetMeAsync(CancellationToken cancellationToken = default)
         {
-            var response = await _httpClient.GetAsync("/api/v1/auth/me", cancellationToken);
+            var response = await _httpClient.GetAsync(GetRequestUri("/api/v1/auth/me"), cancellationToken);
             if (!response.IsSuccessStatusCode) return null;
 
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -183,7 +197,7 @@ namespace Mensetsu.Services
 
         public async Task<List<WorkspaceResponseDto>> ListWorkspacesAsync(CancellationToken cancellationToken = default)
         {
-            var response = await _httpClient.GetAsync("/api/v1/workspaces", cancellationToken);
+            var response = await _httpClient.GetAsync(GetRequestUri("/api/v1/workspaces"), cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -198,7 +212,7 @@ namespace Mensetsu.Services
         public async Task<WorkspaceResponseDto> GetWorkspaceAsync(string id, CancellationToken cancellationToken = default)
         {
             var clean = CleanId(id);
-            var response = await _httpClient.GetAsync($"/api/v1/workspaces/{clean}", cancellationToken);
+            var response = await _httpClient.GetAsync(GetRequestUri($"/api/v1/workspaces/{clean}"), cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -221,7 +235,7 @@ namespace Mensetsu.Services
 
             var json = JsonSerializer.Serialize(req, _jsonOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync("/api/v1/resume-uploads", content, cancellationToken);
+            var response = await _httpClient.PostAsync(GetRequestUri("/api/v1/resume-uploads"), content, cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -265,7 +279,7 @@ namespace Mensetsu.Services
         {
             var clean = CleanId(uploadId).Replace("resume_upload:", "");
             var emptyContent = new StringContent("{}", Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync($"/api/v1/resume-uploads/{clean}/complete", emptyContent, cancellationToken);
+            var response = await _httpClient.PostAsync(GetRequestUri($"/api/v1/resume-uploads/{clean}/complete"), emptyContent, cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -290,13 +304,13 @@ namespace Mensetsu.Services
 
             var json = JsonSerializer.Serialize(req, _jsonOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync("/api/v1/workspaces", content, cancellationToken);
+            var response = await _httpClient.PostAsync(GetRequestUri("/api/v1/workspaces"), content, cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = ExtractErrorMessage(body) ?? $"Failed to create workspace ({response.StatusCode})";
-                throw new InvalidOperationException(error);
+                var errorMsg = ExtractErrorMessage(body) ?? $"Failed to create workspace ({response.StatusCode})";
+                throw new InvalidOperationException(errorMsg);
             }
 
             return JsonSerializer.Deserialize<WorkspaceResponseDto>(body, _jsonOptions)
@@ -306,13 +320,13 @@ namespace Mensetsu.Services
         public async Task<MatchAnalysis?> GetWorkspaceMatchAsync(string id, CancellationToken cancellationToken = default)
         {
             var clean = CleanId(id);
-            var response = await _httpClient.GetAsync($"/api/v1/workspaces/{clean}/match", cancellationToken);
+            var response = await _httpClient.GetAsync(GetRequestUri($"/api/v1/workspaces/{clean}/match"), cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = ExtractErrorMessage(body) ?? $"Failed to load match analysis ({response.StatusCode})";
-                throw new InvalidOperationException(error);
+                var errorMsg = ExtractErrorMessage(body) ?? $"Failed to load match analysis ({response.StatusCode})";
+                throw new InvalidOperationException(errorMsg);
             }
 
             try
@@ -329,13 +343,13 @@ namespace Mensetsu.Services
         public async Task<CompanyResearch?> GetWorkspaceCompanyAsync(string id, CancellationToken cancellationToken = default)
         {
             var clean = CleanId(id);
-            var response = await _httpClient.GetAsync($"/api/v1/workspaces/{clean}/company", cancellationToken);
+            var response = await _httpClient.GetAsync(GetRequestUri($"/api/v1/workspaces/{clean}/company"), cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = ExtractErrorMessage(body) ?? $"Failed to load company research ({response.StatusCode})";
-                throw new InvalidOperationException(error);
+                var errorMsg = ExtractErrorMessage(body) ?? $"Failed to load company research ({response.StatusCode})";
+                throw new InvalidOperationException(errorMsg);
             }
 
             try
@@ -351,13 +365,13 @@ namespace Mensetsu.Services
         public async Task<List<LearningUnit>> GetWorkspaceLearningAsync(string id, CancellationToken cancellationToken = default)
         {
             var clean = CleanId(id);
-            var response = await _httpClient.GetAsync($"/api/v1/workspaces/{clean}/learning", cancellationToken);
+            var response = await _httpClient.GetAsync(GetRequestUri($"/api/v1/workspaces/{clean}/learning"), cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = ExtractErrorMessage(body) ?? $"Failed to load learning units ({response.StatusCode})";
-                throw new InvalidOperationException(error);
+                var errorMsg = ExtractErrorMessage(body) ?? $"Failed to load learning units ({response.StatusCode})";
+                throw new InvalidOperationException(errorMsg);
             }
 
             return JsonSerializer.Deserialize<List<LearningUnit>>(body, _jsonOptions) ?? new List<LearningUnit>();
@@ -367,20 +381,20 @@ namespace Mensetsu.Services
         {
             var cleanWs = CleanId(workspaceId);
             var cleanLesson = CleanId(lessonId);
-            var response = await _httpClient.PutAsync($"/api/v1/workspaces/{cleanWs}/learning/{cleanLesson}/toggle", null, cancellationToken);
+            var response = await _httpClient.PutAsync(GetRequestUri($"/api/v1/workspaces/{cleanWs}/learning/{cleanLesson}/toggle"), null, cancellationToken);
             return response.IsSuccessStatusCode;
         }
 
         public async Task<List<InterviewQuestion>> GetWorkspaceQuestionsAsync(string id, CancellationToken cancellationToken = default)
         {
             var clean = CleanId(id);
-            var response = await _httpClient.GetAsync($"/api/v1/workspaces/{clean}/questions", cancellationToken);
+            var response = await _httpClient.GetAsync(GetRequestUri($"/api/v1/workspaces/{clean}/questions"), cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = ExtractErrorMessage(body) ?? $"Failed to load interview questions ({response.StatusCode})";
-                throw new InvalidOperationException(error);
+                var errorMsg = ExtractErrorMessage(body) ?? $"Failed to load interview questions ({response.StatusCode})";
+                throw new InvalidOperationException(errorMsg);
             }
 
             return JsonSerializer.Deserialize<List<InterviewQuestion>>(body, _jsonOptions) ?? new List<InterviewQuestion>();
@@ -388,13 +402,13 @@ namespace Mensetsu.Services
 
         public async Task<List<LlmConfigItemDto>> GetLlmSettingsAsync(CancellationToken cancellationToken = default)
         {
-            var response = await _httpClient.GetAsync("/api/v1/settings/llm", cancellationToken);
+            var response = await _httpClient.GetAsync(GetRequestUri("/api/v1/settings/llm"), cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = ExtractErrorMessage(body) ?? $"Failed to load LLM settings ({response.StatusCode})";
-                throw new InvalidOperationException(error);
+                var errorMsg = ExtractErrorMessage(body) ?? $"Failed to load LLM settings ({response.StatusCode})";
+                throw new InvalidOperationException(errorMsg);
             }
 
             return JsonSerializer.Deserialize<List<LlmConfigItemDto>>(body, _jsonOptions) ?? new List<LlmConfigItemDto>();
@@ -409,13 +423,13 @@ namespace Mensetsu.Services
 
             var json = JsonSerializer.Serialize(req, _jsonOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await _httpClient.PutAsync("/api/v1/settings/llm", content, cancellationToken);
+            var response = await _httpClient.PutAsync(GetRequestUri("/api/v1/settings/llm"), content, cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = ExtractErrorMessage(body) ?? $"Failed to update LLM setting ({response.StatusCode})";
-                throw new InvalidOperationException(error);
+                var errorMsg = ExtractErrorMessage(body) ?? $"Failed to update LLM setting ({response.StatusCode})";
+                throw new InvalidOperationException(errorMsg);
             }
 
             return JsonSerializer.Deserialize<LlmConfigItemDto>(body, _jsonOptions)

@@ -8,37 +8,70 @@ import MensetsuContracts
 
 public struct SettingsView: View {
     @Environment(\.presentationMode) var presentationMode
+    @ObservedObject var authViewModel: AuthViewModel
     @StateObject private var viewModel = SettingsViewModel()
+    @State private var serverUrlInput: String = AppConfig.savedServerUrl ?? AppConfig.apiBaseUrl
+    @State private var serverUrlError: String? = nil
+    @State private var serverSaveSuccess: Bool = false
 
-    public init() {}
-
+    public init(authViewModel: AuthViewModel) {
+        self.authViewModel = authViewModel
+    }
     public var body: some View {
         NavigationView {
-            Group {
-                if viewModel.isLoading && viewModel.configs.isEmpty {
-                    ProgressView("Loading settings...")
-                        .accessibilityIdentifier(AccessibilityID.settingsLoadingIndicator)
-                } else if let error = viewModel.errorMessage, viewModel.configs.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 40))
-                            .foregroundColor(AppColors.rose)
-                        Text("Error Loading Settings")
-                            .font(.headline)
-                        Text(error)
-                            .font(.subheadline)
-                            .foregroundColor(AppColors.slate500)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 32)
-                        Button("Retry") {
-                            Task { await viewModel.loadSettings() }
+            List {
+                // 1. API Server Endpoint Section (always visible even if server is offline or unauthenticated)
+                Section(header: Text("API Server Endpoint"), footer: Text("Base URL of your self-hosted Rust API. Changing the server signs out the active session.")) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextField("https://api.example.com", text: $serverUrlInput)
+                            .textFieldStyle(.roundedBorder)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .keyboardType(.URL)
+                            .accessibilityIdentifier(AccessibilityID.settingsServerUrlInput)
+
+                        if let error = serverUrlError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(AppColors.rose)
+                                .accessibilityIdentifier(AccessibilityID.serverUrlErrorMessage)
+                        } else if serverSaveSuccess {
+                            Text("Server updated. Session reset.")
+                                .font(.caption)
+                                .foregroundColor(AppColors.emerald)
+                        }
+
+                        Button("Save Server URL") {
+                            saveServerEndpoint()
                         }
                         .buttonStyle(.borderedProminent)
+                        .accessibilityIdentifier(AccessibilityID.settingsSaveServerUrlButton)
                     }
-                    .accessibilityIdentifier(AccessibilityID.settingsErrorBanner)
-                } else {
-                    List {
-                        Section(header: Text("LLM Provider Keys"), footer: Text("Configure API keys for external intelligence models. Keys are securely stored and masked.")) {
+                    .padding(.vertical, 4)
+                }
+
+                // 2. LLM Provider Settings Section (only if authenticated)
+                if case .authenticated = authViewModel.authState {
+                    Section(header: Text("LLM Provider Keys"), footer: Text("Configure API keys for external intelligence models. Keys are securely stored and masked.")) {
+                        if viewModel.isLoading && viewModel.configs.isEmpty {
+                            HStack {
+                                Spacer()
+                                ProgressView("Loading settings...")
+                                    .accessibilityIdentifier(AccessibilityID.settingsLoadingIndicator)
+                                Spacer()
+                            }
+                        } else if let error = viewModel.errorMessage, viewModel.configs.isEmpty {
+                            VStack(spacing: 8) {
+                                Text(error)
+                                    .font(.subheadline)
+                                    .foregroundColor(AppColors.rose)
+                                Button("Retry") {
+                                    Task { await viewModel.loadSettings() }
+                                }
+                                .buttonStyle(.bordered)
+                            }
+                            .accessibilityIdentifier(AccessibilityID.settingsErrorBanner)
+                        } else {
                             ForEach($viewModel.configs, id: \.provider) { $config in
                                 ProviderConfigRow(config: $config, onSave: { key in
                                     Task { await viewModel.saveKey(provider: config.provider, key: key) }
@@ -47,11 +80,11 @@ public struct SettingsView: View {
                             }
                         }
                     }
-                    .listStyle(InsetGroupedListStyle())
                     .accessibilityIdentifier(AccessibilityID.llmProvidersList)
                 }
             }
-            .navigationTitle("LLM Settings")
+            .listStyle(InsetGroupedListStyle())
+            .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -62,10 +95,34 @@ public struct SettingsView: View {
                 }
             }
             .task {
-                await viewModel.loadSettings()
+                if case .authenticated = authViewModel.authState {
+                    await viewModel.loadSettings()
+                }
             }
         }
         .accessibilityIdentifier(AccessibilityID.settingsScreen)
+    }
+
+    private func saveServerEndpoint() {
+        serverUrlError = nil
+        serverSaveSuccess = false
+        do {
+            let validated = try AppConfig.normalizeAndValidateUrl(serverUrlInput)
+            Task {
+                do {
+                    // Reset session and clear credentials BEFORE persisting new endpoint
+                    try await authViewModel.resetSessionForServerChange(newServerUrl: validated)
+                    try AppConfig.saveServerUrl(validated)
+                    serverUrlInput = validated
+                    serverSaveSuccess = true
+                    presentationMode.wrappedValue.dismiss()
+                } catch {
+                    serverUrlError = "Failed to reset session: \(error.localizedDescription)"
+                }
+            }
+        } catch {
+            serverUrlError = error.localizedDescription
+        }
     }
 }
 

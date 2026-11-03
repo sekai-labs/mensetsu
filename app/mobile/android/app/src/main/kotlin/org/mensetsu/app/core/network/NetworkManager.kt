@@ -17,7 +17,6 @@ import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import okio.BufferedSink
 import okio.source
-import org.mensetsu.app.BuildConfig
 import org.mensetsu.app.core.storage.TokenStorage
 import org.mensetsu.contracts.apis.AuthApi
 import org.mensetsu.contracts.apis.ResumeUploadsApi
@@ -48,6 +47,10 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
     private val memoryAccessToken = AtomicReference<String?>(null)
     private val refreshMutex = Mutex()
 
+    // Synchronization lock and epoch counter to protect against token leakage when switching servers
+    private val sessionLock = Any()
+    private var sessionEpoch: Long = 0L
+
     fun getAccessToken(): String? = memoryAccessToken.get()
 
     fun setAccessToken(token: String?) {
@@ -61,18 +64,64 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
     }
 
     fun clearSession() {
-        memoryAccessToken.set(null)
-        tokenStorage.clearRefreshToken()
+        synchronized(sessionLock) {
+            sessionEpoch++
+            memoryAccessToken.set(null)
+            tokenStorage.clearRefreshToken()
+        }
+    }
+
+    /**
+     * Returns true if a valid custom base URL has been configured and saved.
+     * Validates stored preference so corrupt legacy data does not issue invalid requests and prompts onboarding.
+     */
+    fun isEndpointConfigured(): Boolean {
+        val custom = tokenStorage.getCustomBaseUrl()
+        if (!custom.isNullOrBlank()) {
+            return EndpointValidator.validate(custom) is EndpointValidator.ValidationResult.Valid
+        }
+        return false
     }
 
     fun getBaseUrl(): String {
         val custom = tokenStorage.getCustomBaseUrl()
-        if (!custom.isNullOrBlank()) return custom
-        return BuildConfig.DEFAULT_BASE_URL
+        if (!custom.isNullOrBlank()) {
+            val res = EndpointValidator.validate(custom)
+            if (res is EndpointValidator.ValidationResult.Valid) return res.normalizedUrl
+        }
+        return ""
     }
 
+    /**
+     * Validates and saves a new server endpoint URL.
+     * Validation occurs BEFORE clearing session or mutating storage.
+     * Only upon successful validation are session tokens cleared so credentials
+     * never leak across servers.
+     */
     fun setBaseUrl(url: String?) {
-        tokenStorage.setCustomBaseUrl(url)
+        if (url.isNullOrBlank()) {
+            synchronized(sessionLock) {
+                sessionEpoch++
+                memoryAccessToken.set(null)
+                tokenStorage.clearRefreshToken()
+                tokenStorage.clearCustomBaseUrl()
+            }
+            return
+        }
+
+        when (val res = EndpointValidator.validate(url)) {
+            is EndpointValidator.ValidationResult.Valid -> {
+                synchronized(sessionLock) {
+                    sessionEpoch++
+                    memoryAccessToken.set(null)
+                    tokenStorage.clearRefreshToken()
+                    tokenStorage.setCustomBaseUrl(res.normalizedUrl)
+                }
+            }
+            is EndpointValidator.ValidationResult.Invalid -> {
+                throw IllegalArgumentException("Invalid server endpoint: ${res.reason}")
+            }
+        }
     }
 
     // Interceptor to add memory-only Bearer token and handle 401 with serialized refresh + retry once
@@ -86,7 +135,16 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
                 path.contains("/auth/refresh") ||
                 path.contains("/auth/login-2fa")
 
-        val currentAccess = memoryAccessToken.get()
+        // Capture epoch, access token, and active baseUrl BEFORE sending the original request
+        val requestEpoch: Long
+        val currentAccess: String?
+        val requestBaseUrl: String
+        synchronized(sessionLock) {
+            requestEpoch = sessionEpoch
+            currentAccess = memoryAccessToken.get()
+            requestBaseUrl = getBaseUrl()
+        }
+
         val requestWithAuth = if (!isAuthEndpoint && !currentAccess.isNullOrBlank()) {
             originalRequest.newBuilder()
                 .header("Authorization", "Bearer $currentAccess")
@@ -98,10 +156,27 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
         val response = chain.proceed(requestWithAuth)
 
         if (response.code == 401 && !isAuthEndpoint) {
+            // If server endpoint or session was changed while the original request was in flight,
+            // NEVER refresh or retry: doing so could send new-server tokens to old-server URLs
+            // or leak stale credentials.
+            synchronized(sessionLock) {
+                if (sessionEpoch != requestEpoch || requestBaseUrl.isBlank()) {
+                    return@Interceptor response
+                }
+            }
+
+            val refreshBaseUrl = requestBaseUrl
 
             // Serialized refresh execution
             val newAccessToken = kotlinx.coroutines.runBlocking {
                 refreshMutex.withLock {
+                    // If session or endpoint changed while waiting for lock, discard
+                    synchronized(sessionLock) {
+                        if (sessionEpoch != requestEpoch) {
+                            return@withLock null
+                        }
+                    }
+
                     // Check if another concurrent thread already refreshed the token
                     val candidate = memoryAccessToken.get()
                     if (candidate != null && candidate != currentAccess) {
@@ -115,23 +190,39 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
                     }
 
                     try {
-                        val authApi = AuthApi(basePath = getBaseUrl(), client = rawOkHttpClient)
+                        val authApi = AuthApi(basePath = refreshBaseUrl, client = rawOkHttpClient)
                         val tokenResponse = authApi.refresh(
                             RefreshTokenRequestDto(refreshToken = refreshToken)
                         )
                         val newAccess = tokenResponse.accessToken
                         val newRefresh = tokenResponse.refreshToken
-                        saveRefreshToken(newRefresh)
-                        setAccessToken(newAccess)
+
+                        // Atomically verify epoch before saving; if endpoint changed in flight, discard tokens
+                        synchronized(sessionLock) {
+                            if (sessionEpoch != requestEpoch) {
+                                return@withLock null
+                            }
+                            saveRefreshToken(newRefresh)
+                            setAccessToken(newAccess)
+                        }
                         newAccess
                     } catch (e: Exception) {
-                        clearSession()
+                        // Only clear if still on the same epoch
+                        synchronized(sessionLock) {
+                            if (sessionEpoch == requestEpoch) {
+                                clearSession()
+                            }
+                        }
                         null
                     }
                 }
             }
+            val shouldRetry: Boolean
+            synchronized(sessionLock) {
+                shouldRetry = (!newAccessToken.isNullOrBlank() && sessionEpoch == requestEpoch)
+            }
 
-            if (!newAccessToken.isNullOrBlank()) {
+            if (shouldRetry) {
                 response.close()
                 val retryRequest = originalRequest.newBuilder()
                     .header("Authorization", "Bearer $newAccessToken")
