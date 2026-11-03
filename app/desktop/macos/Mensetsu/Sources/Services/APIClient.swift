@@ -226,7 +226,7 @@ public final class APIClient {
                     isRetry: true
                 )
             } catch {
-                try? await TokenStorage.shared.clearTokens()
+                try await resetSession()
                 throw APIError.unauthorized
             }
         }
