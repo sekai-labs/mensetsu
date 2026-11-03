@@ -8,7 +8,7 @@
 
 The web app and five native clients connect to a Rust API; a separate Python worker runs research and analysis. You deploy the services and control where candidate data is stored.
 
-Build badges report GitHub mirror workflows on `main`; they may not reflect the latest [Codeberg source](https://codeberg.org/sekai-labs/mensetsu).
+Workflows are versioned in the [Codeberg source](https://codeberg.org/sekai-labs/mensetsu) and run on the GitHub mirror; badges show the latest GitHub `main` builds.
 
 ## What you can do
 
