@@ -1,9 +1,10 @@
-import { ref, onMounted, onUnmounted, getCurrentInstance } from 'vue'
+import { ref, onMounted, onUnmounted, getCurrentInstance, toValue, watch } from 'vue'
+import type { MaybeRefOrGetter } from 'vue'
 import type { PipelinePhase, WorkspaceStatus } from '~/models/common.model'
 import type { ProgressEventPayload } from '../models/interview.model'
 
 export const useInterviewEventsService = (
-  workspaceId: string,
+  workspaceId: MaybeRefOrGetter<string>,
   onPhaseChange?: (payload: ProgressEventPayload) => void,
   eventSourceFactory?: (url: string) => EventSource
 ) => {
@@ -49,9 +50,10 @@ export const useInterviewEventsService = (
   }
 
   const connect = () => {
-    if (!workspaceId || isTerminalReached || typeof window === 'undefined') return
+    const id = toValue(workspaceId)
+    if (!id || isTerminalReached || typeof window === 'undefined') return
 
-    const cleanId = workspaceId.replace(/^workspace:/, '').replace(/`/g, '')
+    const cleanId = id.replace(/^workspace:/, '').replace(/`/g, '')
     const url = `/api/backend/workspaces/${cleanId}/events`
 
     disconnect()
@@ -86,6 +88,16 @@ export const useInterviewEventsService = (
   }
 
   if (getCurrentInstance()) {
+    watch(() => toValue(workspaceId), () => {
+      disconnect()
+      isTerminalReached = false
+      currentPhase.value = 'preparing_input'
+      progressPercent.value = 0
+      status.value = 'pending'
+      message.value = ''
+      connect()
+    })
+
     onMounted(() => {
       connect()
     })
@@ -104,3 +116,4 @@ export const useInterviewEventsService = (
     disconnect,
   }
 }
+

@@ -34,7 +34,7 @@ const activeRunId = computed(() => {
 })
 
 const { currentPhase, progressPercent, status: sseStatus, isConnected, message } =
-  useInterviewEventsService(workspaceId.value, () => {
+  useInterviewEventsService(workspaceId, () => {
     refreshWorkspace()
   })
 

@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
+import { defineComponent, h, nextTick, ref } from 'vue'
+import { mount } from '@vue/test-utils'
 import { useInterviewEventsService } from '../features/interviews/services/interview-events.service'
 
 class FakeWorkspaceEventSource {
@@ -107,5 +109,40 @@ describe('useInterviewEventsService Progress Streaming', () => {
 
     service.connect()
     expect(fakeSource!.closed).toBe(true)
+  })
+  it('reconnects when the workspace route changes and clears previous workspace progress', async () => {
+    const workspaceId = ref('first')
+    const sources: FakeWorkspaceEventSource[] = []
+    let progressPercent: { value: number } | undefined
+    const component = defineComponent({
+      setup() {
+        progressPercent = useInterviewEventsService(workspaceId, undefined, (url) => {
+          const source = new FakeWorkspaceEventSource(url)
+          sources.push(source)
+          return source as unknown as EventSource
+        }).progressPercent
+        return () => h('div')
+      },
+    })
+    const wrapper = mount(component)
+
+    expect(sources.map((source) => source.url)).toEqual(['/api/backend/workspaces/first/events'])
+    sources[0]!.dispatchNamedEvent('progress', JSON.stringify({
+      workspace_id: 'first',
+      phase: 'analyzing_job',
+      progress_percent: 45,
+    }))
+
+    workspaceId.value = 'second'
+    await nextTick()
+    expect(progressPercent?.value).toBe(0)
+
+    expect(sources[0]!.closed).toBe(true)
+    expect(sources.map((source) => source.url)).toEqual([
+      '/api/backend/workspaces/first/events',
+      '/api/backend/workspaces/second/events',
+    ])
+    wrapper.unmount()
+    expect(sources[1]!.closed).toBe(true)
   })
 })
