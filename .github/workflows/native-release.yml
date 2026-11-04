@@ -84,8 +84,11 @@ jobs:
             -scheme Mensetsu \
             -destination 'generic/platform=macOS' \
             -configuration Release \
-            CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY='' \
+            CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
+            -derivedDataPath "$RUNNER_TEMP/mensetsu-macos" \
+            build
           mkdir -p release-assets
           tar -czf release-assets/mensetsu-macos-unsigned.tar.gz \
             -C "$RUNNER_TEMP/mensetsu-macos/Build/Products/Release" Mensetsu.app
