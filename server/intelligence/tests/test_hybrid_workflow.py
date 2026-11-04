@@ -8,7 +8,14 @@ from src.agents.model_router import (
 )
 from src.agents.schemas import WorkflowRoutingDecision
 from src.agents.workflow_router import route_workflow_request
-from src.orchestration.hybrid_workflow import HybridWorkflowState, build_hybrid_workflow
+from src.contracts.v1 import Artifact, EvidenceProvenance, WorkflowTask
+from src.orchestration.hybrid_workflow import (
+    HybridWorkflowState,
+    _persist_hybrid_outputs,
+    _question_batch_plan,
+    _task_failed_payload,
+    build_hybrid_workflow,
+)
 
 
 @pytest.mark.asyncio
@@ -109,65 +116,278 @@ async def test_hybrid_workflow_state_graph_compiles_and_plans():
     assert app is not None
 
 
+def test_hybrid_workflow_state_preserves_job_description():
+    state = HybridWorkflowState(
+        run_id="run_test_job_description",
+        workspace_id="ws_test_job_description",
+        company_name="Mensetsu",
+        role_title="Software Engineer",
+        job_description="Build reliable distributed services.",
+    )
+
+    assert state.job_description == "Build reliable distributed services."
+
+
+def test_hybrid_task_failure_payload_matches_event_contract():
+    task = WorkflowTask(
+        id="task_company_test",
+        run_id="run_test",
+        task_type="research",
+        name="Company research",
+        assigned_agent="company-research",
+        attempt=2,
+    )
+
+    assert _task_failed_payload(task, "wall-time budget exceeded") == {
+        "task_id": "task_company_test",
+        "attempt": 2,
+        "error": "wall-time budget exceeded",
+        "can_retry": False,
+    }
+
+
 @pytest.mark.asyncio
-async def test_hybrid_workflow_curriculum_staged_success():
+async def test_hybrid_curriculum_generates_one_lesson_per_prioritized_skill():
     mock_ledger = MagicMock()
     mock_ledger.update_workflow_run = AsyncMock()
     mock_ledger.append_event_transactional = AsyncMock()
     mock_ledger.save_task = AsyncMock()
     mock_ledger.list_artifacts_for_run = AsyncMock(return_value=[])
-
     from src.orchestration.hybrid_workflow import execute_curriculum_node
 
-    def curriculum_fn(s):
-        return execute_curriculum_node(s, mock_ledger)
     state = HybridWorkflowState(
         run_id="run_test_curr_123",
         workspace_id="ws_test_123",
         company_name="Netcompany",
         role_title="Senior Consultant / Software Architect",
-        match_analysis={"gaps": [{"name": "GovTech Integration"}]},
+        match_analysis={"gaps": [{"skill": "GovTech Integration"}]},
     )
-
-    mock_exec_rec_1 = MagicMock(id="exec_1")
-    mock_exec_rec_2 = MagicMock(id="exec_2")
-    mock_graph_output = {
-        "skills": [
-            {"name": "GovTech Integration", "category": "Domain", "candidate_status": "gap"}
+    skills = [
+        {
+            "name": f"Skill {index}",
+            "slug": f"skill-{index}",
+            "category": "Architecture",
+            "candidate_status": "gap",
+            "importance": "mandatory",
+        }
+        for index in range(12)
+    ]
+    graph_output = {
+        "skills": skills,
+        "relations": [
+            {"source": f"Skill {index}", "target": f"Skill {index + 1}", "relation": "prerequisite"}
+            for index in range(10)
         ],
-        "relations": [],
         "summary": "Knowledge graph constructed.",
     }
-    mock_units_output = {
-        "learning_units": [
+
+    async def generate_output(**kwargs):
+        input_data = kwargs["input_data"]
+        if input_data["curriculum_stage"] == "graph":
+            return MagicMock(id="exec_graph"), graph_output
+        skill = input_data["target_skills"][0]["name"]
+        return (
+            MagicMock(id=f"exec_{skill}"),
             {
-                "title": "GovTech Modernization",
-                "skill": "GovTech Integration",
-                "summary": "Mastering European digital public infrastructure.",
-            }
-        ]
+                "learning_units": [
+                    {
+                        "title": f"{skill} fundamentals",
+                        "skill": skill,
+                        "summary": f"Study {skill} internals and failure modes.",
+                        "deep_dive_markdown": f"Detailed mechanisms for {skill}.",
+                        "prerequisites": [],
+                        "estimated_minutes": 60,
+                    }
+                ]
+            },
+        )
+
+    with patch(
+        "src.agents.runtime.agent_runtime.execute_agent_loop",
+        side_effect=generate_output,
+    ) as mock_exec:
+        result = await execute_curriculum_node(state, mock_ledger)
+
+    curriculum = result["curriculum"]
+    assert len(curriculum["skills"]) == 12
+    assert len(curriculum["learning_units"]) == 6
+    assert {unit["skill"] for unit in curriculum["learning_units"]} == {
+        skill["name"] for skill in skills[:6]
     }
+    assert mock_exec.call_count == 7
+    unit_calls = [
+        call.kwargs["input_data"]
+        for call in mock_exec.call_args_list
+        if call.kwargs["input_data"]["curriculum_stage"] == "units"
+    ]
+    assert all(len(call["target_skills"]) == 1 for call in unit_calls)
+    saved_tasks = [call.args[0] for call in mock_ledger.save_task.call_args_list]
+    assert {f"exec_{skill['name']}" for skill in skills[:6]} <= set(saved_tasks[-1].execution_ids)
 
-    with patch("src.agents.runtime.agent_runtime.execute_agent_loop") as mock_exec:
-        mock_exec.side_effect = [
-            (mock_exec_rec_1, mock_graph_output),
-            (mock_exec_rec_2, mock_units_output),
-        ]
 
-        res = await curriculum_fn(state)
+def test_question_batches_keep_the_full_question_bank_contract():
+    batches = _question_batch_plan()
+    counts: dict[str, int] = {}
+    for category, _, batch_count in batches:
+        counts[category] = counts.get(category, 0) + batch_count
 
-        assert "curriculum" in res
-        curr = res["curriculum"]
-        assert len(curr["skills"]) == 1
-        assert len(curr["learning_units"]) == 1
-        assert curr["learning_units"][0]["title"] == "GovTech Modernization"
-        assert mock_exec.call_count == 2
-        stage2_call = mock_exec.call_args_list[1]
-        assert stage2_call.kwargs["agent_id"] == "curriculum"
-        assert "learning units" in stage2_call.kwargs["objective"]
+    assert sum(counts.values()) >= 100
+    assert len(counts) == 7
+    assert all(count >= 15 for count in counts.values())
+    assert all(batch_count == 3 for _, _, batch_count in batches)
 
-        # Verify task was saved with both stage execution IDs
-        saved_tasks = [call.args[0] for call in mock_ledger.save_task.call_args_list]
-        assert len(saved_tasks) > 0
-        completed_curr_task = saved_tasks[-1]
-        assert completed_curr_task.execution_ids == ["exec_1", "exec_2"]
+
+@pytest.mark.asyncio
+async def test_hybrid_persists_completed_outputs_from_run_artifacts():
+    workspace_id = "ws_hybrid_test"
+    run_id = "run_hybrid_test"
+    evidence_id = "art_evidence_test"
+    artifacts = [
+        Artifact(
+            id=evidence_id,
+            run_id=run_id,
+            task_id="task_company_run_hybr",
+            type="evidence",
+            title="Company architecture source",
+            evidence=EvidenceProvenance(
+                source_url="https://example.com/architecture",
+                title="Architecture",
+                snippet="Verified architecture evidence.",
+                confidence=0.95,
+            ),
+            content={"snippet": "Verified architecture evidence."},
+        ),
+        Artifact(
+            id="art_company_test",
+            run_id=run_id,
+            task_id="task_company_run_hybr",
+            type="research_report",
+            title="Company research",
+            evidence_ids=[evidence_id],
+            content={
+                "overview": "Evidence-backed company overview.",
+                "claims": [
+                    {
+                        "statement": "Uses event-driven services.",
+                        "category": "architecture",
+                        "confidence": 0.9,
+                        "evidence_ids": [evidence_id],
+                    }
+                ],
+                "tech_stack": [],
+            },
+        ),
+        Artifact(
+            id="art_match_test",
+            run_id=run_id,
+            task_id="task_synthesize_run_hybr",
+            type="validation_result",
+            title="Match analysis",
+            content={
+                "overall_match_ratio": 0.82,
+                "strengths": [{"skill": "Rust", "evidence_quote": "Built Rust services."}],
+                "gaps": [],
+                "risks": [],
+                "wording_improvements": [],
+            },
+        ),
+        Artifact(
+            id="art_curriculum_test",
+            run_id=run_id,
+            task_id="task_curriculum_run_hybr",
+            type="research_report",
+            title="Curriculum",
+            content={
+                "skills": [
+                    {
+                        "name": "Distributed systems",
+                        "slug": "distributed-systems",
+                        "category": "Architecture",
+                        "candidate_status": "in_progress",
+                        "importance": "mandatory",
+                    }
+                ],
+                "relations": [],
+                "learning_units": [
+                    {
+                        "skill": "Distributed systems",
+                        "title": "Consensus fundamentals",
+                        "prerequisites": [],
+                        "estimated_minutes": 45,
+                        "summary": "Understand consensus safety.",
+                        "deep_dive_markdown": "Consensus mechanisms and safety properties.",
+                    }
+                ],
+            },
+        ),
+        Artifact(
+            id="art_questions_test",
+            run_id=run_id,
+            task_id="task_questions_run_hybr",
+            type="question_set",
+            title="Interview questions",
+            content={
+                "questions": [
+                    {
+                        "question": "How would you debug a partition?",
+                        "category": "system_design",
+                        "difficulty": "hard",
+                        "skills_tested": ["distributed systems"],
+                        "interviewer_intent": "Assess failure isolation.",
+                        "answer_outline": [
+                            "Check quorum",
+                            "Inspect network paths",
+                            "Recover safely",
+                        ],
+                        "expected_signals": ["Explains consistency", "Covers recovery"],
+                        "pitfalls": ["Assumes no partitions", "Ignores data loss"],
+                        "follow_ups": [
+                            "How do you recover replicas?",
+                            "What consistency is acceptable?",
+                        ],
+                    }
+                ]
+            },
+        ),
+    ]
+    db = MagicMock()
+    db.execute_query = AsyncMock(return_value=[])
+    ledger = MagicMock(db=db)
+    state = HybridWorkflowState(
+        run_id=run_id,
+        workspace_id=workspace_id,
+        company_name="Example Corp",
+        role_title="Platform Engineer",
+    )
+
+    await _persist_hybrid_outputs(state, ledger, artifacts)
+
+    writes = [(call.args[0], call.kwargs["vars"]) for call in db.execute_query.call_args_list]
+    tables = {query.split("UPSERT type::record('")[1].split("'")[0] for query, _ in writes}
+    assert {
+        "source",
+        "company_research",
+        "claim",
+        "match_analysis",
+        "skill",
+        "learning_unit",
+        "interview_question",
+    } <= tables
+    company_record = next(values for query, values in writes if "company_research" in query)
+    match_record = next(values for query, values in writes if "match_analysis" in query)
+    lesson_record = next(values for query, values in writes if "learning_unit" in query)
+    question_record = next(values for query, values in writes if "interview_question" in query)
+    assert company_record["dossier"]["overview"] == "Evidence-backed company overview."
+    assert len(company_record["dossier"]["sources"]) == 1
+    assert match_record["overall_match_ratio"] == 0.82
+    assert lesson_record["content_markdown"] == "Consensus mechanisms and safety properties."
+    assert question_record["question"] == "How would you debug a partition?"
+    assert question_record["category"] == "system_design"
+    assert question_record["strong_answer_rubric"] == [
+        "Explains consistency",
+        "Covers recovery",
+    ]
+    assert question_record["follow_up_questions"] == [
+        "How do you recover replicas?",
+        "What consistency is acceptable?",
+    ]
