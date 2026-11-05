@@ -429,6 +429,18 @@ async def test_agent_loop_real_tool_sequence_and_provenance():
     assert exec_rec.budgets_used.tokens_in > 0
     assert exec_rec.budgets_used.tokens_out > 0
     assert exec_rec.budgets_used.wall_time_ms > 0.0
+    usage_events = await ledger.get_events_history(run_id=run_id, limit=100)
+    request_usage = [
+        event
+        for event in usage_events.events
+        if event.type == "agent.model_usage" and event.execution_id == exec_rec.id
+    ]
+    assert request_usage
+    assert all(
+        event.payload.total_tokens == event.payload.input_tokens + event.payload.output_tokens
+        for event in request_usage
+    )
+    assert all(event.payload.model_name and event.payload.agent_id for event in request_usage)
 
 
 class EmptyFirstReplyModel(ScriptedToolCallingFakeModel):

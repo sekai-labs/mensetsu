@@ -4,6 +4,7 @@ from pathlib import Path
 from pydantic.json_schema import models_json_schema
 
 from src.contracts.v1 import (
+    AgentModelUsageEvent,
     AgentActivityEvent,
     AgentCompletedEvent,
     AgentExecution,
@@ -91,6 +92,7 @@ def generate_workflows_v1_schema() -> dict:
         (TaskBlockedEvent, "validation"),
         (AgentStartedEvent, "validation"),
         (AgentActivityEvent, "validation"),
+        (AgentModelUsageEvent, "validation"),
         (AgentCompletedEvent, "validation"),
         (AgentFailedEvent, "validation"),
         (DelegationRequestedEvent, "validation"),

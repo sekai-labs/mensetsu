@@ -16,6 +16,7 @@ Workflows are versioned in the [Codeberg source](https://codeberg.org/sekai-labs
 - Review company research with source links and inspect how your experience matches role requirements.
 - Explore skills and knowledge relationships, follow a learning path, and practice with targeted questions.
 - Track background research runs and return to the workspace as results arrive.
+- Monitor per-request model token usage; users see only their own requests, and administrators can inspect usage across the platform.
 
 AI-generated material can be wrong. Check important claims against their cited sources before relying on them.
 
@@ -57,9 +58,9 @@ Android, iOS, Linux, macOS, and Windows clients are in [`app/mobile`](app/mobile
 | --- | --- | --- |
 | Android | [`app/mobile/android`](app/mobile/android) | JDK 17, Android SDK 34, Gradle |
 | iOS | [`app/mobile/ios`](app/mobile/ios) | Xcode on macOS |
-| Linux | [`app/desktop/linux`](app/desktop/linux) | Rust, GTK4, libsecret |
-| macOS | [`app/desktop/macos`](app/desktop/macos) | Xcode on macOS |
-| Windows | [`app/desktop/windows`](app/desktop/windows) | Visual Studio 2022, Windows SDK, .NET 9 SDK |
+| Desktop (Linux, macOS, Windows) | [`app/desktop`](app/desktop) | Rust, platform webview (WebKitGTK on Linux, WebView2 on Windows, WebKit on macOS) |
+
+Native-client workflow runs upload GitHub Actions artifacts. Pushing a `v*` tag runs the release workflow and publishes packaged preview assets on a GitHub prerelease; the builds are unsigned (iOS is simulator-only).
 
 Apple distribution builds require your own signing and provisioning. Native builds use generated API clients from [`contracts/native`](contracts/native).
 

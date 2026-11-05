@@ -121,6 +121,10 @@ namespace Mensetsu.Contracts.Client
             _jsonOptions.Converters.Add(new TaskStatusJsonConverter());
             _jsonOptions.Converters.Add(new TaskStatusNullableJsonConverter());
             _jsonOptions.Converters.Add(new TokenResponseDtoJsonConverter());
+            _jsonOptions.Converters.Add(new TokenUsageCursorDtoJsonConverter());
+            _jsonOptions.Converters.Add(new TokenUsageResponseDtoJsonConverter());
+            _jsonOptions.Converters.Add(new TokenUsageRowDtoJsonConverter());
+            _jsonOptions.Converters.Add(new TokenUsageTotalsDtoJsonConverter());
             _jsonOptions.Converters.Add(new ToolInvocationJsonConverter());
             _jsonOptions.Converters.Add(new ToolInvocationsPageResponseJsonConverter());
             _jsonOptions.Converters.Add(new ToolOutputResponseJsonConverter());
@@ -157,6 +161,7 @@ namespace Mensetsu.Contracts.Client
             _services.AddSingleton<AuthApiEvents>();
             _services.AddSingleton<ResumeUploadsApiEvents>();
             _services.AddSingleton<SettingsApiEvents>();
+            _services.AddSingleton<TokenUsageApiEvents>();
             _services.AddSingleton<WorkflowsApiEvents>();
             _services.AddSingleton<WorkspacesApiEvents>();
             _services.AddSingleton<WorkspacesEventHandlersApiEvents>();
@@ -183,6 +188,7 @@ namespace Mensetsu.Contracts.Client
             builders.Add(_services.AddHttpClient<IAuthApi, AuthApi>(client));
             builders.Add(_services.AddHttpClient<IResumeUploadsApi, ResumeUploadsApi>(client));
             builders.Add(_services.AddHttpClient<ISettingsApi, SettingsApi>(client));
+            builders.Add(_services.AddHttpClient<ITokenUsageApi, TokenUsageApi>(client));
             builders.Add(_services.AddHttpClient<IWorkflowsApi, WorkflowsApi>(client));
             builders.Add(_services.AddHttpClient<IWorkspacesApi, WorkspacesApi>(client));
             builders.Add(_services.AddHttpClient<IWorkspacesEventHandlersApi, WorkspacesEventHandlersApi>(client));

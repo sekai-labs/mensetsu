@@ -896,6 +896,7 @@
           "agent.completed",
           "agent.failed",
           "agent.started",
+          "agent.model_usage",
           "artifact.created",
           "checkpoint.created",
           "delegation.accepted",
@@ -1895,6 +1896,141 @@
         ],
         "type": "object"
       },
+      "TokenUsageCursorDto": {
+        "properties": {
+          "before_event_id": {
+            "type": "string"
+          },
+          "before_timestamp": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "before_timestamp",
+          "before_event_id"
+        ],
+        "type": "object"
+      },
+      "TokenUsageResponseDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TokenUsageRowDto"
+            },
+            "type": "array"
+          },
+          "next_cursor": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TokenUsageCursorDto"
+              }
+            ]
+          },
+          "totals": {
+            "$ref": "#/components/schemas/TokenUsageTotalsDto"
+          }
+        },
+        "required": [
+          "items",
+          "totals"
+        ],
+        "type": "object"
+      },
+      "TokenUsageRowDto": {
+        "properties": {
+          "agent_id": {
+            "type": "string"
+          },
+          "execution_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "input_tokens": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "model_name": {
+            "type": "string"
+          },
+          "model_provider": {
+            "type": "string"
+          },
+          "output_tokens": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "total_tokens": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "agent_id",
+          "model_provider",
+          "model_name",
+          "input_tokens",
+          "output_tokens",
+          "total_tokens",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "TokenUsageTotalsDto": {
+        "properties": {
+          "input_tokens": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "output_tokens": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "request_count": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "total_tokens": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "request_count",
+          "input_tokens",
+          "output_tokens",
+          "total_tokens"
+        ],
+        "type": "object"
+      },
       "ToolInvocation": {
         "additionalProperties": false,
         "properties": {
@@ -2814,6 +2950,58 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/admin/usage/tokens": {
+      "get": {
+        "operationId": "admin_token_usage",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "before_timestamp",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "before_event_id",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenUsageResponseDto"
+                }
+              }
+            },
+            "description": "Token usage across all users"
+          },
+          "403": {
+            "description": "Administrator privileges required"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "token_usage"
+        ]
+      }
+    },
     "/api/v1/auth/2fa/disable": {
       "post": {
         "operationId": "disable_2fa",
@@ -3320,6 +3508,58 @@
         },
         "tags": [
           "settings"
+        ]
+      }
+    },
+    "/api/v1/usage/tokens": {
+      "get": {
+        "operationId": "user_token_usage",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "before_timestamp",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "before_event_id",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenUsageResponseDto"
+                }
+              }
+            },
+            "description": "Token usage for the authenticated user"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "token_usage"
         ]
       }
     },

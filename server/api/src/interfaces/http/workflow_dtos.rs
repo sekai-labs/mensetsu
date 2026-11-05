@@ -499,6 +499,8 @@ pub enum ExecutionEventType {
     AgentFailed,
     #[serde(rename = "agent.started")]
     AgentStarted,
+    #[serde(rename = "agent.model_usage")]
+    AgentModelUsage,
     #[serde(rename = "artifact.created")]
     ArtifactCreated,
     #[serde(rename = "checkpoint.created")]

@@ -114,6 +114,67 @@ async fn seed_workspace(_db: &DatabasePool, token: &str, app: &Router) -> String
     serde_json::from_slice::<Value>(&body).unwrap()["id"].as_str().unwrap().to_string()
 }
 
+async fn authenticated_user_id(app: &Router, token: &str) -> String {
+    let (status, body) = send(
+        app,
+        authed("GET", "/api/v1/auth/me", token).body(Body::empty()).unwrap(),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{}", String::from_utf8_lossy(&body));
+    serde_json::from_slice::<Value>(&body).unwrap()["user"]["id"]
+        .as_str()
+        .unwrap()
+        .to_owned()
+}
+
+async fn seed_token_usage(
+    db: &DatabasePool,
+    run_id: &str,
+    workspace_id: &str,
+    user_id: &str,
+    event_id: &str,
+    input_tokens: u64,
+    output_tokens: u64,
+) {
+    let clean_workspace = workspace_id.strip_prefix("workspace:").unwrap_or(workspace_id);
+    db.client
+        .query(
+            "CREATE type::record('workflow_run', $run_id) SET
+                workspace_id = type::record('workspace', $workspace_id),
+                user_id = $user_id,
+                workflow_id = 'interview-preparation-static',
+                workflow_name = 'Static Interview Preparation Workflow',
+                type = 'static',
+                status = 'completed',
+                current_phase = 'ready',
+                last_seq = 1;
+             CREATE type::record('execution_event', $event_record_id) SET
+                event_id = $event_id,
+                run_id = type::record('workflow_run', $run_id),
+                seq = 1,
+                type = 'agent.model_usage',
+                execution_id = 'exec_usage',
+                payload = $payload;",
+        )
+        .bind(("run_id", run_id.to_owned()))
+        .bind(("workspace_id", clean_workspace.to_owned()))
+        .bind(("user_id", user_id.to_owned()))
+        .bind(("event_record_id", format!("event_{event_id}")))
+        .bind(("event_id", event_id.to_owned()))
+        .bind(("payload", json!({
+            "agent_id": "technical-research",
+            "model_provider": "openrouter",
+            "model_name": "example/model",
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "total_tokens": input_tokens + output_tokens,
+        })))
+        .await
+        .unwrap()
+        .check()
+        .unwrap();
+}
+
 async fn seed_run(db: &DatabasePool, run_id: &str, ws_id: &str, created_at: &str) {
     let clean_ws = ws_id.strip_prefix("workspace:").unwrap_or(ws_id);
     let clean_run = run_id.strip_prefix("workflow_run:").unwrap_or(run_id);
@@ -246,4 +307,136 @@ async fn sse_preserves_id_event_and_exact_json_and_translates_last_event_id() {
     assert!(text.contains("id: 3"), "Expected frame seq 3 in stream: {text}");
     assert!(text.contains("event: task.started"), "Expected event task.started in stream: {text}");
     assert!(text.contains("event: workflow.completed"), "Expected terminal workflow.completed: {text}");
+}
+
+#[tokio::test]
+async fn token_usage_is_user_scoped_and_admin_only_for_global_reports() {
+    let (url, _state, _server) = mock_grpc_server::start_dynamic_mock_grpc_server("".into()).await;
+    let (app, db) = app_with_upstream(&url).await;
+    let token_a = register(&app).await;
+    let token_b = register(&app).await;
+    let user_a = authenticated_user_id(&app, &token_a).await;
+    let user_b = authenticated_user_id(&app, &token_b).await;
+    let workspace_a = seed_workspace(&db, &token_a, &app).await;
+    let workspace_b = seed_workspace(&db, &token_b, &app).await;
+    let event_a = format!("usage_a_{}", uuid::Uuid::new_v4());
+    let event_b = format!("usage_b_{}", uuid::Uuid::new_v4());
+    seed_token_usage(
+        &db,
+        &format!("run_usage_a_{}", uuid::Uuid::new_v4()),
+        &workspace_a,
+        &user_a,
+        &event_a,
+        120,
+        30,
+    )
+    .await;
+    seed_token_usage(
+        &db,
+        &format!("run_usage_b_{}", uuid::Uuid::new_v4()),
+        &workspace_b,
+        &user_b,
+        &event_b,
+        80,
+        20,
+    )
+    .await;
+
+    for (token, own_event, foreign_event) in [
+        (&token_a, &event_a, &event_b),
+        (&token_b, &event_b, &event_a),
+    ] {
+        let (status, body) = send(
+            &app,
+            authed("GET", "/api/v1/usage/tokens", token)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK, "{}", String::from_utf8_lossy(&body));
+        let report: Value = serde_json::from_slice(&body).unwrap();
+        let items = report["items"].as_array().unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0]["id"].as_str(), Some(own_event.as_str()));
+        assert!(!String::from_utf8_lossy(&body).contains(foreign_event));
+        assert_eq!(report["totals"]["request_count"], 1);
+    }
+    let (status, body) = send(
+        &app,
+        authed(
+            "GET",
+            "/api/v1/usage/tokens?before_timestamp=2999-01-01T00%3A00%3A00Z&before_event_id=zzzz",
+            &token_a,
+        )
+        .body(Body::empty())
+        .unwrap(),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{}", String::from_utf8_lossy(&body));
+    let report: Value = serde_json::from_slice(&body).unwrap();
+    assert!(report["items"].as_array().unwrap().iter().any(|item| item["id"] == event_a));
+
+    let (status, _) = send(
+        &app,
+        authed(
+            "GET",
+            "/api/v1/usage/tokens?before_timestamp=2999-01-01T00%3A00%3A00Z",
+            &token_a,
+        )
+        .body(Body::empty())
+        .unwrap(),
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+
+    let (status, _) = send(
+        &app,
+        authed("GET", "/api/v1/admin/usage/tokens", &token_b)
+            .body(Body::empty())
+            .unwrap(),
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+
+    db.client
+        .query("UPDATE type::record('user', $user_id) SET role = 'admin';")
+        .bind(("user_id", user_a.clone()))
+        .await
+        .unwrap()
+        .check()
+        .unwrap();
+    let (status, body) = send(
+        &app,
+        authed("GET", "/api/v1/admin/usage/tokens", &token_a)
+            .body(Body::empty())
+            .unwrap(),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{}", String::from_utf8_lossy(&body));
+    let report: Value = serde_json::from_slice(&body).unwrap();
+    assert!(report["totals"]["request_count"].as_u64().unwrap() >= 2);
+    let items = report["items"].as_array().unwrap();
+    assert!(items.iter().any(|item| item["id"] == event_a));
+    assert!(items.iter().any(|item| item["id"] == event_b));
+    db.client
+        .query(
+            "DELETE execution_event WHERE run_id.user_id IN [$user_a, $user_b];
+             DELETE workflow_run WHERE user_id IN [$user_a, $user_b];
+             DELETE workspace WHERE user_id IN [
+                type::record('user', $user_a),
+                type::record('user', $user_b)
+             ];
+             DELETE auth_session WHERE user_id IN [
+                type::record('user', $user_a),
+                type::record('user', $user_b)
+             ];
+             DELETE type::record('user', $user_a);
+             DELETE type::record('user', $user_b);",
+        )
+        .bind(("user_a", user_a))
+        .bind(("user_b", user_b))
+        .await
+        .unwrap()
+        .check()
+        .unwrap();
 }

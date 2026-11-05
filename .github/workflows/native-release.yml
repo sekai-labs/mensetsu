@@ -20,15 +20,20 @@ jobs:
       - name: Install native build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-4-dev libsecret-1-dev \
-            libglib2.0-dev pkg-config
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libsecret-1-dev \
+            libglib2.0-dev \
+            libxdo-dev \
+            pkg-config
       - name: Build Linux desktop client
-        run: cargo build --release --manifest-path app/desktop/linux/Cargo.toml
+        run: cargo build --release --manifest-path app/desktop/Cargo.toml
       - name: Package Linux client
         run: |
           mkdir -p release-assets
-          tar -czf release-assets/mensetsu-linux-x86_64.tar.gz \
-            -C app/desktop/linux/target/release mensetsu-linux
+          tar -czf release-assets/mensetsu-desktop-linux-x86_64.tar.gz \
+            -C app/desktop/target/release mensetsu-desktop
       - uses: actions/upload-artifact@v4
         with:
           name: native-linux
@@ -39,32 +44,12 @@ jobs:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '9.0.x'
-      - uses: microsoft/setup-msbuild@v3
-        with:
-          vs-version: '[17.0,18.0)'
-          msbuild-architecture: x64
-      - name: Publish self-contained Windows desktop client
+      - name: Build Dioxus Windows desktop client
         shell: pwsh
         run: |
-          $publishDir = (New-Item -ItemType Directory `
-            -Force -Path release-assets/windows).FullName
-          msbuild app/desktop/windows/src/Mensetsu/Mensetsu.csproj `
-            /restore /target:Publish `
-            /p:Platform=x64 /p:Configuration=Release `
-            /p:RuntimeIdentifier=win-x64 /p:SelfContained=true `
-            "/p:PublishDir=$publishDir/"
-          if ($LASTEXITCODE -ne 0) {
-            exit $LASTEXITCODE
-          }
-          if (-not (Test-Path (Join-Path $publishDir 'Mensetsu.exe'))) {
-            throw 'WinUI executable was not published'
-          }
-          if (-not (Test-Path (Join-Path $publishDir 'coreclr.dll'))) {
-            throw '.NET runtime was not included'
-          }
+          cargo build --release --manifest-path app/desktop/Cargo.toml
+          $publishDir = (New-Item -ItemType Directory -Force -Path release-assets/windows).FullName
+          Copy-Item app/desktop/target/release/mensetsu-desktop.exe (Join-Path $publishDir "Mensetsu.exe")
       - name: Install Inno Setup
         shell: pwsh
         run: choco install innosetup --no-progress --yes
@@ -80,7 +65,7 @@ jobs:
           if (-not (Test-Path $iscc)) {
             throw "Inno Setup compiler not found at $iscc"
           }
-          & $iscc "/DAppVersion=$version" app/desktop/windows/Mensetsu.iss
+          & $iscc "/DAppVersion=$version" app/desktop/packaging/Mensetsu.iss
           if ($LASTEXITCODE -ne 0) {
             exit $LASTEXITCODE
           }
@@ -99,24 +84,37 @@ jobs:
     runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
-      - name: Build unsigned macOS desktop client
+      - name: Build Dioxus macOS desktop client
         run: |
-          xcodebuild -project app/desktop/macos/Mensetsu.xcodeproj \
-            -scheme Mensetsu \
-            -destination 'generic/platform=macOS' \
-            -configuration Release \
-            CODE_SIGN_IDENTITY='' \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            -derivedDataPath "$RUNNER_TEMP/mensetsu-macos" \
-            build
-          mkdir -p release-assets
-          tar -czf release-assets/mensetsu-macos-unsigned.tar.gz \
-            -C "$RUNNER_TEMP/mensetsu-macos/Build/Products/Release" Mensetsu.app
+          cargo build --release --manifest-path app/desktop/Cargo.toml
+          mkdir -p release-assets/Mensetsu.app/Contents/MacOS
+          mkdir -p release-assets/Mensetsu.app/Contents/Resources
+          cp app/desktop/target/release/mensetsu-desktop release-assets/Mensetsu.app/Contents/MacOS/Mensetsu
+          cat << 'EOF' > release-assets/Mensetsu.app/Contents/Info.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>Mensetsu</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.sekailabs.mensetsu.desktop</string>
+              <key>CFBundleName</key>
+              <string>Mensetsu</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>0.1.0</string>
+          </dict>
+          </plist>
+          EOF
+          tar -czf release-assets/mensetsu-macos-x86_64.tar.gz \
+            -C release-assets Mensetsu.app
+          rm -rf release-assets/Mensetsu.app
       - uses: actions/upload-artifact@v4
         with:
           name: native-macos
-          path: release-assets/*
+          path: release-assets/mensetsu-macos-x86_64.tar.gz
           if-no-files-found: error
 
   android:
@@ -189,8 +187,7 @@ jobs:
               Store release.
             - iOS is an unsigned simulator app; it cannot be installed on a
               physical device.
-            - macOS is unsigned and may be blocked by Gatekeeper.
-            - Windows provides a portable ZIP and a setup installer; both are unsigned.
-            - Linux is a binary tarball; GTK 4 and libsecret runtime packages
-              are required.
+            - macOS is a Dioxus .app bundle (Intel x86_64), unsigned.
+            - Windows provides a portable ZIP and Inno Setup installer of the Dioxus client.
+            - Linux is a binary tarball built on Ubuntu glibc, requiring webkit2gtk-4.1 and libsecret.
           files: release-assets/*

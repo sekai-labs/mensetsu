@@ -466,6 +466,7 @@ DEFINE FIELD OVERWRITE correlation_id ON TABLE execution_event TYPE option<strin
 DEFINE FIELD OVERWRITE trace_id ON TABLE execution_event TYPE option<string>;
 DEFINE FIELD OVERWRITE payload ON TABLE execution_event TYPE object FLEXIBLE DEFAULT {};
 DEFINE INDEX IF NOT EXISTS idx_execution_event_run_seq ON TABLE execution_event COLUMNS run_id, seq UNIQUE;
+DEFINE INDEX IF NOT EXISTS idx_execution_event_type ON TABLE execution_event COLUMNS type;
 
 DEFINE TABLE OVERWRITE execution_log SCHEMAFULL;
 DEFINE FIELD OVERWRITE run_id ON TABLE execution_log TYPE record<workflow_run>;

@@ -15,8 +15,6 @@ __pycache__/
 app/mobile/android/local.properties
 contracts/native/csharp/**/bin/
 contracts/native/csharp/**/obj/
-app/desktop/windows/**/bin/
-app/desktop/windows/**/obj/
 contracts/native/rust/Cargo.lock
 build/
 

@@ -51,154 +51,159 @@ namespace Mensetsu.Contracts.Model
         AgentStarted = 4,
 
         /// <summary>
+        /// Enum AgentModelUsage for value: agent.model_usage
+        /// </summary>
+        AgentModelUsage = 5,
+
+        /// <summary>
         /// Enum ArtifactCreated for value: artifact.created
         /// </summary>
-        ArtifactCreated = 5,
+        ArtifactCreated = 6,
 
         /// <summary>
         /// Enum CheckpointCreated for value: checkpoint.created
         /// </summary>
-        CheckpointCreated = 6,
+        CheckpointCreated = 7,
 
         /// <summary>
         /// Enum DelegationAccepted for value: delegation.accepted
         /// </summary>
-        DelegationAccepted = 7,
+        DelegationAccepted = 8,
 
         /// <summary>
         /// Enum DelegationCompleted for value: delegation.completed
         /// </summary>
-        DelegationCompleted = 8,
+        DelegationCompleted = 9,
 
         /// <summary>
         /// Enum DelegationFailed for value: delegation.failed
         /// </summary>
-        DelegationFailed = 9,
+        DelegationFailed = 10,
 
         /// <summary>
         /// Enum DelegationRequested for value: delegation.requested
         /// </summary>
-        DelegationRequested = 10,
+        DelegationRequested = 11,
 
         /// <summary>
         /// Enum DelegationStarted for value: delegation.started
         /// </summary>
-        DelegationStarted = 11,
+        DelegationStarted = 12,
 
         /// <summary>
         /// Enum EvidenceSaved for value: evidence.saved
         /// </summary>
-        EvidenceSaved = 12,
+        EvidenceSaved = 13,
 
         /// <summary>
         /// Enum ExecutionResumed for value: execution.resumed
         /// </summary>
-        ExecutionResumed = 13,
+        ExecutionResumed = 14,
 
         /// <summary>
         /// Enum FindingSaved for value: finding.saved
         /// </summary>
-        FindingSaved = 14,
+        FindingSaved = 15,
 
         /// <summary>
         /// Enum PlanCreated for value: plan.created
         /// </summary>
-        PlanCreated = 15,
+        PlanCreated = 16,
 
         /// <summary>
         /// Enum PlanRevised for value: plan.revised
         /// </summary>
-        PlanRevised = 16,
+        PlanRevised = 17,
 
         /// <summary>
         /// Enum TaskAdded for value: task.added
         /// </summary>
-        TaskAdded = 17,
+        TaskAdded = 18,
 
         /// <summary>
         /// Enum TaskBlocked for value: task.blocked
         /// </summary>
-        TaskBlocked = 18,
+        TaskBlocked = 19,
 
         /// <summary>
         /// Enum TaskCompleted for value: task.completed
         /// </summary>
-        TaskCompleted = 19,
+        TaskCompleted = 20,
 
         /// <summary>
         /// Enum TaskFailed for value: task.failed
         /// </summary>
-        TaskFailed = 20,
+        TaskFailed = 21,
 
         /// <summary>
         /// Enum TaskQueued for value: task.queued
         /// </summary>
-        TaskQueued = 21,
+        TaskQueued = 22,
 
         /// <summary>
         /// Enum TaskRemoved for value: task.removed
         /// </summary>
-        TaskRemoved = 22,
+        TaskRemoved = 23,
 
         /// <summary>
         /// Enum TaskRetrying for value: task.retrying
         /// </summary>
-        TaskRetrying = 23,
+        TaskRetrying = 24,
 
         /// <summary>
         /// Enum TaskStarted for value: task.started
         /// </summary>
-        TaskStarted = 24,
+        TaskStarted = 25,
 
         /// <summary>
         /// Enum ToolCompleted for value: tool.completed
         /// </summary>
-        ToolCompleted = 25,
+        ToolCompleted = 26,
 
         /// <summary>
         /// Enum ToolFailed for value: tool.failed
         /// </summary>
-        ToolFailed = 26,
+        ToolFailed = 27,
 
         /// <summary>
         /// Enum ToolStarted for value: tool.started
         /// </summary>
-        ToolStarted = 27,
+        ToolStarted = 28,
 
         /// <summary>
         /// Enum WorkerRecovered for value: worker.recovered
         /// </summary>
-        WorkerRecovered = 28,
+        WorkerRecovered = 29,
 
         /// <summary>
         /// Enum WorkflowCancelled for value: workflow.cancelled
         /// </summary>
-        WorkflowCancelled = 29,
+        WorkflowCancelled = 30,
 
         /// <summary>
         /// Enum WorkflowCompleted for value: workflow.completed
         /// </summary>
-        WorkflowCompleted = 30,
+        WorkflowCompleted = 31,
 
         /// <summary>
         /// Enum WorkflowCreated for value: workflow.created
         /// </summary>
-        WorkflowCreated = 31,
+        WorkflowCreated = 32,
 
         /// <summary>
         /// Enum WorkflowFailed for value: workflow.failed
         /// </summary>
-        WorkflowFailed = 32,
+        WorkflowFailed = 33,
 
         /// <summary>
         /// Enum WorkflowRetrying for value: workflow.retrying
         /// </summary>
-        WorkflowRetrying = 33,
+        WorkflowRetrying = 34,
 
         /// <summary>
         /// Enum WorkflowStarted for value: workflow.started
         /// </summary>
-        WorkflowStarted = 34
+        WorkflowStarted = 35
     }
 
     /// <summary>
@@ -224,6 +229,9 @@ namespace Mensetsu.Contracts.Model
 
             if (value.Equals("agent.started"))
                 return ExecutionEventType.AgentStarted;
+
+            if (value.Equals("agent.model_usage"))
+                return ExecutionEventType.AgentModelUsage;
 
             if (value.Equals("artifact.created"))
                 return ExecutionEventType.ArtifactCreated;
@@ -337,6 +345,9 @@ namespace Mensetsu.Contracts.Model
             if (value.Equals("agent.started"))
                 return ExecutionEventType.AgentStarted;
 
+            if (value.Equals("agent.model_usage"))
+                return ExecutionEventType.AgentModelUsage;
+
             if (value.Equals("artifact.created"))
                 return ExecutionEventType.ArtifactCreated;
 
@@ -449,6 +460,9 @@ namespace Mensetsu.Contracts.Model
 
             if (value == ExecutionEventType.AgentStarted)
                 return "agent.started";
+
+            if (value == ExecutionEventType.AgentModelUsage)
+                return "agent.model_usage";
 
             if (value == ExecutionEventType.ArtifactCreated)
                 return "artifact.created";

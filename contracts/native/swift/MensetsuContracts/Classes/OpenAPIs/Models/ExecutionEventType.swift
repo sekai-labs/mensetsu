@@ -15,6 +15,7 @@ public enum ExecutionEventType: String, Codable, CaseIterable {
     case agentPeriodCompleted = "agent.completed"
     case agentPeriodFailed = "agent.failed"
     case agentPeriodStarted = "agent.started"
+    case agentPeriodModelUsage = "agent.model_usage"
     case artifactPeriodCreated = "artifact.created"
     case checkpointPeriodCreated = "checkpoint.created"
     case delegationPeriodAccepted = "delegation.accepted"

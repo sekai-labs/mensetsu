@@ -1,4 +1,20 @@
 export interface paths {
+    "/api/v1/admin/usage/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_token_usage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/2fa/disable": {
         parameters: {
             query?: never;
@@ -231,6 +247,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_profile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/usage/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["user_token_usage"];
         put?: never;
         post?: never;
         delete?: never;
@@ -979,7 +1011,7 @@ export interface components {
             type: components["schemas"]["ExecutionEventType"];
         };
         /** @enum {string} */
-        ExecutionEventType: "agent.activity" | "agent.completed" | "agent.failed" | "agent.started" | "artifact.created" | "checkpoint.created" | "delegation.accepted" | "delegation.completed" | "delegation.failed" | "delegation.requested" | "delegation.started" | "evidence.saved" | "execution.resumed" | "finding.saved" | "plan.created" | "plan.revised" | "task.added" | "task.blocked" | "task.completed" | "task.failed" | "task.queued" | "task.removed" | "task.retrying" | "task.started" | "tool.completed" | "tool.failed" | "tool.started" | "worker.recovered" | "workflow.cancelled" | "workflow.completed" | "workflow.created" | "workflow.failed" | "workflow.retrying" | "workflow.started";
+        ExecutionEventType: "agent.activity" | "agent.completed" | "agent.failed" | "agent.started" | "agent.model_usage" | "artifact.created" | "checkpoint.created" | "delegation.accepted" | "delegation.completed" | "delegation.failed" | "delegation.requested" | "delegation.started" | "evidence.saved" | "execution.resumed" | "finding.saved" | "plan.created" | "plan.revised" | "task.added" | "task.blocked" | "task.completed" | "task.failed" | "task.queued" | "task.removed" | "task.retrying" | "task.started" | "tool.completed" | "tool.failed" | "tool.started" | "worker.recovered" | "workflow.cancelled" | "workflow.completed" | "workflow.created" | "workflow.failed" | "workflow.retrying" | "workflow.started";
         ExecutionNote: {
             text: string;
             ts: string;
@@ -1197,6 +1229,41 @@ export interface components {
         TokenResponseDto: {
             access_token: string;
             refresh_token: string;
+        };
+        TokenUsageCursorDto: {
+            before_event_id: string;
+            before_timestamp: string;
+        };
+        TokenUsageResponseDto: {
+            items: components["schemas"]["TokenUsageRowDto"][];
+            next_cursor?: null | components["schemas"]["TokenUsageCursorDto"];
+            totals: components["schemas"]["TokenUsageTotalsDto"];
+        };
+        TokenUsageRowDto: {
+            agent_id: string;
+            execution_id?: string | null;
+            id: string;
+            /** Format: int64 */
+            input_tokens: number;
+            model_name: string;
+            model_provider: string;
+            /** Format: int64 */
+            output_tokens: number;
+            run_id: string;
+            timestamp: string;
+            /** Format: int64 */
+            total_tokens: number;
+            user_id?: string | null;
+        };
+        TokenUsageTotalsDto: {
+            /** Format: int64 */
+            input_tokens: number;
+            /** Format: int64 */
+            output_tokens: number;
+            /** Format: int64 */
+            request_count: number;
+            /** Format: int64 */
+            total_tokens: number;
         };
         ToolInvocation: {
             completed_at?: string | null;
@@ -1490,6 +1557,36 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    admin_token_usage: {
+        parameters: {
+            query?: {
+                before_timestamp?: string | null;
+                before_event_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Token usage across all users */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenUsageResponseDto"];
+                };
+            };
+            /** @description Administrator privileges required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     disable_2fa: {
         parameters: {
             query?: never;
@@ -1991,6 +2088,36 @@ export interface operations {
                 };
             };
             /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    user_token_usage: {
+        parameters: {
+            query?: {
+                before_timestamp?: string | null;
+                before_event_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Token usage for the authenticated user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenUsageResponseDto"];
+                };
+            };
+            /** @description Unauthenticated */
             401: {
                 headers: {
                     [name: string]: unknown;

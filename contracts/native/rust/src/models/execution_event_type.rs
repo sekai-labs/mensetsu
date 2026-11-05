@@ -22,6 +22,8 @@ pub enum ExecutionEventType {
     AgentFailed,
     #[serde(rename = "agent.started")]
     AgentStarted,
+    #[serde(rename = "agent.model_usage")]
+    AgentModelUsage,
     #[serde(rename = "artifact.created")]
     ArtifactCreated,
     #[serde(rename = "checkpoint.created")]
@@ -92,6 +94,7 @@ impl std::fmt::Display for ExecutionEventType {
             Self::AgentCompleted => write!(f, "agent.completed"),
             Self::AgentFailed => write!(f, "agent.failed"),
             Self::AgentStarted => write!(f, "agent.started"),
+            Self::AgentModelUsage => write!(f, "agent.model_usage"),
             Self::ArtifactCreated => write!(f, "artifact.created"),
             Self::CheckpointCreated => write!(f, "checkpoint.created"),
             Self::DelegationAccepted => write!(f, "delegation.accepted"),

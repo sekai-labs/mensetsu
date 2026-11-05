@@ -10,6 +10,8 @@ pub mod sse_parser;
 pub mod workflow_dtos;
 pub mod workflows;
 pub mod workspaces;
+pub mod token_usage;
+use token_usage::{TokenUsageResponseDto, TokenUsageRowDto, TokenUsageTotalsDto};
 use axum::{
     http::{header, HeaderValue, Method},
     routing::get,
@@ -103,6 +105,8 @@ use crate::{
         workflows::get_workflow_run_events_history,
         workflows::get_workflow_run_delegations,
         workflows::get_workflow_run_artifacts,
+        token_usage::user_token_usage,
+        token_usage::admin_token_usage,
         workflows::cancel_workflow_run
     ),
     components(
@@ -145,6 +149,10 @@ use crate::{
             KnowledgeSkillNode,
             KnowledgeEdge,
             KnowledgeGraphResponse,
+            TokenUsageResponseDto,
+            TokenUsageRowDto,
+            TokenUsageTotalsDto,
+            token_usage::TokenUsageCursorDto,
             CompanyResearch,
             VisualDiagram,
             LearningUnit,
@@ -271,6 +279,7 @@ pub fn create_router(state: AppState) -> Router {
         .merge(settings::settings_routes(state.clone()))
         .merge(admin::admin_routes(state.clone()))
         .merge(workspaces::workspace_routes(state.clone()))
+        .merge(token_usage::token_usage_routes(state.clone()))
         .merge(
             Router::new()
                 .route("/api/v1/resume-uploads", axum::routing::post(resume_uploads::create_resume_upload))

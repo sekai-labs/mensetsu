@@ -577,6 +577,161 @@
       "title": "AgentFailedPayload",
       "type": "object"
     },
+    "AgentModelUsageEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "task_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task Id"
+        },
+        "execution_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Execution Id"
+        },
+        "parent_execution_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Execution Id"
+        },
+        "tool_invocation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tool Invocation Id"
+        },
+        "correlation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Id"
+        },
+        "trace_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trace Id"
+        },
+        "type": {
+          "const": "agent.model_usage",
+          "default": "agent.model_usage",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/AgentModelUsagePayload"
+        }
+      },
+      "required": [
+        "event_id",
+        "run_id",
+        "seq",
+        "payload"
+      ],
+      "title": "AgentModelUsageEvent",
+      "type": "object"
+    },
+    "AgentModelUsagePayload": {
+      "additionalProperties": false,
+      "properties": {
+        "agent_id": {
+          "title": "Agent Id",
+          "type": "string"
+        },
+        "model_provider": {
+          "title": "Model Provider",
+          "type": "string"
+        },
+        "model_name": {
+          "title": "Model Name",
+          "type": "string"
+        },
+        "input_tokens": {
+          "title": "Input Tokens",
+          "type": "integer"
+        },
+        "output_tokens": {
+          "title": "Output Tokens",
+          "type": "integer"
+        },
+        "total_tokens": {
+          "title": "Total Tokens",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "agent_id",
+        "model_provider",
+        "model_name",
+        "input_tokens",
+        "output_tokens",
+        "total_tokens"
+      ],
+      "title": "AgentModelUsagePayload",
+      "type": "object"
+    },
     "AgentStartedEvent": {
       "additionalProperties": false,
       "properties": {
@@ -2121,6 +2276,7 @@
                 "agent.activity": "#/$defs/AgentActivityEvent",
                 "agent.completed": "#/$defs/AgentCompletedEvent",
                 "agent.failed": "#/$defs/AgentFailedEvent",
+                "agent.model_usage": "#/$defs/AgentModelUsageEvent",
                 "agent.started": "#/$defs/AgentStartedEvent",
                 "artifact.created": "#/$defs/ArtifactCreatedEvent",
                 "checkpoint.created": "#/$defs/CheckpointCreatedEvent",
@@ -2212,6 +2368,9 @@
               },
               {
                 "$ref": "#/$defs/AgentCompletedEvent"
+              },
+              {
+                "$ref": "#/$defs/AgentModelUsageEvent"
               },
               {
                 "$ref": "#/$defs/AgentFailedEvent"

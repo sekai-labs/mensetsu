@@ -113,89 +113,89 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install GTK4 and Secret Service dependencies
-        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libsecret-1-dev libglib2.0-dev pkg-config xvfb xauth dbus-x11 gnome-keyring
-      - name: Build GTK4 native client
+      - name: Install Linux GUI and Secret Service dependencies
         run: |
-          cargo build --release --manifest-path app/desktop/linux/Cargo.toml
-          mkdir -p build/linux/mensetsu-linux
-          cp app/desktop/linux/target/release/mensetsu-linux build/linux/mensetsu-linux/
-          tar -czf build/linux/mensetsu-linux-x86_64.tar.gz -C build/linux/mensetsu-linux mensetsu-linux
+          sudo apt-get update && sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libsecret-1-dev \
+            libglib2.0-dev \
+            pkg-config \
+            libxdo-dev \
+            xvfb xauth dbus-x11 gnome-keyring
+      - name: Build Dioxus Linux desktop client
+        run: |
+          cargo build --release --manifest-path app/desktop/Cargo.toml
+          mkdir -p build/linux/mensetsu-desktop
+          cp app/desktop/target/release/mensetsu-desktop build/linux/mensetsu-desktop/
+          tar -czf build/linux/mensetsu-desktop-linux-x86_64.tar.gz -C build/linux/mensetsu-desktop mensetsu-desktop
       - name: Upload Linux binary bundle
         uses: actions/upload-artifact@v4
         with:
           name: linux-x86_64-bin
-          path: build/linux/mensetsu-linux-x86_64.tar.gz
+          path: build/linux/mensetsu-desktop-linux-x86_64.tar.gz
           if-no-files-found: error
       - name: Require a reachable Rust API
         if: env.MENSETSU_API_URL != ''
         run: |
           curl --fail --silent --show-error "$MENSETSU_API_URL/health/live"
-      - name: Launch and exercise GTK4 UI against Rust API
+      - name: Exercise Desktop client integration against Rust API
         if: env.MENSETSU_API_URL != ''
-        run: dbus-run-session -- bash -c 'printf "native-smoke-secret\n" | gnome-keyring-daemon --unlock --components=secrets; xvfb-run -a cargo test --manifest-path app/desktop/linux/Cargo.toml --test smoke_test -- --nocapture --test-threads=1'
+        run: dbus-run-session -- bash -c 'printf "native-smoke-secret\n" | gnome-keyring-daemon --unlock --components=secrets; cargo test --manifest-path app/desktop/Cargo.toml --test smoke_test -- --nocapture --test-threads=1'
 
   macos:
     runs-on: macos-15-intel
-    env:
-      MENSETSU_TEST_PDF_PATH: ${{ github.workspace }}/fixtures/resume-text.pdf
     steps:
       - uses: actions/checkout@v4
-      - name: Build unsigned macOS app
+      - name: Build Dioxus macOS desktop client
         run: |
-          if ! xcodebuild -project app/desktop/macos/Mensetsu.xcodeproj -scheme Mensetsu -destination 'generic/platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -derivedDataPath "$RUNNER_TEMP/mensetsu-macos" build > "$RUNNER_TEMP/macos-build.log" 2>&1; then
-            grep -E 'error:|Error Domain|failed|Failure' "$RUNNER_TEMP/macos-build.log" | tail -n 12 | while IFS= read -r line; do echo "::error::$line"; done || true
-            echo "::error::$(tail -n 1 "$RUNNER_TEMP/macos-build.log")"
-            exit 1
-          fi
-          mkdir -p build/macos
-          tar -czf build/macos/Mensetsu-macos-unsigned.app.tar.gz -C "$RUNNER_TEMP/mensetsu-macos/Build/Products/Debug" Mensetsu.app
-      - name: Upload unsigned macOS app archive
+          cargo build --release --manifest-path app/desktop/Cargo.toml
+          mkdir -p build/macos/Mensetsu.app/Contents/MacOS
+          mkdir -p build/macos/Mensetsu.app/Contents/Resources
+          cp app/desktop/target/release/mensetsu-desktop build/macos/Mensetsu.app/Contents/MacOS/Mensetsu
+          cat << 'EOF' > build/macos/Mensetsu.app/Contents/Info.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>Mensetsu</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.sekailabs.mensetsu.desktop</string>
+              <key>CFBundleName</key>
+              <string>Mensetsu</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>0.1.0</string>
+          </dict>
+          </plist>
+          EOF
+          tar -czf build/macos/Mensetsu-macos-x86_64.app.tar.gz -C build/macos Mensetsu.app
+      - name: Upload macOS app archive
         uses: actions/upload-artifact@v4
         with:
           name: macos-unsigned-app
-          path: build/macos/Mensetsu-macos-unsigned.app.tar.gz
+          path: build/macos/Mensetsu-macos-x86_64.app.tar.gz
           if-no-files-found: error
       - name: Require a reachable Rust API
         if: env.MENSETSU_API_URL != ''
         run: |
           curl --fail --silent --show-error "$MENSETSU_API_URL/health/live"
-      - name: Exercise macOS SwiftUI UI against Rust API
+      - name: Exercise Desktop client integration against Rust API
         if: env.MENSETSU_API_URL != ''
-        run: xcodebuild test -project app/desktop/macos/Mensetsu.xcodeproj -scheme Mensetsu -destination 'platform=macOS'
+        run: cargo test --manifest-path app/desktop/Cargo.toml --test smoke_test -- --nocapture --test-threads=1
 
   windows:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '9.0.x'
-      - uses: microsoft/setup-msbuild@v3
-        with:
-          vs-version: '[17.0,18.0)'
-          msbuild-architecture: x64
-      - name: Build unpackaged WinUI 3 client
+      - name: Build Dioxus Windows desktop client
         shell: pwsh
         run: |
-          $buildLog = "$env:RUNNER_TEMP\mensetsu-windows-build.log"
-          msbuild app/desktop/windows/Mensetsu.sln /restore /p:Platform=x64 2>&1 | Tee-Object -FilePath $buildLog
-          if ($LASTEXITCODE -ne 0) {
-            Select-String -Path $buildLog -Pattern 'error' | Select-Object -Last 12 | ForEach-Object { Write-Output "::error::$($_.Line)" }
-            exit 1
-          }
-      - name: Publish self-contained Windows application
-        shell: pwsh
-        run: |
+          cargo build --release --manifest-path app/desktop/Cargo.toml
           $publishDir = (New-Item -ItemType Directory -Force -Path build/windows/publish).FullName
-          $publishLog = "$env:RUNNER_TEMP\mensetsu-windows-publish.log"
-          msbuild app/desktop/windows/src/Mensetsu/Mensetsu.csproj /restore /target:Publish /p:Platform=x64 /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true "/p:PublishDir=$publishDir/" 2>&1 | Tee-Object -FilePath $publishLog
-          if ($LASTEXITCODE -ne 0) {
-            Select-String -Path $publishLog -Pattern 'error' | Select-Object -Last 12 | ForEach-Object { Write-Output "::error::$($_.Line)" }
-            exit 1
-          }
-          if (-not (Test-Path (Join-Path $publishDir 'Mensetsu.exe'))) { throw 'WinUI executable not published' }
-          if (-not (Test-Path (Join-Path $publishDir 'coreclr.dll'))) { throw '.NET runtime not included in published app' }
+          Copy-Item app/desktop/target/release/mensetsu-desktop.exe (Join-Path $publishDir "Mensetsu.exe")
       - name: Package Windows executable and dependencies
         shell: pwsh
         run: |
@@ -212,10 +212,8 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest "$env:MENSETSU_API_URL/health/live" -UseBasicParsing | Out-Null
-      - name: Launch and exercise WinUI UI against Rust API
+      - name: Exercise Desktop client integration against Rust API
         if: env.MENSETSU_API_URL != ''
         shell: pwsh
         run: |
-          $env:MENSETSU_APP_EXE = (Get-Item build/windows/publish/Mensetsu.exe).FullName
-          $env:MENSETSU_TEST_PDF_PATH = "$((Get-Item .).FullName)\fixtures\resume-text.pdf"
-          dotnet test app/desktop/windows/tests/Mensetsu.AutomationSmoke/Mensetsu.AutomationSmoke.csproj --no-build -p:Platform=x64
+          cargo test --manifest-path app/desktop/Cargo.toml --test smoke_test -- --nocapture --test-threads=1

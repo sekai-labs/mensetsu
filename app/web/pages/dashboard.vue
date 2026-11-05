@@ -4,6 +4,7 @@ import { calculateWorkspaceStatistics } from '~/features/interviews/utils/interv
 import { useAuthService } from '~/features/auth/services/auth.service'
 import StatusBadge from '~/components/ui/StatusBadge.vue'
 import AppButton from '~/components/ui/AppButton.vue'
+import TokenUsagePanel from '~/components/usage/TokenUsagePanel.vue'
 
 definePageMeta({
   layout: 'default',
@@ -23,7 +24,7 @@ const recentWorkspaces = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-8">
+  <div class="space-y-7">
 
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
       <div>
@@ -43,40 +44,34 @@ const recentWorkspaces = computed(() => {
     </div>
 
 
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
-        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-500">{{ $t('dashboard.activeWorkspaces') }}</div>
-        <div class="text-2xl font-bold font-mono tracking-tight text-slate-900 dark:text-white mt-1">
-          {{ stats.total }}
-        </div>
+    <section class="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Workspace summary">
+      <div class="min-h-28 rounded-lg border border-slate-200 border-l-2 border-l-slate-400 bg-white px-4 py-3.5 shadow-sm dark:border-slate-800 dark:border-l-slate-600 dark:bg-slate-900">
+        <div class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">{{ $t('dashboard.activeWorkspaces') }}</div>
+        <div class="mt-3 font-mono text-3xl font-semibold leading-none tracking-tight tabular-nums text-slate-900 dark:text-white">{{ stats.total }}</div>
       </div>
-      <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
-        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-500">{{ $t('dashboard.completedWorkspaces') }}</div>
-        <div class="text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400 mt-1">
-          {{ stats.ready }}
-        </div>
+      <div class="min-h-28 rounded-lg border border-slate-200 border-l-2 border-l-emerald-500 bg-white px-4 py-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">{{ $t('dashboard.completedWorkspaces') }}</div>
+        <div class="mt-3 font-mono text-3xl font-semibold leading-none tracking-tight tabular-nums text-emerald-700 dark:text-emerald-400">{{ stats.ready }}</div>
       </div>
-      <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
-        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-500">{{ $t('dashboard.analyzing') }}</div>
-        <div class="text-2xl font-bold font-mono tracking-tight text-indigo-600 dark:text-indigo-400 mt-1">
-          {{ stats.active }}
-        </div>
+      <div class="min-h-28 rounded-lg border border-slate-200 border-l-2 border-l-indigo-500 bg-white px-4 py-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">{{ $t('dashboard.analyzing') }}</div>
+        <div class="mt-3 font-mono text-3xl font-semibold leading-none tracking-tight tabular-nums text-indigo-700 dark:text-indigo-400">{{ stats.active }}</div>
       </div>
-      <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
-        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-500">{{ $t('dashboard.attentionNeeded') }}</div>
-        <div class="text-2xl font-bold font-mono tracking-tight text-rose-600 dark:text-rose-400 mt-1">
-          {{ stats.failed }}
-        </div>
+      <div class="min-h-28 rounded-lg border border-slate-200 border-l-2 border-l-rose-500 bg-white px-4 py-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">{{ $t('dashboard.attentionNeeded') }}</div>
+        <div class="mt-3 font-mono text-3xl font-semibold leading-none tracking-tight tabular-nums text-rose-700 dark:text-rose-400">{{ stats.failed }}</div>
       </div>
-    </div>
+    </section>
+
+    <TokenUsagePanel scope="user" />
 
 
-    <div class="space-y-4">
+    <section class="space-y-3.5">
       <div class="flex items-center justify-between">
-        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+        <h2 class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 dark:text-slate-300">
           {{ $t('dashboard.activePreparations') }}
         </h2>
-        <NuxtLink to="/interviews" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
+        <NuxtLink to="/interviews" class="rounded text-xs font-medium text-indigo-700 hover:text-indigo-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600 dark:text-indigo-300 dark:hover:text-indigo-200">
           {{ $t('dashboard.viewAll', { count: stats.total }) }}
         </NuxtLink>
       </div>
@@ -100,11 +95,11 @@ const recentWorkspaces = computed(() => {
         </NuxtLink>
       </div>
 
-      <div v-else class="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+      <div v-else class="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
         <div
           v-for="ws in recentWorkspaces"
           :key="ws.id"
-          class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors"
+          class="flex flex-col justify-between gap-4 px-4 py-3.5 transition-colors hover:bg-slate-50 sm:flex-row sm:items-center dark:hover:bg-slate-800/60"
         >
           <div class="space-y-1 min-w-0">
             <div class="flex items-center gap-2.5">
@@ -134,6 +129,6 @@ const recentWorkspaces = computed(() => {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>

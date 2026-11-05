@@ -522,6 +522,15 @@ class AgentActivityPayload(BaseModel):
     description: str
 
 
+class AgentModelUsagePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    agent_id: str
+    model_provider: str
+    model_name: str
+    input_tokens: int
+    output_tokens: int
+    total_tokens: int
+
 class AgentCompletedPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
     execution_id: str
@@ -654,6 +663,7 @@ EventPayload = Union[
     TaskBlockedPayload,
     AgentStartedPayload,
     AgentActivityPayload,
+    AgentModelUsagePayload,
     AgentCompletedPayload,
     AgentFailedPayload,
     DelegationRequestedPayload,
@@ -779,6 +789,10 @@ class AgentActivityEvent(BaseExecutionEvent):
     payload: AgentActivityPayload
 
 
+class AgentModelUsageEvent(BaseExecutionEvent):
+    type: Literal["agent.model_usage"] = "agent.model_usage"
+    payload: AgentModelUsagePayload
+
 class AgentCompletedEvent(BaseExecutionEvent):
     type: Literal["agent.completed"] = "agent.completed"
     payload: AgentCompletedPayload
@@ -880,6 +894,7 @@ ExecutionEvent = Annotated[
         AgentStartedEvent,
         AgentActivityEvent,
         AgentCompletedEvent,
+        AgentModelUsageEvent,
         AgentFailedEvent,
         DelegationRequestedEvent,
         DelegationAcceptedEvent,

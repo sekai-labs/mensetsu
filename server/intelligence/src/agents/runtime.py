@@ -932,7 +932,7 @@ class AutonomousAgentRuntime:
         current_saved_evidence_ids_var.set(saved_ev_ids)
         chat_model = model_override or self.get_chat_model(role=agent_id, request_timeout_s=defn.llm_request_timeout_s)
         model_name = getattr(chat_model, "model_name", getattr(chat_model, "model", "custom-model"))
-        provider_name = chat_model.__class__.__name__
+        provider_name = provider_key(chat_model)
         exec_rec = AgentExecution(
             id=execution_id,
             run_id=run_id,
@@ -1013,6 +1013,34 @@ class AutonomousAgentRuntime:
                                 "description": step_desc,
                             },
                         )
+                    usage = getattr(last_m, "usage_metadata", None)
+                    if isinstance(usage, dict):
+                        tokens_in = usage.get("input_tokens")
+                        tokens_out = usage.get("output_tokens")
+                        if (
+                            "input_tokens" in usage
+                            and "output_tokens" in usage
+                            and isinstance(tokens_in, int)
+                            and not isinstance(tokens_in, bool)
+                            and tokens_in >= 0
+                            and isinstance(tokens_out, int)
+                            and not isinstance(tokens_out, bool)
+                            and tokens_out >= 0
+                        ):
+                            await self_ledger.append_event_transactional(
+                                run_id=run_id,
+                                event_type="agent.model_usage",
+                                task_id=task_id,
+                                execution_id=exec_rec.id,
+                                payload={
+                                    "agent_id": agent_id,
+                                    "model_provider": provider_name,
+                                    "model_name": model_name,
+                                    "input_tokens": tokens_in,
+                                    "output_tokens": tokens_out,
+                                    "total_tokens": tokens_in + tokens_out,
+                                },
+                            )
                 return None
 
         @wrap_tool_call

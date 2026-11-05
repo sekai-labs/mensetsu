@@ -22,7 +22,7 @@ import com.squareup.moshi.JsonClass
 /**
  * 
  *
- * Values: agentPeriodActivity,agentPeriodCompleted,agentPeriodFailed,agentPeriodStarted,artifactPeriodCreated,checkpointPeriodCreated,delegationPeriodAccepted,delegationPeriodCompleted,delegationPeriodFailed,delegationPeriodRequested,delegationPeriodStarted,evidencePeriodSaved,executionPeriodResumed,findingPeriodSaved,planPeriodCreated,planPeriodRevised,taskPeriodAdded,taskPeriodBlocked,taskPeriodCompleted,taskPeriodFailed,taskPeriodQueued,taskPeriodRemoved,taskPeriodRetrying,taskPeriodStarted,toolPeriodCompleted,toolPeriodFailed,toolPeriodStarted,workerPeriodRecovered,workflowPeriodCancelled,workflowPeriodCompleted,workflowPeriodCreated,workflowPeriodFailed,workflowPeriodRetrying,workflowPeriodStarted
+ * Values: agentPeriodActivity,agentPeriodCompleted,agentPeriodFailed,agentPeriodStarted,agentPeriodModel_usage,artifactPeriodCreated,checkpointPeriodCreated,delegationPeriodAccepted,delegationPeriodCompleted,delegationPeriodFailed,delegationPeriodRequested,delegationPeriodStarted,evidencePeriodSaved,executionPeriodResumed,findingPeriodSaved,planPeriodCreated,planPeriodRevised,taskPeriodAdded,taskPeriodBlocked,taskPeriodCompleted,taskPeriodFailed,taskPeriodQueued,taskPeriodRemoved,taskPeriodRetrying,taskPeriodStarted,toolPeriodCompleted,toolPeriodFailed,toolPeriodStarted,workerPeriodRecovered,workflowPeriodCancelled,workflowPeriodCompleted,workflowPeriodCreated,workflowPeriodFailed,workflowPeriodRetrying,workflowPeriodStarted
  */
 
 @JsonClass(generateAdapter = false)
@@ -39,6 +39,9 @@ enum class ExecutionEventType(val value: kotlin.String) {
 
     @Json(name = "agent.started")
     agentPeriodStarted("agent.started"),
+
+    @Json(name = "agent.model_usage")
+    agentPeriodModel_usage("agent.model_usage"),
 
     @Json(name = "artifact.created")
     artifactPeriodCreated("artifact.created"),
