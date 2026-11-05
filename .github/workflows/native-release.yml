@@ -75,7 +75,7 @@ jobs:
           if-no-files-found: error
 
   macos:
-    runs-on: macos-15
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
       - name: Build unsigned macOS desktop client
@@ -123,7 +123,7 @@ jobs:
           if-no-files-found: error
 
   ios:
-    runs-on: macos-15
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
       - name: Build unsigned iOS simulator client

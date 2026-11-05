@@ -64,7 +64,7 @@ jobs:
             app/mobile/android/gradlew -p app/mobile/android connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.API_BASE_URL="$MENSETSU_API_URL"
 
   ios:
-    runs-on: macos-15
+    runs-on: macos-15-intel
     env:
       MENSETSU_API_BASE_URL: ${{ vars.NATIVE_SMOKE_API_URL }}
     steps:
@@ -136,7 +136,7 @@ jobs:
         run: dbus-run-session -- bash -c 'printf "native-smoke-secret\n" | gnome-keyring-daemon --unlock --components=secrets; xvfb-run -a cargo test --manifest-path app/desktop/linux/Cargo.toml --test smoke_test -- --nocapture --test-threads=1'
 
   macos:
-    runs-on: macos-15
+    runs-on: macos-15-intel
     env:
       MENSETSU_TEST_PDF_PATH: ${{ github.workspace }}/fixtures/resume-text.pdf
     steps:
