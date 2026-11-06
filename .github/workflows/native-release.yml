@@ -80,42 +80,6 @@ jobs:
             release-assets/mensetsu-windows-x64-setup.exe
           if-no-files-found: error
 
-  macos:
-    runs-on: macos-15-intel
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build Dioxus macOS desktop client
-        run: |
-          cargo build --release --manifest-path app/desktop/Cargo.toml
-          mkdir -p release-assets/Mensetsu.app/Contents/MacOS
-          mkdir -p release-assets/Mensetsu.app/Contents/Resources
-          cp app/desktop/target/release/mensetsu-desktop release-assets/Mensetsu.app/Contents/MacOS/Mensetsu
-          cat << 'EOF' > release-assets/Mensetsu.app/Contents/Info.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CFBundleExecutable</key>
-              <string>Mensetsu</string>
-              <key>CFBundleIdentifier</key>
-              <string>com.sekailabs.mensetsu.desktop</string>
-              <key>CFBundleName</key>
-              <string>Mensetsu</string>
-              <key>CFBundlePackageType</key>
-              <string>APPL</string>
-              <key>CFBundleShortVersionString</key>
-              <string>0.1.0</string>
-          </dict>
-          </plist>
-          EOF
-          tar -czf release-assets/mensetsu-macos-x86_64.tar.gz \
-            -C release-assets Mensetsu.app
-          rm -rf release-assets/Mensetsu.app
-      - uses: actions/upload-artifact@v4
-        with:
-          name: native-macos
-          path: release-assets/mensetsu-macos-x86_64.tar.gz
-          if-no-files-found: error
 
   android:
     runs-on: ubuntu-24.04
@@ -165,7 +129,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-24.04
-    needs: [linux, windows, macos, android, ios]
+    needs: [linux, windows, android, ios]
     permissions:
       contents: write
     steps:
@@ -187,7 +151,6 @@ jobs:
               Store release.
             - iOS is an unsigned simulator app; it cannot be installed on a
               physical device.
-            - macOS is a Dioxus .app bundle (Intel x86_64), unsigned.
             - Windows provides a portable ZIP and Inno Setup installer of the Dioxus client.
             - Linux is a binary tarball built on Ubuntu glibc, requiring webkit2gtk-4.1 and libsecret.
           files: release-assets/*

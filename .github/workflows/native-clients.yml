@@ -143,48 +143,6 @@ jobs:
         if: env.MENSETSU_API_URL != ''
         run: dbus-run-session -- bash -c 'printf "native-smoke-secret\n" | gnome-keyring-daemon --unlock --components=secrets; cargo test --manifest-path app/desktop/Cargo.toml --test smoke_test -- --nocapture --test-threads=1'
 
-  macos:
-    runs-on: macos-15-intel
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build Dioxus macOS desktop client
-        run: |
-          cargo build --release --manifest-path app/desktop/Cargo.toml
-          mkdir -p build/macos/Mensetsu.app/Contents/MacOS
-          mkdir -p build/macos/Mensetsu.app/Contents/Resources
-          cp app/desktop/target/release/mensetsu-desktop build/macos/Mensetsu.app/Contents/MacOS/Mensetsu
-          cat << 'EOF' > build/macos/Mensetsu.app/Contents/Info.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CFBundleExecutable</key>
-              <string>Mensetsu</string>
-              <key>CFBundleIdentifier</key>
-              <string>com.sekailabs.mensetsu.desktop</string>
-              <key>CFBundleName</key>
-              <string>Mensetsu</string>
-              <key>CFBundlePackageType</key>
-              <string>APPL</string>
-              <key>CFBundleShortVersionString</key>
-              <string>0.1.0</string>
-          </dict>
-          </plist>
-          EOF
-          tar -czf build/macos/Mensetsu-macos-x86_64.app.tar.gz -C build/macos Mensetsu.app
-      - name: Upload macOS app archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-unsigned-app
-          path: build/macos/Mensetsu-macos-x86_64.app.tar.gz
-          if-no-files-found: error
-      - name: Require a reachable Rust API
-        if: env.MENSETSU_API_URL != ''
-        run: |
-          curl --fail --silent --show-error "$MENSETSU_API_URL/health/live"
-      - name: Exercise Desktop client integration against Rust API
-        if: env.MENSETSU_API_URL != ''
-        run: cargo test --manifest-path app/desktop/Cargo.toml --test smoke_test -- --nocapture --test-threads=1
 
   windows:
     runs-on: windows-2022
