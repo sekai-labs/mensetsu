@@ -7,8 +7,11 @@ service ResumeStorageService {
 }
 
 message GetResumeDownloadUrlRequest {
+  // Accepts a UUID or a table-qualified `workspace:<uuid>` record ID.
   string workspace_id = 1;
+  // Accepts a UUID or a table-qualified `user:<user-id>` record ID. User IDs may be UUIDs or ASCII letters, digits, `_`, and `-`.
   string user_id = 2;
+  // Accepts a UUID or a table-qualified `resume_upload:<uuid>` record ID.
   string resume_upload_id = 3;
 }
 

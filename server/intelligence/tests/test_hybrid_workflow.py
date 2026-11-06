@@ -102,6 +102,89 @@ def test_model_routing_role_slots_and_fallback():
     assert hasattr(model, "fallbacks") or hasattr(model, "with_fallbacks")
 
 
+
+@pytest.mark.asyncio
+async def test_run_scoped_llm_config_isolated_between_concurrent_runs(monkeypatch):
+    import asyncio
+
+    from src.agents.runtime import (
+        agent_runtime,
+        current_model_factory_var,
+        llm_config_scope,
+    )
+
+    monkeypatch.setattr(agent_runtime, "_global_model_factory", None)
+    monkeypatch.setenv("LLM_OPENAI_API_KEY", "service-env-key")
+    monkeypatch.setenv("LLM_OPENAI_BASE_URL", "https://service-env.example/v1")
+    monkeypatch.setenv("LLM_DEFAULT_MODEL", "service-env-model")
+    factory_token = current_model_factory_var.set(None)
+
+    def config_for(name):
+        return {
+            "user_providers": {
+                "openai": {
+                    "api_key": f"key-{name}",
+                    "base_url": f"https://{name}.example/v1",
+                }
+            },
+            "system_providers": {},
+            "model_routing": {
+                "research": {
+                    "primary": {
+                        "provider_key": "openai",
+                        "model": f"{name}-model",
+                        "temperature": 0.0,
+                    }
+                }
+            },
+        }
+
+    async def selected_model(name):
+        with llm_config_scope(config_for(name)):
+            await asyncio.sleep(0)
+            model = agent_runtime.get_chat_model(role="research")
+            return model.model_name, model.openai_api_base
+
+    try:
+        selected = await asyncio.gather(selected_model("run-a"), selected_model("run-b"))
+        assert selected == [
+            ("run-a-model", "https://run-a.example/v1"),
+            ("run-b-model", "https://run-b.example/v1"),
+        ]
+    finally:
+        current_model_factory_var.reset(factory_token)
+
+
+def test_run_routing_uses_service_environment_credentials_as_fallback(monkeypatch):
+    from src.agents.runtime import (
+        agent_runtime,
+        current_model_factory_var,
+        llm_config_scope,
+    )
+
+    monkeypatch.setattr(agent_runtime, "_global_model_factory", None)
+    monkeypatch.setenv("LLM_OPENAI_API_KEY", "service-env-key")
+    monkeypatch.setenv("LLM_OPENAI_BASE_URL", "https://service-env.example/v1")
+    factory_token = current_model_factory_var.set(None)
+    config = {
+        "model_routing": {
+            "research": {
+                "primary": {
+                    "provider_key": "openai",
+                    "model": "routed-model",
+                }
+            }
+        }
+    }
+
+    try:
+        with llm_config_scope(config):
+            model = agent_runtime.get_chat_model(role="research")
+        assert model.model_name == "routed-model"
+        assert model.openai_api_base == "https://service-env.example/v1"
+    finally:
+        current_model_factory_var.reset(factory_token)
+
 @pytest.mark.asyncio
 async def test_hybrid_workflow_state_graph_compiles_and_plans():
     mock_ledger = MagicMock()

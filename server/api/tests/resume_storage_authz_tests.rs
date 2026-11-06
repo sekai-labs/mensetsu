@@ -36,11 +36,22 @@ async fn download_url_requires_service_credentials_and_owned_attached_resume() {
         .expect_err("An incorrect service token must not receive a signed URL");
     assert_eq!(rejected.code(), Code::Unauthenticated);
 
-    let mut owned_lookup = Request::new(lookup);
+    let mut owned_lookup = Request::new(lookup.clone());
     owned_lookup.metadata_mut().insert(
         "authorization", "Bearer test-storage-service-credential".parse().unwrap(),
     );
     let missing = service.get_resume_download_url(owned_lookup).await
         .expect_err("No owned attached PDF exists for unrelated record IDs");
     assert_eq!(missing.code(), Code::NotFound);
+    let mut prefixed_lookup = Request::new(GetResumeDownloadUrlRequest {
+        workspace_id: format!("workspace:{}", lookup.workspace_id),
+        user_id: "user:admin_mensetsu".to_string(),
+        resume_upload_id: format!("resume_upload:{}", lookup.resume_upload_id),
+    });
+    prefixed_lookup.metadata_mut().insert(
+        "authorization", "Bearer test-storage-service-credential".parse().unwrap(),
+    );
+    let missing_prefixed = service.get_resume_download_url(prefixed_lookup).await
+        .expect_err("Table-qualified Surreal record IDs should be normalized before lookup");
+    assert_eq!(missing_prefixed.code(), Code::NotFound);
 }

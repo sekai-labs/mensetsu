@@ -194,7 +194,11 @@ class DurableJobWorker:
         hb_task = asyncio.create_task(heartbeat_loop())
 
         try:
-            from src.agents.runtime import current_ledger_var, current_lost_lease_var
+            from src.agents.runtime import (
+                current_ledger_var,
+                current_lost_lease_var,
+                llm_config_scope,
+            )
 
             current_ledger_var.set(self.ledger)
             current_lost_lease_var.set(lost_lease_event)
@@ -325,7 +329,8 @@ class DurableJobWorker:
                     seniority=payload.get("seniority"),
                 )
             input_val = None if existing_checkpoint is not None else initial_state
-            await graph.ainvoke(input_val, config=config)
+            with llm_config_scope(payload.get("llm_config")):
+                await graph.ainvoke(input_val, config=config)
 
             run_obj = await self.ledger.get_workflow_run(run_id)
             if not run_obj or run_obj.status != "completed":

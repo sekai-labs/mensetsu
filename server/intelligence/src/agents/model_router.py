@@ -50,8 +50,8 @@ def resolve_provider_credentials(
         if leg_key and leg_key.strip():
             return leg_key.strip(), legacy_cfg.get("base_url")
 
-    env_key = os.environ.get("OPENAI_API_KEY", "")
-    env_base = os.environ.get("OPENAI_BASE_URL")
+    env_key = os.environ.get("LLM_OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY", "")
+    env_base = os.environ.get("LLM_OPENAI_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
     return env_key, env_base
 
 
@@ -107,13 +107,14 @@ def resolve_chat_model_for_role(
         primary_def = slot_config.get("primary")
         fallback_def = slot_config.get("fallback")
 
+    default_model = os.environ.get("LLM_DEFAULT_MODEL") or os.environ.get("OPENAI_MODEL", "gpt-4o")
     if primary_def:
         p_provider = primary_def.get("provider_key", "openai")
-        p_model = primary_def.get("model") or os.environ.get("OPENAI_MODEL", "gpt-4o")
+        p_model = primary_def.get("model") or default_model
         p_temp = float(primary_def.get("temperature", 0.2))
     else:
         p_provider = (legacy or {}).get("provider") or "openai"
-        p_model = (legacy or {}).get("model_chat") or os.environ.get("OPENAI_MODEL", "gpt-4o")
+        p_model = (legacy or {}).get("model_chat") or default_model
         p_temp = 0.2
 
     p_key, p_base = resolve_provider_credentials(

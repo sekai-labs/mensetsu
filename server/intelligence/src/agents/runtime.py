@@ -7,7 +7,7 @@ import os
 import time
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Callable
+from typing import Any, Callable, Iterator
 
 import httpx
 import openai
@@ -65,6 +65,43 @@ current_lost_lease_var: contextvars.ContextVar[asyncio.Event | None] = contextva
 current_model_factory_var: contextvars.ContextVar[Callable[[], BaseChatModel] | None] = (
     contextvars.ContextVar("current_model_factory", default=None)
 )
+
+current_llm_config_var: contextvars.ContextVar[dict[str, Any] | None] = contextvars.ContextVar(
+    "current_llm_config", default=None
+)
+
+
+@contextlib.contextmanager
+def llm_config_scope(config: dict[str, Any] | None) -> Iterator[None]:
+    token = current_llm_config_var.set(config)
+    try:
+        yield
+    finally:
+        current_llm_config_var.reset(token)
+
+
+def has_explicit_llm_config(config: dict[str, Any] | None, role: str) -> bool:
+    if not config:
+        return False
+
+    from src.agents.model_router import ROLE_SLOT_MAP
+
+    routing = config.get("model_routing") or {}
+    slot_name = ROLE_SLOT_MAP.get(role, role)
+    if routing.get(slot_name) or routing.get(role):
+        return True
+
+    legacy = config.get("legacy") or {}
+    if legacy:
+        return True
+
+    provider_key = legacy.get("provider") or "openai"
+    for source in ("user_providers", "system_providers"):
+        provider = (config.get(source) or {}).get(provider_key) or {}
+        if provider.get("api_key") or provider.get("base_url"):
+            return True
+    return False
+
 
 logger = logging.getLogger("mensetsu.agents.runtime")
 
@@ -335,11 +372,19 @@ class AutonomousAgentRuntime:
             self._search_engine = AgentSearchEngine()
         return self._search_engine
 
-    def get_chat_model(self, role: str = "research", request_timeout_s: float = LLM_REQUEST_TIMEOUT_S) -> BaseChatModel:
+    def get_chat_model(
+        self, role: str = "research", request_timeout_s: float = LLM_REQUEST_TIMEOUT_S
+    ) -> BaseChatModel:
         factory = current_model_factory_var.get() or self._global_model_factory
         if factory:
             return factory()
+
         from src.agents.model_router import resolve_chat_model_for_role
+
+        llm_config = current_llm_config_var.get()
+        if has_explicit_llm_config(llm_config, role):
+            return resolve_chat_model_for_role(role, llm_config, timeout_s=request_timeout_s)
+
         base_url = os.environ.get("LLM_OPENAI_BASE_URL")
         api_key = os.environ.get("LLM_OPENAI_API_KEY")
         model = os.environ.get("LLM_DEFAULT_MODEL", "gemini-3.8-flash-high")
