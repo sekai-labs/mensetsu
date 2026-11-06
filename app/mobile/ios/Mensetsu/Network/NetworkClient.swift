@@ -1,7 +1,3 @@
-//
-// NetworkClient.swift
-// Mensetsu
-//
 
 import Foundation
 import MensetsuContracts
@@ -51,11 +47,9 @@ public final class NetworkClient {
         try await tokenManager.clear()
         MensetsuContractsAPI.customHeaders.removeValue(forKey: "Authorization")
     }
-    /// Executes an API request with bearer authentication and automatic single retry on 401.
     public func executeWithAuthRetry<T>(
         request: @escaping (_ accessToken: String) async throws -> T
     ) async throws -> T {
-        // 1. Get current in-memory access token or refresh
         var token = await tokenManager.getAccessToken()
         if token == nil {
             token = try await tokenManager.refreshToken()
@@ -68,11 +62,8 @@ public final class NetworkClient {
         do {
             return try await executeWithToken(token: validToken, request: request)
         } catch {
-            // Check if 401 Unauthorized
             if isUnauthorized(error: error) {
-                // Refresh token once (serialized in actor)
                 let newToken = try await tokenManager.refreshToken()
-                // Retry request once with the refreshed token
                 return try await executeWithToken(token: newToken, request: request)
             } else {
                 throw error

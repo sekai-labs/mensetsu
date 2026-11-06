@@ -1,7 +1,3 @@
-//
-// AuthSession.swift
-// Mensetsu
-//
 
 import Foundation
 import Combine
@@ -54,8 +50,6 @@ public actor TokenManager {
         refreshTask = nil
     }
 
-    /// Serialized refresh operation: if multiple calls arrive concurrently,
-    /// all await the same in-flight refresh Task.
     public func refreshToken() async throws -> String {
         if let existingTask = refreshTask {
             return try await existingTask.value

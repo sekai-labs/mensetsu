@@ -37,7 +37,6 @@ fun LlmSettingsScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var editingConfig by remember { mutableStateOf<LlmConfigItemDto?>(null) }
 
-    // Server Endpoint configuration state
     var endpointInput by remember { mutableStateOf(networkManager.getBaseUrl()) }
     var endpointError by remember { mutableStateOf<String?>(null) }
     var endpointSuccessMessage by remember { mutableStateOf<String?>(null) }
@@ -86,8 +85,6 @@ fun LlmSettingsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Server Endpoint Configuration section is ALWAYS rendered so users can reconfigure the server
-            // even when the backend is offline or LLM settings fail to load.
             item {
                 Text(
                     text = "Server Configuration",
@@ -183,7 +180,6 @@ fun LlmSettingsScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            // LLM Settings section handles loading and error states locally without hiding server settings
             when {
                 isLoading -> {
                     item {

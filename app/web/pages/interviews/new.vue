@@ -20,7 +20,6 @@ const { createWorkspace, createResumeUpload, completeResumeUpload, uploadResumeF
 const isSubmitting = ref<boolean>(false)
 const errorMessage = ref<string>('')
 
-// Form State
 const currentStep = ref<number>(1)
 const companyName = ref<string>('')
 const roleTitle = ref<string>('')
@@ -34,7 +33,7 @@ const resumeFileName = computed(() => resumeFile.value?.name ?? null)
 const isDragging = ref<boolean>(false)
 const notes = ref<string>('')
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MiB
+const MAX_FILE_SIZE = 5 * 1024 * 1024
 
 const seniorityLevels: Array<{ value: SeniorityLevel; label: string; desc: string }> = [
   { value: 'junior', label: 'Junior', desc: '0-2 yrs' },
@@ -166,17 +165,14 @@ const handleSubmit = async () => {
         throw new Error('Please select a resume PDF file.')
       }
 
-      // Step 1: Request presigned upload URL from BFF
       const presignRes = await createResumeUpload({
         filename: file.name,
         size_bytes: file.size,
         content_type: 'application/pdf',
       })
 
-      // Step 2: Binary PUT file bytes directly to opaque signed URL without auth/cookies
       await uploadResumeFileToSignedUrl(presignRes.upload_url, file)
 
-      // Step 3: Complete upload confirmation
       const completeRes = await completeResumeUpload(presignRes.upload_id)
       if (completeRes.status !== 'completed') {
         throw new Error('Résumé upload was not confirmed by storage.')
@@ -215,7 +211,6 @@ const handleSubmit = async () => {
 
 <template>
   <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6">
-    <!-- Header -->
     <div class="mb-8 border-b border-slate-200 dark:border-slate-800 pb-5">
       <div class="flex items-center gap-2 mb-2">
         <span class="px-2.5 py-0.5 text-xs font-mono font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded">
@@ -230,7 +225,6 @@ const handleSubmit = async () => {
         {{ $t('wizard.description') }}
       </p>
 
-      <!-- Step Navigation Indicator -->
       <div class="mt-6 flex items-center gap-2 sm:gap-4 overflow-x-auto pb-2 text-xs font-medium">
         <button
           type="button"
@@ -308,14 +302,12 @@ const handleSubmit = async () => {
       </div>
     </div>
 
-    <!-- Error Banner -->
     <div v-if="errorMessage" class="mb-6 p-4 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2">
       <span class="font-bold">Error:</span>
       <span>{{ errorMessage }}</span>
     </div>
 
     <form @submit.prevent="handleSubmit" class="space-y-6">
-      <!-- STEP 1: Target Role & Seniority -->
       <div v-show="currentStep === 1" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs space-y-6">
         <div>
           <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
@@ -398,7 +390,6 @@ const handleSubmit = async () => {
         </div>
       </div>
 
-      <!-- STEP 2: Sources & Focus URLs -->
       <div v-show="currentStep === 2" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs space-y-6">
         <div>
           <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
@@ -455,7 +446,6 @@ const handleSubmit = async () => {
         </div>
       </div>
 
-      <!-- STEP 3: Candidate Resume -->
       <div v-show="currentStep === 3" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
@@ -489,7 +479,6 @@ const handleSubmit = async () => {
           </div>
         </div>
 
-        <!-- Mode: Paste Text -->
         <div v-if="resumeMode === 'paste'" class="space-y-2">
           <textarea
             data-testid="resume-text"
@@ -500,7 +489,6 @@ const handleSubmit = async () => {
           ></textarea>
         </div>
 
-        <!-- Mode: Upload PDF -->
         <div v-else class="space-y-2">
           <div
             class="border-2 border-dashed transition rounded-lg p-8 flex flex-col items-center justify-center text-center cursor-pointer"
@@ -558,7 +546,6 @@ const handleSubmit = async () => {
         </div>
       </div>
 
-      <!-- STEP 4: Job Description & Launch -->
       <div v-show="currentStep === 4" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs space-y-6">
         <div>
           <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
@@ -580,7 +567,6 @@ const handleSubmit = async () => {
           ></textarea>
         </div>
 
-        <!-- Summary overview before submission -->
         <div class="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-850/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
           <div class="space-y-0.5">
             <div class="font-semibold text-slate-900 dark:text-white">

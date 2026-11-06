@@ -87,7 +87,6 @@ const filteredRisks = computed(() => {
 
 <template>
   <div class="space-y-6">
-    <!-- Header -->
     <div class="border-b border-slate-200 dark:border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs font-mono text-indigo-600 dark:text-indigo-400 font-semibold mb-1">
@@ -116,7 +115,6 @@ const filteredRisks = computed(() => {
       </div>
     </div>
 
-    <!-- Error State -->
     <div v-if="errorMatch" class="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs space-y-2">
       <div class="font-semibold text-rose-800 dark:text-rose-300">Failed to load match analysis</div>
       <p class="text-rose-600 dark:text-rose-400">{{ errorMatch.message || String(errorMatch) }}</p>
@@ -129,14 +127,12 @@ const filteredRisks = computed(() => {
       </button>
     </div>
 
-    <!-- Loading Skeleton -->
     <div v-else-if="pendingMatch" class="space-y-4">
       <div class="h-10 bg-slate-100 dark:bg-slate-800/40 rounded-lg animate-pulse"></div>
       <div class="h-32 bg-slate-100 dark:bg-slate-800/40 rounded-lg animate-pulse"></div>
     </div>
 
     <template v-else>
-      <!-- Filters and Search Toolbar -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
           <button
@@ -196,7 +192,6 @@ const filteredRisks = computed(() => {
         </div>
       </div>
 
-      <!-- Strengths Matrix Section -->
       <div v-show="activeFilter === 'all' || activeFilter === 'strengths'" class="space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
@@ -245,7 +240,6 @@ const filteredRisks = computed(() => {
         </div>
       </div>
 
-      <!-- Identified Gaps Section -->
       <div v-show="activeFilter === 'all' || activeFilter === 'gaps'" class="space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
@@ -296,7 +290,6 @@ const filteredRisks = computed(() => {
         </div>
       </div>
 
-      <!-- Resume Wording Improvements -->
       <div v-show="activeFilter === 'all' || activeFilter === 'wording'" class="space-y-3">
         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
           <Sparkles class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
@@ -334,7 +327,6 @@ const filteredRisks = computed(() => {
         </div>
       </div>
 
-      <!-- Interview Risks -->
       <div v-show="activeFilter === 'all' || activeFilter === 'risks'" class="space-y-3">
         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
           <AlertTriangle class="w-4 h-4 text-rose-500" />
@@ -360,7 +352,6 @@ const filteredRisks = computed(() => {
       </div>
     </template>
 
-    <!-- Source Evidence Drawer -->
     <EvidenceDrawer
       :is-open="isDrawerOpen"
       :citation="selectedSource"

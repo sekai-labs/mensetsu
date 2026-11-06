@@ -32,7 +32,7 @@ pub fn App() -> Element {
         }
     });
 
-    // Check login state on initial load if endpoint is already configured
+
     use_effect({
         let api_sig = api.clone();
         move || {

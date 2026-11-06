@@ -1,7 +1,3 @@
-//
-// MensetsuApp.swift
-// Mensetsu
-//
 
 import SwiftUI
 import MensetsuContracts

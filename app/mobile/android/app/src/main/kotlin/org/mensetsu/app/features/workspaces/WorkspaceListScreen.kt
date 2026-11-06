@@ -43,7 +43,7 @@ fun WorkspaceListScreen(
     var workspaces by remember { mutableStateOf<List<WorkspaceResponseDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var selectedFilter by remember { mutableStateOf("all") } // all, ready, processing
+    var selectedFilter by remember { mutableStateOf("all") }
 
     var showCreateDialog by remember { mutableStateOf(false) }
 
@@ -131,7 +131,6 @@ fun WorkspaceListScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Filter Tabs
             TabRow(
                 selectedTabIndex = when (selectedFilter) {
                     "ready" -> 1

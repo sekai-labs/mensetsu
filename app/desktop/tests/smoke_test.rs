@@ -1,5 +1,3 @@
-//! Integration tests for mensetsu_desktop
-//! Verifies API contracts, endpoint configuration, secure store, and workflows.
 
 use mensetsu_desktop::services::api::ApiService;
 use mensetsu_desktop::services::endpoint_config::{set_persisted_server_url, validate_and_normalize_url, EndpointConfigError};
@@ -20,19 +18,19 @@ fn test_endpoint_validation_and_normalization() {
         "https://api.mensetsu.example.com"
     );
 
-    // Insecure HTTP to remote host must be rejected
+
     match validate_and_normalize_url("http://api.mensetsu.example.com") {
         Err(EndpointConfigError::InsecureHttp) => (),
         other => panic!("Expected InsecureHttp error, got {:?}", other),
     }
 
-    // Subpath must be rejected
+
     match validate_and_normalize_url("https://api.mensetsu.example.com/api/v1") {
         Err(EndpointConfigError::PathNotAllowed) => (),
         other => panic!("Expected PathNotAllowed error, got {:?}", other),
     }
 
-    // Credentials must be rejected
+
     match validate_and_normalize_url("https://user:pass@api.mensetsu.example.com") {
         Err(EndpointConfigError::UserinfoNotAllowed) => (),
         other => panic!("Expected UserinfoNotAllowed error, got {:?}", other),
@@ -61,14 +59,14 @@ async fn test_api_integration_smoke() {
     let name = "Dioxus Smoke Tester";
     let password = "Password123!Secure";
 
-    // Register
+
     api.register(name, &email, password).await.expect("Registration should succeed");
 
-    // List workspaces
+
     let workspaces = api.list_workspaces().await.expect("List workspaces should succeed");
     let initial_count = workspaces.len();
 
-    // Create workspace
+
     let ws = api.create_workspace(
         "Dioxus Corp",
         "Staff Rust Engineer",
@@ -79,21 +77,21 @@ async fn test_api_integration_smoke() {
     assert_eq!(ws.company_name, "Dioxus Corp");
     assert_eq!(ws.role_title, "Staff Rust Engineer");
 
-    // Verify workspace appears in list
+
     let updated = api.list_workspaces().await.expect("List workspaces after create");
     assert_eq!(updated.len(), initial_count + 1);
 
-    // Fetch workspace by id
+
     let fetched = api.get_workspace(&ws.id).await.expect("Get workspace");
     assert_eq!(fetched.id, ws.id);
 
-    // LLM settings test
+
     let mut llm_req = UpsertLlmConfigRequestDto::new("openai".to_string());
     llm_req.api_key = Some(Some("sk-test-fake-key-for-smoke".to_string()));
     let _ = api.update_llm_setting(llm_req).await;
     let settings = api.get_llm_settings().await.unwrap_or_default();
     assert!(settings.iter().any(|s| s.provider == "openai"));
 
-    // Logout
+
     api.logout().await.expect("Logout should succeed");
 }

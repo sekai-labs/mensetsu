@@ -1,7 +1,3 @@
-//
-// MensetsuUITests.swift
-// MensetsuUITests
-//
 
 import XCTest
 
@@ -17,10 +13,6 @@ final class MensetsuUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    /// Ensures the application reaches the Auth view pointing to the expected endpoint.
-    /// If on setup screen, enters the target endpoint directly.
-    /// If already configured but pointing to a different endpoint (e.g. from a prior test),
-    /// opens Settings from Auth screen and switches the endpoint to target.
     private func ensureConfiguredAndOnAuthView(for appInstance: XCUIApplication, endpoint: String? = nil) {
         let target = endpoint ?? targetApiUrl
         let authScreen = appInstance.otherElements["auth_screen"]
@@ -42,7 +34,6 @@ final class MensetsuUITests: XCTestCase {
 
         XCTAssertTrue(authScreen.waitForExistence(timeout: 10.0), "Auth screen should appear")
 
-        // Check if active server matches target; if not, reconfigure via pre-auth settings
         let openServerBtn = appInstance.buttons["open_server_settings_button"]
         if openServerBtn.waitForExistence(timeout: 3.0) {
             let buttonLabel = openServerBtn.label
@@ -77,11 +68,9 @@ final class MensetsuUITests: XCTestCase {
         app.launch()
         ensureConfiguredAndOnAuthView(for: app)
 
-        // 1. Verify Auth Screen is present
         let authScreen = app.otherElements["auth_screen"]
         XCTAssertTrue(authScreen.waitForExistence(timeout: 5.0), "Auth screen should appear")
 
-        // 2. Switch to Register mode
         let registerTab = app.buttons["auth_register_tab"]
         if registerTab.exists {
             registerTab.tap()
@@ -107,11 +96,9 @@ final class MensetsuUITests: XCTestCase {
         XCTAssertTrue(registerButton.isEnabled)
         registerButton.tap()
 
-        // 3. Verify transition to Workspace List Screen
         let workspaceListScreen = app.otherElements["workspace_list_screen"]
         XCTAssertTrue(workspaceListScreen.waitForExistence(timeout: 10.0), "Workspace list screen should appear after register")
 
-        // 4. Open Create Workspace Sheet
         let openCreateBtn = app.buttons["open_create_workspace_button"]
         XCTAssertTrue(openCreateBtn.waitForExistence(timeout: 3.0))
         openCreateBtn.tap()
@@ -140,17 +127,14 @@ final class MensetsuUITests: XCTestCase {
         XCTAssertTrue(submitCreateBtn.isEnabled)
         submitCreateBtn.tap()
 
-        // 5. Verify workspace appears in list
         let createdRow = app.staticTexts[testCompany]
         XCTAssertTrue(createdRow.waitForExistence(timeout: 10.0), "Newly created workspace should appear in list")
 
-        // 6. Navigate to Workspace Detail
         createdRow.tap()
 
         let detailScreen = app.otherElements["workspace_detail_screen"]
         XCTAssertTrue(detailScreen.waitForExistence(timeout: 5.0), "Detail screen should appear")
 
-        // Verify tabs can be switched
         let matchTab = app.buttons["detail_tab_match"]
         if matchTab.exists {
             matchTab.tap()
@@ -171,10 +155,8 @@ final class MensetsuUITests: XCTestCase {
             questionsTab.tap()
         }
 
-        // Return to workspace list
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(workspaceListScreen.waitForExistence(timeout: 5.0))
-        // 7. Import a real PDF from Files and create a second workspace.
         openCreateBtn.tap()
         let pdfCompany = "PDFCo_\(randomSuffix)"
         let pdfCompanyField = app.textFields["create_company_field"]
@@ -205,7 +187,6 @@ final class MensetsuUITests: XCTestCase {
         pdfCreateButton.tap()
         XCTAssertTrue(app.staticTexts[pdfCompany].waitForExistence(timeout: 30.0), "PDF workspace should appear in the list")
 
-        // 8. Verify logout.
 
         let logoutBtn = app.buttons["logout_button"]
         XCTAssertTrue(logoutBtn.exists)
@@ -219,7 +200,6 @@ final class MensetsuUITests: XCTestCase {
         app.launch()
         ensureConfiguredAndOnAuthView(for: app)
 
-        // Reconfigure to an unreachable port via settings UI to test real network failure handling
         let openServerBtn = app.buttons["open_server_settings_button"]
         XCTAssertTrue(openServerBtn.waitForExistence(timeout: 5.0))
         openServerBtn.tap()
@@ -253,18 +233,15 @@ final class MensetsuUITests: XCTestCase {
         let loginButton = app.buttons["auth_login_button"]
         loginButton.tap()
 
-        // Verify error banner is displayed
         let errorBanner = app.otherElements["auth_error_banner"]
         XCTAssertTrue(errorBanner.waitForExistence(timeout: 10.0), "Error banner should be displayed on network failure")
     }
 
     func testFirstLaunchEndpointSetupAndValidation() throws {
         let app = XCUIApplication()
-        // Clear saved endpoint preference on launch to simulate clean first launch
         app.launchArguments = ["-mensetsu_server_endpoint", ""]
         app.launch()
 
-        // 1. Verify server setup screen is presented on first launch
         let setupScreen = app.otherElements["server_setup_screen"]
         XCTAssertTrue(setupScreen.waitForExistence(timeout: 5.0), "Server setup screen should appear when no endpoint is configured")
 
@@ -272,7 +249,6 @@ final class MensetsuUITests: XCTestCase {
         XCTAssertTrue(inputField.waitForExistence(timeout: 3.0))
         let connectBtn = app.buttons["button_save_server_url"]
 
-        // 2. Test validation: try entering insecure remote URL
         inputField.tap()
         inputField.typeText("http://remote.example.com")
         connectBtn.tap()
@@ -280,7 +256,6 @@ final class MensetsuUITests: XCTestCase {
         let errorMsg = app.staticTexts["server_url_error_message"]
         XCTAssertTrue(errorMsg.waitForExistence(timeout: 3.0), "Error should appear for insecure remote HTTP URL")
 
-        // 3. Enter a valid loopback dev URL (strips trailing slash)
         inputField.tap()
         let currentVal = inputField.value as? String ?? ""
         let deleteString = String(repeating: XCUIKeyboardKey.delete.rawValue, count: currentVal.count)
@@ -288,11 +263,9 @@ final class MensetsuUITests: XCTestCase {
         inputField.typeText(targetApiUrl + "/")
         connectBtn.tap()
 
-        // 4. Verify transition to auth screen once valid URL is saved
         let authScreen = app.otherElements["auth_screen"]
         XCTAssertTrue(authScreen.waitForExistence(timeout: 5.0), "Auth screen should appear after saving valid server URL")
 
-        // 5. Terminate and relaunch cleanly without launch arguments to verify persistence
         app.terminate()
         let relaunchedApp = XCUIApplication()
         relaunchedApp.launch()
@@ -308,7 +281,6 @@ final class MensetsuUITests: XCTestCase {
         let authScreen = app.otherElements["auth_screen"]
         XCTAssertTrue(authScreen.waitForExistence(timeout: 5.0))
 
-        // Open pre-auth server settings
         let openServerBtn = app.buttons["open_server_settings_button"]
         XCTAssertTrue(openServerBtn.waitForExistence(timeout: 3.0), "Pre-auth server settings button must exist on auth screen")
         openServerBtn.tap()
@@ -319,7 +291,6 @@ final class MensetsuUITests: XCTestCase {
         let serverInput = app.textFields["settings_input_server_url"]
         XCTAssertTrue(serverInput.waitForExistence(timeout: 3.0), "Server URL input must be visible on settings screen")
 
-        // Change server to another valid URL
         serverInput.tap()
         let currentVal = serverInput.value as? String ?? ""
         let deleteString = String(repeating: XCUIKeyboardKey.delete.rawValue, count: currentVal.count)
@@ -330,7 +301,6 @@ final class MensetsuUITests: XCTestCase {
         XCTAssertTrue(saveBtn.waitForExistence(timeout: 3.0), "Save server URL button must exist")
         saveBtn.tap()
 
-        // Verify settings dismisses and auth screen is visible with clean session
         XCTAssertTrue(authScreen.waitForExistence(timeout: 5.0), "Auth screen must remain visible in unauthenticated state after server change")
 
         app.terminate()
@@ -341,7 +311,6 @@ final class MensetsuUITests: XCTestCase {
         changeServer.tap()
         XCTAssertEqual(relaunched.textFields["settings_input_server_url"].value as? String, "http://localhost:8081")
 
-        // Restore target API URL so subsequent test runs have expected endpoint
         let restoreInput = relaunched.textFields["settings_input_server_url"]
         restoreInput.tap()
         let restoreVal = restoreInput.value as? String ?? ""

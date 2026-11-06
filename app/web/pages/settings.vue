@@ -12,7 +12,6 @@ const { request } = useApiClient()
 
 const activeTab = ref<'providers' | 'routing' | 'security'>('providers')
 
-// Provider BYOK State
 interface CombinedProvider {
   provider_key: string
   name: string
@@ -33,7 +32,6 @@ const providerBaseUrl = ref<string>('')
 const isSavingProvider = ref<boolean>(false)
 const providerFeedback = ref<string>('')
 
-// Model Routing Matrix State
 interface ModelSlot {
   provider_key: string
   model: string
@@ -135,7 +133,6 @@ const handleSaveRoutingMatrix = async () => {
   }
 }
 
-// 2FA Security State
 const totpSetupData = ref<{ secret: string; qr_code_svg: string; otpauth_url: string } | null>(null)
 const totpCodeInput = ref<string>('')
 const twoFaError = ref<string>('')

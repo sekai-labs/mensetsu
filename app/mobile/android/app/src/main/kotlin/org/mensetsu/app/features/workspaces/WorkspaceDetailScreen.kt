@@ -43,7 +43,7 @@ fun WorkspaceDetailScreen(
 
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var selectedTabIndex by remember { mutableStateOf(0) } // 0: Overview, 1: Match, 2: Company, 3: Learning, 4: Questions, 5: Settings
+    var selectedTabIndex by remember { mutableStateOf(0) }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -63,7 +63,6 @@ fun WorkspaceDetailScreen(
                     val ws = networkManager.getWorkspacesApi().getWorkspace(workspaceId)
                     workspace = ws
 
-                    // Load match
                     try {
                         val rawMatch = networkManager.getLearningHandlersApi().getWorkspaceMatch(workspaceId)
                         val matchJson = Serializer.moshi.adapter(Any::class.java).toJson(rawMatch)
@@ -72,7 +71,6 @@ fun WorkspaceDetailScreen(
                         match = null
                     }
 
-                    // Load company
                     try {
                         val rawCompany = networkManager.getResearchHandlersApi().getWorkspaceCompany(workspaceId)
                         val compJson = Serializer.moshi.adapter(Any::class.java).toJson(rawCompany)
@@ -81,14 +79,12 @@ fun WorkspaceDetailScreen(
                         company = null
                     }
 
-                    // Load questions
                     try {
                         questions = networkManager.getLearningHandlersApi().getWorkspaceQuestions(workspaceId)
                     } catch (_: Exception) {
                         questions = emptyList()
                     }
 
-                    // Load learning
                     try {
                         learning = networkManager.getLearningHandlersApi().getWorkspaceLearning(workspaceId)
                     } catch (_: Exception) {
@@ -113,7 +109,6 @@ fun WorkspaceDetailScreen(
                 withContext(Dispatchers.IO) {
                     networkManager.getWorkspacesApi().toggleLearningUnitCompleted(workspaceId, lessonId)
                 }
-                // Update local state toggle
                 learning = learning.map { l ->
                     if (l.id == lessonId) {
                         l.copy(completed = !(l.completed ?: false))
@@ -122,7 +117,6 @@ fun WorkspaceDetailScreen(
                     }
                 }
             } catch (e: Exception) {
-                // Keep UI in sync by reloading
                 loadAllData()
             }
         }

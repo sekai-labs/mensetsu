@@ -59,7 +59,6 @@ async def test_workflow_router_prompt_classification():
 
 
 def test_byok_credential_precedence():
-    # 1. User personal key overrides platform admin key
     user_provs = {
         "anthropic": {"api_key": "sk-ant-user-personal", "base_url": "https://user-anthropic.com"}
     }
@@ -72,7 +71,6 @@ def test_byok_credential_precedence():
     assert key == "sk-ant-user-personal"
     assert base == "https://user-anthropic.com"
 
-    # 2. When user key is absent, falls back to platform admin key
     key2, base2 = resolve_provider_credentials("anthropic", {}, system_provs, legacy)
     assert key2 == "sk-ant-admin-shared"
     assert base2 == "https://admin-anthropic.com"
@@ -98,7 +96,6 @@ def test_model_routing_role_slots_and_fallback():
     }
 
     model = resolve_chat_model_for_role("router", cfg)
-    # Model should have fallback bound
     assert hasattr(model, "fallbacks") or hasattr(model, "with_fallbacks")
 
 

@@ -1,7 +1,3 @@
-//
-// SettingsView.swift
-// Mensetsu
-//
 
 import SwiftUI
 import MensetsuContracts
@@ -20,7 +16,6 @@ public struct SettingsView: View {
     public var body: some View {
         NavigationView {
             List {
-                // 1. API Server Endpoint Section (always visible even if server is offline or unauthenticated)
                 Section(header: Text("API Server Endpoint"), footer: Text("Base URL of your self-hosted Rust API. Changing the server signs out the active session.")) {
                     VStack(alignment: .leading, spacing: 8) {
                         TextField("https://api.example.com", text: $serverUrlInput)
@@ -50,7 +45,6 @@ public struct SettingsView: View {
                     .padding(.vertical, 4)
                 }
 
-                // 2. LLM Provider Settings Section (only if authenticated)
                 if case .authenticated = authViewModel.authState {
                     Section(header: Text("LLM Provider Keys"), footer: Text("Configure API keys for external intelligence models. Keys are securely stored and masked.")) {
                         if viewModel.isLoading && viewModel.configs.isEmpty {
@@ -110,7 +104,6 @@ public struct SettingsView: View {
             let validated = try AppConfig.normalizeAndValidateUrl(serverUrlInput)
             Task {
                 do {
-                    // Reset session and clear credentials BEFORE persisting new endpoint
                     try await authViewModel.resetSessionForServerChange(newServerUrl: validated)
                     try AppConfig.saveServerUrl(validated)
                     serverUrlInput = validated

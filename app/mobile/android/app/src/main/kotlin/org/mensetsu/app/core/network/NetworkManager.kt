@@ -35,19 +35,11 @@ import java.util.concurrent.atomic.AtomicReference
 
 data class SelectedPdf(val uri: Uri, val filename: String, val sizeBytes: Long)
 
-/**
- * Authentication and session manager.
- * Access tokens are kept strictly in-memory.
- * Refresh tokens are stored securely in Android Keystore-backed storage.
- * Refresh calls are serialized, and on 401 a single retry is attempted.
- */
 class NetworkManager(private val tokenStorage: TokenStorage) {
 
-    // Memory-only access token
     private val memoryAccessToken = AtomicReference<String?>(null)
     private val refreshMutex = Mutex()
 
-    // Synchronization lock and epoch counter to protect against token leakage when switching servers
     private val sessionLock = Any()
     private var sessionEpoch: Long = 0L
 
@@ -71,10 +63,6 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
         }
     }
 
-    /**
-     * Returns true if a valid custom base URL has been configured and saved.
-     * Validates stored preference so corrupt legacy data does not issue invalid requests and prompts onboarding.
-     */
     fun isEndpointConfigured(): Boolean {
         val custom = tokenStorage.getCustomBaseUrl()
         if (!custom.isNullOrBlank()) {
@@ -92,12 +80,6 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
         return ""
     }
 
-    /**
-     * Validates and saves a new server endpoint URL.
-     * Validation occurs BEFORE clearing session or mutating storage.
-     * Only upon successful validation are session tokens cleared so credentials
-     * never leak across servers.
-     */
     fun setBaseUrl(url: String?) {
         if (url.isNullOrBlank()) {
             synchronized(sessionLock) {
@@ -124,18 +106,15 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
         }
     }
 
-    // Interceptor to add memory-only Bearer token and handle 401 with serialized refresh + retry once
     private val authInterceptor = Interceptor { chain ->
         val originalRequest = chain.request()
 
-        // Skip adding auth header for login, register, 2fa, and refresh endpoints to avoid recursive loops
         val path = originalRequest.url.encodedPath
         val isAuthEndpoint = path.contains("/auth/login") ||
                 path.contains("/auth/register") ||
                 path.contains("/auth/refresh") ||
                 path.contains("/auth/login-2fa")
 
-        // Capture epoch, access token, and active baseUrl BEFORE sending the original request
         val requestEpoch: Long
         val currentAccess: String?
         val requestBaseUrl: String
@@ -156,9 +135,6 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
         val response = chain.proceed(requestWithAuth)
 
         if (response.code == 401 && !isAuthEndpoint) {
-            // If server endpoint or session was changed while the original request was in flight,
-            // NEVER refresh or retry: doing so could send new-server tokens to old-server URLs
-            // or leak stale credentials.
             synchronized(sessionLock) {
                 if (sessionEpoch != requestEpoch || requestBaseUrl.isBlank()) {
                     return@Interceptor response
@@ -167,17 +143,14 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
 
             val refreshBaseUrl = requestBaseUrl
 
-            // Serialized refresh execution
             val newAccessToken = kotlinx.coroutines.runBlocking {
                 refreshMutex.withLock {
-                    // If session or endpoint changed while waiting for lock, discard
                     synchronized(sessionLock) {
                         if (sessionEpoch != requestEpoch) {
                             return@withLock null
                         }
                     }
 
-                    // Check if another concurrent thread already refreshed the token
                     val candidate = memoryAccessToken.get()
                     if (candidate != null && candidate != currentAccess) {
                         return@withLock candidate
@@ -197,7 +170,6 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
                         val newAccess = tokenResponse.accessToken
                         val newRefresh = tokenResponse.refreshToken
 
-                        // Atomically verify epoch before saving; if endpoint changed in flight, discard tokens
                         synchronized(sessionLock) {
                             if (sessionEpoch != requestEpoch) {
                                 return@withLock null
@@ -207,7 +179,6 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
                         }
                         newAccess
                     } catch (e: Exception) {
-                        // Only clear if still on the same epoch
                         synchronized(sessionLock) {
                             if (sessionEpoch == requestEpoch) {
                                 clearSession()
@@ -234,7 +205,6 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
         response
     }
 
-    // Raw OkHttpClient without the AuthInterceptor (used by refresh call to avoid cycles)
     val rawOkHttpClient: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
@@ -244,7 +214,6 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
         })
         .build()
 
-    // Authenticated OkHttpClient with Bearer token injection and serialized 401 refresh
     val okHttpClient: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
@@ -285,7 +254,6 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
             "Choose a PDF résumé."
         }
         if (sizeBytes == null || sizeBytes!! < 0) {
-            // Some Documents providers omit size. Count a bounded stream without retaining its bytes.
             contentResolver.openInputStream(uri)?.use { input ->
                 val buffer = ByteArray(8192)
                 var measured = 0L

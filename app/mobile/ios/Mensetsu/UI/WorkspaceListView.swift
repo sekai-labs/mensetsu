@@ -1,7 +1,3 @@
-//
-// WorkspaceListView.swift
-// Mensetsu
-//
 
 import SwiftUI
 import MensetsuContracts
@@ -31,13 +27,11 @@ public struct WorkspaceListView: View {
                 Color(UIColor.systemGroupedBackground).ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Filter bar
                     filterSegment
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                         .background(Color(UIColor.systemBackground))
 
-                    // Content
                     if viewModel.isLoading && viewModel.workspaces.isEmpty {
                         Spacer()
                         ProgressView("Loading workspaces...")

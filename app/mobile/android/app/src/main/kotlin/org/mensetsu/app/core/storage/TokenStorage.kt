@@ -5,10 +5,6 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
-/**
- * Android Keystore-backed persistence for the rotating refresh token.
- * Access tokens are NEVER written to disk and remain memory-only.
- */
 class TokenStorage(context: Context) {
     private val prefs: SharedPreferences = EncryptedSharedPreferences.create(
         context,

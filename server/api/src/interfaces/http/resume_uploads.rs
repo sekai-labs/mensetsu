@@ -246,7 +246,7 @@ pub async fn complete_resume_upload(
         return Err(AppError::Forbidden("You do not own this upload".to_string()));
     }
 
-    // Repeated complete on an already completed or attached upload returns its existing immutable result
+
     if record.status == "completed" || record.status == "attached" {
         return Ok(Json(CompleteResumeUploadResponseDto {
             upload_id,
@@ -265,7 +265,7 @@ pub async fn complete_resume_upload(
         .filter(|k| !k.trim().is_empty())
         .ok_or_else(|| AppError::Conflict("Staging object key not recorded for upload".to_string()))?;
 
-    // HEAD staging object
+
     let (staging_size, staging_content_type) = state
         .storage
         .head(&staging_key)
@@ -300,11 +300,11 @@ pub async fn complete_resume_upload(
         )));
     }
 
-    // Generate unique final key per completion attempt
+
     let final_uuid = Uuid::new_v4().to_string();
     let final_key = format!("resumes/final/{final_uuid}.pdf");
 
-    // Copy to unique final key
+
     state
         .storage
         .copy(&staging_key, &final_key)
@@ -314,7 +314,7 @@ pub async fn complete_resume_upload(
             AppError::ExternalService("Failed to copy staged object to final location".to_string())
         })?;
 
-    // Verify final HEAD and ranged GET first 4 bytes
+
     let head_and_prefix_result = async {
         let (final_size, final_ct) = state.storage.head(&final_key).await?;
         if final_size != record.size_bytes {
@@ -342,7 +342,7 @@ pub async fn complete_resume_upload(
     .await;
 
     if let Err(err) = head_and_prefix_result {
-        // Clean up the rejected final object
+
         let _ = state.storage.delete(&final_key).await;
         return Err(match err {
             AppError::Validation(msg) => AppError::Validation(msg),
@@ -352,7 +352,7 @@ pub async fn complete_resume_upload(
         });
     }
 
-    // CAS transition from 'pending' to 'completed' with winning final object_key
+
     let cas_query = "
         UPDATE type::record('resume_upload', $upload_id) SET
             object_key = $final_key,
@@ -383,10 +383,10 @@ pub async fn complete_resume_upload(
     };
 
     if updated_rows.is_empty() {
-        // We lost the race or status was no longer pending; delete the redundant final object
+
         let _ = state.storage.delete(&final_key).await;
 
-        // Check if it was already marked completed/attached
+
         let mut check_res = db
             .query("SELECT status FROM type::record('resume_upload', $upload_id);")
             .bind(("upload_id", upload_id.clone()))

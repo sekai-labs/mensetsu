@@ -14,7 +14,6 @@ if (user.value && user.value.role !== 'admin') {
   router.push('/dashboard')
 }
 
-// 1. Dynamic System Settings
 interface SystemConfigMap {
   MAX_CONCURRENT_AGENTS?: number
   MAX_CONCURRENT_AGENTS_PER_RUN?: number
@@ -69,7 +68,6 @@ const handleSaveConfig = async () => {
   }
 }
 
-// 2. Admin Providers Management
 interface AdminProvider {
   provider_key: string
   name: string

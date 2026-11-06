@@ -1,7 +1,3 @@
-//
-// WorkspaceDetailView.swift
-// Mensetsu
-//
 
 import SwiftUI
 import MensetsuContracts
@@ -29,7 +25,6 @@ public struct WorkspaceDetailView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            // Tab Picker
             Picker("Tabs", selection: $selectedTab) {
                 ForEach(DetailTab.allCases) { tab in
                     Text(tab.rawValue).tag(tab)
@@ -41,7 +36,6 @@ public struct WorkspaceDetailView: View {
             .background(Color(UIColor.systemBackground))
             .accessibilityIdentifier(AccessibilityID.detailTabBar)
 
-            // Content Area
             if viewModel.isLoading && viewModel.workspace == nil {
                 Spacer()
                 ProgressView("Loading workspace...")
@@ -100,7 +94,6 @@ public struct WorkspaceDetailView: View {
         .accessibilityIdentifier(AccessibilityID.workspaceDetailScreen)
     }
 
-    // MARK: - Overview
     private var overviewView: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -140,7 +133,6 @@ public struct WorkspaceDetailView: View {
                     .background(Color(UIColor.secondarySystemGroupedBackground))
                     .cornerRadius(12)
 
-                    // Metrics Grid
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         metricCard(
                             title: "Match Ratio",
@@ -197,12 +189,10 @@ public struct WorkspaceDetailView: View {
         .cornerRadius(10)
     }
 
-    // MARK: - Match Tab
     private var matchView: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 if let match = viewModel.match {
-                    // Overall Match Card
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Overall Fit Ratio")
@@ -221,7 +211,6 @@ public struct WorkspaceDetailView: View {
                     .background(Color(UIColor.secondarySystemGroupedBackground))
                     .cornerRadius(10)
 
-                    // Strengths
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Demonstrated Strengths")
                             .font(.headline)
@@ -263,7 +252,6 @@ public struct WorkspaceDetailView: View {
                     }
                     .accessibilityIdentifier(AccessibilityID.matchStrengthsList)
 
-                    // Gaps
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Identified Skill Gaps")
                             .font(.headline)
@@ -302,7 +290,6 @@ public struct WorkspaceDetailView: View {
                     }
                     .accessibilityIdentifier(AccessibilityID.matchGapsList)
 
-                    // Risks
                     if !match.risks.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Potential Interview Risks")
@@ -329,7 +316,6 @@ public struct WorkspaceDetailView: View {
         }
     }
 
-    // MARK: - Company Tab
     private var companyView: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -411,7 +397,6 @@ public struct WorkspaceDetailView: View {
         }
     }
 
-    // MARK: - Learning Tab
     private var learningView: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
@@ -461,7 +446,6 @@ public struct WorkspaceDetailView: View {
         .accessibilityIdentifier(AccessibilityID.learningUnitsList)
     }
 
-    // MARK: - Questions Tab
     @State private var selectedDifficulty: String = "all"
 
     private var filteredQuestions: [InterviewQuestion] {
@@ -586,7 +570,6 @@ public final class WorkspaceDetailViewModel: ObservableObject {
     public func toggleLesson(lessonId: String) async {
         do {
             try await service.toggleLearningUnit(id: workspaceId, lessonId: lessonId)
-            // Toggle local state
             lessons = lessons.map { lesson in
                 if lesson.id == lessonId {
                     var updated = lesson

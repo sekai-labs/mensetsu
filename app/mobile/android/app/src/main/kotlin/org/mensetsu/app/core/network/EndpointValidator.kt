@@ -9,14 +9,6 @@ object EndpointValidator {
         data class Invalid(val reason: String) : ValidationResult()
     }
 
-    /**
-     * Validates and normalizes the server endpoint URL according to platform rules:
-     * - Strips trailing slashes and trims leading/trailing whitespace
-     * - Must be an absolute URI with http or https scheme
-     * - Host must be present
-     * - Non-loopback addresses must use HTTPS
-     * - Plain HTTP is allowed only for hosts permitted by network_security_config.xml
-     */
     fun validate(rawUrl: String?): ValidationResult {
         if (rawUrl.isNullOrBlank()) {
             return ValidationResult.Invalid("API endpoint URL cannot be empty.")
@@ -67,7 +59,6 @@ object EndpointValidator {
             return ValidationResult.Invalid("0.0.0.0 is a bind address and not a valid client destination.")
         }
 
-        // Loopback / local development hosts permitted to use plain HTTP:
         val isLoopback = isLocalHost(host)
 
         if (scheme == "http" && !isLoopback) {
@@ -80,11 +71,9 @@ object EndpointValidator {
         if (host == "localhost" || host == "127.0.0.1") {
             return true
         }
-        // Android emulator loopback alias to host machine
         if (host == "10.0.2.2") {
             return true
         }
-        // Genymotion emulator loopback alias
         if (host == "10.0.3.2") {
             return true
         }

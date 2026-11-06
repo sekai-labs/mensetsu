@@ -1,7 +1,3 @@
-//
-// CreateWorkspaceSheet.swift
-// Mensetsu
-//
 
 import SwiftUI
 import MensetsuContracts

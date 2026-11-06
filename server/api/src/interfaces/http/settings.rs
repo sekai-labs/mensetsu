@@ -55,7 +55,7 @@ pub struct ProviderStatusItemDto {
     pub provider_key: String,
     pub name: String,
     pub base_url: Option<String>,
-    pub active_key_source: String, // "user" | "system" | "none"
+    pub active_key_source: String,
     pub is_user_override: bool,
     pub is_enabled: bool,
     pub allowed_models: Vec<String>,

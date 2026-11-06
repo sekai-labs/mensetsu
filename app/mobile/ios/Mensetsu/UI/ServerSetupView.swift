@@ -1,7 +1,3 @@
-//
-// ServerSetupView.swift
-// Mensetsu
-//
 
 import SwiftUI
 import MensetsuContracts
@@ -105,7 +101,6 @@ public struct ServerSetupView: View {
             let validated = try AppConfig.normalizeAndValidateUrl(serverUrlInput)
             Task {
                 do {
-                    // Clear any leftover keychain tokens from previous installs/configurations before saving new URL
                     try await authViewModel.resetSessionForServerChange(newServerUrl: validated)
                     try AppConfig.saveServerUrl(validated)
                     onConfigured(validated)

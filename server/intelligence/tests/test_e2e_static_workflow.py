@@ -86,7 +86,6 @@ async def test_e2e_static_workflow_and_fixtures(monkeypatch):
     assert events[-1].seq == completed_run.last_seq
     assert events[-1].type in ("workflow.completed", "workflow.failed", "workflow.cancelled")
 
-    # Format SSE text directly from recorded execution events
     sse_text = "".join(
         f"id: {e.seq}\nevent: {e.type}\ndata: {e.model_dump_json()}\n\n" for e in events
     )

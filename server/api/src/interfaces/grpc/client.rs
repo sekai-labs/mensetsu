@@ -115,7 +115,7 @@ impl GrpcClient {
             .map_err(|e| AppError::ExternalService(format!("Failed to establish DataControl gRPC stream: {e}")))?
             .into_inner();
 
-        // Spawn background listener task to demultiplex control envelopes
+
         let pending_map = pending_requests.clone();
         tokio::spawn(async move {
             let mut stream = response_stream;
@@ -448,7 +448,7 @@ impl GrpcClient {
 
         let (sub_tx, sub_rx) = mpsc::channel::<EventStreamClientMessage>(16);
 
-        // Send initial subscribe
+
         let sub_msg = EventStreamClientMessage {
             message: Some(event_stream_client_message::Message::Subscribe(
                 SubscribeRunMessage { run_id, after_seq },
@@ -465,7 +465,7 @@ impl GrpcClient {
 
         let sse_stream = async_stream::stream! {
             let mut stream = incoming_stream;
-            let _keepalive_tx = sub_tx; // hold channel open
+            let _keepalive_tx = sub_tx;
             while let Some(item) = stream.next().await {
                 match item {
                     Ok(frame) => {

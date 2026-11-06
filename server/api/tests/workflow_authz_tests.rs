@@ -223,7 +223,7 @@ async fn foreign_and_unknown_runs_are_404_on_every_route_and_never_forwarded() {
     seed_run(&db, &run_a, &ws_a, "2026-10-12T10:00:00Z").await;
     let unknown = format!("run_{}", uuid::Uuid::new_v4());
 
-    // Clear commands recorded during workspace creation setup
+
     state.received_commands.lock().clear();
 
     for (method, uri) in run_scoped_routes(&run_a) {
@@ -235,14 +235,14 @@ async fn foreign_and_unknown_runs_are_404_on_every_route_and_never_forwarded() {
         assert_eq!(status, StatusCode::NOT_FOUND, "unknown: {method} {uri}");
     }
 
-    // Ensure no commands reached gRPC upstream for foreign or unknown attempts
+
     assert!(
         state.received_commands.lock().is_empty(),
         "nothing may reach gRPC upstream for unauthorized runs: {:?}",
         state.received_commands.lock()
     );
 
-    // Authorized requests for owned run succeed and invoke gRPC upstream
+
     let (status, body) = send(&app, authed("GET", &format!("/api/v1/workflows/runs/{run_a}"), &token_a).body(Body::empty()).unwrap()).await;
     assert_eq!(status, StatusCode::OK, "{}", String::from_utf8_lossy(&body));
 

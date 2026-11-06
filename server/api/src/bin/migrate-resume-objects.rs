@@ -83,7 +83,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
 
-        // If already has source_upload_id and source_object_key, verify object existence and upload record before clearing
+
         if let (Some(upload_id), Some(object_key)) = (&record.source_upload_id, &record.source_object_key) {
             if base64_str.len() > 7_500_000 {
                 eprintln!("Record {} has oversized legacy base64; preserving it.", resume_id_str);
@@ -100,7 +100,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
             println!("Record {} has upload/object references ({}, {}); verifying before clearing...", resume_id_str, upload_id, object_key);
 
-            // 1. Verify object exists in S3 via HEAD
+
             let head_result = storage.head(object_key).await;
             let verified_size = match head_result {
                 Ok((size, _)) if size == original.len() as u64 => size,
@@ -116,7 +116,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             };
 
-            // 2. Verify resume_upload record exists, matches owner/workspace, and size
+
             let mut up_check_resp = client
                 .query("SELECT user_id, workspace_id, object_key, size_bytes, status FROM type::record('resume_upload', $id);")
                 .bind(("id", record_key(upload_id, "resume_upload")?))
@@ -167,7 +167,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 continue;
             }
 
-            // Verified! Safe to clear legacy base64
+
             let update_q = "UPDATE type::record('resume', $id) SET source_pdf_base64 = NONE;";
             let mut up_resp = client
                 .query(update_q)
@@ -179,8 +179,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             continue;
         }
 
-        // Guard base64 encoded length before decoding to prevent unbounded allocation.
-        // 5 MiB binary = ~7,000,000 base64 chars (5 * 1024 * 1024 * 4 / 3 = 6,990,507 chars).
+
+
         const MAX_BASE64_CHARS: usize = 7_500_000;
         if base64_str.len() > MAX_BASE64_CHARS {
             eprintln!(
@@ -194,7 +194,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
 
-        // 1. Decode base64
+
         let bytes = match BASE64_STANDARD.decode(base64_str.as_bytes()) {
             Ok(b) => b,
             Err(e) => {
@@ -204,7 +204,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
 
-        // 2. Validate size: <= 5 MiB (5,242,880 bytes) and > 0 bytes
+
         const MAX_SIZE: usize = 5 * 1024 * 1024;
         if bytes.is_empty() || bytes.len() > MAX_SIZE {
             eprintln!(
@@ -217,7 +217,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             continue;
         }
 
-        // 3. Validate %PDF magic (%PDF = 0x25, 0x50, 0x44, 0x46)
+
         if bytes.len() < 4 || &bytes[0..4] != b"%PDF" {
             eprintln!("Invalid magic bytes (not a PDF) for resume record {}", resume_id_str);
             failed_ids.push(resume_id_str);
@@ -226,7 +226,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let pdf_len = bytes.len() as u64;
 
-        // 4. Fetch workspace owner user_id
+
         let mut ws_resp = client
             .query("SELECT user_id FROM type::record('workspace', $id);")
             .bind(("id", record_key(&record.workspace_id, "workspace")?))
@@ -246,22 +246,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
 
-        // 5. Generate final S3 key
+
         let upload_uuid = Uuid::new_v4();
         let final_key = format!("resumes/final/{}.pdf", upload_uuid);
 
-        // 6. Write to private S3
+
         if let Err(e) = storage.put_pdf_bytes(&final_key, bytes).await {
             eprintln!("Failed to upload PDF to S3 for resume record {}: {}", resume_id_str, e);
             failed_ids.push(resume_id_str);
             continue;
         }
 
-        // 7. HEAD-verify size
+
         let head_result = storage.head(&final_key).await;
         match head_result {
             Ok((head_size, _)) if head_size == pdf_len => {
-                // Verified
+
             }
             Ok((head_size, _)) => {
                 eprintln!(
@@ -278,7 +278,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        // 8. Create resume_upload record with status 'attached'
+
         let filename = record
             .source_filename
             .as_deref()
@@ -307,7 +307,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .await?;
         let _check: Option<serde_json::Value> = create_resp.take(0)?;
 
-        // 9. Update resume record with source_upload_id and source_object_key, and clear source_pdf_base64
+
         let update_resume_q = "UPDATE type::record('resume', $id) SET
             source_upload_id = type::record('resume_upload', $upload_id),
             source_object_key = $object_key,

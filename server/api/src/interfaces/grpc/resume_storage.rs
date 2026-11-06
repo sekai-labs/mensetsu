@@ -29,7 +29,6 @@ impl ResumeStorageGrpcService {
     }
 }
 
-/// Accepts a UUID or a Surreal record ID qualified by its expected table.
 fn unqualified_record_id<'a>(raw: &'a str, table: &str) -> Result<&'a str, Status> {
     let raw = raw.trim().trim_matches('`');
     let id = match raw.split_once(':') {
@@ -50,7 +49,6 @@ fn parse_record_uuid(raw: &str, table: &str) -> Result<String, Status> {
         .map_err(|_| Status::invalid_argument("Invalid record ID"))
 }
 
-/// User IDs are UUIDs for ordinary accounts but may be stable named IDs.
 fn parse_user_record_id(raw: &str) -> Result<String, Status> {
     let id = unqualified_record_id(raw, "user")?;
     if !id.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'-') {

@@ -1,7 +1,3 @@
-//
-// KeychainStore.swift
-// Mensetsu
-//
 
 import Foundation
 import Security
@@ -24,7 +20,6 @@ public final class KeychainStore: SecureTokenStoring {
     public func saveRefreshToken(_ token: String) throws {
         guard let data = token.data(using: .utf8) else { return }
 
-        // Remove any existing item before adding
         try? clearRefreshToken()
 
         let query: [String: Any] = [

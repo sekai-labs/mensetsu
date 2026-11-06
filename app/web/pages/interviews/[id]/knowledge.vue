@@ -75,7 +75,6 @@ const flowElements = computed(() => {
   }
 
   const rawNodes = graphData.value.nodes
-  // Create mapping table for matching edges whether by id, slug, or name (lowercase normalized)
   const nodeKeyMap = new Map<string, string>()
   for (const n of rawNodes) {
     const canonicalId = n.id || n.slug || n.name || ''

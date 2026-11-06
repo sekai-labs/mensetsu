@@ -39,7 +39,6 @@ fun AuthScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // 2FA state
     var show2faDialog by remember { mutableStateOf(false) }
     var temp2faToken by remember { mutableStateOf("") }
     var code2fa by remember { mutableStateOf("") }

@@ -20,7 +20,7 @@ pub fn WorkspaceListView(props: WorkspaceListProps) -> Element {
     let mut is_loading = use_signal(|| false);
     let mut show_create_dialog = use_signal(|| false);
 
-    // Create dialog state
+
     let mut create_company = use_signal(String::new);
     let mut create_role = use_signal(String::new);
     let mut create_resume_text = use_signal(String::new);
@@ -142,7 +142,7 @@ pub fn WorkspaceListView(props: WorkspaceListProps) -> Element {
             class: "app-layout",
             id: "{test_ids::MAIN_VIEW}",
             "data-testid": "{test_ids::MAIN_VIEW}",
-            // Header
+
             header { class: "app-header",
                 h1 { class: "title-2", "Workspaces" }
                 div { style: "display: flex; gap: 8px;",
@@ -185,9 +185,9 @@ pub fn WorkspaceListView(props: WorkspaceListProps) -> Element {
                 }
             }
 
-            // Main content
+
             main { class: "app-content",
-                // Filter bar
+
                 div { style: "display: flex; gap: 8px; margin-bottom: 16px;",
                     button {
                         class: if cur_filter == "all" { "primary" } else { "secondary" },
@@ -256,7 +256,7 @@ pub fn WorkspaceListView(props: WorkspaceListProps) -> Element {
                 }
             }
 
-            // Create Workspace Modal
+
             if *show_create_dialog.read() {
                 div { class: "modal-backdrop",
                     div { class: "modal",

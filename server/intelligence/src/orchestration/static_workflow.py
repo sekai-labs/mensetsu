@@ -190,7 +190,6 @@ def build_static_workflow(
             resume_source = "text" if resume_text else None
 
             if state.resume_upload_id:
-                # Fetch resume via authenticated internal gRPC to Rust ResumeStorageService
                 import os
                 from urllib.parse import urlparse
                 import grpc
@@ -241,7 +240,6 @@ def build_static_workflow(
                         f"Download URL origin '{actual_origin}' does not strictly match allowed origin '{allowed_origin}'."
                     )
 
-                # Stream up to 5 MiB + 1 bytes with no redirects
                 max_allowed = 5 * 1024 * 1024
                 async with httpx.AsyncClient(follow_redirects=False, timeout=30.0, trust_env=False) as client:
                     async with client.stream("GET", download_url) as stream_resp:
@@ -268,7 +266,6 @@ def build_static_workflow(
                 )
                 resume_source = "pdf"
 
-                # Persist real extracted text to existing resume.raw_text before any LLM calls
                 await persist_record(
                     db_client=db,
                     table="resume",

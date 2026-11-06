@@ -28,7 +28,6 @@ async def test_health_check_exempt_from_auth(ephemeral_grpc_server):
     port, _ = ephemeral_grpc_server
     async with grpc.aio.insecure_channel(f"127.0.0.1:{port}") as channel:
         stub = health_pb2_grpc.HealthStub(channel)
-        # Calling without any authorization metadata should succeed (status SERVING or NOT_SERVING)
         resp = await stub.Check(health_pb2.HealthCheckRequest(service=""))
         assert resp.status in (
             health_pb2.HealthCheckResponse.ServingStatus.SERVING,
@@ -40,7 +39,6 @@ async def test_health_check_exempt_from_auth(ephemeral_grpc_server):
 async def test_control_stream_requires_valid_bearer_token(ephemeral_grpc_server):
     port, token = ephemeral_grpc_server
 
-    # 1. Calling without metadata -> UNAUTHENTICATED
     async with grpc.aio.insecure_channel(f"127.0.0.1:{port}") as channel:
         stub = control_pb2_grpc.DataControlServiceStub(channel)
 
@@ -56,7 +54,6 @@ async def test_control_stream_requires_valid_bearer_token(ephemeral_grpc_server)
                 pass
         assert exc_info.value.code() == grpc.StatusCode.UNAUTHENTICATED
 
-    # 2. Calling with invalid token -> UNAUTHENTICATED
     async with grpc.aio.insecure_channel(f"127.0.0.1:{port}") as channel:
         stub = control_pb2_grpc.DataControlServiceStub(channel)
 
@@ -73,7 +70,6 @@ async def test_control_stream_requires_valid_bearer_token(ephemeral_grpc_server)
                 pass
         assert exc_info.value.code() == grpc.StatusCode.UNAUTHENTICATED
 
-    # 3. Calling with valid token -> SUCCESS (returns definitions)
     async with grpc.aio.insecure_channel(f"127.0.0.1:{port}") as channel:
         stub = control_pb2_grpc.DataControlServiceStub(channel)
 

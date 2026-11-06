@@ -48,9 +48,7 @@ impl ResumeObjectStore {
         })
     }
 
-    /// Presigns a public PUT request for clients to upload a PDF directly to S3.
-    /// Signed for 5 minutes with Content-Type enforced.
-    pub async fn presign_put(&self, key: &str, content_type: &str) -> Result<String, AppError> {
+            pub async fn presign_put(&self, key: &str, content_type: &str) -> Result<String, AppError> {
         let presign_config = PresigningConfig::expires_in(Duration::from_secs(300))
             .map_err(|e| AppError::Internal(format!("Failed to build presign config: {e}")))?;
 
@@ -67,9 +65,7 @@ impl ResumeObjectStore {
         Ok(presigned.uri().to_string())
     }
 
-    /// Presigns an internal GET request for Python workers to download a PDF from S3.
-    /// Signed for 5 minutes (internal).
-    pub async fn presign_get(&self, key: &str) -> Result<String, AppError> {
+            pub async fn presign_get(&self, key: &str) -> Result<String, AppError> {
         let presign_config = PresigningConfig::expires_in(Duration::from_secs(300))
             .map_err(|e| AppError::Internal(format!("Failed to build presign config: {e}")))?;
 
@@ -85,8 +81,7 @@ impl ResumeObjectStore {
         Ok(presigned.uri().to_string())
     }
 
-    /// Retrieves object metadata (content_length, content_type).
-    pub async fn head(&self, key: &str) -> Result<(u64, Option<String>), AppError> {
+        pub async fn head(&self, key: &str) -> Result<(u64, Option<String>), AppError> {
         let resp = self
             .internal_client
             .head_object()
@@ -104,8 +99,7 @@ impl ResumeObjectStore {
         Ok((size, content_type))
     }
 
-    /// Reads up to `len` bytes from the start of the object using S3 Range header `bytes=0-{len-1}`.
-    pub async fn get_prefix(&self, key: &str, len: u64) -> Result<Vec<u8>, AppError> {
+        pub async fn get_prefix(&self, key: &str, len: u64) -> Result<Vec<u8>, AppError> {
         if len == 0 {
             return Ok(Vec::new());
         }
@@ -129,8 +123,7 @@ impl ResumeObjectStore {
         Ok(data.to_vec())
     }
 
-    /// Copies an object within the bucket from `from` key to `to` key.
-    pub async fn copy(&self, from: &str, to: &str) -> Result<(), AppError> {
+        pub async fn copy(&self, from: &str, to: &str) -> Result<(), AppError> {
         let copy_source = format!("{}/{}", self.bucket, from);
         self.internal_client
             .copy_object()
@@ -144,8 +137,7 @@ impl ResumeObjectStore {
         Ok(())
     }
 
-    /// Deletes an object by key.
-    pub async fn delete(&self, key: &str) -> Result<(), AppError> {
+        pub async fn delete(&self, key: &str) -> Result<(), AppError> {
         self.internal_client
             .delete_object()
             .bucket(&self.bucket)
@@ -157,8 +149,7 @@ impl ResumeObjectStore {
         Ok(())
     }
 
-    /// Direct upload helper for migration or internal writes.
-    pub async fn put_pdf_bytes(&self, key: &str, bytes: Vec<u8>) -> Result<(), AppError> {
+        pub async fn put_pdf_bytes(&self, key: &str, bytes: Vec<u8>) -> Result<(), AppError> {
         self.internal_client
             .put_object()
             .bucket(&self.bucket)

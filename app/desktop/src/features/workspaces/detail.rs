@@ -16,14 +16,14 @@ pub fn WorkspaceDetailView(props: WorkspaceDetailProps) -> Element {
     let mut active_tab = use_signal(|| "overview".to_string());
     let mut error_msg = use_signal(|| Option::<String>::None);
 
-    // Tab data
+
     let mut match_data = use_signal(|| Option::<MatchAnalysis>::None);
     let mut company_data = use_signal(|| Option::<serde_json::Value>::None);
     let mut learning_data = use_signal(|| Option::<Vec<LearningUnit>>::None);
     let mut questions_data = use_signal(|| Option::<Vec<InterviewQuestion>>::None);
     let mut questions_difficulty = use_signal(|| "all".to_string());
 
-    // Loaders
+
     let load_details = {
         let api = props.api.clone();
         let ws_id = props.workspace_id.clone();
@@ -114,7 +114,7 @@ pub fn WorkspaceDetailView(props: WorkspaceDetailProps) -> Element {
             class: "app-layout",
             id: "{test_ids::DETAIL_VIEW}",
             "data-testid": "{test_ids::DETAIL_VIEW}",
-            // Header
+
             header { class: "app-header",
                 div { style: "display: flex; align-items: center; gap: 16px;",
                     button {
@@ -133,7 +133,7 @@ pub fn WorkspaceDetailView(props: WorkspaceDetailProps) -> Element {
                 }
             }
 
-            // Tabs bar
+
             div { style: "padding: 0 24px; background-color: var(--surface-color);",
                 div { class: "tabs",
                     button {
@@ -174,7 +174,7 @@ pub fn WorkspaceDetailView(props: WorkspaceDetailProps) -> Element {
                 }
             }
 
-            // Tab Content
+
             main { class: "app-content",
                 if let Some(err) = error_msg.read().as_ref() {
                     div {
@@ -185,7 +185,7 @@ pub fn WorkspaceDetailView(props: WorkspaceDetailProps) -> Element {
                     }
                 }
 
-                // Tab 1: Overview
+
                 if cur_tab == "overview" {
                     div { id: "{test_ids::DETAIL_TAB_OVERVIEW}",
                         h2 { class: "title-2", style: "margin-bottom: 12px;", "Workspace Overview" }
@@ -197,7 +197,7 @@ pub fn WorkspaceDetailView(props: WorkspaceDetailProps) -> Element {
                     }
                 }
 
-                // Tab 2: Match
+
                 if cur_tab == "match" {
                     div { id: "{test_ids::DETAIL_TAB_MATCH}",
                         if let Some(m) = match_data.read().as_ref() {
@@ -246,7 +246,7 @@ pub fn WorkspaceDetailView(props: WorkspaceDetailProps) -> Element {
                     }
                 }
 
-                // Tab 3: Company
+
                 if cur_tab == "company" {
                     div { id: "{test_ids::DETAIL_TAB_COMPANY}",
                         if let Some(c) = company_data.read().as_ref() {
@@ -288,7 +288,7 @@ pub fn WorkspaceDetailView(props: WorkspaceDetailProps) -> Element {
                     }
                 }
 
-                // Tab 4: Learning
+
                 if cur_tab == "learning" {
                     div { id: "{test_ids::DETAIL_TAB_LEARNING}",
                         if let Some(units) = learning_data.read().as_ref() {
@@ -324,7 +324,7 @@ pub fn WorkspaceDetailView(props: WorkspaceDetailProps) -> Element {
                     }
                 }
 
-                // Tab 5: Questions
+
                 if cur_tab == "questions" {
                     div { id: "{test_ids::DETAIL_TAB_QUESTIONS}",
                         div { style: "display: flex; gap: 8px; margin-bottom: 16px; align-items: center;",

@@ -48,7 +48,6 @@ class GrpcAuthInterceptor(grpc.aio.ServerInterceptor):
         if handler is None:
             return None
 
-        # Inspect metadata
         metadata = dict(handler_call_details.invocation_metadata or ())
         auth_header = metadata.get("authorization")
 

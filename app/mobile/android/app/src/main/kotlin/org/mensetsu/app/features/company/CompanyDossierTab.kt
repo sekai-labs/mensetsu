@@ -46,7 +46,6 @@ fun CompanyDossierTab(company: CompanyResearch?) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        // Executive Overview
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
@@ -62,7 +61,6 @@ fun CompanyDossierTab(company: CompanyResearch?) {
             }
         }
 
-        // Business Model
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
@@ -78,7 +76,6 @@ fun CompanyDossierTab(company: CompanyResearch?) {
             }
         }
 
-        // Engineering Tech Stack
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
@@ -101,7 +98,6 @@ fun CompanyDossierTab(company: CompanyResearch?) {
             }
         }
 
-        // Engineering Culture
         if (company.engineeringCulture.isNotEmpty()) {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -122,7 +118,6 @@ fun CompanyDossierTab(company: CompanyResearch?) {
             }
         }
 
-        // Sources & Citations
         if (company.sources.isNotEmpty()) {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {

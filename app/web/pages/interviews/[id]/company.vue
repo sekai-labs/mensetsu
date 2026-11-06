@@ -43,7 +43,6 @@ const displayedChapters = computed(() => {
       summary: chap.summary,
       content_markdown: chap.content_markdown,
     }))
-    // Add verified tech stack & citations as companion references if not in custom list
     if (companyData.value?.tech_stack?.length && !list.some((c) => c.slug === 'tech-stack')) {
       list.push({
         id: 'tech-stack',
@@ -69,7 +68,6 @@ const displayedChapters = computed(() => {
   return defaultChapters.map((c) => ({ ...c, custom: false, summary: undefined, content_markdown: undefined }))
 })
 
-// Keep activeChapterId pointing to first available chapter if unset
 watchEffect(() => {
   if (displayedChapters.value.length > 0 && !displayedChapters.value.some((c) => c.id === activeChapterId.value)) {
     activeChapterId.value = displayedChapters.value[0].id
@@ -173,7 +171,6 @@ const openSourceById = (sourceId?: string) => {
         }"
       >
 
-        <!-- Custom Agent-Decided Chapter -->
         <section v-if="activeCustomChapter" class="space-y-6 max-w-prose">
           <div class="border-l-3 border-indigo-600 pl-4">
             <h2 class="text-lg font-bold text-slate-900 dark:text-white">
@@ -192,7 +189,6 @@ const openSourceById = (sourceId?: string) => {
           </div>
         </section>
 
-        <!-- Standard Chapter: Executive Profile & Evidence Matrix -->
         <section v-else-if="activeChapterId === 'profile' || activeChapterId === '1'" class="space-y-6 max-w-prose">
           <div class="border-l-3 border-indigo-600 pl-4">
             <h2 class="text-lg font-bold text-slate-900 dark:text-white">

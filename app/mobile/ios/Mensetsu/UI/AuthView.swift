@@ -1,7 +1,3 @@
-//
-// AuthView.swift
-// Mensetsu
-//
 
 import SwiftUI
 import MensetsuContracts
@@ -25,7 +21,6 @@ public struct AuthView: View {
                 Color(UIColor.systemGroupedBackground).ignoresSafeArea()
 
                 VStack(spacing: 24) {
-                    // App Logo / Title
                     VStack(spacing: 8) {
                         Image(systemName: "sparkles")
                             .font(.system(size: 44, weight: .semibold))
@@ -43,14 +38,11 @@ public struct AuthView: View {
                     .padding(.top, 32)
 
                     if case .requires2FA(let tempToken) = viewModel.authState {
-                        // 2FA Challenge Form
                         twoFaChallengeView(tempToken: tempToken)
                     } else {
-                        // Standard Login / Register Card
                         authFormCard
                     }
 
-                    // Pre-auth server setting trigger
                     Button(action: {
                         showingServerSettings = true
                     }) {
@@ -92,7 +84,6 @@ public struct AuthView: View {
 
     private var authFormCard: some View {
         VStack(spacing: 16) {
-            // Mode Picker
             Picker("Mode", selection: $isRegisterMode) {
                 Text("Login").tag(false)
                     .accessibilityIdentifier(AccessibilityID.authLoginTab)

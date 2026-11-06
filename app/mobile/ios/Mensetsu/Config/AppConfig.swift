@@ -1,7 +1,3 @@
-//
-// AppConfig.swift
-// Mensetsu
-//
 
 import Foundation
 
@@ -31,7 +27,6 @@ public enum EndpointValidationError: LocalizedError {
 public struct AppConfig {
     public static let serverEndpointKey = "mensetsu_server_endpoint"
 
-    /// Persisted endpoint saved by user in UserDefaults.
     public static var savedServerUrl: String? {
         get {
             guard let raw = UserDefaults.standard.string(forKey: serverEndpointKey),
@@ -51,13 +46,10 @@ public struct AppConfig {
         }
     }
 
-    /// True if an endpoint is configured in saved user endpoint.
     public static var isConfigured: Bool {
         return savedServerUrl != nil
     }
 
-    /// The active base URL for API requests. Returns saved URL if present.
-    /// Falls back to empty string if not configured (never silent default in production).
     public static var apiBaseUrl: String {
         if let saved = savedServerUrl {
             return saved
@@ -65,15 +57,12 @@ public struct AppConfig {
         return ""
     }
 
-    /// Normalizes (strips trailing slash, trims whitespace) and validates the URL.
-    /// Requires absolute http/https URL and HTTPS for non-loopback hosts.
     public static func normalizeAndValidateUrl(_ rawUrl: String) throws -> String {
         let trimmed = rawUrl.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             throw EndpointValidationError.emptyUrl
         }
 
-        // Strip trailing slashes
         var cleaned = trimmed
         while cleaned.hasSuffix("/") {
             cleaned.removeLast()
@@ -86,12 +75,10 @@ public struct AppConfig {
             throw EndpointValidationError.invalidUrl
         }
 
-        // Disallow user credentials, query strings, and fragments
         if components.user != nil || components.password != nil || components.query != nil || components.fragment != nil {
             throw EndpointValidationError.disallowedComponents
         }
 
-        // Disallow path beyond empty or "/"
         if !components.path.isEmpty && components.path != "/" {
             throw EndpointValidationError.disallowedComponents
         }
@@ -112,7 +99,6 @@ public struct AppConfig {
         return cleaned
     }
 
-    /// Saves a newly validated server URL. Returns the validated normalized URL.
     @discardableResult
     public static func saveServerUrl(_ rawUrl: String) throws -> String {
         let validated = try normalizeAndValidateUrl(rawUrl)
@@ -120,7 +106,6 @@ public struct AppConfig {
         return validated
     }
 
-    /// Clears the saved server URL.
     public static func clearSavedServerUrl() {
         savedServerUrl = nil
     }

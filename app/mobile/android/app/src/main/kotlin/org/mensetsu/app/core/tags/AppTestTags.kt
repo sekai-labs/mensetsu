@@ -1,10 +1,6 @@
 package org.mensetsu.app.core.tags
 
-/**
- * Stable accessibility & testTag identifiers for UI automation and CI smoke testing.
- */
 object AppTestTags {
-    // Auth & Navigation
     const val AUTH_SCREEN = "auth_screen"
     const val AUTH_TAB_LOGIN = "auth_tab_login"
     const val AUTH_TAB_REGISTER = "auth_tab_register"
@@ -14,12 +10,10 @@ object AppTestTags {
     const val AUTH_BUTTON_SUBMIT = "auth_button_submit"
     const val AUTH_ERROR_TEXT = "auth_error_text"
 
-    // 2FA Dialog
     const val DIALOG_2FA = "dialog_2fa"
     const val INPUT_2FA_CODE = "input_2fa_code"
     const val BUTTON_2FA_VERIFY = "button_2fa_verify"
 
-    // Workspace List
     const val WORKSPACE_LIST_SCREEN = "workspace_list_screen"
     const val WORKSPACE_LIST_LOADING = "workspace_list_loading"
     const val WORKSPACE_LIST_ERROR = "workspace_list_error"
@@ -33,7 +27,6 @@ object AppTestTags {
     const val BUTTON_SETTINGS = "button_settings"
     const val BUTTON_LOGOUT = "button_logout"
 
-    // Create Workspace Dialog
     const val DIALOG_CREATE_WORKSPACE = "dialog_create_workspace"
     const val INPUT_CREATE_COMPANY = "input_create_company"
     const val INPUT_CREATE_ROLE = "input_create_role"
@@ -47,7 +40,6 @@ object AppTestTags {
     const val BUTTON_CREATE_CANCEL = "button_create_cancel"
     const val CREATE_WORKSPACE_ERROR = "create_workspace_error"
 
-    // Workspace Detail
     const val WORKSPACE_DETAIL_SCREEN = "workspace_detail_screen"
     const val DETAIL_LOADING = "detail_loading"
     const val DETAIL_ERROR = "detail_error"
@@ -59,21 +51,17 @@ object AppTestTags {
     const val DETAIL_TAB_SETTINGS = "detail_tab_settings"
     const val BUTTON_DETAIL_BACK = "button_detail_back"
 
-    // Detail - Learning & Toggle
     const val LEARNING_UNIT_PREFIX = "learning_unit_"
     const val LEARNING_TOGGLE_PREFIX = "learning_toggle_"
 
-    // Detail - Questions
     const val QUESTIONS_FILTER_DIFFICULTY = "questions_filter_difficulty"
     const val QUESTION_CARD_PREFIX = "question_card_"
 
-    // Settings
     const val SETTINGS_SCREEN = "settings_screen"
     const val SETTINGS_PROVIDER_PREFIX = "settings_provider_"
     const val SETTINGS_KEY_INPUT = "settings_key_input"
     const val SETTINGS_SAVE_BUTTON = "settings_save_button"
 
-    // Server Endpoint Setup & Settings
     const val SERVER_SETUP_SCREEN = "server_setup_screen"
     const val INPUT_SERVER_URL = "input_server_url"
     const val BUTTON_SAVE_SERVER_URL = "button_save_server_url"

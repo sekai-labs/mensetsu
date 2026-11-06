@@ -91,10 +91,10 @@ pub async fn create_workspace(
     let user_id = auth_user.user_id;
     let clean_uid = user_id.0.replace("user:", "").replace('`', "");
 
-    // If resume_upload_id is provided:
-    // 1. Disallow simultaneous nonblank resume_text
-    // 2. Validate upload record (owned, completed, unattached)
-    let mut validated_upload: Option<(String, String)> = None; // (filename, object_key)
+
+
+
+    let mut validated_upload: Option<(String, String)> = None;
 
     if let Some(upload_id_raw) = &payload.resume_upload_id {
         let clean_upload_id = upload_id_raw.replace("resume_upload:", "").replace('`', "");
@@ -167,7 +167,7 @@ pub async fn create_workspace(
         validated_upload = Some((filename, object_key));
     }
 
-    // Build domain workspace first (validates invariants without saving to DB yet)
+
     let workspace = state
         .workspace_service
         .build_workspace(user_id.clone(), &payload)?;
@@ -181,7 +181,7 @@ pub async fn create_workspace(
         .map(|s| serde_json::to_value(s).unwrap_or_default().as_str().unwrap_or("").to_string());
     let target_date_str = workspace.target_date.as_ref().map(|d| d.to_rfc3339());
 
-    // Execute workspace + upload attachment + resume + job_description in a single SurrealDB transaction
+
     let mut statements = vec!["BEGIN TRANSACTION;".to_string()];
 
     if payload.resume_upload_id.is_some() {

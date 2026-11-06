@@ -1,7 +1,3 @@
-//
-// AuthViewModel.swift
-// Mensetsu
-//
 
 import Foundation
 import Combine
@@ -87,7 +83,6 @@ public final class AuthViewModel: ObservableObject {
         do {
             try await authService.logout()
         } catch {
-            // Still clear local auth state
         }
         authState = .unauthenticated
         errorMessage = nil

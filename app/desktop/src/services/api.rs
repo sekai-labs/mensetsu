@@ -8,9 +8,9 @@ use crate::services::secure_store::KeyringStore;
 #[derive(Clone)]
 pub struct ApiService {
     base_url: Arc<std::sync::RwLock<String>>,
-    // Access token kept in memory only
+
     access_token: Arc<RwLock<Option<String>>>,
-    // Refresh token serialized lock and persistent store
+
     refresh_lock: Arc<Mutex<()>>,
     keyring: Arc<KeyringStore>,
 }
@@ -93,7 +93,7 @@ impl ApiService {
         cfg
     }
 
-    // Refresh rotating token with serialized lock
+
     pub async fn refresh_access_token(&self) -> Result<String, ApiError> {
         let _guard = self.refresh_lock.lock().await;
 

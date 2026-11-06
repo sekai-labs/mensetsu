@@ -1,7 +1,3 @@
-//
-// AuthService.swift
-// Mensetsu
-//
 
 import Foundation
 import MensetsuContracts

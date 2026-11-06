@@ -61,14 +61,12 @@ dependencies {
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
-    // AndroidX & Lifecycle
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
 
-    // Jetpack Compose & Material 3
     val composeBom = platform("androidx.compose:compose-bom:2024.02.02")
     implementation(composeBom)
     androidTestImplementation(composeBom)
@@ -79,19 +77,15 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
 
-    // Security - Android Keystore backed EncryptedSharedPreferences
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
-    // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
 
-    // OkHttp & Moshi (matching contracts)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
     implementation("com.squareup.moshi:moshi-adapters:1.15.1")
 
-    // Testing
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

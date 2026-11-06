@@ -119,7 +119,7 @@ pub fn SettingsView(props: SettingsProps) -> Element {
             class: "app-layout",
             id: "{test_ids::SETTINGS_VIEW}",
             "data-testid": "{test_ids::SETTINGS_VIEW}",
-            // Header
+
             header { class: "app-header",
                 div { style: "display: flex; align-items: center; gap: 16px;",
                     button {
@@ -135,7 +135,7 @@ pub fn SettingsView(props: SettingsProps) -> Element {
 
             main { class: "app-content",
                 div { style: "max-width: 680px; display: flex; flex-direction: column; gap: 32px;",
-                    // Server Endpoint Section
+
                     div { class: "card", style: "max-width: 100%;",
                         h2 { class: "title-2", style: "margin-bottom: 8px;", "Rust API Server Endpoint" }
                         p {
@@ -176,7 +176,7 @@ pub fn SettingsView(props: SettingsProps) -> Element {
                         }
                     }
 
-                    // LLM Provider Settings Section
+
                     div { class: "card", style: "max-width: 100%;",
                         h2 { class: "title-2", style: "margin-bottom: 8px;", "LLM Provider Configuration" }
                         p { class: "dim-label", style: "margin-bottom: 16px;", "Configure provider API keys for intelligence analysis." }

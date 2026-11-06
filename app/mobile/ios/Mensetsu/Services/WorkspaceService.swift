@@ -1,7 +1,3 @@
-//
-// WorkspaceService.swift
-// Mensetsu
-//
 
 import Foundation
 import MensetsuContracts

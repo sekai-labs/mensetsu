@@ -32,7 +32,6 @@ impl DatabasePool {
             .use_db(&config.surreal_db)
             .await
             .map_err(|e| AppError::Database(format!("SurrealDB namespace select failed: {e}")))?;
-        // Preflight check: refuse startup before schema::apply if legacy source_pdf_base64 exists and has non-empty values.
         Self::preflight_legacy_resume_base64(&client).await?;
 
 
@@ -43,8 +42,6 @@ impl DatabasePool {
         })
     }
     async fn preflight_legacy_resume_base64(client: &Db) -> Result<()> {
-        // Query whether resume table exists and if any row has non-empty source_pdf_base64.
-        // Check table presence first to distinguish absent table from database failures.
         let mut info_resp = client
             .query("INFO FOR DB;")
             .await
@@ -59,7 +56,6 @@ impl DatabasePool {
         let table_exists = tables.contains_key("resume");
 
         if !table_exists {
-            // Fresh database without resume table, safe to proceed
             return Ok(());
         }
 

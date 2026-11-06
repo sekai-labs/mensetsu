@@ -157,7 +157,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         stub = control_pb2_grpc.DataControlServiceStub(channel)
         metadata = (("authorization", f"Bearer {token}"),)
 
-        # Helper to send a single command and receive envelope
         async def call_cmd(cmd: control_pb2.ControlCommand) -> control_pb2.ControlDataEnvelope:
             async def gen():
                 yield cmd
@@ -169,7 +168,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
             assert len(res) == 1
             return res[0]
 
-        # 1. list_workflows
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="1", list_workflows=control_pb2.ListWorkflowsCommand()
@@ -179,14 +177,12 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         defs = json.loads(e.payload_json)
         assert len(defs) == 3
 
-        # 2. list_runs
         e = await call_cmd(
             control_pb2.ControlCommand(correlation_id="2", list_runs=control_pb2.ListRunsCommand())
         )
         assert e.status_code == 200
         assert run_id in e.payload_json
 
-        # 3. get_run
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="3", get_run=control_pb2.GetRunCommand(run_id=run_id)
@@ -195,7 +191,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         assert e.status_code == 200
         assert json.loads(e.payload_json)["id"] == run_id
 
-        # 4. get_task
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="4",
@@ -205,7 +200,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         assert e.status_code == 200
         assert json.loads(e.payload_json)["id"] == "task_1"
 
-        # 5. list_agents
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="5", list_agents=control_pb2.ListAgentsCommand(run_id=run_id)
@@ -214,7 +208,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         assert e.status_code == 200
         assert json.loads(e.payload_json)[0]["id"] == "exec_1"
 
-        # 6. get_agent
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="6",
@@ -224,7 +217,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         assert e.status_code == 200
         assert json.loads(e.payload_json)["id"] == "exec_1"
 
-        # 7. list_agent_tools
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="7",
@@ -235,7 +227,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         )
         assert e.status_code == 200
 
-        # 8. get_tool_output
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="8",
@@ -247,7 +238,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         assert e.status_code == 200
         assert json.loads(e.payload_json)["content"] == "mock tool invocation output"
 
-        # 9. list_delegations
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="9",
@@ -257,7 +247,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         assert e.status_code == 200
         assert json.loads(e.payload_json)[0]["id"] == "del_1"
 
-        # 10. list_artifacts
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="10", list_artifacts=control_pb2.ListArtifactsCommand(run_id=run_id)
@@ -266,7 +255,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         assert e.status_code == 200
         assert json.loads(e.payload_json)[0]["id"] == "art_1"
 
-        # 11. get_logs
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="11", get_logs=control_pb2.GetLogsCommand(run_id=run_id)
@@ -274,7 +262,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         )
         assert e.status_code == 200
 
-        # 12. get_task_graph
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="12", get_task_graph=control_pb2.GetTaskGraphCommand(run_id=run_id)
@@ -282,7 +269,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         )
         assert e.status_code == 200
 
-        # 13. get_delegation_graph
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="13",
@@ -291,7 +277,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         )
         assert e.status_code == 200
 
-        # 14. cancel_run
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="14", cancel_run=control_pb2.CancelRunCommand(run_id=run_id)
@@ -300,7 +285,6 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         assert e.status_code == 200
         assert json.loads(e.payload_json)["status"] == "cancelled"
 
-        # 15. get_events_history
         e = await call_cmd(
             control_pb2.ControlCommand(
                 correlation_id="15",

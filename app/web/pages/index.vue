@@ -8,7 +8,6 @@ definePageMeta({
 
 <template>
   <div class="py-12 sm:py-20 max-w-5xl mx-auto space-y-20">
-    <!-- Hero Section -->
     <section class="text-center space-y-6 max-w-3xl mx-auto">
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-900 bg-indigo-50/60 dark:bg-indigo-950/40 text-xs font-mono font-medium text-indigo-700 dark:text-indigo-300">
         <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400"></span>
@@ -37,7 +36,6 @@ definePageMeta({
       </div>
     </section>
 
-    <!-- 3 Core Architectural Pillars -->
     <section class="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-slate-200 dark:border-slate-800 pt-12">
       <div class="space-y-3">
         <div class="font-mono text-xs text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">
@@ -76,7 +74,6 @@ definePageMeta({
       </div>
     </section>
 
-    <!-- Pipeline Architecture -->
     <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 sm:p-8 space-y-4 shadow-sm">
       <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
         <div class="text-xs font-mono font-semibold uppercase tracking-wider text-slate-500">

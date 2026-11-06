@@ -130,7 +130,6 @@ class SchemaRepairFinalizerModel(BaseChatModel):
         if "Research budget is nearly exhausted" in messages_text:
             if not self.attempted_invalid:
                 self.attempted_invalid = True
-                # Emit an invalid payload with insufficient claims (<8)
                 invalid_payload = {
                     "overview": "Acme Overview",
                     "business_model": "SaaS",
@@ -161,7 +160,6 @@ class SchemaRepairFinalizerModel(BaseChatModel):
                 )
                 return ChatResult(generations=[ChatGeneration(message=msg)])
 
-            # On second attempt (repair after validation error), emit valid output
             valid_payload = {
                 "overview": "Acme Repaired Overview",
                 "business_model": "SaaS",

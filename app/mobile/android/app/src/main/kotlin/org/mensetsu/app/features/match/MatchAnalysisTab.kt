@@ -38,7 +38,6 @@ fun MatchAnalysisTab(match: MatchAnalysis?) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Overall score banner
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -78,7 +77,6 @@ fun MatchAnalysisTab(match: MatchAnalysis?) {
             }
         }
 
-        // Strengths Section
         Text(
             text = "Demonstrated Strengths (${match.strengths.size})",
             style = MaterialTheme.typography.titleMedium,
@@ -126,7 +124,6 @@ fun MatchAnalysisTab(match: MatchAnalysis?) {
             }
         }
 
-        // Gaps Section
         Text(
             text = "Identified Gaps (${match.gaps.size})",
             style = MaterialTheme.typography.titleMedium,
@@ -174,7 +171,6 @@ fun MatchAnalysisTab(match: MatchAnalysis?) {
             }
         }
 
-        // Risks Section
         if (match.risks.isNotEmpty()) {
             Text(
                 text = "Evaluation Risks",

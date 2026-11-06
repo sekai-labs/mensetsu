@@ -183,7 +183,7 @@ pub fn AuthView(props: AuthProps) -> Element {
                         }
                     }
                 } else {
-                    // 2FA challenge mode
+
                     div { style: "margin-bottom: 16px;",
                         label { class: "dim-label", style: "display: block; margin-bottom: 6px;", "Two-Factor Authentication Code" }
                         input {

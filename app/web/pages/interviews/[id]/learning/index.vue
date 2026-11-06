@@ -143,7 +143,6 @@ const handleToggle = async (lessonId: string) => {
         </div>
       </div>
 
-      <!-- Pagination Controls for Learning Plan -->
       <div v-if="totalPages > 1" class="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-4 text-xs">
         <div class="text-slate-500 font-mono">
           Page {{ currentPage }} of {{ totalPages }} ({{ learningUnits?.length || 0 }} modules)

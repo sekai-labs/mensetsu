@@ -1,12 +1,8 @@
-//
-// AppTheme.swift
-// Mensetsu
-//
 
 import SwiftUI
 
 public struct AppColors {
-    public static let primary = Color(red: 37/255, green: 99/255, blue: 235/255) // #2563EB
+    public static let primary = Color(red: 37/255, green: 99/255, blue: 235/255)
     public static let primaryDark = Color(red: 29/255, green: 78/255, blue: 216/255)
     public static let primaryLight = Color(red: 239/255, green: 246/255, blue: 255/255)
 

@@ -52,8 +52,6 @@ sealed class Screen {
 
 @Composable
 fun AppNavigation(networkManager: org.mensetsu.app.core.network.NetworkManager) {
-    // If no endpoint is configured, prompt on first launch.
-    // If configured and tokens exist, go directly to WorkspaceList; otherwise to Auth.
     var currentScreen by remember {
         mutableStateOf<Screen>(
             if (!networkManager.isEndpointConfigured()) {

@@ -30,7 +30,6 @@ async def test_static_normalize_with_resume_upload_success(monkeypatch):
 
     pdf_data = _make_pdf("Built reliable event pipelines in Rust")
 
-    # Mock gRPC stub
     mock_resp = MagicMock()
     mock_resp.url = "http://minio:9000/mensetsu-resumes/resumes/final/test.pdf"
     mock_resp.filename = "resume.pdf"
@@ -48,7 +47,6 @@ async def test_static_normalize_with_resume_upload_success(monkeypatch):
     mock_ledger.db = MagicMock()
     mock_ledger.db.execute_query = AsyncMock(return_value=[])
 
-    # Mock streaming response
     class MockStreamResponse:
         status_code = 200
         async def __aenter__(self):
@@ -94,7 +92,6 @@ async def test_static_normalize_with_resume_upload_success(monkeypatch):
         )
 
         assert "Built reliable event pipelines in Rust" in res["resume_text"]
-        # Verify raw_text was persisted to db before LLM
         upsert_calls = mock_ledger.db.execute_query.call_args_list
         assert any("UPSERT type::record('resume'" in str(call) for call in upsert_calls)
 

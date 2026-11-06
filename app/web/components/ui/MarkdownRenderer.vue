@@ -81,7 +81,6 @@ const renderedHtml = computed(() => renderMarkdown(props.content))
   @apply font-semibold text-slate-900 dark:text-white;
 }
 
-/* Dense mode for compact cards, syllabus previews, summaries */
 .dense-markdown :deep(h1),
 .dense-markdown :deep(h2),
 .dense-markdown :deep(h3) {

@@ -10,9 +10,6 @@ from src.generation.documents import (
 
 
 def _make_pdf(text: str) -> bytes:
-    # Minimal single-page PDF with text stream
-    # Using pypdf's PdfWriter with blank page, but to add text with pure pypdf or minimal raw pdf
-    # Constructing a valid PDF with a simple content stream
     content = f"BT /F1 12 Tf 72 712 Td ({text}) Tj ET".encode("latin1")
     stream_len = len(content)
     pdf = (
@@ -59,7 +56,6 @@ def test_extract_resume_pdf_bytes_rejects_corrupted_pdf():
 
 
 def test_extract_resume_pdf_bytes_rejects_empty_extractable_text():
-    # Empty page with no text stream
     writer = PdfWriter()
     writer.add_blank_page(width=100, height=100)
     out = io.BytesIO()

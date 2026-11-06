@@ -18,10 +18,6 @@ import org.mensetsu.app.core.network.EndpointValidator
 import org.mensetsu.app.core.network.NetworkManager
 import org.mensetsu.app.core.tags.AppTestTags
 
-/**
- * First-launch onboarding screen that prompts the user for the self-hosted Rust API base URL.
- * Normalizes input (strips trailing slashes) and validates (absolute http(s), HTTPS for remote hosts).
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServerSetupScreen(

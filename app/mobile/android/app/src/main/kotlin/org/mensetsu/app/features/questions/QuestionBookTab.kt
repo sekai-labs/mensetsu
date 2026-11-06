@@ -62,7 +62,6 @@ fun QuestionBookTab(questions: List<InterviewQuestion>) {
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Difficulty Filter Chips
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.testTag(AppTestTags.QUESTIONS_FILTER_DIFFICULTY)

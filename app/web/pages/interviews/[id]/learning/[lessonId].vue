@@ -78,7 +78,6 @@ const handleToggle = async () => {
       </div>
 
 
-      <!-- Under-the-hood In-depth Sessions -->
       <div v-if="currentLesson?.chapters?.length" class="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
         <div class="flex items-center justify-between">
           <div class="text-xs font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
@@ -89,7 +88,6 @@ const handleToggle = async () => {
           </div>
         </div>
 
-        <!-- Session Tabs -->
         <div class="flex flex-wrap gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg">
           <button
             v-for="(session, sIdx) in currentLesson.chapters"
@@ -106,7 +104,6 @@ const handleToggle = async () => {
           </button>
         </div>
 
-        <!-- Active Session Content -->
         <div
           v-if="currentLesson.chapters[activeSessionIndex]"
           class="p-4 rounded-lg bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-750 space-y-3"

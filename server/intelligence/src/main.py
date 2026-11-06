@@ -14,7 +14,6 @@ logger = logging.getLogger("mensetsu.intelligence.server")
 
 
 def create_grpc_server() -> grpc.aio.Server:
-    # Enforce fail-closed startup invariant
     from src.orchestration.auth import get_internal_token
 
     get_internal_token()

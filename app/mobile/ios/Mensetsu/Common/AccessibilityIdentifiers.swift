@@ -1,24 +1,17 @@
-//
-// AccessibilityIdentifiers.swift
-// Mensetsu
-//
 
 import Foundation
 
 public enum AccessibilityID {
-    // Server Endpoint Setup (First Launch)
     public static let serverSetupScreen = "server_setup_screen"
     public static let inputServerUrl = "input_server_url"
     public static let buttonSaveServerUrl = "button_save_server_url"
     public static let serverUrlErrorMessage = "server_url_error_message"
 
-    // Server Change (Settings / Pre-auth)
     public static let settingsServerUrlInput = "settings_input_server_url"
     public static let settingsSaveServerUrlButton = "settings_button_save_server_url"
     public static let openServerSettingsButton = "open_server_settings_button"
     public static let serverSettingsSheet = "server_settings_sheet"
 
-    // Auth
     public static let authScreen = "auth_screen"
     public static let authModeSegment = "auth_mode_segment"
     public static let authLoginTab = "auth_login_tab"
@@ -31,13 +24,11 @@ public enum AccessibilityID {
     public static let authErrorBanner = "auth_error_banner"
     public static let authLoadingIndicator = "auth_loading_indicator"
 
-    // 2FA Challenge
     public static let twoFaScreen = "2fa_screen"
     public static let twoFaCodeField = "2fa_code_field"
     public static let twoFaVerifyButton = "2fa_verify_button"
     public static let twoFaErrorBanner = "2fa_error_banner"
 
-    // Workspace List
     public static let workspaceListScreen = "workspace_list_screen"
     public static let workspaceLoadingIndicator = "workspace_loading_indicator"
     public static let workspaceErrorBanner = "workspace_error_banner"
@@ -54,7 +45,6 @@ public enum AccessibilityID {
         return "workspace_row_\(id)"
     }
 
-    // Create Workspace Form
     public static let createWorkspaceSheet = "create_workspace_sheet"
     public static let createCompanyField = "create_company_field"
     public static let createRoleField = "create_role_field"
@@ -67,7 +57,6 @@ public enum AccessibilityID {
     public static let cancelCreateWorkspaceButton = "cancel_create_workspace_button"
     public static let createWorkspaceErrorBanner = "create_workspace_error_banner"
 
-    // Workspace Detail Shell
     public static let workspaceDetailScreen = "workspace_detail_screen"
     public static let detailLoadingIndicator = "detail_loading_indicator"
     public static let detailErrorBanner = "detail_error_banner"
@@ -78,7 +67,6 @@ public enum AccessibilityID {
     public static let tabLearning = "detail_tab_learning"
     public static let tabQuestions = "detail_tab_questions"
 
-    // Overview Tab
     public static let overviewCompanyName = "overview_company_name"
     public static let overviewRoleTitle = "overview_role_title"
     public static let overviewStatusBadge = "overview_status_badge"
@@ -86,19 +74,16 @@ public enum AccessibilityID {
     public static let overviewGapsMetric = "overview_gaps_metric"
     public static let overviewQuestionsMetric = "overview_questions_metric"
 
-    // Match Tab
     public static let matchRatioText = "match_ratio_text"
     public static let matchStrengthsList = "match_strengths_list"
     public static let matchGapsList = "match_gaps_list"
     public static let matchRisksList = "match_risks_list"
 
-    // Company Tab
     public static let companyOverviewText = "company_overview_text"
     public static let companyTechStackList = "company_tech_stack_list"
     public static let companyCultureList = "company_culture_list"
     public static let companyCitationsList = "company_citations_list"
 
-    // Learning Tab
     public static let learningUnitsList = "learning_units_list"
     public static func lessonRow(id: String) -> String {
         return "lesson_row_\(id)"
@@ -107,14 +92,12 @@ public enum AccessibilityID {
         return "lesson_toggle_\(id)"
     }
 
-    // Questions Tab
     public static let questionsDifficultyPicker = "questions_difficulty_picker"
     public static let questionsList = "questions_list"
     public static func questionRow(id: String) -> String {
         return "question_row_\(id)"
     }
 
-    // Settings Screen
     public static let settingsScreen = "settings_screen"
     public static let settingsLoadingIndicator = "settings_loading_indicator"
     public static let settingsErrorBanner = "settings_error_banner"
