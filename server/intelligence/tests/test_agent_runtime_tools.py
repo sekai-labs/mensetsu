@@ -385,7 +385,7 @@ async def test_agent_loop_real_tool_sequence_and_provenance():
         )
     fake_model = ScriptedToolCallingFakeModel()
     with patch(
-        "src.agents.runtime.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock
+        "src.agents.agent_tools.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock
     ) as mock_fetch:
         mock_fetch.return_value = (
             "Careers at Acme",

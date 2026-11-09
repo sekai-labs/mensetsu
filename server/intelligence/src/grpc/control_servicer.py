@@ -4,6 +4,7 @@ from typing import AsyncIterator
 
 import grpc
 from src.grpc.v1 import control_pb2, control_pb2_grpc
+from src.orchestration.ledger import IdempotencyConflict
 from src.orchestration.service import WorkflowService
 
 logger = logging.getLogger("mensetsu.grpc.control")
@@ -64,6 +65,9 @@ class DataControlServicer(control_pb2_grpc.DataControlServiceServicer):
                         user_prompt=c.user_prompt if c.HasField("user_prompt") else None,
                         workflow_mode=c.workflow_mode if c.HasField("workflow_mode") else None,
                         llm_config=llm_config,
+                        idempotency_key=c.idempotency_key
+                        if c.HasField("idempotency_key")
+                        else None,
                     )
                     yield control_pb2.ControlDataEnvelope(
                         correlation_id=corr_id,
@@ -280,6 +284,13 @@ class DataControlServicer(control_pb2_grpc.DataControlServiceServicer):
                         error_message=f"Unknown command type: {cmd_type}",
                         is_end_of_stream=True,
                     )
+            except IdempotencyConflict as e:
+                yield control_pb2.ControlDataEnvelope(
+                    correlation_id=corr_id,
+                    status_code=409,
+                    error_message=str(e),
+                    is_end_of_stream=True,
+                )
             except KeyError as e:
                 yield control_pb2.ControlDataEnvelope(
                     correlation_id=corr_id,

@@ -54,22 +54,12 @@ impl IdentityService {
         }
 
         let password_hash = self.hasher.hash_password(&dto.password)?;
-        let admin_emails = std::env::var("ADMIN_EMAILS").unwrap_or_default();
-        let is_admin = if !admin_emails.is_empty() {
-            admin_emails
-                .split(',')
-                .any(|e| e.trim().eq_ignore_ascii_case(&email.0))
-        } else {
-            
-            email.0.starts_with("admin@") || email.0.starts_with("admin_")
-        };
-        let role = if is_admin {
-            crate::contexts::identity::domain::UserRole::Admin
-        } else {
-            crate::contexts::identity::domain::UserRole::Member
-        };
-
-        let user = User::new(email, dto.name, password_hash, role)?;
+        let user = User::new(
+            email,
+            dto.name,
+            password_hash,
+            crate::contexts::identity::domain::UserRole::Member,
+        )?;
         self.user_repo.save(&user).await?;
 
         let refresh_token = TokenService::generate_refresh_token();

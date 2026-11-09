@@ -56,18 +56,18 @@ fn build_auth_cookies(
 ) -> Vec<String> {
     vec![
         format!(
-            "mensetsu_access={access_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={access_ttl}"
+            "mensetsu_access={access_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age={access_ttl}"
         ),
         format!(
-            "mensetsu_refresh={refresh_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={refresh_ttl}"
+            "mensetsu_refresh={refresh_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age={refresh_ttl}"
         ),
     ]
 }
 
 fn build_clear_cookies() -> Vec<String> {
     vec![
-        "mensetsu_access=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT".to_string(),
-        "mensetsu_refresh=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT".to_string(),
+        "mensetsu_access=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT".to_string(),
+        "mensetsu_refresh=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT".to_string(),
     ]
 }
 

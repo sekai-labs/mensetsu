@@ -192,6 +192,12 @@ const filteredRisks = computed(() => {
         </div>
       </div>
 
+      <div
+        class="max-h-[min(42rem,calc(100vh_-_24rem))] space-y-6 overflow-y-auto overscroll-contain rounded-md pr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+        role="region"
+        aria-label="Match analysis results"
+        tabindex="0"
+      >
       <div v-show="activeFilter === 'all' || activeFilter === 'strengths'" class="space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
@@ -349,6 +355,7 @@ const filteredRisks = computed(() => {
             </p>
           </div>
         </div>
+      </div>
       </div>
     </template>
 

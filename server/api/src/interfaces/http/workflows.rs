@@ -221,6 +221,7 @@ pub async fn list_workflow_runs(
         (status = 404, description = "Workspace not found"),
         (status = 400, description = "Unknown workflow_id"),
         (status = 422, description = "Invalid body (including unknown fields such as user_id)"),
+        (status = 409, description = "Idempotency-Key reused with a different request"),
         (status = 502, description = "Intelligence error or contract mismatch"),
         (status = 503, description = "Intelligence unavailable")
     )

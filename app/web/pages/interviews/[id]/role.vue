@@ -38,6 +38,29 @@ const handleImportUrl = async () => {
     isImporting.value = false
   }
 }
+
+type RoleRequirementView = {
+  category?: string
+  description?: string
+  is_mandatory?: boolean
+  skill?: string
+  quote?: string
+  required?: string
+  level?: string
+}
+
+const requirements = computed<RoleRequirementView[]>(() => {
+  return (roleData.value?.requirements ?? []) as unknown as RoleRequirementView[]
+})
+
+const requirementTitle = (req: RoleRequirementView) => req.category?.trim() || req.skill?.trim() || ''
+const requirementDescription = (req: RoleRequirementView) => req.description?.trim() || req.quote?.trim() || ''
+const requirementIsMandatory = (req: RoleRequirementView) => req.is_mandatory ?? req.required === 'required'
+const requirementPriorityLabel = (req: RoleRequirementView) => {
+  if (requirementIsMandatory(req)) return 'Mandatory'
+  if (req.required === 'preferred') return 'Preferred'
+  return 'Unspecified'
+}
 </script>
 
 <template>
@@ -47,7 +70,7 @@ const handleImportUrl = async () => {
       <div class="flex items-center gap-2 text-xs font-mono text-indigo-600 dark:text-indigo-400 font-semibold mb-1">
         <span>{{ $t('role.badge') }}</span>
         <span>•</span>
-        <span class="capitalize">{{ roleData?.seniority || 'Staff' }} Level</span>
+        <span class="capitalize">{{ roleData?.seniority ? `${roleData.seniority} level` : 'Level not specified' }}</span>
       </div>
       <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
         {{ $t('role.title') }}
@@ -116,7 +139,7 @@ const handleImportUrl = async () => {
         <div v-if="!roleData?.responsibilities?.length" class="p-6 border border-dashed border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-400">
           Extracting responsibilities from role specification...
         </div>
-      <div v-else class="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+      <div v-else class="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg overflow-x-hidden overflow-y-auto overscroll-contain max-h-[min(24rem,calc(100vh_-_30rem))] bg-white dark:bg-slate-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500" role="region" aria-label="Role responsibilities" tabindex="0">
         <div
           v-for="(resp, idx) in roleData.responsibilities"
           :key="idx"
@@ -137,26 +160,30 @@ const handleImportUrl = async () => {
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
         {{ $t('role.requirementsTitle') }}
       </h2>
-      <div v-if="!roleData?.requirements?.length" class="p-6 border border-dashed border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-400">
+      <div v-if="!requirements.length" class="p-6 border border-dashed border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-400">
         Extracting requirements from role specification...
       </div>
-      <div v-else class="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+      <div v-else class="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg overflow-x-hidden overflow-y-auto overscroll-contain max-h-[min(24rem,calc(100vh_-_30rem))] bg-white dark:bg-slate-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500" role="region" aria-label="Role requirements" tabindex="0">
         <div
-          v-for="(req, idx) in roleData.requirements"
+          v-for="(req, idx) in requirements"
           :key="idx"
           class="p-4 space-y-1.5 hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors"
         >
           <div class="flex items-center gap-2">
             <span
               class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded font-bold"
-              :class="req.is_mandatory ? 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'"
+              :class="requirementIsMandatory(req) ? 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'"
             >
-              {{ req.is_mandatory ? 'Mandatory' : 'Preferred' }}
+              {{ requirementPriorityLabel(req) }}
             </span>
-            <span class="text-xs font-semibold text-slate-900 dark:text-white">{{ req.category }}</span>
+            <span class="text-xs font-semibold text-slate-900 dark:text-white">{{ requirementTitle(req) || 'Unspecified requirement' }}</span>
+            <span v-if="req.level" class="text-[10px] font-mono uppercase text-slate-400">{{ req.level }}</span>
           </div>
-          <p class="text-xs text-slate-700 dark:text-slate-300 m-0 leading-relaxed">
-            {{ req.description }}
+          <p v-if="requirementDescription(req)" class="text-xs text-slate-700 dark:text-slate-300 m-0 leading-relaxed">
+            {{ requirementDescription(req) }}
+          </p>
+          <p v-else class="text-xs italic text-slate-400 dark:text-slate-500 m-0 leading-relaxed">
+            No requirement description provided.
           </p>
         </div>
       </div>

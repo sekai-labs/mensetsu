@@ -3718,6 +3718,9 @@
           "404": {
             "description": "Workspace not found"
           },
+          "409": {
+            "description": "Idempotency-Key reused with a different request"
+          },
           "422": {
             "description": "Invalid body (including unknown fields such as user_id)"
           },

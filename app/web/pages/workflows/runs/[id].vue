@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { VueFlow, useVueFlow, EdgeLabelRenderer, getSmoothStepPath } from '@vue-flow/core'
-import '@vue-flow/core/dist/style.css'
-import '@vue-flow/core/dist/theme-default.css'
 import dagre from '@dagrejs/dagre'
 import {
   Workflow,
@@ -21,8 +18,6 @@ import {
 } from 'lucide-vue-next'
 import { useWorkflowRunStore } from '~/composables/useWorkflowStore'
 import { useWorkflowService } from '~/services/workflow.service'
-import TaskNode from '~/components/workflow/TaskNode.vue'
-import DelegationNode from '~/components/workflow/DelegationNode.vue'
 import ExecutionInspector from '~/components/workflow/ExecutionInspector.vue'
 import ActivityTimeline from '~/components/workflow/ActivityTimeline.vue'
 import ExecutionLogsViewer from '~/components/workflow/ExecutionLogsViewer.vue'
@@ -72,7 +67,11 @@ const updateQueryParams = () => {
 }
 
 
-const { fitView, zoomIn, zoomOut } = useVueFlow()
+const workflowGraphRef = ref<{
+  zoomIn: () => void
+  zoomOut: () => void
+  fitView: () => void
+} | null>(null)
 
 const layoutDagre = (nodes: any[], edges: any[], direction = 'TB', nodeWidth = 260, nodeHeight = 110, nodesep = 50, ranksep = 70) => {
   const dagreGraph = new dagre.graphlib.Graph()
@@ -295,9 +294,6 @@ onMounted(async () => {
   if (store.value) {
     await store.value.fetchFullSnapshot()
     store.value.connectSse()
-    nextTick(() => {
-      fitView()
-    })
   }
 })
 
@@ -419,23 +415,29 @@ const formatDuration = (ms?: number | null) => {
 
           <div class="flex items-center gap-1">
             <button
-              class="p-1.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              type="button"
+              class="p-1.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               title="Zoom in"
-              @click="() => zoomIn()"
+              aria-label="Zoom in"
+              @click="workflowGraphRef?.zoomIn()"
             >
               <ZoomIn class="w-4 h-4" />
             </button>
             <button
-              class="p-1.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              type="button"
+              class="p-1.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               title="Zoom out"
-              @click="() => zoomOut()"
+              aria-label="Zoom out"
+              @click="workflowGraphRef?.zoomOut()"
             >
               <ZoomOut class="w-4 h-4" />
             </button>
             <button
-              class="p-1.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              type="button"
+              class="p-1.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               title="Fit graph"
-              @click="() => fitView()"
+              aria-label="Fit graph"
+              @click="workflowGraphRef?.fitView()"
             >
               <Maximize2 class="w-4 h-4" />
             </button>
@@ -476,63 +478,30 @@ const formatDuration = (ms?: number | null) => {
             <Loader2 class="w-3 h-3 animate-spin text-indigo-500" />
             <span>Refreshing...</span>
           </div>
-          <VueFlow
-            :nodes="currentNodes"
-            :edges="currentEdges"
-            :fit-view-on-init="true"
-            class="h-full w-full"
-            @node-click="onNodeClick"
-            @edge-click="onEdgeClick"
-          >
-            <template #node-task="props">
-              <TaskNode
-                :id="props.id"
-                :data="props.data"
-                :selected="store?.selectedTaskId.value === props.id"
-              />
-            </template>
-
-            <template #node-delegation="props">
-              <DelegationNode
-                :id="props.id"
-                :label="String(props.label || '')"
-                :data="props.data"
-                :selected="store?.selectedAgentId.value === props.id"
-              />
-            </template>
-
-            <template #edge-smoothstep="edgeProps">
-              <g class="cursor-pointer" @click="onEdgeClick({ edge: edgeProps })">
-                <path
-                  :id="edgeProps.id"
-                  class="vue-flow__edge-path stroke-indigo-400 dark:stroke-indigo-400 stroke-2"
-                  :d="getSmoothStepPath(edgeProps)[0]"
-                  :style="edgeProps.style"
-                />
-                <path
-                  class="vue-flow__edge-interaction"
-                  :d="getSmoothStepPath(edgeProps)[0]"
-                  stroke-opacity="0"
-                  stroke-width="24"
-                  fill="none"
-                />
-                <EdgeLabelRenderer>
-                  <div
-                    :style="{
-                      position: 'absolute',
-                      transform: `translate(-50%, -50%) translate(${getSmoothStepPath(edgeProps)[1]}px,${getSmoothStepPath(edgeProps)[2]}px)`,
-                      pointerEvents: 'all',
-                    }"
-                    data-testid="delegation-edge-label"
-                    class="px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 shadow-xs text-[11px] font-mono text-indigo-600 dark:text-indigo-400 font-semibold cursor-pointer select-none hover:bg-indigo-50 dark:hover:bg-slate-800 transition-colors"
-                    @click.stop="onEdgeClick({ edge: edgeProps })"
-                  >
-                    {{ edgeProps.label || 'Delegation' }}
+          <ClientOnly>
+            <WorkflowGraph
+              ref="workflowGraphRef"
+              :nodes="currentNodes"
+              :edges="currentEdges"
+              :selected-task-id="store?.selectedTaskId.value || null"
+              :selected-agent-id="store?.selectedAgentId.value || null"
+              @node-click="onNodeClick"
+              @edge-click="onEdgeClick"
+            />
+            <template #fallback>
+              <div class="absolute inset-0 flex items-center justify-center p-8" role="status" aria-live="polite">
+                <div class="w-full max-w-md space-y-3 rounded-lg border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                  <div class="h-3 w-2/3 rounded bg-slate-200 dark:bg-slate-800"></div>
+                  <div class="grid grid-cols-3 gap-2" aria-hidden="true">
+                    <div class="h-12 rounded border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"></div>
+                    <div class="h-12 rounded border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"></div>
+                    <div class="h-12 rounded border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"></div>
                   </div>
-                </EdgeLabelRenderer>
-              </g>
+                  <p class="text-[11px] font-mono text-slate-500 dark:text-slate-400">Rendering workflow graph…</p>
+                </div>
+              </div>
             </template>
-          </VueFlow>
+          </ClientOnly>
 
 
           <div

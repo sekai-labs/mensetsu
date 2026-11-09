@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 import { useInterviewService } from '~/features/interviews/services/interview.service'
 import type { SourceCitation } from '~/features/interviews/models/interview.model'
 import EvidenceDrawer from '~/components/ui/EvidenceDrawer.vue'
+import { formatDisplayDate } from '~/utils/date'
 
 definePageMeta({
   layout: 'workspace',
@@ -134,7 +135,7 @@ const openCitation = (source: SourceCitation) => {
     <div v-else-if="!companyData?.sources?.length" class="p-8 text-center border border-dashed border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-400">
       No sources indexed yet.
     </div>
-    <div v-else class="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+    <div v-else class="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg overflow-x-hidden overflow-y-auto overscroll-contain max-h-[min(44rem,calc(100vh_-_24rem))] bg-white dark:bg-slate-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500" role="region" aria-label="Indexed evidence sources" tabindex="0">
       <div
         v-for="src in companyData.sources"
         :key="src.id"
@@ -156,7 +157,7 @@ const openCitation = (source: SourceCitation) => {
 
         <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
           <span class="truncate max-w-md text-indigo-600 dark:text-indigo-400">{{ src.source_url }}</span>
-          <span>{{ src.retrieved_at ? new Date(src.retrieved_at).toLocaleDateString() : 'Recent' }}</span>
+          <span>{{ src.retrieved_at ? formatDisplayDate(src.retrieved_at) : 'Recent' }}</span>
         </div>
       </div>
     </div>

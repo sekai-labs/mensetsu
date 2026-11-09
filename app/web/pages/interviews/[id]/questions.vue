@@ -173,6 +173,12 @@ watch([searchQuery, categoryFilter, difficultyFilter], () => {
     </div>
     <div v-else class="space-y-3">
       <div
+        class="space-y-3 max-h-[min(40rem,calc(100vh_-_24rem))] overflow-y-auto overscroll-contain rounded-md pr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+        role="region"
+        aria-label="Interview question results"
+        tabindex="0"
+      >
+      <div
         v-for="q in paginatedList"
         :key="q.id"
         class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden transition-colors"
@@ -265,6 +271,7 @@ watch([searchQuery, categoryFilter, difficultyFilter], () => {
             </ul>
           </div>
         </div>
+      </div>
       </div>
 
 

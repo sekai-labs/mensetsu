@@ -1,7 +1,7 @@
 {
   "nodes": [
     {
-      "id": "task_company_run_c2c8",
+      "id": "task_company_run_35a3",
       "label": "Research Target Company",
       "type": "task",
       "data": {
@@ -12,13 +12,13 @@
         "required": true,
         "added_in_revision": 1,
         "execution_ids": [
-          "exec_0eba36db26b4"
+          "exec_1e21c59e9b5b"
         ],
         "group": "research"
       }
     },
     {
-      "id": "task_curriculum_run_c2c8",
+      "id": "task_curriculum_run_35a3",
       "label": "Construct Knowledge Graph & Curriculum",
       "type": "task",
       "data": {
@@ -29,16 +29,16 @@
         "required": true,
         "added_in_revision": 1,
         "execution_ids": [
-          "exec_fd46d4995c65",
-          "exec_970185e0c2d1",
-          "exec_6edb88a1a63f",
-          "exec_be27876344be"
+          "exec_e44edb2427a8",
+          "exec_372a418c2984",
+          "exec_528695ba3e55",
+          "exec_50220b91c499"
         ],
         "group": "curriculum"
       }
     },
     {
-      "id": "task_job_run_c2c8",
+      "id": "task_job_run_35a3",
       "label": "Analyze Job Description & Skills",
       "type": "task",
       "data": {
@@ -49,13 +49,13 @@
         "required": true,
         "added_in_revision": 1,
         "execution_ids": [
-          "exec_071e098f1bf2"
+          "exec_5c524d374914"
         ],
         "group": "research"
       }
     },
     {
-      "id": "task_normalize_run_c2c8",
+      "id": "task_normalize_run_35a3",
       "label": "Normalize CV and JD inputs",
       "type": "task",
       "data": {
@@ -70,7 +70,7 @@
       }
     },
     {
-      "id": "task_persist_run_c2c8",
+      "id": "task_persist_run_35a3",
       "label": "Persist Domain Entities to SurrealDB",
       "type": "task",
       "data": {
@@ -85,7 +85,7 @@
       }
     },
     {
-      "id": "task_qgen_run_c2c8",
+      "id": "task_qgen_run_35a3",
       "label": "Generate Question Book & Rubrics",
       "type": "task",
       "data": {
@@ -96,33 +96,33 @@
         "required": true,
         "added_in_revision": 1,
         "execution_ids": [
-          "exec_cdba4f367ce3",
-          "exec_562e2c24e923",
-          "exec_33eadb348656",
-          "exec_265846b1e38a",
-          "exec_581cf4167889",
-          "exec_7471b278747e",
-          "exec_7f8d0ed0ef21",
-          "exec_899e3432c4cd",
-          "exec_f0f983b76d03",
-          "exec_e2c6b5de9099",
-          "exec_e556f6750d42",
-          "exec_9a0eea7e6f26",
-          "exec_5113a543894e",
-          "exec_9d520387ef52",
-          "exec_410fd29cded5",
-          "exec_893ce0f24b66",
-          "exec_ac3dd4426628",
-          "exec_5a880f08cb16",
-          "exec_e67b8c34b219",
-          "exec_3f015b48530f",
-          "exec_bd935229ad79"
+          "exec_5e466efdfd50",
+          "exec_3bfe3a7df5a9",
+          "exec_df05cd300cb5",
+          "exec_157cdd848ac9",
+          "exec_33c0c48329dc",
+          "exec_2f0b48870a9c",
+          "exec_96791e6fca5f",
+          "exec_2331c07255fa",
+          "exec_d2a418cd7df2",
+          "exec_e4da523ed291",
+          "exec_13f8d85de781",
+          "exec_a324e5d08108",
+          "exec_0291cfc805bf",
+          "exec_9c8885263f83",
+          "exec_cb59865ab8dc",
+          "exec_22d1e08ff678",
+          "exec_6c459948578e",
+          "exec_d1cf8ca78941",
+          "exec_3ef7c01599f4",
+          "exec_98c241dcec7e",
+          "exec_c84a679727c2"
         ],
         "group": "generation"
       }
     },
     {
-      "id": "task_qval_run_c2c8",
+      "id": "task_qval_run_35a3",
       "label": "Audit Question Book & Evaluation Rubrics",
       "type": "task",
       "data": {
@@ -137,7 +137,7 @@
       }
     },
     {
-      "id": "task_synth_run_c2c8",
+      "id": "task_synth_run_35a3",
       "label": "Synthesize Match Analysis & Evidence Evaluation",
       "type": "task",
       "data": {
@@ -148,13 +148,13 @@
         "required": true,
         "added_in_revision": 1,
         "execution_ids": [
-          "exec_9d46364f1c55"
+          "exec_40ab70c07cbc"
         ],
         "group": "synthesis"
       }
     },
     {
-      "id": "task_tech_run_c2c8",
+      "id": "task_tech_run_35a3",
       "label": "Research Technical Stack & Architecture",
       "type": "task",
       "data": {
@@ -165,7 +165,7 @@
         "required": true,
         "added_in_revision": 1,
         "execution_ids": [
-          "exec_ab2e48e96c2f"
+          "exec_74a2aeb25e7a"
         ],
         "group": "research"
       }
@@ -173,63 +173,63 @@
   ],
   "edges": [
     {
-      "id": "edge_task_normalize_run_c2c8_to_task_company_run_c2c8",
-      "source": "task_normalize_run_c2c8",
-      "target": "task_company_run_c2c8",
+      "id": "edge_task_normalize_run_35a3_to_task_company_run_35a3",
+      "source": "task_normalize_run_35a3",
+      "target": "task_company_run_35a3",
       "kind": "dependency"
     },
     {
-      "id": "edge_task_synth_run_c2c8_to_task_curriculum_run_c2c8",
-      "source": "task_synth_run_c2c8",
-      "target": "task_curriculum_run_c2c8",
+      "id": "edge_task_synth_run_35a3_to_task_curriculum_run_35a3",
+      "source": "task_synth_run_35a3",
+      "target": "task_curriculum_run_35a3",
       "kind": "dependency"
     },
     {
-      "id": "edge_task_normalize_run_c2c8_to_task_job_run_c2c8",
-      "source": "task_normalize_run_c2c8",
-      "target": "task_job_run_c2c8",
+      "id": "edge_task_normalize_run_35a3_to_task_job_run_35a3",
+      "source": "task_normalize_run_35a3",
+      "target": "task_job_run_35a3",
       "kind": "dependency"
     },
     {
-      "id": "edge_task_qgen_run_c2c8_to_task_persist_run_c2c8",
-      "source": "task_qgen_run_c2c8",
-      "target": "task_persist_run_c2c8",
+      "id": "edge_task_qgen_run_35a3_to_task_persist_run_35a3",
+      "source": "task_qgen_run_35a3",
+      "target": "task_persist_run_35a3",
       "kind": "dependency"
     },
     {
-      "id": "edge_task_curriculum_run_c2c8_to_task_qgen_run_c2c8",
-      "source": "task_curriculum_run_c2c8",
-      "target": "task_qgen_run_c2c8",
+      "id": "edge_task_curriculum_run_35a3_to_task_qgen_run_35a3",
+      "source": "task_curriculum_run_35a3",
+      "target": "task_qgen_run_35a3",
       "kind": "dependency"
     },
     {
-      "id": "edge_task_qgen_run_c2c8_to_task_qval_run_c2c8",
-      "source": "task_qgen_run_c2c8",
-      "target": "task_qval_run_c2c8",
+      "id": "edge_task_qgen_run_35a3_to_task_qval_run_35a3",
+      "source": "task_qgen_run_35a3",
+      "target": "task_qval_run_35a3",
       "kind": "dependency"
     },
     {
-      "id": "edge_task_company_run_c2c8_to_task_synth_run_c2c8",
-      "source": "task_company_run_c2c8",
-      "target": "task_synth_run_c2c8",
+      "id": "edge_task_company_run_35a3_to_task_synth_run_35a3",
+      "source": "task_company_run_35a3",
+      "target": "task_synth_run_35a3",
       "kind": "dependency"
     },
     {
-      "id": "edge_task_job_run_c2c8_to_task_synth_run_c2c8",
-      "source": "task_job_run_c2c8",
-      "target": "task_synth_run_c2c8",
+      "id": "edge_task_job_run_35a3_to_task_synth_run_35a3",
+      "source": "task_job_run_35a3",
+      "target": "task_synth_run_35a3",
       "kind": "dependency"
     },
     {
-      "id": "edge_task_tech_run_c2c8_to_task_synth_run_c2c8",
-      "source": "task_tech_run_c2c8",
-      "target": "task_synth_run_c2c8",
+      "id": "edge_task_tech_run_35a3_to_task_synth_run_35a3",
+      "source": "task_tech_run_35a3",
+      "target": "task_synth_run_35a3",
       "kind": "dependency"
     },
     {
-      "id": "edge_task_normalize_run_c2c8_to_task_tech_run_c2c8",
-      "source": "task_normalize_run_c2c8",
-      "target": "task_tech_run_c2c8",
+      "id": "edge_task_normalize_run_35a3_to_task_tech_run_35a3",
+      "source": "task_normalize_run_35a3",
+      "target": "task_tech_run_35a3",
       "kind": "dependency"
     }
   ]

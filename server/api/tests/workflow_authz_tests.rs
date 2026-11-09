@@ -33,6 +33,8 @@ async fn app_with_upstream(intelligence_grpc_url: &str) -> (Router, DatabasePool
     let mut config = AppConfig::from_env();
     config.intelligence_grpc_url = intelligence_grpc_url.to_string();
     config.internal_service_token = INTERNAL_TOKEN.to_string();
+    config.jwt_secret = "workflow-test-jwt-secret-32-bytes-minimum".to_string();
+    config.encryption_key = "workflow-test-encryption-key-32-bytes-minimum".to_string();
 
     let db = DatabasePool::connect(&config).await.expect("SurrealDB must be reachable");
     let ws_repo = Arc::new(SurrealWorkspaceRepository::new((*db.client).clone()));

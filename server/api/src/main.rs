@@ -16,6 +16,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     let config = AppConfig::from_env();
+    config.validate().map_err(std::io::Error::other)?;
     tracing::info!("Connecting to SurrealDB at {}", config.surreal_url);
 
     let db = contexts::workspace::infrastructure::db::DatabasePool::connect(&config).await?;

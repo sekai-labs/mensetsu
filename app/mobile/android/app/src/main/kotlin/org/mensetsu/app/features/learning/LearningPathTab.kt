@@ -41,8 +41,6 @@ fun LearningPathTab(
         mutableStateOf(lessons.firstOrNull()?.id)
     }
 
-    val selectedLesson = lessons.find { it.id == selectedLessonId } ?: lessons.first()
-
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),

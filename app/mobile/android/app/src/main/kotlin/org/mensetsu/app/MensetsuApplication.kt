@@ -13,13 +13,7 @@ class MensetsuApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        instance = this
         tokenStorage = TokenStorage(this)
         networkManager = NetworkManager(tokenStorage)
-    }
-
-    companion object {
-        lateinit var instance: MensetsuApplication
-            private set
     }
 }

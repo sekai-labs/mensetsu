@@ -2,7 +2,7 @@ import { resolvePostAuthRedirect } from '~/features/auth/utils/auth.util'
 import { useAuthService } from '~/features/auth/services/auth.service'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { isAuthenticated, isInitialized, fetchCurrentUser } = useAuthService()
+  const { user, isAuthenticated, isInitialized, fetchCurrentUser } = useAuthService()
 
   if (!isInitialized.value) {
     await fetchCurrentUser()
@@ -12,5 +12,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (redirectTarget) {
     return navigateTo(redirectTarget)
+  }
+
+  if ((to.path === '/admin' || to.path.startsWith('/admin/')) && user.value?.role !== 'admin') {
+    return navigateTo('/dashboard')
   }
 })

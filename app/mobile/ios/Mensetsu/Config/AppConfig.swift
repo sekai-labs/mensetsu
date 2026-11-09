@@ -46,10 +46,6 @@ public struct AppConfig {
         }
     }
 
-    public static var isConfigured: Bool {
-        return savedServerUrl != nil
-    }
-
     public static var apiBaseUrl: String {
         if let saved = savedServerUrl {
             return saved
@@ -104,9 +100,5 @@ public struct AppConfig {
         let validated = try normalizeAndValidateUrl(rawUrl)
         savedServerUrl = validated
         return validated
-    }
-
-    public static func clearSavedServerUrl() {
-        savedServerUrl = nil
     }
 }

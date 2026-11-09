@@ -37,6 +37,7 @@ export const KNOWN_EVENT_TYPES: Record<string, true> = {
   'agent.activity': true,
   'agent.completed': true,
   'agent.failed': true,
+  'agent.model_usage': true,
   'delegation.requested': true,
   'delegation.accepted': true,
   'delegation.started': true,

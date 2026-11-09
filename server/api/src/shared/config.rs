@@ -43,7 +43,7 @@ impl AppConfig {
                 .split(',')
                 .map(|s| s.trim().to_string())
                 .collect(),
-            jwt_secret: env::var("JWT_SECRET").unwrap_or_else(|_| "mensetsu_dev_super_secret_jwt_key_at_least_32_bytes!".to_string()),
+            jwt_secret: env::var("JWT_SECRET").unwrap_or_default(),
             access_token_ttl_seconds: env::var("ACCESS_TOKEN_TTL_SECONDS")
                 .ok()
                 .and_then(|v| v.parse().ok())
@@ -52,8 +52,7 @@ impl AppConfig {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(2_592_000), 
-            encryption_key: env::var("ENCRYPTION_KEY")
-                .unwrap_or_else(|_| "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string()),
+            encryption_key: env::var("ENCRYPTION_KEY").unwrap_or_default(),
             internal_service_token: env::var("INTERNAL_SERVICE_TOKEN")
                 .map(|t| t.trim().to_string())
                 .unwrap_or_default(),
@@ -66,9 +65,98 @@ impl AppConfig {
     }
 
     pub fn validate(&self) -> Result<(), String> {
-        if self.internal_service_token.is_empty() {
+        for (name, value) in [
+            ("JWT_SECRET", self.jwt_secret.as_str()),
+            ("ENCRYPTION_KEY", self.encryption_key.as_str()),
+        ] {
+            if value.trim().is_empty() {
+                return Err(format!("{name} is unset or blank; refusing to start"));
+            }
+            if value.as_bytes().len() < 32 {
+                return Err(format!("{name} must be at least 32 bytes; refusing to start"));
+            }
+        }
+
+        let former_fallbacks = [
+            "mensetsu_dev_super_secret_jwt_key_at_least_32_bytes!",
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        ];
+        if former_fallbacks
+            .iter()
+            .any(|fallback| self.jwt_secret == *fallback || self.encryption_key == *fallback)
+        {
+            return Err("A known insecure fallback secret is configured; refusing to start".into());
+        }
+        if self.jwt_secret == self.encryption_key {
+            return Err("JWT_SECRET and ENCRYPTION_KEY must be different; refusing to start".into());
+        }
+
+        if self.internal_service_token.trim().is_empty() {
             return Err("INTERNAL_SERVICE_TOKEN is unset or empty; refusing to start".into());
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::AppConfig;
+
+    fn config(jwt_secret: &str, encryption_key: &str) -> AppConfig {
+        let mut config = AppConfig::from_env();
+        config.jwt_secret = jwt_secret.to_string();
+        config.encryption_key = encryption_key.to_string();
+        config.internal_service_token = "test-internal-token".to_string();
+        config
+    }
+
+    #[test]
+    fn validate_rejects_missing_or_blank_secrets() {
+        assert!(config("", "distinct-encryption-key-123456789").validate().is_err());
+        assert!(config("jwt-secret-value-123456789012345", " \t ").validate().is_err());
+    }
+
+    #[test]
+    fn validate_rejects_secrets_shorter_than_32_bytes() {
+        assert!(config("short", "distinct-encryption-key-123456789").validate().is_err());
+        assert!(config("jwt-secret-value-123456789012345", "short").validate().is_err());
+    }
+
+    #[test]
+    fn validate_rejects_known_fallback_secrets() {
+        assert!(config(
+            "mensetsu_dev_super_secret_jwt_key_at_least_32_bytes!",
+            "different-encryption-secret-value-123456789"
+        )
+        .validate()
+        .is_err());
+        assert!(config(
+            "different-jwt-secret-value-123456789012",
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        )
+        .validate()
+        .is_err());
+    }
+
+    #[test]
+    fn validate_rejects_reused_secrets() {
+        let secret = "same-secret-value-with-at-least-32-bytes";
+        assert!(config(secret, secret).validate().is_err());
+    }
+
+    #[test]
+    fn validate_accepts_distinct_secrets_and_requires_internal_token() {
+        assert!(config(
+            "a-valid-jwt-secret-value-with-32-bytes",
+            "a-valid-encryption-key-with-32-bytes"
+        )
+        .validate()
+        .is_ok());
+        let mut missing_token = config(
+            "a-valid-jwt-secret-value-with-32-bytes",
+            "a-valid-encryption-key-with-32-bytes",
+        );
+        missing_token.internal_service_token = "  ".to_string();
+        assert!(missing_token.validate().is_err());
     }
 }

@@ -24,6 +24,7 @@ ENV HOST=0.0.0.0
 USER node
 
 COPY --chown=node:node --from=builder /build/app/web/.output ./
+COPY --chown=node:node --from=builder /build/app/web/node_modules/vue ./server/node_modules/.nitro/vue@3.5.45
 
 EXPOSE 3000
 

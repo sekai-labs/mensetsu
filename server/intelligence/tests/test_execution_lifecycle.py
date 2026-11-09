@@ -7,10 +7,13 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
+from src.agents import agent_tools as agent_tools_module
 from src.agents import runtime as runtime_module
+from src.agents import runtime_support as runtime_support_module
 from src.agents.registry import AgentDefinition, registry
 from src.agents.runtime import AgentExecutionError, AutonomousAgentRuntime, current_agent_id_var
 from src.contracts.v1 import Artifact, WorkflowRun
+from src.orchestration import limits as limits_module
 from src.orchestration.ledger import SurrealLedgerRepository
 from src.orchestration.limits import ConcurrencyLimits
 
@@ -111,7 +114,9 @@ def lifecycle(monkeypatch):
             ),
         )
 
-    monkeypatch.setattr(runtime_module, "agent_limits", ConcurrencyLimits(agent_limit=lambda a: 4))
+    limits = ConcurrencyLimits(agent_limit=lambda a: 4)
+    monkeypatch.setattr(runtime_module, "agent_limits", limits)
+    monkeypatch.setattr(limits_module, "agent_limits", limits)
     return register
 
 
@@ -180,7 +185,7 @@ async def assert_child_and_delegation_closed(ledger, run_id, reason_fragment):
 @pytest.mark.asyncio
 async def test_parent_wall_timeout_closes_delegated_child_and_delegation(lifecycle, monkeypatch):
     lifecycle(parent_wall_s=2, child_wall_s=30)
-    monkeypatch.setattr(runtime_module, "DELEGATION_PARENT_RESERVE_S", -60.0)
+    monkeypatch.setattr(agent_tools_module, "DELEGATION_PARENT_RESERVE_S", -60.0)
     ledger, run_id = await new_run()
     model = ChildBlocksForeverModel(child_sleep_s=10.0)
     runtime = AutonomousAgentRuntime(ledger=ledger)
@@ -214,7 +219,7 @@ async def test_parent_wall_timeout_closes_delegated_child_and_delegation(lifecyc
 @pytest.mark.asyncio
 async def test_parent_cancellation_closes_delegated_child_and_delegation(lifecycle, monkeypatch):
     lifecycle(parent_wall_s=60, child_wall_s=30)
-    monkeypatch.setattr(runtime_module, "DELEGATION_PARENT_RESERVE_S", -60.0)
+    monkeypatch.setattr(agent_tools_module, "DELEGATION_PARENT_RESERVE_S", -60.0)
     ledger, run_id = await new_run()
     model = ChildBlocksForeverModel(child_sleep_s=10.0)
     runtime = AutonomousAgentRuntime(ledger=ledger)
@@ -265,7 +270,7 @@ async def test_late_delegation_is_refused(lifecycle):
 @pytest.mark.asyncio
 async def test_child_wait_does_not_consume_parent_budget(lifecycle, monkeypatch):
     lifecycle(parent_wall_s=6, child_wall_s=30)
-    monkeypatch.setattr(runtime_module, "DELEGATION_PARENT_RESERVE_S", -60.0)
+    monkeypatch.setattr(agent_tools_module, "DELEGATION_PARENT_RESERVE_S", -60.0)
     ledger, run_id = await new_run()
     model = LifecycleModel(
         parent_pre_delegate_sleep_s=0.5, child_sleep_s=12.0, parent_post_delegate_sleep_s=0.5
@@ -290,7 +295,7 @@ async def test_child_wait_does_not_consume_parent_budget(lifecycle, monkeypatch)
 @pytest.mark.asyncio
 async def test_llm_retry_backoff_does_not_consume_wall_budget(lifecycle, monkeypatch, caplog):
     lifecycle(parent_wall_s=3, child_wall_s=10)
-    monkeypatch.setattr(runtime_module, "LLM_RETRY_DELAYS_S", (4.0,))
+    monkeypatch.setattr(runtime_support_module, "LLM_RETRY_DELAYS_S", (4.0,))
     ledger, run_id = await new_run()
     attempts = 0
 
@@ -377,13 +382,11 @@ async def test_execution_slot_wait_does_not_consume_wall_budget(lifecycle):
 @pytest.mark.asyncio
 async def test_provider_slot_wait_does_not_consume_wall_budget(lifecycle, monkeypatch, caplog):
     lifecycle(parent_wall_s=3, child_wall_s=10)
-    monkeypatch.setattr(
-        runtime_module,
-        "agent_limits",
-        ConcurrencyLimits(llm_inflight_limit=1, agent_limit=lambda a: 4),
-    )
+    provider_limits = ConcurrencyLimits(llm_inflight_limit=1, agent_limit=lambda a: 4)
+    monkeypatch.setattr(runtime_module, "agent_limits", provider_limits)
+    monkeypatch.setattr(limits_module, "agent_limits", provider_limits)
     ledger, run_id = await new_run()
-    limits = runtime_module.agent_limits
+    limits = provider_limits
     limits._bind_loop()
 
     class FastModel(BaseChatModel):

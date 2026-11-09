@@ -101,7 +101,7 @@ async def test_worker_race_condition_xclaim_heartbeat_prevents_theft():
     from unittest.mock import AsyncMock, patch
 
     with patch(
-        "src.agents.runtime.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock
+        "src.agents.agent_tools.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock
     ) as mock_fetch:
         mock_fetch.return_value = (
             "Careers at Acme",

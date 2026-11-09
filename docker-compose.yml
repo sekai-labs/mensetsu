@@ -2,7 +2,12 @@ services:
   surrealdb:
     image: surrealdb/surrealdb:v3.2.4
     container_name: mensetsu-surrealdb
-    command: start --log debug --user root --pass root surrealkv:/data/surreal.db
+    command: start --log info --user root --pass root surrealkv:/data/surreal.db
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     user: "0:0"
     ports:
       - "8000:8000"
@@ -19,6 +24,11 @@ services:
   redis:
     image: redis/redis-stack-server:7.4.0-v8
     container_name: mensetsu-redis
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     environment:
       - REDIS_ARGS=--maxmemory 3gb --maxmemory-policy volatile-lru
     mem_limit: 3584m
@@ -37,6 +47,11 @@ services:
   searxng:
     image: searxng/searxng:2026.10.11-ad46ebd7d
     container_name: mensetsu-searxng
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     mem_limit: 384m
     cpus: 1.0
     environment:
@@ -53,6 +68,11 @@ services:
   minio:
     image: bitnamilegacy/minio:2025.7.23-debian-12-r5@sha256:6dabb4a2088c9a79908de3bc05f4586c23ad2182c8908e7e3acbf61c1467fb20
     container_name: mensetsu-minio
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     ports:
       - "127.0.0.1:9000:9000"
       - "127.0.0.1:9001:9001"
@@ -68,10 +88,17 @@ services:
       timeout: 3s
       retries: 5
     restart: unless-stopped
+    mem_limit: 1g
+    cpus: 1.0
 
   minio-init:
     image: bitnamilegacy/minio:2025.7.23-debian-12-r5@sha256:6dabb4a2088c9a79908de3bc05f4586c23ad2182c8908e7e3acbf61c1467fb20
     container_name: mensetsu-minio-init
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     depends_on:
       minio:
         condition: service_healthy
@@ -86,6 +113,11 @@ services:
 
   api:
     container_name: mensetsu-api
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     build:
       context: .
       dockerfile: server/api/Dockerfile
@@ -135,6 +167,11 @@ services:
     cpus: 1.0
   intelligence:
     container_name: mensetsu-intelligence
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     build:
       context: ./server/intelligence
       dockerfile: Dockerfile
@@ -171,6 +208,11 @@ services:
 
   worker:
     container_name: mensetsu-worker
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     build:
       context: ./server/intelligence
       dockerfile: Dockerfile
@@ -204,6 +246,11 @@ services:
       context: .
       dockerfile: app/web/Dockerfile
     container_name: mensetsu-web
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     ports:
       - "3001:3000"
     environment:

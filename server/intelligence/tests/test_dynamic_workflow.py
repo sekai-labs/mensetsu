@@ -172,7 +172,7 @@ async def test_dynamic_workflow_plan_revision_and_parallel_overlap():
     from unittest.mock import AsyncMock, patch
 
     with patch(
-        "src.agents.runtime.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock
+        "src.agents.agent_tools.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock
     ) as mock_fetch:
         mock_fetch.return_value = (
             "Careers at Acme",

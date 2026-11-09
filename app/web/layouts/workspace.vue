@@ -16,7 +16,7 @@ const workspaceId = computed(() => String(route.params.id || ''))
 const { getWorkspace } = useInterviewService()
 const { listWorkflowRuns } = useWorkflowService()
 
-const { data: workspace, refresh: refreshWorkspace } = await useAsyncData<WorkspaceResponse | null>(
+const { data: workspace, error: workspaceError, refresh: refreshWorkspace } = await useAsyncData<WorkspaceResponse | null>(
   () => `ws-shell-${workspaceId.value}`,
   () => (workspaceId.value ? getWorkspace(workspaceId.value) : Promise.resolve(null)),
   { watch: [workspaceId] }
@@ -33,6 +33,15 @@ const activeRunId = computed(() => {
   return latest ? latest.id : null
 })
 
+const getErrorStatus = (error: unknown): number | undefined => {
+  if (!error || typeof error !== 'object') return undefined
+  if ('statusCode' in error && typeof error.statusCode === 'number') return error.statusCode
+  if ('status' in error && typeof error.status === 'number') return error.status
+  return undefined
+}
+
+const isForbidden = computed(() => getErrorStatus(workspaceError.value) === 403)
+
 const { currentPhase, progressPercent, status: sseStatus, isConnected, message } =
   useInterviewEventsService(workspaceId, () => {
     refreshWorkspace()
@@ -47,7 +56,7 @@ const effectivePhase = computed(() => currentPhase.value || workspace.value?.cur
   <div class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 font-sans selection:bg-indigo-600 selection:text-white">
 
     <AppHeader
-      :workspace-id="workspaceId"
+      :workspace-id="isForbidden ? '' : workspaceId"
       :workspace="workspace"
       :status="effectiveStatus"
       :current-phase="effectivePhase"
@@ -55,12 +64,13 @@ const effectivePhase = computed(() => currentPhase.value || workspace.value?.cur
       :is-connected="isConnected"
       :message="message"
       :is-mobile-menu-open="isMobileMenuOpen"
-      :active-run-id="activeRunId"
+      :active-run-id="isForbidden ? null : activeRunId"
       @toggle-mobile-menu="isMobileMenuOpen = !isMobileMenuOpen"
     />
 
 
     <MobileNavigationDrawer
+      v-if="!isForbidden"
       :is-open="isMobileMenuOpen"
       :workspace-id="workspaceId"
       :workspace="workspace"
@@ -71,7 +81,7 @@ const effectivePhase = computed(() => currentPhase.value || workspace.value?.cur
 
     <div class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 flex flex-col lg:flex-row gap-8">
 
-      <div class="hidden lg:block shrink-0">
+      <div v-if="!isForbidden" class="hidden lg:block shrink-0">
         <WorkspaceSidebar
           :workspace-id="workspaceId"
           :workspace="workspace"

@@ -77,7 +77,7 @@ async def test_worker_crash_recovery_resumes_without_reexecution():
     from unittest.mock import AsyncMock, patch
 
     with patch(
-        "src.agents.runtime.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock
+        "src.agents.agent_tools.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock
     ) as mock_fetch:
         mock_fetch.return_value = (
             "Careers at Acme",

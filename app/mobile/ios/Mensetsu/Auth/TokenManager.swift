@@ -1,6 +1,5 @@
 
 import Foundation
-import Combine
 import MensetsuContracts
 
 public enum AuthState: Equatable {
@@ -123,7 +122,6 @@ public enum APIError: Error, LocalizedError {
     case unauthorized(String)
     case invalidResponse
     case validation(String)
-    case networkError(String)
     case serverError(statusCode: Int, message: String)
 
     public var errorDescription: String? {
@@ -134,8 +132,6 @@ public enum APIError: Error, LocalizedError {
             return "Invalid server response"
         case let .validation(message):
             return message
-        case let .networkError(msg):
-            return "Network connection error: \(msg)"
         case let .serverError(statusCode, message):
             return "Server returned error \(statusCode): \(message)"
         }

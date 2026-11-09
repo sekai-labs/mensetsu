@@ -136,20 +136,20 @@ const toggleProvider = async (p: AdminProvider) => {
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto py-8 px-4 sm:px-6 space-y-8">
+  <div class="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-9 space-y-8">
     <div class="border-b border-surface-border pb-5">
       <div class="flex items-center gap-2 mb-1">
         <span class="px-2 py-0.5 text-xs font-mono font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded">
           System Administration
         </span>
       </div>
-      <h1 class="text-2xl font-bold tracking-tight text-text-primary">Platform Dynamic Configuration</h1>
-      <p class="text-xs text-text-muted mt-1">
-        Dynamically tune concurrency limits, LLM in-flight throttles, search providers, and platform gateways.
+      <h1 class="text-2xl font-semibold tracking-tight text-text-primary">Platform settings</h1>
+      <p class="mt-1 text-sm text-text-muted">
+        Worker capacity, search configuration, and shared model providers.
       </p>
     </div>
 
-    <div class="bg-surface-elevated/70 border border-surface-border rounded-xl p-5 shadow-sm space-y-5">
+    <section class="space-y-5 border-b border-surface-border pb-7">
       <div class="flex justify-between items-center">
         <div>
           <h2 class="text-sm font-bold text-text-primary">Worker Concurrency & Throttle Controls</h2>
@@ -250,9 +250,9 @@ const toggleProvider = async (p: AdminProvider) => {
           </div>
         </div>
       </div>
-    </div>
+</section>
 
-    <div class="bg-surface-elevated/70 border border-surface-border rounded-xl p-5 shadow-sm space-y-4">
+    <section class="space-y-5 border-b border-surface-border pb-7">
       <div class="flex justify-between items-center">
         <div>
           <h2 class="text-sm font-bold text-text-primary">Platform Model Gateways & Shared Credentials</h2>
@@ -299,7 +299,7 @@ const toggleProvider = async (p: AdminProvider) => {
           </div>
         </div>
       </div>
-    </div>
+</section>
 
     <div v-if="showNewProviderModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
       <div class="w-full max-w-md bg-surface-base border border-surface-border rounded-xl shadow-xl p-5 space-y-4">

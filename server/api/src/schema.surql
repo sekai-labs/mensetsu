@@ -356,6 +356,14 @@ DEFINE FIELD OVERWRITE degraded ON TABLE workflow_run TYPE bool DEFAULT false;
 DEFINE FIELD OVERWRITE degraded_reasons ON TABLE workflow_run TYPE array<string> DEFAULT [];
 DEFINE INDEX IF NOT EXISTS idx_workflow_run_workspace ON TABLE workflow_run COLUMNS workspace_id;
 DEFINE INDEX IF NOT EXISTS idx_workflow_run_created_at ON TABLE workflow_run COLUMNS created_at;
+DEFINE TABLE OVERWRITE run_idempotency SCHEMAFULL;
+DEFINE FIELD OVERWRITE request_hash ON TABLE run_idempotency TYPE string;
+DEFINE FIELD OVERWRITE run_id ON TABLE run_idempotency TYPE record<workflow_run>;
+DEFINE FIELD OVERWRITE user_id ON TABLE run_idempotency TYPE string;
+DEFINE FIELD OVERWRITE workspace_id ON TABLE run_idempotency TYPE record<workspace>;
+DEFINE FIELD OVERWRITE operation ON TABLE run_idempotency TYPE string;
+DEFINE FIELD OVERWRITE created_at ON TABLE run_idempotency TYPE datetime DEFAULT time::now();
+
 
 DEFINE TABLE OVERWRITE workflow_task SCHEMAFULL;
 DEFINE FIELD OVERWRITE run_id ON TABLE workflow_task TYPE record<workflow_run>;

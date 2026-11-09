@@ -7,7 +7,9 @@ requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.10.0",
     "pydantic-settings>=2.7.0",
-    "httpx>=0.28.0",
+# The pinned transport wraps private HTTPX/httpcore backend fields; update with its tests.
+    "httpcore==1.0.9",
+    "httpx==0.28.1",
     "beautifulsoup4>=4.12.0",
     "pypdf>=5.1.0",
     "openai>=3.22.1",
@@ -26,7 +28,6 @@ dependencies = [
 dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.25.0",
-    "pytest-timeout>=2.4.0",
     "ruff>=0.9.0",
 ]
 

@@ -1,3 +1,5 @@
+import hashlib
+import json
 import logging
 import uuid
 from typing import Any
@@ -17,11 +19,7 @@ from src.contracts.v1 import (
     WorkflowRun,
     WorkflowTask,
 )
-from src.orchestration.shared import (
-    DEFINITIONS,
-    get_ledger,
-    job_queue,
-)
+from src.orchestration.shared import DEFINITIONS, get_ledger, job_queue
 
 logger = logging.getLogger("mensetsu.orchestration.service")
 
@@ -48,6 +46,7 @@ class WorkflowService:
         user_prompt: str | None = None,
         workflow_mode: str | None = None,
         llm_config: dict[str, Any] | None = None,
+        idempotency_key: str | None = None,
     ) -> WorkflowRun:
         wf_def = next((d for d in DEFINITIONS if d.id == workflow_id), None)
         if wf_def is None:
@@ -70,18 +69,49 @@ class WorkflowService:
         )
 
         active_ledger = get_ledger()
-        await active_ledger.create_workflow_run(run)
-
-        await active_ledger.append_event_transactional(
-            run_id=run.id,
-            event_type="workflow.created",
-            payload={
-                "workflow_id": run.workflow_id,
-                "workspace_id": run.workspace_id,
-                "user_id": run.user_id,
-                "type": run.type,
-            },
-        )
+        if idempotency_key is not None:
+            request = {
+                "workspace_id": workspace_id,
+                "user_id": user_id,
+                "operation": "create_run",
+                "workflow_id": wf_def.id,
+                "company_name": company_name,
+                "role_title": role_title,
+                "company_urls": company_urls or [],
+                "resume_text": resume_text,
+                "resume_upload_id": resume_upload_id,
+                "resume_filename": resume_filename,
+                "job_description": job_description,
+                "jd_url": jd_url,
+                "seniority": seniority,
+                "user_prompt": user_prompt,
+                "workflow_mode": workflow_mode,
+                "llm_config": llm_config,
+            }
+            canonical = json.dumps(request, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+            request_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+            scope_key = json.dumps(
+                [user_id, workspace_id, "create_run", idempotency_key],
+                separators=(",", ":"),
+                ensure_ascii=False,
+            )
+            record_id = "idem_" + hashlib.sha256(scope_key.encode("utf-8")).hexdigest()
+            run, _created = await active_ledger.create_idempotent_workflow_run(
+                run, record_id, request_hash
+            )
+        else:
+            await active_ledger.create_workflow_run(run)
+            await active_ledger.append_event_transactional(
+                run_id=run.id,
+                event_type="workflow.created",
+                payload={
+                    "workflow_id": run.workflow_id,
+                    "workspace_id": run.workspace_id,
+                    "user_id": run.user_id,
+                    "type": run.type,
+                },
+            )
+            run.last_seq = 1
 
         await job_queue.enqueue_job(
             run_id=run.id,
@@ -103,8 +133,8 @@ class WorkflowService:
                 "workflow_mode": workflow_mode,
                 "llm_config": llm_config,
             },
+            deduplicate_by_run_id=idempotency_key is not None,
         )
-        run.last_seq = 1
         return run
 
     @staticmethod

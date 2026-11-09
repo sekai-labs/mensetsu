@@ -103,7 +103,7 @@ async def test_worker_concurrent_jobs_isolated_lease_loss():
     from unittest.mock import AsyncMock, patch
 
     with patch(
-        "src.agents.runtime.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock
+        "src.agents.agent_tools.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock
     ) as mock_fetch:
         mock_fetch.return_value = (
             "Careers at Acme",

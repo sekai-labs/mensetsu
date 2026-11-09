@@ -695,10 +695,22 @@ impl IntoResponse for AppError {
             AppError::Unauthorized(msg) => (StatusCode::UNAUTHORIZED, msg),
             AppError::Forbidden(msg) => (StatusCode::FORBIDDEN, msg),
             AppError::Conflict(msg) => (StatusCode::CONFLICT, msg),
-            AppError::Database(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
+            AppError::Database(detail) => {
+                tracing::error!(error = %detail, "Database error while handling request");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "An internal server error occurred".to_owned(),
+                )
+            },
             AppError::ExternalService(msg) => (StatusCode::BAD_GATEWAY, msg),
             AppError::ServiceUnavailable(msg) => (StatusCode::SERVICE_UNAVAILABLE, msg),
-            AppError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
+            AppError::Internal(detail) => {
+                tracing::error!(error = %detail, "Internal error while handling request");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "An internal server error occurred".to_owned(),
+                )
+            },
         };
 
         let body = Json(serde_json::json!({
@@ -709,5 +721,36 @@ impl IntoResponse for AppError {
         }));
 
         (status, body).into_response()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn database_and_internal_errors_return_generic_server_error() {
+        let sentinel = "sensitive-error-detail-7d91";
+        let cases = [
+            AppError::Database(sentinel.to_owned()),
+            AppError::Internal(sentinel.to_owned()),
+        ];
+
+        for error in cases {
+            let response = error.into_response();
+            assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+
+            let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+                .await
+                .expect("response body should be readable");
+            let body_text = String::from_utf8(body.to_vec()).expect("response body should be UTF-8");
+            assert!(!body_text.contains(sentinel));
+            let body_json: serde_json::Value =
+                serde_json::from_str(&body_text).expect("response body should be JSON");
+            assert_eq!(
+                body_json["error"]["message"],
+                "An internal server error occurred"
+            );
+        }
     }
 }

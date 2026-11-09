@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Layers,
   HelpCircle,
+  ShieldAlert,
   Sparkles,
 } from 'lucide-vue-next'
 
@@ -35,6 +36,15 @@ const showObjectiveModal = ref(false)
 const objectivePrompt = ref('')
 const objectiveSuccess = ref(false)
 const objectiveError = ref('')
+
+const getErrorStatus = (error: unknown): number | undefined => {
+  if (!error || typeof error !== 'object') return undefined
+  if ('statusCode' in error && typeof error.statusCode === 'number') return error.statusCode
+  if ('status' in error && typeof error.status === 'number') return error.status
+  return undefined
+}
+
+const isForbidden = computed(() => getErrorStatus(errorWs.value) === 403)
 
 const matchRatio = computed(() => {
   return match.value?.overall_match_ratio ? Math.round(match.value.overall_match_ratio * 100) : 0
@@ -66,20 +76,20 @@ const handleUpdateObjective = async () => {
   <div class="space-y-6">
     <div class="border-b border-slate-200 dark:border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <div class="flex items-center gap-2 text-xs font-mono text-indigo-600 dark:text-indigo-400 font-semibold mb-1">
+        <div v-if="!isForbidden" class="flex items-center gap-2 text-xs font-mono text-indigo-600 dark:text-indigo-400 font-semibold mb-1">
           <span>{{ $t('overview.badge') }}</span>
           <span>•</span>
           <span class="text-slate-400 font-mono">ID: {{ workspaceId }}</span>
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          {{ $t('overview.title', { company: ws?.company_name || 'Target Role' }) }}
+          {{ isForbidden ? 'Workspace access denied' : $t('overview.title', { company: ws?.company_name || 'Target Role' }) }}
         </h1>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+        <p v-if="!isForbidden" class="text-xs text-slate-500 dark:text-slate-400 mt-1">
           {{ $t('overview.subtitle', { role: ws?.role_title || 'Role' }) }}
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div v-if="!isForbidden" class="flex items-center gap-2">
         <button
           type="button"
           @click="showObjectiveModal = true"
@@ -95,7 +105,27 @@ const handleUpdateObjective = async () => {
       </div>
     </div>
 
-    <div v-if="errorWs" class="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs space-y-2">
+    <div
+      v-if="isForbidden"
+      role="alert"
+      class="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs space-y-2"
+    >
+      <div class="flex items-center gap-2 font-semibold text-rose-800 dark:text-rose-300">
+        <ShieldAlert class="w-4 h-4 shrink-0" aria-hidden="true" />
+        <span>{{ errorWs?.message || 'You do not have permission to access this resource.' }}</span>
+      </div>
+      <p class="text-rose-600 dark:text-rose-400">
+        No workspace data or actions are available for your account.
+      </p>
+      <NuxtLink
+        to="/interviews"
+        class="inline-flex px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-medium transition-colors"
+      >
+        Back to workspaces
+      </NuxtLink>
+    </div>
+
+    <div v-else-if="errorWs" class="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs space-y-2">
       <div class="font-semibold text-rose-800 dark:text-rose-300">Failed to load workspace overview</div>
       <p class="text-rose-600 dark:text-rose-400">{{ errorWs.message || String(errorWs) }}</p>
       <button
@@ -125,7 +155,7 @@ const handleUpdateObjective = async () => {
       <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-2xs">
         <div class="text-[11px] font-mono uppercase tracking-wider text-slate-500">{{ $t('overview.targetSeniority') }}</div>
         <div class="text-2xl font-bold font-mono tracking-tight text-slate-900 dark:text-white mt-1 capitalize">
-          {{ ws?.seniority || 'Senior' }}
+          {{ ws?.seniority || 'Level not specified' }}
         </div>
         <p class="text-[11px] text-slate-500 mt-1">
           Expected domain depth
@@ -153,7 +183,7 @@ const handleUpdateObjective = async () => {
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div v-if="!isForbidden" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div class="space-y-6">
         <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-2xs space-y-3">
           <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -280,7 +310,7 @@ const handleUpdateObjective = async () => {
     </div>
   </div>
 
-  <div v-if="showObjectiveModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-2xs">
+  <div v-if="!isForbidden && showObjectiveModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-2xs">
     <div class="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-5 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
         <div>

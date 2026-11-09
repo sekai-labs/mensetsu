@@ -109,7 +109,7 @@ async def main():
         agent_runtime.set_model_factory(lambda: BlockingModel())
         from tests.search_double import install_search_double
         install_search_double()
-        with patch("src.agents.runtime.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock) as mock_fetch:
+        with patch("src.agents.agent_tools.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = (
                 "Careers at Acme",
                 "We build distributed systems in Python and Rust.",
@@ -210,7 +210,7 @@ async def main():
     from tests.search_double import install_search_double
     install_search_double()
     from unittest.mock import AsyncMock, patch
-    with patch("src.agents.runtime.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock) as mock_fetch:
+    with patch("src.agents.agent_tools.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock) as mock_fetch:
         mock_fetch.return_value = (
             "Careers at Acme",
             "We build distributed systems in Python and Rust.",

@@ -204,6 +204,8 @@ impl GrpcClient {
                     Err(AppError::NotFound(envelope.error_message))
                 } else if envelope.status_code == 400 {
                     Err(AppError::Validation(envelope.error_message))
+                } else if envelope.status_code == 409 {
+                    Err(AppError::Conflict(envelope.error_message))
                 } else if envelope.status_code == 503 {
                     Err(AppError::ServiceUnavailable(envelope.error_message))
                 } else {
@@ -260,7 +262,7 @@ impl GrpcClient {
     pub async fn create_run(
         &self,
         payload: &CreateRunPayload,
-        _idempotency_key: Option<&str>,
+        idempotency_key: Option<&str>,
     ) -> Result<WorkflowRun> {
         let llm_config_json = payload
             .llm_config
@@ -283,6 +285,7 @@ impl GrpcClient {
             user_prompt: payload.user_prompt.clone(),
             workflow_mode: payload.workflow_mode.clone(),
             llm_config_json,
+            idempotency_key: idempotency_key.map(str::to_owned),
         }))
         .await
     }

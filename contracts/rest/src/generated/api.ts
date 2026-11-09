@@ -2274,6 +2274,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Idempotency-Key reused with a different request */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Invalid body (including unknown fields such as user_id) */
             422: {
                 headers: {

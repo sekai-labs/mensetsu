@@ -883,6 +883,12 @@ namespace Mensetsu.Contracts.Api
         bool IsNotFound { get; }
 
         /// <summary>
+        /// Returns true if the response is 409 Conflict
+        /// </summary>
+        /// <returns></returns>
+        bool IsConflict { get; }
+
+        /// <summary>
         /// Returns true if the response is 422 UnprocessableContent
         /// </summary>
         /// <returns></returns>
@@ -5796,6 +5802,12 @@ namespace Mensetsu.Contracts.Api
             /// </summary>
             /// <returns></returns>
             public bool IsNotFound => 404 == (int)StatusCode;
+
+            /// <summary>
+            /// Returns true if the response is 409 Conflict
+            /// </summary>
+            /// <returns></returns>
+            public bool IsConflict => 409 == (int)StatusCode;
 
             /// <summary>
             /// Returns true if the response is 422 UnprocessableContent

@@ -4,11 +4,11 @@ from pathlib import Path
 from pydantic.json_schema import models_json_schema
 
 from src.contracts.v1 import (
-    AgentModelUsageEvent,
     AgentActivityEvent,
     AgentCompletedEvent,
     AgentExecution,
     AgentFailedEvent,
+    AgentModelUsageEvent,
     AgentStartedEvent,
     Artifact,
     ArtifactCreatedEvent,

@@ -60,6 +60,8 @@ echo "==> Applying migration 011_drop_resume_base64.surql..."
 apply_sql_file infra/migrations/011_drop_resume_base64.surql
 echo "==> Applying migration 012_token_usage_event_index.surql..."
 apply_sql_file infra/migrations/012_token_usage_event_index.surql
+echo "==> Applying migration 013_run_idempotency.surql..."
+apply_sql_file infra/migrations/013_run_idempotency.surql
 
 echo "==> Applying final schema..."
 apply_sql_file server/api/src/schema.surql

@@ -47,7 +47,7 @@ async def test_save_evidence_unfetched_and_fabricated_snippet():
     assert "was never fetched by 'read_source'" in res_unfetched
 
     with patch(
-        "src.agents.runtime.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock
+        "src.agents.agent_tools.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock
     ) as mock_fetch:
         mock_fetch.return_value = ("Blog", "Real fetched content about distributed consensus.")
         read_res = await tool_map["read_source"].ainvoke({"url": "https://www.python.org/blogs/"})

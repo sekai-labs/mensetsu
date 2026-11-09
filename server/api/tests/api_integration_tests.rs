@@ -42,6 +42,9 @@ async fn setup_test_app() -> (axum::Router, AppConfig, DatabasePool) {
 
 async fn setup_test_app_with_upstream(intelligence_url: &str) -> (axum::Router, AppConfig, DatabasePool) {
     let mut config = AppConfig::from_env();
+    config.jwt_secret = "integration_test_jwt_secret_distinct_from_default".to_string();
+    config.encryption_key =
+        "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789".to_string();
     config.intelligence_grpc_url = intelligence_url.to_string();
     config.internal_service_token = TEST_INTERNAL_TOKEN.to_string();
     let db = DatabasePool::connect(&config)
@@ -107,6 +110,44 @@ async fn setup_test_app_with_upstream(intelligence_url: &str) -> (axum::Router, 
 }
 
 #[tokio::test]
+async fn test_public_registration_never_grants_admin_role() {
+    let first_email = format!("admin@{}.attacker.example", uuid::Uuid::new_v4());
+    let prefixed_email = format!("admin_{}@attacker.example", uuid::Uuid::new_v4());
+
+    let (app, _, _) = setup_test_app().await;
+    for email in [&first_email, &prefixed_email] {
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/api/v1/auth/register")
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        serde_json::json!({
+                            "email": email,
+                            "password": "Password123!",
+                            "name": "Untrusted Administrator"
+                        })
+                        .to_string(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        let status = response.status();
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        assert_eq!(status, StatusCode::CREATED, "registration failed: {body:?}");
+        let registration: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(registration["user"]["role"], "member", "{email}");
+    }
+
+}
+
+#[tokio::test]
 async fn test_health_and_ready_endpoints() {
     let (app, _, _) = setup_test_app().await;
 
@@ -168,6 +209,7 @@ async fn test_auth_registration_login_refresh_and_me() {
         .to_str()
         .unwrap();
     assert!(set_cookie_header.contains("mensetsu_access="));
+    assert!(set_cookie_header.contains("Secure"));
 
     let reg_json: serde_json::Value = serde_json::from_str(&reg_body_str).unwrap();
     let access_token = reg_json["access_token"].as_str().unwrap();
@@ -458,6 +500,37 @@ async fn test_llm_settings_encryption_and_sharing() {
     assert_eq!(admin_reg.status(), StatusCode::CREATED);
     let body = axum::body::to_bytes(admin_reg.into_body(), usize::MAX).await.unwrap();
     let admin_auth: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(admin_auth["user"]["role"], "member");
+
+    let admin_id = admin_auth["user"]["id"]
+        .as_str()
+        .unwrap()
+        .replace("user:", "")
+        .replace('`', "");
+    db.client
+        .query("UPDATE type::record('user', $uid) SET role = 'admin';")
+        .bind(("uid", admin_id))
+        .await
+        .unwrap();
+
+    let admin_login = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/v1/auth/login")
+                .header("content-type", "application/json")
+                .body(Body::from(serde_json::json!({
+                    "email": admin_email,
+                    "password": "Password123!"
+                }).to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(admin_login.status(), StatusCode::OK);
+    let body = axum::body::to_bytes(admin_login.into_body(), usize::MAX).await.unwrap();
+    let admin_auth: serde_json::Value = serde_json::from_slice(&body).unwrap();
     let admin_token = admin_auth["access_token"].as_str().unwrap();
     assert_eq!(admin_auth["user"]["role"], "admin");
 
@@ -636,3 +709,4 @@ async fn test_workflow_endpoints_auth_and_routing() {
         .unwrap();
     assert_eq!(unauth_runs.status(), StatusCode::UNAUTHORIZED);
 }
+

@@ -1,8 +1,587 @@
 [
   {
-    "id": "exec_071e098f1bf2",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_job_run_c2c8",
+    "id": "exec_0291cfc805bf",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 project_deep_dive interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 1 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 2333.711490035057,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_6cd3dfcbc680"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:40.177779+00:00",
+    "completed_at": "2026-11-07 15:24:45.176829+00:00"
+  },
+  {
+    "id": "exec_13f8d85de781",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 resume_deep_dive interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 1518.1456776335835,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_995b59441176"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:36.154409+00:00",
+    "completed_at": "2026-11-07 15:24:40.239969+00:00"
+  },
+  {
+    "id": "exec_157cdd848ac9",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 target_stack interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 1 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 1649.6225385926664,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_f4d1f6087a66"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:21.617987+00:00",
+    "completed_at": "2026-11-07 15:24:26.107304+00:00"
+  },
+  {
+    "id": "exec_1e21c59e9b5b",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_company_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "company-research",
+    "objective": "Analyze company Acme Systems culture and tech stack",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 40,
+      "tool_calls": 40,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 480000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 8,
+      "tool_calls": 7,
+      "tokens_in": 3040,
+      "tokens_out": 375,
+      "wall_time_ms": 38043.64389786497,
+      "external_requests": 1
+    },
+    "tool_call_count": 7,
+    "notes": [],
+    "artifact_ids": [
+      "art_cc654990df1e",
+      "art_ffb11b01f4f9",
+      "art_687ee37a1c1d",
+      "art_42a27b96e92f",
+      "art_3d9bcafcc6ee"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:22:06.691243+00:00",
+    "completed_at": "2026-11-07 15:22:47.006190+00:00"
+  },
+  {
+    "id": "exec_22d1e08ff678",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 debugging interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 1 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 1710.2670329622924,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_b8abf837cc8c"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:46.283406+00:00",
+    "completed_at": "2026-11-07 15:24:51.065397+00:00"
+  },
+  {
+    "id": "exec_2331c07255fa",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 technical_fundamentals interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 2137.7851739525795,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_c9dc9206e214"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:28.268100+00:00",
+    "completed_at": "2026-11-07 15:24:33.552075+00:00"
+  },
+  {
+    "id": "exec_2f0b48870a9c",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 target_stack interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 3 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 1806.2621881254017,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_a37932bb2bf0"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:24.254779+00:00",
+    "completed_at": "2026-11-07 15:24:28.373995+00:00"
+  },
+  {
+    "id": "exec_33c0c48329dc",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 target_stack interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 1772.5941399112344,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_b9911c2e291b"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:22.293656+00:00",
+    "completed_at": "2026-11-07 15:24:26.508031+00:00"
+  },
+  {
+    "id": "exec_372a418c2984",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_curriculum_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "curriculum",
+    "objective": "Write one prerequisite-aware learning unit for each of: Skill 0, Skill 1",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 8,
+      "tool_calls": 7,
+      "tokens_in": 3140,
+      "tokens_out": 385,
+      "wall_time_ms": 41173.26293094084,
+      "external_requests": 1
+    },
+    "tool_call_count": 7,
+    "notes": [],
+    "artifact_ids": [
+      "art_7c8a4322e10f",
+      "art_5332ec42c499",
+      "art_eebbb8ccd0cb",
+      "art_5abad402c8f5",
+      "art_df7abdea3715",
+      "art_e74a1c65d871"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:23:23.591957+00:00",
+    "completed_at": "2026-11-07 15:24:06.783681+00:00"
+  },
+  {
+    "id": "exec_3bfe3a7df5a9",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 system_design interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 3140.543956309557,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_44a20fa2cd15"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:11.523423+00:00",
+    "completed_at": "2026-11-07 15:24:20.477052+00:00"
+  },
+  {
+    "id": "exec_3ef7c01599f4",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 behavioral interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 1 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 1983.3583408035338,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_690df388f800"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:52.683359+00:00",
+    "completed_at": "2026-11-07 15:24:56.464726+00:00"
+  },
+  {
+    "id": "exec_40ab70c07cbc",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_synth_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "evidence-evaluator",
+    "objective": "Evaluate candidate CV and JD match, verify claims, and identify skill gaps",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 50,
+      "tool_calls": 50,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 360000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 689.5765797235072,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_2d61a97d9c79"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:22:58.572941+00:00",
+    "completed_at": "2026-11-07 15:23:00.148604+00:00"
+  },
+  {
+    "id": "exec_50220b91c499",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_curriculum_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "curriculum",
+    "objective": "Write one prerequisite-aware learning unit for each of: Skill 4, Skill 5",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 8,
+      "tool_calls": 7,
+      "tokens_in": 3140,
+      "tokens_out": 385,
+      "wall_time_ms": 39989.33878913522,
+      "external_requests": 1
+    },
+    "tool_call_count": 7,
+    "notes": [],
+    "artifact_ids": [
+      "art_d3d1aec47596",
+      "art_79a4e5e2cc2f",
+      "art_5f362ca56e86",
+      "art_db7d4c8b00b3",
+      "art_185eeee530bf",
+      "art_6a169fadb138"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:23:23.890726+00:00",
+    "completed_at": "2026-11-07 15:24:05.860024+00:00"
+  },
+  {
+    "id": "exec_528695ba3e55",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_curriculum_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "curriculum",
+    "objective": "Write one prerequisite-aware learning unit for each of: Skill 2, Skill 3",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 8,
+      "tool_calls": 7,
+      "tokens_in": 3140,
+      "tokens_out": 385,
+      "wall_time_ms": 40432.0084429346,
+      "external_requests": 1
+    },
+    "tool_call_count": 7,
+    "notes": [],
+    "artifact_ids": [
+      "art_09faa281fb65",
+      "art_adc31e37d6e6",
+      "art_dc20ac486c60",
+      "art_0f2228045994",
+      "art_dfb3d4d8b8cd",
+      "art_3354af3f666d"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:23:23.856249+00:00",
+    "completed_at": "2026-11-07 15:24:05.945425+00:00"
+  },
+  {
+    "id": "exec_5c524d374914",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_job_run_35a3",
     "parent_execution_id": null,
     "child_execution_ids": [],
     "agent_id": "job-analysis",
@@ -11,7 +590,7 @@
     "delegation_depth": 0,
     "retries": 0,
     "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
+    "model_provider": "ScriptedToolCallingFakeModel:",
     "model_name": "custom-model",
     "budgets": {
       "model_calls": 30,
@@ -26,973 +605,28 @@
       "tool_calls": 7,
       "tokens_in": 3140,
       "tokens_out": 385,
-      "wall_time_ms": 41348.36462489329,
+      "wall_time_ms": 41219.554224051535,
       "external_requests": 1
     },
     "tool_call_count": 7,
     "notes": [],
     "artifact_ids": [
-      "art_0e64100a6f8e",
-      "art_8c2d434d2725",
-      "art_2c5f8a743cb2",
-      "art_fdf46d9e0476",
-      "art_3fa95de6074f",
-      "art_cb45fe8526a6"
+      "art_545711494397",
+      "art_81fa5868d68a",
+      "art_6ba952053b42",
+      "art_bb569aaf7232",
+      "art_b7af169fe74f",
+      "art_ba3763c2618b"
     ],
     "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
     "error": null,
-    "started_at": "2026-11-01 15:29:36.449386+00:00",
-    "completed_at": "2026-11-01 15:30:20.664049+00:00"
+    "started_at": "2026-11-07 15:22:06.720039+00:00",
+    "completed_at": "2026-11-07 15:22:49.991325+00:00"
   },
   {
-    "id": "exec_0eba36db26b4",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_company_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "company-research",
-    "objective": "Analyze company Acme Systems culture and tech stack",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 40,
-      "tool_calls": 40,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 480000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 8,
-      "tool_calls": 7,
-      "tokens_in": 3040,
-      "tokens_out": 375,
-      "wall_time_ms": 40961.4828650374,
-      "external_requests": 1
-    },
-    "tool_call_count": 7,
-    "notes": [],
-    "artifact_ids": [
-      "art_09bdb0911843",
-      "art_06d77e2a0ea6",
-      "art_2f41ee35311e",
-      "art_84cbcdbe8852",
-      "art_e29cf69db002"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:29:35.866774+00:00",
-    "completed_at": "2026-11-01 15:30:19.174798+00:00"
-  },
-  {
-    "id": "exec_265846b1e38a",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 target_stack interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 1 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 1858.915335033089,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_f602562a030c"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:06.273531+00:00",
-    "completed_at": "2026-11-01 15:32:11.228991+00:00"
-  },
-  {
-    "id": "exec_33eadb348656",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 system_design interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 3 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 7560.12282287702,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_33c329375f50"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:31:53.999333+00:00",
-    "completed_at": "2026-11-01 15:32:04.092626+00:00"
-  },
-  {
-    "id": "exec_3f015b48530f",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 behavioral interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 1623.2313339132816,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_787595c46dce"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:45.973915+00:00",
-    "completed_at": "2026-11-01 15:32:50.253512+00:00"
-  },
-  {
-    "id": "exec_410fd29cded5",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 project_deep_dive interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 3 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 1694.4365531671792,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_60709dbce131"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:29.390893+00:00",
-    "completed_at": "2026-11-01 15:32:33.598431+00:00"
-  },
-  {
-    "id": "exec_5113a543894e",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 project_deep_dive interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 1 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 3118.226786144078,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_1d40186be6a1"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:26.930733+00:00",
-    "completed_at": "2026-11-01 15:32:32.187325+00:00"
-  },
-  {
-    "id": "exec_562e2c24e923",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 system_design interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 4767.251932993531,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_be06a16aa625"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:31:53.973989+00:00",
-    "completed_at": "2026-11-01 15:32:04.470880+00:00"
-  },
-  {
-    "id": "exec_581cf4167889",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 target_stack interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 1447.312579024583,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_4ec540631188"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:09.084869+00:00",
-    "completed_at": "2026-11-01 15:32:12.867081+00:00"
-  },
-  {
-    "id": "exec_5a880f08cb16",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 debugging interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 3 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 3166.477649938315,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_6a1b785b4c79"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:36.573431+00:00",
-    "completed_at": "2026-11-01 15:32:42.971684+00:00"
-  },
-  {
-    "id": "exec_6edb88a1a63f",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_curriculum_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "curriculum",
-    "objective": "Write one prerequisite-aware learning unit for each of: Skill 2, Skill 3",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 8,
-      "tool_calls": 7,
-      "tokens_in": 3140,
-      "tokens_out": 385,
-      "wall_time_ms": 46914.62695598602,
-      "external_requests": 1
-    },
-    "tool_call_count": 7,
-    "notes": [],
-    "artifact_ids": [
-      "art_bde35c07a147",
-      "art_59b84ca8a481",
-      "art_5465138dc4c5",
-      "art_85065f889eb6",
-      "art_b53ac2cfea2f",
-      "art_652e03b51fde"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:30:59.587240+00:00",
-    "completed_at": "2026-11-01 15:31:48.492149+00:00"
-  },
-  {
-    "id": "exec_7006cbcb6838",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_tech_run_c2c8",
-    "parent_execution_id": "exec_ab2e48e96c2f",
-    "child_execution_ids": [],
-    "agent_id": "evidence-evaluator",
-    "objective": "Audit candidate evidence coverage",
-    "status": "completed",
-    "delegation_depth": 1,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 50,
-      "tool_calls": 50,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 360000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 1774.2742549162358,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_048d0976cf9a"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:29:51.279936+00:00",
-    "completed_at": "2026-11-01 15:29:57.574874+00:00"
-  },
-  {
-    "id": "exec_7471b278747e",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 target_stack interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 3 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 1522.190771996975,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_159773e1b638"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:07.480986+00:00",
-    "completed_at": "2026-11-01 15:32:12.198345+00:00"
-  },
-  {
-    "id": "exec_7f8d0ed0ef21",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 technical_fundamentals interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 1 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 2441.5641678497195,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_44f875ecd378"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:12.982573+00:00",
-    "completed_at": "2026-11-01 15:32:17.187043+00:00"
-  },
-  {
-    "id": "exec_893ce0f24b66",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 debugging interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 1 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 2514.6330781280994,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_ba64dea90d70"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:33.648946+00:00",
-    "completed_at": "2026-11-01 15:32:39.479280+00:00"
-  },
-  {
-    "id": "exec_899e3432c4cd",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 technical_fundamentals interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 1952.7105391025543,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_2b445ed46b6f"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:13.798129+00:00",
-    "completed_at": "2026-11-01 15:32:18.194838+00:00"
-  },
-  {
-    "id": "exec_970185e0c2d1",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_curriculum_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "curriculum",
-    "objective": "Write one prerequisite-aware learning unit for each of: Skill 0, Skill 1",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 8,
-      "tool_calls": 7,
-      "tokens_in": 3140,
-      "tokens_out": 385,
-      "wall_time_ms": 47370.92337291688,
-      "external_requests": 1
-    },
-    "tool_call_count": 7,
-    "notes": [],
-    "artifact_ids": [
-      "art_6fae6e974a80",
-      "art_8da43ba9fa4c",
-      "art_4782b76a18f8",
-      "art_971fcfdabcd6",
-      "art_f7a3f15c40bc",
-      "art_16f3e90166b2"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:30:59.284118+00:00",
-    "completed_at": "2026-11-01 15:31:48.856049+00:00"
-  },
-  {
-    "id": "exec_9a0eea7e6f26",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 resume_deep_dive interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 3 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 1778.2904708292335,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_6e3a5111235c"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:23.069428+00:00",
-    "completed_at": "2026-11-01 15:32:27.712861+00:00"
-  },
-  {
-    "id": "exec_9d46364f1c55",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_synth_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "evidence-evaluator",
-    "objective": "Evaluate candidate CV and JD match, verify claims, and identify skill gaps",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 50,
-      "tool_calls": 50,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 360000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 898.201733129099,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_329dfeec5bd5"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:30:34.289660+00:00",
-    "completed_at": "2026-11-01 15:30:36.128345+00:00"
-  },
-  {
-    "id": "exec_9d520387ef52",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 project_deep_dive interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 2744.7566881310195,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_1c0147118185"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:28.905397+00:00",
-    "completed_at": "2026-11-01 15:32:34.205775+00:00"
-  },
-  {
-    "id": "exec_ab2e48e96c2f",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_tech_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [
-      "exec_7006cbcb6838"
-    ],
-    "agent_id": "technical-research",
-    "objective": "Extract architectural patterns and distributed systems signals",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 40,
-      "tool_calls": 40,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 480000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 8,
-      "tool_calls": 7,
-      "tokens_in": 3040,
-      "tokens_out": 375,
-      "wall_time_ms": 51590.06546600722,
-      "external_requests": 1
-    },
-    "tool_call_count": 7,
-    "notes": [],
-    "artifact_ids": [
-      "art_372bfd369fa3",
-      "art_23569d50d7bf",
-      "art_a915ab694dba",
-      "art_89fa0f9fff28",
-      "art_b620f9b57c0f"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:29:35.958965+00:00",
-    "completed_at": "2026-11-01 15:30:29.565186+00:00"
-  },
-  {
-    "id": "exec_ac3dd4426628",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 debugging interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 2999.051693128422,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_e3306941eac5"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:36.480248+00:00",
-    "completed_at": "2026-11-01 15:32:42.763788+00:00"
-  },
-  {
-    "id": "exec_bd935229ad79",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 behavioral interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 3 of 3; focus on the given target_topics)",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 1189.4673679489642,
-      "external_requests": 0
-    },
-    "tool_call_count": 0,
-    "notes": [],
-    "artifact_ids": [
-      "art_71d42d5e756d"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:32:45.771577+00:00",
-    "completed_at": "2026-11-01 15:32:49.883751+00:00"
-  },
-  {
-    "id": "exec_be27876344be",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_curriculum_run_c2c8",
-    "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "curriculum",
-    "objective": "Write one prerequisite-aware learning unit for each of: Skill 4, Skill 5",
-    "status": "completed",
-    "delegation_depth": 0,
-    "retries": 0,
-    "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
-    "model_name": "custom-model",
-    "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
-      "tokens_in": 50000,
-      "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
-      "external_requests": 25
-    },
-    "budgets_used": {
-      "model_calls": 8,
-      "tool_calls": 7,
-      "tokens_in": 3140,
-      "tokens_out": 385,
-      "wall_time_ms": 46807.67234507948,
-      "external_requests": 1
-    },
-    "tool_call_count": 7,
-    "notes": [],
-    "artifact_ids": [
-      "art_48caf49fb724",
-      "art_56be048a4280",
-      "art_30bd330915d9",
-      "art_c52f26d10a27",
-      "art_0319c3c42e84",
-      "art_093ce76d87d8"
-    ],
-    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
-    "error": null,
-    "started_at": "2026-11-01 15:30:59.555377+00:00",
-    "completed_at": "2026-11-01 15:31:48.358855+00:00"
-  },
-  {
-    "id": "exec_cdba4f367ce3",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
+    "id": "exec_5e466efdfd50",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
     "parent_execution_id": null,
     "child_execution_ids": [],
     "agent_id": "interview-generation",
@@ -1001,7 +635,7 @@
     "delegation_depth": 0,
     "retries": 0,
     "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
+    "model_provider": "ScriptedToolCallingFakeModel:",
     "model_name": "custom-model",
     "budgets": {
       "model_calls": 15,
@@ -1016,32 +650,32 @@
       "tool_calls": 0,
       "tokens_in": 520,
       "tokens_out": 80,
-      "wall_time_ms": 7322.55412498489,
+      "wall_time_ms": 6676.307103130966,
       "external_requests": 0
     },
     "tool_call_count": 0,
     "notes": [],
     "artifact_ids": [
-      "art_aac21f018195"
+      "art_40ef72cf6cea"
     ],
     "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
     "error": null,
-    "started_at": "2026-11-01 15:31:53.753083+00:00",
-    "completed_at": "2026-11-01 15:32:03.588690+00:00"
+    "started_at": "2026-11-07 15:24:11.213329+00:00",
+    "completed_at": "2026-11-07 15:24:20.065260+00:00"
   },
   {
-    "id": "exec_e2c6b5de9099",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
+    "id": "exec_6c459948578e",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
     "parent_execution_id": null,
     "child_execution_ids": [],
     "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 resume_deep_dive interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 1 of 3; focus on the given target_topics)",
+    "objective": "Generate exactly 5 debugging interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
     "status": "completed",
     "delegation_depth": 0,
     "retries": 0,
     "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
+    "model_provider": "ScriptedToolCallingFakeModel:",
     "model_name": "custom-model",
     "budgets": {
       "model_calls": 15,
@@ -1056,72 +690,78 @@
       "tool_calls": 0,
       "tokens_in": 520,
       "tokens_out": 80,
-      "wall_time_ms": 2582.1935718413442,
+      "wall_time_ms": 1664.6611029282212,
       "external_requests": 0
     },
     "tool_call_count": 0,
     "notes": [],
     "artifact_ids": [
-      "art_f0262f306367"
+      "art_0d897f37b52b"
     ],
     "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
     "error": null,
-    "started_at": "2026-11-01 15:32:19.284016+00:00",
-    "completed_at": "2026-11-01 15:32:25.355506+00:00"
+    "started_at": "2026-11-07 15:24:49.572170+00:00",
+    "completed_at": "2026-11-07 15:24:54.722913+00:00"
   },
   {
-    "id": "exec_e556f6750d42",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
+    "id": "exec_74a2aeb25e7a",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_tech_run_35a3",
     "parent_execution_id": null,
-    "child_execution_ids": [],
-    "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 resume_deep_dive interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
+    "child_execution_ids": [
+      "exec_d8ab71de8076"
+    ],
+    "agent_id": "technical-research",
+    "objective": "Extract architectural patterns and distributed systems signals",
     "status": "completed",
     "delegation_depth": 0,
     "retries": 0,
     "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
+    "model_provider": "ScriptedToolCallingFakeModel:",
     "model_name": "custom-model",
     "budgets": {
-      "model_calls": 15,
-      "tool_calls": 10,
+      "model_calls": 40,
+      "tool_calls": 40,
       "tokens_in": 50000,
       "tokens_out": 10000,
-      "wall_time_ms": 600000.0,
+      "wall_time_ms": 480000.0,
       "external_requests": 25
     },
     "budgets_used": {
-      "model_calls": 1,
-      "tool_calls": 0,
-      "tokens_in": 520,
-      "tokens_out": 80,
-      "wall_time_ms": 2389.226962113753,
-      "external_requests": 0
+      "model_calls": 8,
+      "tool_calls": 7,
+      "tokens_in": 3040,
+      "tokens_out": 375,
+      "wall_time_ms": 45049.70080498606,
+      "external_requests": 1
     },
-    "tool_call_count": 0,
+    "tool_call_count": 7,
     "notes": [],
     "artifact_ids": [
-      "art_291caac49176"
+      "art_36322552827e",
+      "art_313544a5dde1",
+      "art_ba9e0fe84360",
+      "art_200bae64d7cf",
+      "art_2846e0c8d6ff"
     ],
     "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
     "error": null,
-    "started_at": "2026-11-01 15:32:21.606659+00:00",
-    "completed_at": "2026-11-01 15:32:26.872666+00:00"
+    "started_at": "2026-11-07 15:22:07.354605+00:00",
+    "completed_at": "2026-11-07 15:22:54.290275+00:00"
   },
   {
-    "id": "exec_e67b8c34b219",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
+    "id": "exec_96791e6fca5f",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
     "parent_execution_id": null,
     "child_execution_ids": [],
     "agent_id": "interview-generation",
-    "objective": "Generate exactly 5 behavioral interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 1 of 3; focus on the given target_topics)",
+    "objective": "Generate exactly 5 technical_fundamentals interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 1 of 3; focus on the given target_topics)",
     "status": "completed",
     "delegation_depth": 0,
     "retries": 0,
     "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
+    "model_provider": "ScriptedToolCallingFakeModel:",
     "model_name": "custom-model",
     "budgets": {
       "model_calls": 15,
@@ -1136,23 +776,263 @@
       "tool_calls": 0,
       "tokens_in": 520,
       "tokens_out": 80,
-      "wall_time_ms": 3158.579137874767,
+      "wall_time_ms": 1895.6548580899835,
       "external_requests": 0
     },
     "tool_call_count": 0,
     "notes": [],
     "artifact_ids": [
-      "art_2bf118b83f55"
+      "art_adeafbed3919"
     ],
     "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
     "error": null,
-    "started_at": "2026-11-01 15:32:42.680263+00:00",
-    "completed_at": "2026-11-01 15:32:48.748004+00:00"
+    "started_at": "2026-11-07 15:24:27.574624+00:00",
+    "completed_at": "2026-11-07 15:24:32.404535+00:00"
   },
   {
-    "id": "exec_f0f983b76d03",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_qgen_run_c2c8",
+    "id": "exec_98c241dcec7e",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 behavioral interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 1357.4886401183903,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_8cb90d6d7047"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:55.269770+00:00",
+    "completed_at": "2026-11-07 15:24:58.260843+00:00"
+  },
+  {
+    "id": "exec_9c8885263f83",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 project_deep_dive interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 2 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 1747.5329139269888,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_b9409220c878"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:42.518089+00:00",
+    "completed_at": "2026-11-07 15:24:47.233139+00:00"
+  },
+  {
+    "id": "exec_a324e5d08108",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 resume_deep_dive interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 3 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 1545.7113981246948,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_c0f5bd034ed7"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:36.098459+00:00",
+    "completed_at": "2026-11-07 15:24:39.879391+00:00"
+  },
+  {
+    "id": "exec_c84a679727c2",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 behavioral interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 3 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 963.5962438769639,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_359476d30ebf"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:56.975381+00:00",
+    "completed_at": "2026-11-07 15:24:59.161462+00:00"
+  },
+  {
+    "id": "exec_cb59865ab8dc",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 project_deep_dive interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 3 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 1583.6064699105918,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_4d92a9833488"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:42.554845+00:00",
+    "completed_at": "2026-11-07 15:24:47.279465+00:00"
+  },
+  {
+    "id": "exec_d1cf8ca78941",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 debugging interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 3 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 1575.1717938110232,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_19184f188f5d"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:49.683090+00:00",
+    "completed_at": "2026-11-07 15:24:53.171186+00:00"
+  },
+  {
+    "id": "exec_d2a418cd7df2",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
     "parent_execution_id": null,
     "child_execution_ids": [],
     "agent_id": "interview-generation",
@@ -1161,7 +1041,7 @@
     "delegation_depth": 0,
     "retries": 0,
     "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
+    "model_provider": "ScriptedToolCallingFakeModel:",
     "model_name": "custom-model",
     "budgets": {
       "model_calls": 15,
@@ -1176,23 +1056,103 @@
       "tool_calls": 0,
       "tokens_in": 520,
       "tokens_out": 80,
-      "wall_time_ms": 2122.7262020111084,
+      "wall_time_ms": 2178.57064679265,
       "external_requests": 0
     },
     "tool_call_count": 0,
     "notes": [],
     "artifact_ids": [
-      "art_6ad3c70ef70f"
+      "art_c0993303fc1f"
     ],
     "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
     "error": null,
-    "started_at": "2026-11-01 15:32:14.364717+00:00",
-    "completed_at": "2026-11-01 15:32:19.482859+00:00"
+    "started_at": "2026-11-07 15:24:30.519842+00:00",
+    "completed_at": "2026-11-07 15:24:34.321130+00:00"
   },
   {
-    "id": "exec_fd46d4995c65",
-    "run_id": "run_c2c8749edfc343bb832508c099492114",
-    "task_id": "task_curriculum_run_c2c8",
+    "id": "exec_d8ab71de8076",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_tech_run_35a3",
+    "parent_execution_id": "exec_74a2aeb25e7a",
+    "child_execution_ids": [],
+    "agent_id": "evidence-evaluator",
+    "objective": "Audit candidate evidence coverage",
+    "status": "completed",
+    "delegation_depth": 1,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 50,
+      "tool_calls": 50,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 360000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 1686.7389590479434,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_970453e2eaff"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:22:21.928830+00:00",
+    "completed_at": "2026-11-07 15:22:27.679444+00:00"
+  },
+  {
+    "id": "exec_df05cd300cb5",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 system_design interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 3 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 4260.425503831357,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_3745476b680d"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:11.483405+00:00",
+    "completed_at": "2026-11-07 15:24:21.978252+00:00"
+  },
+  {
+    "id": "exec_e44edb2427a8",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_curriculum_run_35a3",
     "parent_execution_id": null,
     "child_execution_ids": [],
     "agent_id": "curriculum",
@@ -1201,7 +1161,7 @@
     "delegation_depth": 0,
     "retries": 0,
     "current_activity": null,
-    "model_provider": "ScriptedToolCallingFakeModel",
+    "model_provider": "ScriptedToolCallingFakeModel:",
     "model_name": "custom-model",
     "budgets": {
       "model_calls": 15,
@@ -1216,22 +1176,62 @@
       "tool_calls": 7,
       "tokens_in": 3140,
       "tokens_out": 385,
-      "wall_time_ms": 16561.128028901294,
+      "wall_time_ms": 17681.851932778955,
       "external_requests": 1
     },
     "tool_call_count": 7,
     "notes": [],
     "artifact_ids": [
-      "art_89ad4ccbb69c",
-      "art_01bb06537493",
-      "art_d26ac29e7e5f",
-      "art_c42f94687b9c",
-      "art_a7b024568e1e",
-      "art_ad83f3f4ad1d"
+      "art_7fae37067a4f",
+      "art_957ddb27993d",
+      "art_d8998adf3964",
+      "art_6acba3eeba84",
+      "art_b692f7cea874",
+      "art_5f06b2b94181"
     ],
     "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
     "error": null,
-    "started_at": "2026-11-01 15:30:41.195781+00:00",
-    "completed_at": "2026-11-01 15:30:58.640553+00:00"
+    "started_at": "2026-11-07 15:23:04.373056+00:00",
+    "completed_at": "2026-11-07 15:23:22.906806+00:00"
+  },
+  {
+    "id": "exec_e4da523ed291",
+    "run_id": "run_35a3aa189b8c4496bc6e438e73165074",
+    "task_id": "task_qgen_run_35a3",
+    "parent_execution_id": null,
+    "child_execution_ids": [],
+    "agent_id": "interview-generation",
+    "objective": "Generate exactly 5 resume_deep_dive interview questions with rigorous rubrics for Lead Backend Architect at Acme Systems (batch 1 of 3; focus on the given target_topics)",
+    "status": "completed",
+    "delegation_depth": 0,
+    "retries": 0,
+    "current_activity": null,
+    "model_provider": "ScriptedToolCallingFakeModel:",
+    "model_name": "custom-model",
+    "budgets": {
+      "model_calls": 15,
+      "tool_calls": 10,
+      "tokens_in": 50000,
+      "tokens_out": 10000,
+      "wall_time_ms": 600000.0,
+      "external_requests": 25
+    },
+    "budgets_used": {
+      "model_calls": 1,
+      "tool_calls": 0,
+      "tokens_in": 520,
+      "tokens_out": 80,
+      "wall_time_ms": 2092.599807307124,
+      "external_requests": 0
+    },
+    "tool_call_count": 0,
+    "notes": [],
+    "artifact_ids": [
+      "art_fcafe172be11"
+    ],
+    "public_summary": "Grounded research confirms Acme uses distributed Python and Rust.",
+    "error": null,
+    "started_at": "2026-11-07 15:24:34.124268+00:00",
+    "completed_at": "2026-11-07 15:24:38.814716+00:00"
   }
 ]

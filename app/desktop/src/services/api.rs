@@ -1,7 +1,7 @@
 use std::{path::Path, sync::Arc};
 use tokio::sync::{Mutex, RwLock};
 use mensetsu_contracts::apis::configuration::Configuration;
-use mensetsu_contracts::apis::{auth_api, resume_uploads_api, workspaces_api, workspaces_learning_handlers_api, workspaces_research_handlers_api, settings_api};
+use mensetsu_contracts::apis::{auth_api, resume_uploads_api, workspaces_api, workspaces_learning_handlers_api, workspaces_research_handlers_api, settings_api, token_usage_api};
 use mensetsu_contracts::models;
 use crate::services::secure_store::KeyringStore;
 
@@ -450,6 +450,29 @@ impl ApiService {
                 settings_api::upsert_llm_setting(&cfg_retry, req).await.map_err(|e| ApiError::Api(format!("{e}")))
             }
             Err(e) => Err(ApiError::Api(format!("{e}"))),
+        }
+    }
+
+    pub async fn get_token_usage(
+        &self,
+        cursor: Option<models::TokenUsageCursorDto>,
+    ) -> Result<models::TokenUsageResponseDto, ApiError> {
+        let token = match self.access_token.read().await.clone() {
+            Some(token) => token,
+            None => self.refresh_access_token().await?,
+        };
+        let before_timestamp = cursor.as_ref().map(|value| value.before_timestamp.as_str());
+        let before_event_id = cursor.as_ref().map(|value| value.before_event_id.as_str());
+        match token_usage_api::user_token_usage(&self.config(Some(&token)), before_timestamp, before_event_id).await {
+            Ok(value) => Ok(value),
+            Err(mensetsu_contracts::apis::Error::ResponseError(response))
+                if response.status == reqwest::StatusCode::UNAUTHORIZED =>
+            {
+                let token = self.refresh_access_token().await?;
+                token_usage_api::user_token_usage(&self.config(Some(&token)), before_timestamp, before_event_id)
+                    .await.map_err(|error| ApiError::Api(format!("{error}")))
+            }
+            Err(error) => Err(ApiError::Api(format!("{error}"))),
         }
     }
 }

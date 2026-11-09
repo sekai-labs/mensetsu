@@ -13,7 +13,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
-import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import okio.BufferedSink
 import okio.source
@@ -21,7 +20,7 @@ import org.mensetsu.app.core.storage.TokenStorage
 import org.mensetsu.contracts.apis.AuthApi
 import org.mensetsu.contracts.apis.ResumeUploadsApi
 import org.mensetsu.contracts.apis.SettingsApi
-import org.mensetsu.contracts.apis.WorkflowsApi
+import org.mensetsu.contracts.apis.TokenUsageApi
 import org.mensetsu.contracts.apis.WorkspacesApi
 import org.mensetsu.contracts.apis.WorkspacesLearningHandlersApi
 import org.mensetsu.contracts.apis.WorkspacesResearchHandlersApi
@@ -332,5 +331,6 @@ class NetworkManager(private val tokenStorage: TokenStorage) {
     fun getResearchHandlersApi(): WorkspacesResearchHandlersApi =
         WorkspacesResearchHandlersApi(basePath = getBaseUrl(), client = okHttpClient)
     fun getSettingsApi(): SettingsApi = SettingsApi(basePath = getBaseUrl(), client = okHttpClient)
-    fun getWorkflowsApi(): WorkflowsApi = WorkflowsApi(basePath = getBaseUrl(), client = okHttpClient)
+    fun getTokenUsageApi(): TokenUsageApi =
+        TokenUsageApi(basePath = getBaseUrl(), client = okHttpClient)
 }

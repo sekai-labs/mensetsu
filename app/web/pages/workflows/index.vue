@@ -231,8 +231,8 @@ const handlePrevPage = () => {
         </p>
       </div>
 
-      <div v-else class="overflow-x-auto">
-        <table class="w-full text-left border-collapse text-xs">
+      <div v-else class="overflow-x-auto overflow-y-auto overscroll-contain max-h-[min(18rem,calc(100vh_-_24rem))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500" role="region" aria-label="Workflow runs" tabindex="0">
+        <table class="w-full min-w-[880px] text-left border-collapse text-xs">
           <thead>
             <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/50 text-[11px] font-mono uppercase text-slate-500 sticky top-0">
               <th class="py-2.5 px-4 font-semibold">{{ $t('workflows.table.workflowId') }}</th>

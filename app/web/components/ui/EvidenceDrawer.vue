@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SourceCitation } from '~/features/interviews/models/interview.model'
+import { formatDisplayDate } from '~/utils/date'
 
 interface Props {
   isOpen: boolean
@@ -76,7 +77,7 @@ onUnmounted(() => {
               <div>
                 <span class="text-slate-400 block text-[10px]">Retrieved</span>
                 <span class="text-slate-700 dark:text-slate-300">
-                  {{ citation.retrieved_at ? new Date(citation.retrieved_at).toLocaleDateString() : 'Recent' }}
+                  {{ citation.retrieved_at ? formatDisplayDate(citation.retrieved_at) : 'Recent' }}
                 </span>
               </div>
             </div>

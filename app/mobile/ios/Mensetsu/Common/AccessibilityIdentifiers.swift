@@ -1,6 +1,4 @@
 
-import Foundation
-
 public enum AccessibilityID {
     public static let serverSetupScreen = "server_setup_screen"
     public static let inputServerUrl = "input_server_url"
@@ -10,7 +8,6 @@ public enum AccessibilityID {
     public static let settingsServerUrlInput = "settings_input_server_url"
     public static let settingsSaveServerUrlButton = "settings_button_save_server_url"
     public static let openServerSettingsButton = "open_server_settings_button"
-    public static let serverSettingsSheet = "server_settings_sheet"
 
     public static let authScreen = "auth_screen"
     public static let authModeSegment = "auth_mode_segment"
@@ -34,9 +31,6 @@ public enum AccessibilityID {
     public static let workspaceErrorBanner = "workspace_error_banner"
     public static let workspaceList = "workspace_list"
     public static let workspaceFilterSegment = "workspace_filter_segment"
-    public static let filterAll = "workspace_filter_all"
-    public static let filterReady = "workspace_filter_ready"
-    public static let filterProcessing = "workspace_filter_processing"
     public static let openCreateWorkspaceButton = "open_create_workspace_button"
     public static let openSettingsButton = "open_settings_button"
     public static let logoutButton = "logout_button"

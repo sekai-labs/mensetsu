@@ -9,11 +9,13 @@ from src.agents.model_router import (
 from src.agents.schemas import WorkflowRoutingDecision
 from src.agents.workflow_router import route_workflow_request
 from src.contracts.v1 import Artifact, EvidenceProvenance, WorkflowTask
-from src.orchestration.hybrid_workflow import (
-    HybridWorkflowState,
+from src.orchestration.hybrid_support import (
     _persist_hybrid_outputs,
     _question_batch_plan,
     _task_failed_payload,
+)
+from src.orchestration.hybrid_workflow import (
+    HybridWorkflowState,
     build_hybrid_workflow,
 )
 
@@ -233,7 +235,7 @@ async def test_hybrid_curriculum_generates_one_lesson_per_prioritized_skill():
     mock_ledger.append_event_transactional = AsyncMock()
     mock_ledger.save_task = AsyncMock()
     mock_ledger.list_artifacts_for_run = AsyncMock(return_value=[])
-    from src.orchestration.hybrid_workflow import execute_curriculum_node
+    from src.orchestration.hybrid_curriculum import execute_curriculum_node
 
     state = HybridWorkflowState(
         run_id="run_test_curr_123",

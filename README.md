@@ -1,14 +1,12 @@
 # Mensetsu (面接)
 
-[![Container images pipeline](https://github.com/sekai-labs/mensetsu/actions/workflows/images.yml/badge.svg?branch=main)](https://github.com/sekai-labs/mensetsu/actions/workflows/images.yml) [![Native clients pipeline](https://github.com/sekai-labs/mensetsu/actions/workflows/native-clients.yml/badge.svg?branch=main)](https://github.com/sekai-labs/mensetsu/actions/workflows/native-clients.yml)
+![Container images pipeline](https://github.com/sekai-labs/mensetsu/actions/workflows/images.yml/badge.svg?branch=main) ![Native clients pipeline](https://github.com/sekai-labs/mensetsu/actions/workflows/native-clients.yml/badge.svg?branch=main)
 
-[![Rust API](https://img.shields.io/badge/API-Rust-555555?logo=rust&logoColor=white)](server/api) [![Python worker](https://img.shields.io/badge/Worker-Python-555555?logo=python&logoColor=white)](server/intelligence) [![Nuxt web](https://img.shields.io/badge/Web-Nuxt-555555?logo=nuxt&logoColor=white)](app/web) [![SurrealDB](https://img.shields.io/badge/Data-SurrealDB-555555)](docker-compose.yml) [![Redis](https://img.shields.io/badge/Jobs-Redis-555555?logo=redis&logoColor=white)](docker-compose.yml)
+![Rust API](https://img.shields.io/badge/API-Rust-555555?logo=rust&logoColor=white) ![Python worker](https://img.shields.io/badge/Worker-Python-555555?logo=python&logoColor=white) ![Nuxt web](https://img.shields.io/badge/Web-Nuxt-555555?logo=nuxt&logoColor=white) ![SurrealDB](https://img.shields.io/badge/Data-SurrealDB-555555) ![Redis](https://img.shields.io/badge/Jobs-Redis-555555?logo=redis&logoColor=white)
 
 **Self-hosted, evidence-backed preparation for technical interviews.** Mensetsu brings a résumé, a target role, and company research into one workspace. It connects claims to sources, highlights experience gaps, and turns those gaps into a learning path and interview practice.
 
 The web app and five native clients connect to a Rust API; a separate Python worker runs research and analysis. You deploy the services and control where candidate data is stored.
-
-Workflows are versioned in the [Codeberg source](https://codeberg.org/sekai-labs/mensetsu) and run on the GitHub mirror; badges show the latest GitHub `main` builds.
 
 ## What you can do
 
@@ -25,20 +23,25 @@ AI-generated material can be wrong. Check important claims against their cited s
 **Requirements:** Docker Engine with Compose v2 and credentials for an OpenAI-compatible model endpoint. The supplied Compose configuration is for local development, **not** an internet-facing production deployment.
 
 1. Create a local configuration file:
-
    ```bash
-   cp .env.example .env
+    cp .env.example .env
    ```
 
-2. Edit `.env`. Set unique values for `JWT_SECRET`, `ENCRYPTION_KEY`, `INTERNAL_SERVICE_TOKEN`, and `SEARXNG_SECRET`. Set `LLM_OPENAI_BASE_URL`, `LLM_OPENAI_API_KEY`, and `LLM_DEFAULT_MODEL` for the model you intend to use. The worker refuses to start without the model base URL and key. The template's MinIO credentials are development defaults; replace them for any shared deployment.
+   
+2. Generate independent secrets and place them in `.env`:
+   ```bash
+    printf 'JWT_SECRET=%s\n' "$(openssl rand -hex 32)"
+    printf 'ENCRYPTION_KEY=%s\n' "$(openssl rand -hex 32)"
+   ```
 
+    Copy each command's output into its corresponding `.env` entry; do not reuse either secret. Set a unique `INTERNAL_SERVICE_TOKEN` and `SEARXNG_SECRET` too. Set `LLM_OPENAI_BASE_URL`, `LLM_OPENAI_API_KEY`, and `LLM_DEFAULT_MODEL` for the model you intend to use. The worker refuses to start without the model base URL and key. The template's MinIO credentials are development defaults; replace them for any shared deployment.
 3. Build and start the services:
-
    ```bash
-   docker compose up -d --build
+    docker compose up -d --build
    ```
 
-4. Open **http://localhost:3001** and complete the first-run administrator setup. The API health check is **http://localhost:3000/health/live**. If a service does not start, inspect it with `docker compose ps` and `docker compose logs <service>`.
+   
+4. Open [**http://localhost:3001**](http://localhost:3001) and create the first administrator through **POST `/api/v1/setup/initialize`**. The API health check is [**http://localhost:3000/health/live**](http://localhost:3000/health/live). If a service does not start, inspect it with `docker compose ps` and `docker compose logs <service>`.
 
 Stop the stack with `docker compose down`. Do **not** add `-v` unless you intend to delete the database, Redis, and object-storage volumes.
 
@@ -54,11 +57,13 @@ PDF uploads use short-lived signed URLs to private S3-compatible storage. Set `S
 
 Android, iOS, Linux, macOS, and Windows clients are in [`app/mobile`](app/mobile) and [`app/desktop`](app/desktop). On first launch, enter the **Rust API origin**, for example `https://api.example.org`—not the web app URL or an `/api/v1` path. Remote servers require HTTPS; loopback HTTP is for local development. `localhost` on a phone or another computer refers to that device, not your server. You can change servers from settings or the sign-in screen; switching signs out the current session.
 
-| Platform | Source | Build requirements |
-| --- | --- | --- |
-| Android | [`app/mobile/android`](app/mobile/android) | JDK 17, Android SDK 34, Gradle |
-| iOS | [`app/mobile/ios`](app/mobile/ios) | Xcode on macOS |
-| Desktop (Linux, macOS, Windows) | [`app/desktop`](app/desktop) | Rust, platform webview (WebKitGTK on Linux, WebView2 on Windows, WebKit on macOS) |
+
+| Platform                        | Source                                     | Build requirements                                                                |
+| ------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------- |
+| Android                         | [`app/mobile/android`](app/mobile/android) | JDK 17, Android SDK 34, Gradle                                                    |
+| iOS                             | [`app/mobile/ios`](app/mobile/ios)         | Xcode on macOS                                                                    |
+| Desktop (Linux, macOS, Windows) | [`app/desktop`](app/desktop)               | Rust, platform webview (WebKitGTK on Linux, WebView2 on Windows, WebKit on macOS) |
+
 
 Native-client workflow runs upload GitHub Actions artifacts. Pushing a `v*` tag runs the release workflow and publishes packaged preview assets on a GitHub prerelease; the builds are unsigned (iOS is simulator-only).
 
@@ -66,13 +71,15 @@ Apple distribution builds require your own signing and provisioning. Native buil
 
 ## Architecture
 
-| Component | Responsibility |
-| --- | --- |
-| [`app/web`](app/web) | Nuxt web UI; proxies API requests and manages browser sessions |
-| [`server/api`](server/api) | Rust API; identity, authorization, workspaces, storage access, and OpenAPI |
-| [`server/intelligence`](server/intelligence) | Python intelligence service and worker; research and analysis |
-| [`contracts`](contracts) | REST/OpenAPI and internal gRPC contracts; generated client code |
-| SurrealDB, Redis, SearXNG, S3-compatible storage | Workspace data, job coordination, web search, and private PDF objects |
+
+| Component                                        | Responsibility                                                             |
+| ------------------------------------------------ | -------------------------------------------------------------------------- |
+| [`app/web`](app/web)                             | Nuxt web UI; proxies API requests and manages browser sessions             |
+| [`server/api`](server/api)                       | Rust API; identity, authorization, workspaces, storage access, and OpenAPI |
+| [`server/intelligence`](server/intelligence)     | Python intelligence service and worker; research and analysis              |
+| [`contracts`](contracts)                         | REST/OpenAPI and internal gRPC contracts; generated client code            |
+| SurrealDB, Redis, SearXNG, S3-compatible storage | Workspace data, job coordination, web search, and private PDF objects      |
+
 
 The [architecture overview](docs/architecture/system-overview.md) covers service communication and workflow execution.
 

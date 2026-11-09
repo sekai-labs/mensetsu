@@ -19,6 +19,7 @@ message CreateRunCommand {
   optional string workflow_mode = 14;
   optional string llm_config_json = 15;
   optional string resume_upload_id = 16;
+  optional string idempotency_key = 17;
 }
 
 message ResumePlanCommand {

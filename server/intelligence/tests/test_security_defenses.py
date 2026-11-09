@@ -1,3 +1,5 @@
+import socket
+
 import pytest
 
 from src.extractor.models import PromptInjectionDefense
@@ -24,6 +26,41 @@ def test_ssrf_rejects_private_192_network():
     with pytest.raises(SSRFSecurityError):
         validate_url_for_ssrf("http://192.168.1.1/admin")
 
+def test_ssrf_rejects_ipv4_mapped_private_address(monkeypatch):
+    monkeypatch.setattr(
+        "src.fetcher.ssrf_client.socket.getaddrinfo",
+        lambda *_args, **_kwargs: [
+            (
+                socket.AF_INET6,
+                socket.SOCK_STREAM,
+                socket.IPPROTO_TCP,
+                "",
+                ("::ffff:169.254.169.254", 443, 0, 0),
+            )
+        ],
+    )
+
+    with pytest.raises(SSRFSecurityError):
+        validate_url_for_ssrf("https://company.example.com")
+
+
+
+@pytest.mark.parametrize(
+    "address",
+    ["224.0.0.1", "255.255.255.255", "192.0.2.1", "ff02::1"],
+)
+def test_ssrf_rejects_non_global_reserved_addresses(monkeypatch, address):
+    family = socket.AF_INET6 if ":" in address else socket.AF_INET
+    monkeypatch.setattr(
+        "src.fetcher.ssrf_client.socket.getaddrinfo",
+        lambda _host, port, **_kwargs: [
+            (family, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", (address, port, 0, 0)
+             if family == socket.AF_INET6 else (address, port))
+        ],
+    )
+
+    with pytest.raises(SSRFSecurityError, match="non-global"):
+        validate_url_for_ssrf("https://company.example.com")
 
 def test_prompt_injection_redaction():
     adversarial_cv = (

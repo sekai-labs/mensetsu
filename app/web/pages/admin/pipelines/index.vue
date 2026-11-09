@@ -33,7 +33,7 @@ const { data: pipelinesData } = await useAsyncData('admin-pipelines', () => list
       No pipeline execution records found.
     </div>
 
-    <div v-else class="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
+    <div v-else class="divide-y divide-slate-100 overflow-x-hidden overflow-y-auto overscroll-contain max-h-[min(36rem,calc(100vh_-_22rem))] rounded-lg border border-slate-200 bg-white shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900" role="region" aria-label="Pipeline executions" tabindex="0">
       <div
         v-for="pipe in pipelinesData.pipelines"
         :key="pipe.workspace_id"

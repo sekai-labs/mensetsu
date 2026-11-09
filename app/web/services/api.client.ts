@@ -42,22 +42,51 @@ export const useApiClient = () => {
       return res._data as unknown as T
     } catch (err: unknown) {
       if (err && typeof err === 'object') {
+        const errorResponse = 'response' in err && err.response && typeof err.response === 'object'
+          ? err.response as { status?: number; _data?: unknown }
+          : undefined
         const statusCode = (('statusCode' in err ? err.statusCode : undefined) ||
           ('status' in err ? err.status : undefined) ||
+          errorResponse?.status ||
           500) as number
         let message = 'An unexpected API error occurred'
         let data: unknown = undefined
 
-        if ('data' in err && err.data) {
-          data = err.data
-          if (typeof err.data === 'object' && 'error' in err.data && err.data.error) {
-            const errData = err.data.error
-            if (typeof errData === 'object' && 'message' in errData && typeof errData.message === 'string') {
-              message = errData.message
+        const findUsefulMessage = (value: unknown): string | undefined => {
+          if (!value || typeof value !== 'object') {
+            return undefined
+          }
+
+          const errorData = value as Record<string, unknown>
+          for (const key of ['error', 'data']) {
+            const nestedMessage = findUsefulMessage(errorData[key])
+            if (nestedMessage) {
+              return nestedMessage
             }
           }
-        } else if ('message' in err && typeof err.message === 'string') {
+
+          if (typeof errorData.message === 'string' &&
+            !['An unexpected API error occurred', 'Proxy request failed', 'Forbidden'].includes(errorData.message)) {
+            return errorData.message
+          }
+
+          return undefined
+        }
+
+        const errorData = ('data' in err && err.data) || errorResponse?._data
+        if (errorData) {
+          data = errorData
+          const dataMessage = findUsefulMessage(errorData)
+          if (dataMessage) {
+            message = dataMessage
+          }
+        } else if ('message' in err && typeof err.message === 'string' &&
+          !['An unexpected API error occurred', 'Proxy request failed', 'Forbidden'].includes(err.message)) {
           message = err.message
+        }
+
+        if (statusCode === 403 && message === 'An unexpected API error occurred') {
+          message = 'You do not have permission to access this resource.'
         }
 
         throw new ApiError(message, statusCode, data)

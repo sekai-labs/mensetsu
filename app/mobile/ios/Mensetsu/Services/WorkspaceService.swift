@@ -14,6 +14,7 @@ public protocol WorkspaceServiceProtocol {
     func toggleLearningUnit(id: String, lessonId: String) async throws
     func getLlmSettings() async throws -> [LlmConfigItemDto]
     func updateLlmSetting(provider: String, apiKey: String, isShared: Bool) async throws -> LlmConfigItemDto
+    func getTokenUsage(cursor: TokenUsageCursorDto?) async throws -> TokenUsageResponseDto
 }
 
 public final class WorkspaceService: WorkspaceServiceProtocol {
@@ -283,6 +284,24 @@ public final class WorkspaceService: WorkspaceServiceProtocol {
                         return
                     }
                     continuation.resume(returning: updated)
+                }
+            }
+        }
+    }
+    public func getTokenUsage(cursor: TokenUsageCursorDto?) async throws -> TokenUsageResponseDto {
+        return try await client.executeWithAuthRetry { _ in
+            try await withCheckedThrowingContinuation { continuation in
+                TokenUsageAPI.userTokenUsage(
+                    beforeTimestamp: cursor?.beforeTimestamp,
+                    beforeEventId: cursor?.beforeEventId
+                ) { response, error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else if let response = response {
+                        continuation.resume(returning: response)
+                    } else {
+                        continuation.resume(throwing: APIError.invalidResponse)
+                    }
                 }
             }
         }

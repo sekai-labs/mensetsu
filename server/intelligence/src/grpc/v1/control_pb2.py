@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rcontrol.proto\x12\x13mensetsu.control.v1\"\xf8\x03\n\x10\x43reateRunCommand\x12\x14\n\x0cworkspace_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12\x13\n\x0bworkflow_id\x18\x03 \x01(\t\x12\x14\n\x0c\x63ompany_name\x18\x04 \x01(\t\x12\x12\n\nrole_title\x18\x05 \x01(\t\x12\x14\n\x0c\x63ompany_urls\x18\x06 \x03(\t\x12\x13\n\x0bresume_text\x18\x07 \x01(\t\x12\x1c\n\x0fresume_filename\x18\t \x01(\tH\x00\x88\x01\x01\x12\x17\n\x0fjob_description\x18\n \x01(\t\x12\x13\n\x06jd_url\x18\x0b \x01(\tH\x01\x88\x01\x01\x12\x16\n\tseniority\x18\x0c \x01(\tH\x02\x88\x01\x01\x12\x18\n\x0buser_prompt\x18\r \x01(\tH\x03\x88\x01\x01\x12\x1a\n\rworkflow_mode\x18\x0e \x01(\tH\x04\x88\x01\x01\x12\x1c\n\x0fllm_config_json\x18\x0f \x01(\tH\x05\x88\x01\x01\x12\x1d\n\x10resume_upload_id\x18\x10 \x01(\tH\x06\x88\x01\x01\x42\x12\n\x10_resume_filenameB\t\n\x07_jd_urlB\x0c\n\n_seniorityB\x0e\n\x0c_user_promptB\x10\n\x0e_workflow_modeB\x12\n\x10_llm_config_jsonB\x13\n\x11_resume_upload_idJ\x04\x08\x08\x10\t\"3\n\x11ResumePlanCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x0e\n\x06prompt\x18\x02 \x01(\t\"\x16\n\x14ListWorkflowsCommand\"\xc1\x01\n\x0fListRunsCommand\x12\x0f\n\x07run_ids\x18\x01 \x03(\t\x12\x19\n\x0cworkspace_id\x18\x02 \x01(\tH\x00\x88\x01\x01\x12\x13\n\x06status\x18\x03 \x01(\tH\x01\x88\x01\x01\x12\x15\n\x08run_type\x18\x04 \x01(\tH\x02\x88\x01\x01\x12\r\n\x05limit\x18\x05 \x01(\r\x12\x13\n\x06\x63ursor\x18\x06 \x01(\tH\x03\x88\x01\x01\x42\x0f\n\r_workspace_idB\t\n\x07_statusB\x0b\n\t_run_typeB\t\n\x07_cursor\"\x1f\n\rGetRunCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"\"\n\x10\x43\x61ncelRunCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"1\n\x0eGetTaskCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x0f\n\x07task_id\x18\x02 \x01(\t\"#\n\x11ListAgentsCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"7\n\x0fGetAgentCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x14\n\x0c\x65xecution_id\x18\x02 \x01(\t\"l\n\x15ListAgentToolsCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x14\n\x0c\x65xecution_id\x18\x02 \x01(\t\x12\x13\n\x06\x63ursor\x18\x03 \x01(\tH\x00\x88\x01\x01\x12\r\n\x05limit\x18\x04 \x01(\rB\t\n\x07_cursor\"a\n\x14GetToolOutputCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x1a\n\x12tool_invocation_id\x18\x02 \x01(\t\x12\x0e\n\x06offset\x18\x03 \x01(\r\x12\r\n\x05limit\x18\x04 \x01(\r\"(\n\x16ListDelegationsCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"&\n\x14ListArtifactsCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"\xc1\x01\n\x0eGetLogsCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x13\n\x06\x63ursor\x18\x02 \x01(\tH\x00\x88\x01\x01\x12\r\n\x05limit\x18\x03 \x01(\r\x12\x15\n\x08severity\x18\x04 \x01(\tH\x01\x88\x01\x01\x12\x14\n\x07task_id\x18\x05 \x01(\tH\x02\x88\x01\x01\x12\x19\n\x0c\x65xecution_id\x18\x06 \x01(\tH\x03\x88\x01\x01\x42\t\n\x07_cursorB\x0b\n\t_severityB\n\n\x08_task_idB\x0f\n\r_execution_id\"%\n\x13GetTaskGraphCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"+\n\x19GetDelegationGraphCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"K\n\x17GetEventsHistoryCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x11\n\tafter_seq\x18\x02 \x01(\x03\x12\r\n\x05limit\x18\x03 \x01(\r\"\'\n\x12PingControlCommand\x12\x11\n\ttimestamp\x18\x01 \x01(\x03\"\xc4\t\n\x0e\x43ontrolCommand\x12\x16\n\x0e\x63orrelation_id\x18\x01 \x01(\t\x12;\n\ncreate_run\x18\x02 \x01(\x0b\x32%.mensetsu.control.v1.CreateRunCommandH\x00\x12=\n\x0bresume_plan\x18\x03 \x01(\x0b\x32&.mensetsu.control.v1.ResumePlanCommandH\x00\x12\x43\n\x0elist_workflows\x18\x04 \x01(\x0b\x32).mensetsu.control.v1.ListWorkflowsCommandH\x00\x12\x39\n\tlist_runs\x18\x05 \x01(\x0b\x32$.mensetsu.control.v1.ListRunsCommandH\x00\x12\x35\n\x07get_run\x18\x06 \x01(\x0b\x32\".mensetsu.control.v1.GetRunCommandH\x00\x12;\n\ncancel_run\x18\x07 \x01(\x0b\x32%.mensetsu.control.v1.CancelRunCommandH\x00\x12\x37\n\x08get_task\x18\x08 \x01(\x0b\x32#.mensetsu.control.v1.GetTaskCommandH\x00\x12=\n\x0blist_agents\x18\t \x01(\x0b\x32&.mensetsu.control.v1.ListAgentsCommandH\x00\x12\x39\n\tget_agent\x18\n \x01(\x0b\x32$.mensetsu.control.v1.GetAgentCommandH\x00\x12\x46\n\x10list_agent_tools\x18\x0b \x01(\x0b\x32*.mensetsu.control.v1.ListAgentToolsCommandH\x00\x12\x44\n\x0fget_tool_output\x18\x0c \x01(\x0b\x32).mensetsu.control.v1.GetToolOutputCommandH\x00\x12G\n\x10list_delegations\x18\r \x01(\x0b\x32+.mensetsu.control.v1.ListDelegationsCommandH\x00\x12\x43\n\x0elist_artifacts\x18\x0e \x01(\x0b\x32).mensetsu.control.v1.ListArtifactsCommandH\x00\x12\x37\n\x08get_logs\x18\x0f \x01(\x0b\x32#.mensetsu.control.v1.GetLogsCommandH\x00\x12\x42\n\x0eget_task_graph\x18\x10 \x01(\x0b\x32(.mensetsu.control.v1.GetTaskGraphCommandH\x00\x12N\n\x14get_delegation_graph\x18\x11 \x01(\x0b\x32..mensetsu.control.v1.GetDelegationGraphCommandH\x00\x12J\n\x12get_events_history\x18\x12 \x01(\x0b\x32,.mensetsu.control.v1.GetEventsHistoryCommandH\x00\x12\x37\n\x04ping\x18\x13 \x01(\x0b\x32\'.mensetsu.control.v1.PingControlCommandH\x00\x42\t\n\x07\x63ommand\"\x9f\x01\n\x13\x43ontrolDataEnvelope\x12\x16\n\x0e\x63orrelation_id\x18\x01 \x01(\t\x12\x13\n\x0bstatus_code\x18\x02 \x01(\r\x12\x15\n\rerror_message\x18\x03 \x01(\t\x12\x18\n\x10is_end_of_stream\x18\x04 \x01(\x08\x12\x14\n\x0cpayload_json\x18\x05 \x01(\t\x12\x14\n\x0c\x62inary_chunk\x18\x06 \x01(\x0c\x32x\n\x12\x44\x61taControlService\x12\x62\n\rStreamControl\x12#.mensetsu.control.v1.ControlCommand\x1a(.mensetsu.control.v1.ControlDataEnvelope(\x01\x30\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rcontrol.proto\x12\x13mensetsu.control.v1\"\xaa\x04\n\x10\x43reateRunCommand\x12\x14\n\x0cworkspace_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12\x13\n\x0bworkflow_id\x18\x03 \x01(\t\x12\x14\n\x0c\x63ompany_name\x18\x04 \x01(\t\x12\x12\n\nrole_title\x18\x05 \x01(\t\x12\x14\n\x0c\x63ompany_urls\x18\x06 \x03(\t\x12\x13\n\x0bresume_text\x18\x07 \x01(\t\x12\x1c\n\x0fresume_filename\x18\t \x01(\tH\x00\x88\x01\x01\x12\x17\n\x0fjob_description\x18\n \x01(\t\x12\x13\n\x06jd_url\x18\x0b \x01(\tH\x01\x88\x01\x01\x12\x16\n\tseniority\x18\x0c \x01(\tH\x02\x88\x01\x01\x12\x18\n\x0buser_prompt\x18\r \x01(\tH\x03\x88\x01\x01\x12\x1a\n\rworkflow_mode\x18\x0e \x01(\tH\x04\x88\x01\x01\x12\x1c\n\x0fllm_config_json\x18\x0f \x01(\tH\x05\x88\x01\x01\x12\x1d\n\x10resume_upload_id\x18\x10 \x01(\tH\x06\x88\x01\x01\x12\x1c\n\x0fidempotency_key\x18\x11 \x01(\tH\x07\x88\x01\x01\x42\x12\n\x10_resume_filenameB\t\n\x07_jd_urlB\x0c\n\n_seniorityB\x0e\n\x0c_user_promptB\x10\n\x0e_workflow_modeB\x12\n\x10_llm_config_jsonB\x13\n\x11_resume_upload_idB\x12\n\x10_idempotency_keyJ\x04\x08\x08\x10\t\"3\n\x11ResumePlanCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x0e\n\x06prompt\x18\x02 \x01(\t\"\x16\n\x14ListWorkflowsCommand\"\xc1\x01\n\x0fListRunsCommand\x12\x0f\n\x07run_ids\x18\x01 \x03(\t\x12\x19\n\x0cworkspace_id\x18\x02 \x01(\tH\x00\x88\x01\x01\x12\x13\n\x06status\x18\x03 \x01(\tH\x01\x88\x01\x01\x12\x15\n\x08run_type\x18\x04 \x01(\tH\x02\x88\x01\x01\x12\r\n\x05limit\x18\x05 \x01(\r\x12\x13\n\x06\x63ursor\x18\x06 \x01(\tH\x03\x88\x01\x01\x42\x0f\n\r_workspace_idB\t\n\x07_statusB\x0b\n\t_run_typeB\t\n\x07_cursor\"\x1f\n\rGetRunCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"\"\n\x10\x43\x61ncelRunCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"1\n\x0eGetTaskCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x0f\n\x07task_id\x18\x02 \x01(\t\"#\n\x11ListAgentsCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"7\n\x0fGetAgentCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x14\n\x0c\x65xecution_id\x18\x02 \x01(\t\"l\n\x15ListAgentToolsCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x14\n\x0c\x65xecution_id\x18\x02 \x01(\t\x12\x13\n\x06\x63ursor\x18\x03 \x01(\tH\x00\x88\x01\x01\x12\r\n\x05limit\x18\x04 \x01(\rB\t\n\x07_cursor\"a\n\x14GetToolOutputCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x1a\n\x12tool_invocation_id\x18\x02 \x01(\t\x12\x0e\n\x06offset\x18\x03 \x01(\r\x12\r\n\x05limit\x18\x04 \x01(\r\"(\n\x16ListDelegationsCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"&\n\x14ListArtifactsCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"\xc1\x01\n\x0eGetLogsCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x13\n\x06\x63ursor\x18\x02 \x01(\tH\x00\x88\x01\x01\x12\r\n\x05limit\x18\x03 \x01(\r\x12\x15\n\x08severity\x18\x04 \x01(\tH\x01\x88\x01\x01\x12\x14\n\x07task_id\x18\x05 \x01(\tH\x02\x88\x01\x01\x12\x19\n\x0c\x65xecution_id\x18\x06 \x01(\tH\x03\x88\x01\x01\x42\t\n\x07_cursorB\x0b\n\t_severityB\n\n\x08_task_idB\x0f\n\r_execution_id\"%\n\x13GetTaskGraphCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"+\n\x19GetDelegationGraphCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\"K\n\x17GetEventsHistoryCommand\x12\x0e\n\x06run_id\x18\x01 \x01(\t\x12\x11\n\tafter_seq\x18\x02 \x01(\x03\x12\r\n\x05limit\x18\x03 \x01(\r\"\'\n\x12PingControlCommand\x12\x11\n\ttimestamp\x18\x01 \x01(\x03\"\xc4\t\n\x0e\x43ontrolCommand\x12\x16\n\x0e\x63orrelation_id\x18\x01 \x01(\t\x12;\n\ncreate_run\x18\x02 \x01(\x0b\x32%.mensetsu.control.v1.CreateRunCommandH\x00\x12=\n\x0bresume_plan\x18\x03 \x01(\x0b\x32&.mensetsu.control.v1.ResumePlanCommandH\x00\x12\x43\n\x0elist_workflows\x18\x04 \x01(\x0b\x32).mensetsu.control.v1.ListWorkflowsCommandH\x00\x12\x39\n\tlist_runs\x18\x05 \x01(\x0b\x32$.mensetsu.control.v1.ListRunsCommandH\x00\x12\x35\n\x07get_run\x18\x06 \x01(\x0b\x32\".mensetsu.control.v1.GetRunCommandH\x00\x12;\n\ncancel_run\x18\x07 \x01(\x0b\x32%.mensetsu.control.v1.CancelRunCommandH\x00\x12\x37\n\x08get_task\x18\x08 \x01(\x0b\x32#.mensetsu.control.v1.GetTaskCommandH\x00\x12=\n\x0blist_agents\x18\t \x01(\x0b\x32&.mensetsu.control.v1.ListAgentsCommandH\x00\x12\x39\n\tget_agent\x18\n \x01(\x0b\x32$.mensetsu.control.v1.GetAgentCommandH\x00\x12\x46\n\x10list_agent_tools\x18\x0b \x01(\x0b\x32*.mensetsu.control.v1.ListAgentToolsCommandH\x00\x12\x44\n\x0fget_tool_output\x18\x0c \x01(\x0b\x32).mensetsu.control.v1.GetToolOutputCommandH\x00\x12G\n\x10list_delegations\x18\r \x01(\x0b\x32+.mensetsu.control.v1.ListDelegationsCommandH\x00\x12\x43\n\x0elist_artifacts\x18\x0e \x01(\x0b\x32).mensetsu.control.v1.ListArtifactsCommandH\x00\x12\x37\n\x08get_logs\x18\x0f \x01(\x0b\x32#.mensetsu.control.v1.GetLogsCommandH\x00\x12\x42\n\x0eget_task_graph\x18\x10 \x01(\x0b\x32(.mensetsu.control.v1.GetTaskGraphCommandH\x00\x12N\n\x14get_delegation_graph\x18\x11 \x01(\x0b\x32..mensetsu.control.v1.GetDelegationGraphCommandH\x00\x12J\n\x12get_events_history\x18\x12 \x01(\x0b\x32,.mensetsu.control.v1.GetEventsHistoryCommandH\x00\x12\x37\n\x04ping\x18\x13 \x01(\x0b\x32\'.mensetsu.control.v1.PingControlCommandH\x00\x42\t\n\x07\x63ommand\"\x9f\x01\n\x13\x43ontrolDataEnvelope\x12\x16\n\x0e\x63orrelation_id\x18\x01 \x01(\t\x12\x13\n\x0bstatus_code\x18\x02 \x01(\r\x12\x15\n\rerror_message\x18\x03 \x01(\t\x12\x18\n\x10is_end_of_stream\x18\x04 \x01(\x08\x12\x14\n\x0cpayload_json\x18\x05 \x01(\t\x12\x14\n\x0c\x62inary_chunk\x18\x06 \x01(\x0c\x32x\n\x12\x44\x61taControlService\x12\x62\n\rStreamControl\x12#.mensetsu.control.v1.ControlCommand\x1a(.mensetsu.control.v1.ControlDataEnvelope(\x01\x30\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,45 +32,45 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'control_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_CREATERUNCOMMAND']._serialized_start=39
-  _globals['_CREATERUNCOMMAND']._serialized_end=543
-  _globals['_RESUMEPLANCOMMAND']._serialized_start=545
-  _globals['_RESUMEPLANCOMMAND']._serialized_end=596
-  _globals['_LISTWORKFLOWSCOMMAND']._serialized_start=598
-  _globals['_LISTWORKFLOWSCOMMAND']._serialized_end=620
-  _globals['_LISTRUNSCOMMAND']._serialized_start=623
-  _globals['_LISTRUNSCOMMAND']._serialized_end=816
-  _globals['_GETRUNCOMMAND']._serialized_start=818
-  _globals['_GETRUNCOMMAND']._serialized_end=849
-  _globals['_CANCELRUNCOMMAND']._serialized_start=851
-  _globals['_CANCELRUNCOMMAND']._serialized_end=885
-  _globals['_GETTASKCOMMAND']._serialized_start=887
-  _globals['_GETTASKCOMMAND']._serialized_end=936
-  _globals['_LISTAGENTSCOMMAND']._serialized_start=938
-  _globals['_LISTAGENTSCOMMAND']._serialized_end=973
-  _globals['_GETAGENTCOMMAND']._serialized_start=975
-  _globals['_GETAGENTCOMMAND']._serialized_end=1030
-  _globals['_LISTAGENTTOOLSCOMMAND']._serialized_start=1032
-  _globals['_LISTAGENTTOOLSCOMMAND']._serialized_end=1140
-  _globals['_GETTOOLOUTPUTCOMMAND']._serialized_start=1142
-  _globals['_GETTOOLOUTPUTCOMMAND']._serialized_end=1239
-  _globals['_LISTDELEGATIONSCOMMAND']._serialized_start=1241
-  _globals['_LISTDELEGATIONSCOMMAND']._serialized_end=1281
-  _globals['_LISTARTIFACTSCOMMAND']._serialized_start=1283
-  _globals['_LISTARTIFACTSCOMMAND']._serialized_end=1321
-  _globals['_GETLOGSCOMMAND']._serialized_start=1324
-  _globals['_GETLOGSCOMMAND']._serialized_end=1517
-  _globals['_GETTASKGRAPHCOMMAND']._serialized_start=1519
-  _globals['_GETTASKGRAPHCOMMAND']._serialized_end=1556
-  _globals['_GETDELEGATIONGRAPHCOMMAND']._serialized_start=1558
-  _globals['_GETDELEGATIONGRAPHCOMMAND']._serialized_end=1601
-  _globals['_GETEVENTSHISTORYCOMMAND']._serialized_start=1603
-  _globals['_GETEVENTSHISTORYCOMMAND']._serialized_end=1678
-  _globals['_PINGCONTROLCOMMAND']._serialized_start=1680
-  _globals['_PINGCONTROLCOMMAND']._serialized_end=1719
-  _globals['_CONTROLCOMMAND']._serialized_start=1722
-  _globals['_CONTROLCOMMAND']._serialized_end=2942
-  _globals['_CONTROLDATAENVELOPE']._serialized_start=2945
-  _globals['_CONTROLDATAENVELOPE']._serialized_end=3104
-  _globals['_DATACONTROLSERVICE']._serialized_start=3106
-  _globals['_DATACONTROLSERVICE']._serialized_end=3226
+  _globals['_CREATERUNCOMMAND']._serialized_end=593
+  _globals['_RESUMEPLANCOMMAND']._serialized_start=595
+  _globals['_RESUMEPLANCOMMAND']._serialized_end=646
+  _globals['_LISTWORKFLOWSCOMMAND']._serialized_start=648
+  _globals['_LISTWORKFLOWSCOMMAND']._serialized_end=670
+  _globals['_LISTRUNSCOMMAND']._serialized_start=673
+  _globals['_LISTRUNSCOMMAND']._serialized_end=866
+  _globals['_GETRUNCOMMAND']._serialized_start=868
+  _globals['_GETRUNCOMMAND']._serialized_end=899
+  _globals['_CANCELRUNCOMMAND']._serialized_start=901
+  _globals['_CANCELRUNCOMMAND']._serialized_end=935
+  _globals['_GETTASKCOMMAND']._serialized_start=937
+  _globals['_GETTASKCOMMAND']._serialized_end=986
+  _globals['_LISTAGENTSCOMMAND']._serialized_start=988
+  _globals['_LISTAGENTSCOMMAND']._serialized_end=1023
+  _globals['_GETAGENTCOMMAND']._serialized_start=1025
+  _globals['_GETAGENTCOMMAND']._serialized_end=1080
+  _globals['_LISTAGENTTOOLSCOMMAND']._serialized_start=1082
+  _globals['_LISTAGENTTOOLSCOMMAND']._serialized_end=1190
+  _globals['_GETTOOLOUTPUTCOMMAND']._serialized_start=1192
+  _globals['_GETTOOLOUTPUTCOMMAND']._serialized_end=1289
+  _globals['_LISTDELEGATIONSCOMMAND']._serialized_start=1291
+  _globals['_LISTDELEGATIONSCOMMAND']._serialized_end=1331
+  _globals['_LISTARTIFACTSCOMMAND']._serialized_start=1333
+  _globals['_LISTARTIFACTSCOMMAND']._serialized_end=1371
+  _globals['_GETLOGSCOMMAND']._serialized_start=1374
+  _globals['_GETLOGSCOMMAND']._serialized_end=1567
+  _globals['_GETTASKGRAPHCOMMAND']._serialized_start=1569
+  _globals['_GETTASKGRAPHCOMMAND']._serialized_end=1606
+  _globals['_GETDELEGATIONGRAPHCOMMAND']._serialized_start=1608
+  _globals['_GETDELEGATIONGRAPHCOMMAND']._serialized_end=1651
+  _globals['_GETEVENTSHISTORYCOMMAND']._serialized_start=1653
+  _globals['_GETEVENTSHISTORYCOMMAND']._serialized_end=1728
+  _globals['_PINGCONTROLCOMMAND']._serialized_start=1730
+  _globals['_PINGCONTROLCOMMAND']._serialized_end=1769
+  _globals['_CONTROLCOMMAND']._serialized_start=1772
+  _globals['_CONTROLCOMMAND']._serialized_end=2992
+  _globals['_CONTROLDATAENVELOPE']._serialized_start=2995
+  _globals['_CONTROLDATAENVELOPE']._serialized_end=3154
+  _globals['_DATACONTROLSERVICE']._serialized_start=3156
+  _globals['_DATACONTROLSERVICE']._serialized_end=3276
 # @@protoc_insertion_point(module_scope)

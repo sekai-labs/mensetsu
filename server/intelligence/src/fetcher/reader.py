@@ -10,7 +10,12 @@ from urllib.parse import urlparse
 import httpx
 from bs4 import BeautifulSoup, NavigableString, Tag
 
-from src.fetcher.ssrf_client import SafeResearchFetcher, SSRFSecurityError, validate_url_for_ssrf
+from src.fetcher.ssrf_client import (
+    SafeResearchFetcher,
+    SSRFSecurityError,
+    fetch_limited_response,
+    validate_url_for_ssrf,
+)
 
 logger = logging.getLogger("mensetsu.reader")
 
@@ -171,43 +176,39 @@ class SafeReaderFetcher:
             ] = "success"
 
             try:
-                async with httpx.AsyncClient(
-                    timeout=self.timeout, follow_redirects=False
-                ) as client:
-                    current_url = url
-                    resp = None
-                    for _ in range(5):
-                        validate_url_for_ssrf(current_url)
-                        resp = await client.get(
-                            current_url,
-                            headers={
-                                "User-Agent": (
-                                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 MensetsuBot/2.0"
-                                ),
-                                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                            },
-                        )
-                        if resp.is_redirect:
-                            loc = resp.headers.get("Location")
-                            if not loc:
-                                break
-                            current_url = str(httpx.URL(current_url).join(loc))
-                            continue
-                        break
+                current_url = url
+                for _ in range(5):
+                    resp = await fetch_limited_response(
+                        current_url,
+                        timeout=self.timeout,
+                        headers={
+                            "User-Agent": (
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 MensetsuBot/2.0"
+                            ),
+                            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                        },
+                        max_bytes=5 * 1024 * 1024,
+                    )
+                    if resp.is_redirect:
+                        loc = resp.headers.get("Location")
+                        if not loc:
+                            break
+                        current_url = str(httpx.URL(current_url).join(loc))
+                        continue
+                    break
+                if resp is None:
+                    raise ValueError(f"Failed to fetch content from {url}")
 
-                    if resp is None:
-                        raise ValueError(f"Failed to fetch content from {url}")
+                canonical_url = current_url
+                if resp.status_code in [401, 403, 429]:
+                    access_status = "blocked_or_captcha"
+                elif resp.status_code == 404:
+                    access_status = "not_found"
+                elif resp.status_code >= 400:
+                    access_status = "error"
 
-                    canonical_url = current_url
-                    if resp.status_code in [401, 403, 429]:
-                        access_status = "blocked_or_captcha"
-                    elif resp.status_code == 404:
-                        access_status = "not_found"
-                    elif resp.status_code >= 400:
-                        access_status = "error"
-
-                    raw_html = resp.text
+                raw_html = resp.content.decode("utf-8", errors="replace")
             except SSRFSecurityError:
                 return FetchedDocument(
                     url=url,

@@ -1,6 +1,5 @@
 
 import SwiftUI
-import MensetsuContracts
 
 public struct ServerSetupView: View {
     @ObservedObject var authViewModel: AuthViewModel

@@ -5,6 +5,7 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use std::net::{IpAddr, SocketAddr};
 use utoipa::ToSchema;
 use validator::Validate;
 
@@ -508,6 +509,17 @@ pub async fn get_combined_providers(
     Ok(Json(result))
 }
 
+fn resolve_user_provider_key(
+    submitted_key: Option<&str>,
+    existing_key: Option<&str>,
+    crypto: &CryptoService,
+) -> Result<Option<String>> {
+    match submitted_key {
+        Some(raw) if !raw.trim().is_empty() => Ok(Some(crypto.encrypt(raw.trim())?)),
+        _ => Ok(existing_key.map(str::to_owned)),
+    }
+}
+
 #[utoipa::path(
     put,
     path = "/api/v1/settings/llm/providers",
@@ -524,13 +536,23 @@ pub async fn upsert_user_provider(
     let db = &state.db.client;
     let crypto = CryptoService::new(&state.config.encryption_key);
     let pkey = payload.provider_key.to_lowercase();
-
-    let enc_key = match payload.api_key.as_deref() {
-        Some(raw) if !raw.trim().is_empty() => Some(crypto.encrypt(raw.trim())?),
-        _ => None,
-    };
-
     let rec_id = format!("{}_{}", auth_user.user_id.0, pkey);
+
+    let mut existing_result = db
+        .query(
+            "SELECT encrypted_api_key FROM type::record('user_llm_provider', $id);",
+        )
+        .bind(("id", rec_id.as_str()))
+        .await
+        .map_err(|e| AppError::Database(format!("Failed to read user provider: {e}")))?;
+    let existing_records: Vec<serde_json::Value> = existing_result
+        .take(0)
+        .unwrap_or_default();
+    let existing_key = existing_records
+        .first()
+        .and_then(|record| record["encrypted_api_key"].as_str());
+    let enc_key = resolve_user_provider_key(payload.api_key.as_deref(), existing_key, &crypto)?;
+
     let query = "
         UPSERT type::record('user_llm_provider', $id) SET
             user_id = type::record('user', $uid),
@@ -633,6 +655,80 @@ pub async fn update_user_routing(
     Ok(StatusCode::OK)
 }
 
+fn is_blocked_model_ip(ip: IpAddr) -> bool {
+    match ip {
+        IpAddr::V4(ip) => {
+            let octets = ip.octets();
+            ip.is_private()
+                || ip.is_loopback()
+                || ip.is_link_local()
+                || ip.is_unspecified()
+                || ip.is_multicast()
+                || ip.is_broadcast()
+                || octets[0] == 0
+                || (octets[0] == 100 && (64..=127).contains(&octets[1]))
+                || (octets[0] == 192 && octets[1] == 0 && octets[2] == 0)
+                || (octets[0] == 192 && octets[1] == 0 && octets[2] == 2)
+                || (octets[0] == 198 && (octets[1] == 18 || octets[1] == 19))
+                || (octets[0] == 198 && octets[1] == 51 && octets[2] == 100)
+                || (octets[0] == 203 && octets[1] == 0 && octets[2] == 113)
+                || octets[0] >= 240
+        }
+        IpAddr::V6(ip) => {
+            let segments = ip.segments();
+            ip.is_loopback()
+                || ip.is_unspecified()
+                || ip.is_unique_local()
+                || ip.is_unicast_link_local()
+                || ip.is_multicast()
+                || (segments[0] & 0xffc0) == 0xfec0
+                || (segments[0] == 0x2001 && segments[1] == 0x0db8)
+                || ip
+                    .to_ipv4_mapped()
+                    .is_some_and(|mapped| is_blocked_model_ip(IpAddr::V4(mapped)))
+        }
+    }
+}
+
+async fn resolve_public_model_url(raw_url: &str) -> Result<(reqwest::Url, Vec<SocketAddr>)> {
+    let mut url = reqwest::Url::parse(raw_url)
+        .map_err(|_| AppError::Forbidden("Invalid model provider URL".into()))?;
+    if !matches!(url.scheme(), "http" | "https")
+        || url.host_str().is_none()
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.query().is_some()
+        || url.fragment().is_some()
+    {
+        return Err(AppError::Forbidden("Invalid model provider URL".into()));
+    }
+
+    let host = url
+        .host_str()
+        .ok_or_else(|| AppError::Forbidden("Invalid model provider URL".into()))?;
+    let port = url
+        .port_or_known_default()
+        .ok_or_else(|| AppError::Forbidden("Invalid model provider URL".into()))?;
+    let addresses = if let Ok(ip) = host.parse::<IpAddr>() {
+        vec![SocketAddr::new(ip, port)]
+    } else {
+        tokio::net::lookup_host((host, port))
+            .await
+            .map_err(|_| AppError::Forbidden("Could not resolve model provider URL".into()))?
+            .collect()
+    };
+
+    if addresses.is_empty() || addresses.iter().any(|addr| is_blocked_model_ip(addr.ip())) {
+        return Err(AppError::Forbidden(
+            "Private network URLs are forbidden".into(),
+        ));
+    }
+
+    let path = format!("{}/models", url.path().trim_end_matches('/'));
+    url.set_path(&path);
+    Ok((url, addresses))
+}
+
 #[utoipa::path(
     post,
     path = "/api/v1/settings/llm/models",
@@ -646,39 +742,135 @@ pub async fn discover_models(
     _auth_user: AuthenticatedUser,
     Json(payload): Json<DiscoverModelsRequestDto>,
 ) -> Result<Json<serde_json::Value>> {
-    let base_url = payload.base_url.unwrap_or_else(|| match payload.provider_key.to_lowercase().as_str() {
-        "openai" => "https://api.openai.com/v1".to_string(),
-        "openrouter" => "https://openrouter.ai/api/v1".to_string(),
-        "anthropic" => "https://api.anthropic.com/v1".to_string(),
-        _ => "https://api.openai.com/v1".to_string(),
-    });
-
-    if base_url.starts_with("http://127.") || base_url.starts_with("http://192.168.") || base_url.starts_with("http://10.") || base_url.starts_with("http://169.254.") {
-        return Err(AppError::Forbidden("Private network URLs are forbidden".into()));
-    }
-
-    let models_url = format!("{}/models", base_url.trim_end_matches('/'));
-    let client = reqwest::Client::new();
-    let mut req = client.get(&models_url).timeout(std::time::Duration::from_secs(5));
+    let base_url =
+        payload
+            .base_url
+            .unwrap_or_else(|| match payload.provider_key.to_lowercase().as_str() {
+                "openai" => "https://api.openai.com/v1".to_string(),
+                "openrouter" => "https://openrouter.ai/api/v1".to_string(),
+                "anthropic" => "https://api.anthropic.com/v1".to_string(),
+                _ => "https://api.openai.com/v1".to_string(),
+            });
+    let (models_url, addresses) = resolve_public_model_url(&base_url).await?;
+    let host = models_url
+        .host_str()
+        .ok_or_else(|| AppError::Forbidden("Invalid model provider URL".into()))?;
+    let client = reqwest::Client::builder()
+        .no_proxy()
+        .redirect(reqwest::redirect::Policy::none())
+        .resolve_to_addrs(host, &addresses)
+        .build()
+        .map_err(|e| AppError::Internal(format!("Could not build model discovery client: {e}")))?;
+    let mut req = client
+        .get(models_url)
+        .timeout(std::time::Duration::from_secs(5));
     if let Some(key) = payload.api_key.filter(|k| !k.is_empty()) {
         req = req.header("Authorization", format!("Bearer {key}"));
     }
 
     match req.send().await {
         Ok(res) if res.status().is_success() => {
-            let val: serde_json::Value = res.json().await.unwrap_or(serde_json::json!({ "data": [] }));
+            let val: serde_json::Value = res
+                .json()
+                .await
+                .unwrap_or(serde_json::json!({ "data": [] }));
             Ok(Json(val))
         }
         _ => {
             let defaults = match payload.provider_key.to_lowercase().as_str() {
-                "anthropic" => vec!["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
+                "anthropic" => vec![
+                    "claude-3-5-sonnet-20241022",
+                    "claude-3-5-haiku-20241022",
+                    "claude-3-opus-20240229",
+                ],
                 "openai" => vec!["gpt-4o", "gpt-4o-mini", "o1-mini", "o1-preview"],
                 "gemini" => vec!["gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.0-flash-exp"],
                 _ => vec!["default-model"],
             };
-            let data: Vec<serde_json::Value> = defaults.into_iter().map(|m| serde_json::json!({ "id": m })).collect();
+            let data: Vec<serde_json::Value> = defaults
+                .into_iter()
+                .map(|m| serde_json::json!({ "id": m }))
+                .collect();
             Ok(Json(serde_json::json!({ "data": data })))
         }
     }
 }
 
+#[cfg(test)]
+mod model_discovery_security_tests {
+    use super::is_blocked_model_ip;
+    use std::net::IpAddr;
+
+    #[test]
+    fn rejects_private_and_link_local_addresses() {
+        for address in [
+            "127.0.0.1",
+            "10.1.2.3",
+            "192.168.1.2",
+            "169.254.169.254",
+            "100.64.0.1",
+            "fc00::1",
+            "fe80::1",
+        ] {
+            assert!(
+                is_blocked_model_ip(address.parse::<IpAddr>().expect("valid fixture address")),
+                "{address} must be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn allows_public_addresses() {
+        for address in ["1.1.1.1", "2606:4700:4700::1111"] {
+            assert!(
+                !is_blocked_model_ip(address.parse::<IpAddr>().expect("valid fixture address")),
+                "{address} must be allowed"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn rejects_private_provider_url_before_connecting() {
+        assert!(super::resolve_public_model_url("http://127.0.0.1/v1")
+            .await
+            .is_err());
+        assert!(super::resolve_public_model_url("file:///etc/passwd")
+            .await
+            .is_err());
+    }
+}
+
+#[cfg(test)]
+mod provider_key_update_tests {
+    use super::{resolve_user_provider_key, UpsertUserProviderRequestDto};
+    use crate::shared::encryption::CryptoService;
+
+    #[test]
+    fn blank_or_omitted_key_preserves_existing_secret_and_replacement_updates_it() {
+        let crypto = CryptoService::new("deterministic test encryption key");
+        let existing = crypto.encrypt("existing test secret").unwrap();
+
+        for body in [
+            serde_json::json!({"provider_key": "openai"}),
+            serde_json::json!({"provider_key": "openai", "api_key": ""}),
+            serde_json::json!({"provider_key": "openai", "api_key": " \t\n "}),
+        ] {
+            let request: UpsertUserProviderRequestDto = serde_json::from_value(body).unwrap();
+            let resolved =
+                resolve_user_provider_key(request.api_key.as_deref(), Some(&existing), &crypto)
+                    .unwrap();
+            assert_eq!(resolved.as_deref(), Some(existing.as_str()));
+        }
+
+        let request: UpsertUserProviderRequestDto = serde_json::from_value(
+            serde_json::json!({"provider_key": "openai", "api_key": "replacement test secret"}),
+        )
+        .unwrap();
+        let replacement =
+            resolve_user_provider_key(request.api_key.as_deref(), Some(&existing), &crypto)
+                .unwrap()
+                .unwrap();
+        assert_ne!(replacement, existing);
+        assert_eq!(crypto.decrypt(&replacement).unwrap(), "replacement test secret");
+    }
+}

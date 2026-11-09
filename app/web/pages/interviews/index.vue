@@ -4,6 +4,7 @@ import { filterWorkspaces } from '~/features/interviews/utils/interview.util'
 import StatusBadge from '~/components/ui/StatusBadge.vue'
 import AppButton from '~/components/ui/AppButton.vue'
 import AppInput from '~/components/ui/AppInput.vue'
+import { formatDisplayDate } from '~/utils/date'
 
 definePageMeta({
   layout: 'default',
@@ -97,9 +98,9 @@ const filteredWorkspaces = computed(() => {
           <div class="flex items-center gap-2 text-xs text-slate-500">
             <span class="font-medium text-slate-700 dark:text-slate-300">{{ ws.role_title }}</span>
             <span>•</span>
-            <span class="capitalize">{{ ws.seniority || 'Mid' }}</span>
+            <span class="capitalize">{{ ws.seniority || 'Level not specified' }}</span>
             <span>•</span>
-            <span class="font-mono text-[11px]">{{ new Date(ws.created_at).toLocaleDateString() }}</span>
+            <span class="font-mono text-[11px]">{{ formatDisplayDate(ws.created_at) }}</span>
           </div>
         </div>
 

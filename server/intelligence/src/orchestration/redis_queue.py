@@ -47,7 +47,27 @@ class RedisStreamJobQueue:
                     logger.warning(f"Consumer group setup: {e}")
         return self.client
 
-    async def enqueue_job(self, run_id: str, payload: dict[str, Any], delay_ms: int = 0) -> str:
+    IDEMPOTENT_ENQUEUE_LUA = """
+local previous = redis.call('GET', KEYS[1])
+if previous then
+    return previous
+end
+local message_id = redis.call(
+    'XADD', KEYS[2], 'MAXLEN', '~', '10000', '*',
+    'run_id', ARGV[1], 'payload', ARGV[2],
+    'enqueued_at', ARGV[3], 'due_ts', ARGV[4]
+)
+redis.call('SET', KEYS[1], message_id)
+return message_id
+"""
+
+    async def enqueue_job(
+        self,
+        run_id: str,
+        payload: dict[str, Any],
+        delay_ms: int = 0,
+        deduplicate_by_run_id: bool = False,
+    ) -> str:
 
         client = await self.get_client()
         due_ts = (time.time() * 1000) + delay_ms
@@ -62,6 +82,17 @@ class RedisStreamJobQueue:
             await client.zadd(delay_key, {json.dumps(job_msg): due_ts})
             return f"delayed:{due_ts}"
 
+        if deduplicate_by_run_id:
+            return await client.eval(
+                self.IDEMPOTENT_ENQUEUE_LUA,
+                2,
+                f"{self.stream_key}:run:{run_id}",
+                self.stream_key,
+                run_id,
+                job_msg["payload"],
+                job_msg["enqueued_at"],
+                job_msg["due_ts"],
+            )
         msg_id = await client.xadd(
             name=self.stream_key, fields=job_msg, maxlen=10000, approximate=True
         )

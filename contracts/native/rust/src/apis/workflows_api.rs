@@ -161,6 +161,7 @@ pub enum TriggerWorkflowRunError {
     Status401(),
     Status403(),
     Status404(),
+    Status409(),
     Status422(),
     Status502(),
     Status503(),

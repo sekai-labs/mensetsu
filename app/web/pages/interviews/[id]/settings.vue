@@ -70,7 +70,7 @@ const handleSave = () => {
           Seniority Level
         </label>
         <input
-          :value="ws?.seniority || 'Staff'"
+          :value="ws?.seniority || 'Level not specified'"
           disabled
           class="block w-full rounded-md border text-xs px-3 py-2 bg-slate-50 dark:bg-slate-850 text-slate-500 border-slate-200 dark:border-slate-700"
         />
