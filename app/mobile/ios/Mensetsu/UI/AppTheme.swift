@@ -5,6 +5,8 @@ public struct AppColors {
     public static let primary = Color(red: 37/255, green: 99/255, blue: 235/255)
     public static let primaryDark = Color(red: 29/255, green: 78/255, blue: 216/255)
 
+    public static let slate50 = Color(red: 248/255, green: 250/255, blue: 252/255)
+    public static let slate200 = Color(red: 226/255, green: 232/255, blue: 240/255)
     public static let slate100 = Color(red: 241/255, green: 245/255, blue: 249/255)
     public static let slate400 = Color(red: 148/255, green: 163/255, blue: 184/255)
     public static let slate500 = Color(red: 100/255, green: 116/255, blue: 139/255)

@@ -13,7 +13,7 @@ UninstallDisplayIcon={app}\Mensetsu.exe
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 PrivilegesRequired=admin
-OutputDir=..\..\release-assets
+OutputDir=..\..\..\release-assets
 OutputBaseFilename=mensetsu-windows-x64-setup
 Compression=lzma2
 SolidCompression=yes
@@ -23,7 +23,7 @@ WizardStyle=modern
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
 
 [Files]
-Source: "..\..\release-assets\windows\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\..\release-assets\windows\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\Mensetsu"; Filename: "{app}\Mensetsu.exe"
