@@ -16,9 +16,13 @@ public struct TokenUsageTotalsDto: Codable, JSONEncodable, Hashable {
     public static let outputTokensRule = NumericRule<Int64>(minimum: 0, exclusiveMinimum: false, maximum: nil, exclusiveMaximum: false, multipleOf: nil)
     public static let requestCountRule = NumericRule<Int64>(minimum: 0, exclusiveMinimum: false, maximum: nil, exclusiveMaximum: false, multipleOf: nil)
     public static let totalTokensRule = NumericRule<Int64>(minimum: 0, exclusiveMinimum: false, maximum: nil, exclusiveMaximum: false, multipleOf: nil)
+    /** Scope-wide total input tokens */
     public var inputTokens: Int64
+    /** Scope-wide total output tokens */
     public var outputTokens: Int64
+    /** Scope-wide total count of model usage requests */
     public var requestCount: Int64
+    /** Scope-wide total tokens (input + output) */
     public var totalTokens: Int64
 
     public init(inputTokens: Int64, outputTokens: Int64, requestCount: Int64, totalTokens: Int64) {

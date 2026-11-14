@@ -97,7 +97,7 @@ const handleUpdateObjective = async () => {
         >
           <span>{{ $t('overview.updateFocus') }}</span>
         </button>
-        <NuxtLink :to="`/interviews/${workspaceId}/company`">
+        <NuxtLink :to="`/interviews/${encodeURIComponent(workspaceId)}/company`">
           <AppButton size="sm">
             {{ $t('overview.readDossier') }}
           </AppButton>
@@ -191,7 +191,7 @@ const handleUpdateObjective = async () => {
               <CheckCircle2 class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>{{ $t('overview.verifiedMatches') }}</span>
             </h2>
-            <NuxtLink :to="`/interviews/${workspaceId}/match`" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
+            <NuxtLink :to="`/interviews/${encodeURIComponent(workspaceId)}/match`" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
               View All ({{ match?.strengths?.length || 0 }}) →
             </NuxtLink>
           </div>
@@ -221,7 +221,7 @@ const handleUpdateObjective = async () => {
               <AlertCircle class="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <span>{{ $t('overview.priorityGaps') }}</span>
             </h2>
-            <NuxtLink :to="`/interviews/${workspaceId}/learning`" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
+            <NuxtLink :to="`/interviews/${encodeURIComponent(workspaceId)}/learning`" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
               Study Plan →
             </NuxtLink>
           </div>
@@ -258,7 +258,7 @@ const handleUpdateObjective = async () => {
               <Building2 class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span>{{ $t('overview.architectureOverview') }}</span>
             </h2>
-            <NuxtLink :to="`/interviews/${workspaceId}/company`" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
+            <NuxtLink :to="`/interviews/${encodeURIComponent(workspaceId)}/company`" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
               {{ $t('overview.fullDossier') }}
             </NuxtLink>
           </div>
@@ -283,7 +283,7 @@ const handleUpdateObjective = async () => {
 
         <div class="grid grid-cols-2 gap-3">
           <NuxtLink
-            :to="`/interviews/${workspaceId}/questions`"
+            :to="`/interviews/${encodeURIComponent(workspaceId)}/questions`"
             class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg hover:border-indigo-500 transition-colors space-y-1 block shadow-2xs group"
           >
             <div class="flex items-center justify-between">
@@ -295,7 +295,7 @@ const handleUpdateObjective = async () => {
           </NuxtLink>
 
           <NuxtLink
-            :to="`/interviews/${workspaceId}/practice`"
+            :to="`/interviews/${encodeURIComponent(workspaceId)}/practice`"
             class="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg hover:border-indigo-500 transition-colors space-y-1 block shadow-2xs group"
           >
             <div class="flex items-center justify-between">

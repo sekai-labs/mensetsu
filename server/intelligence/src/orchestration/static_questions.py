@@ -5,6 +5,11 @@ import time
 from typing import Any
 
 from src.agents.runtime import agent_runtime
+from src.agents.runtime_support import AgentRecoveryContext, build_agent_recovery_context
+from src.agents.schemas import (
+    current_knowledge_graph_skill_names_var,
+    validate_question_skill_names,
+)
 from src.contracts.v1 import WorkflowTask
 from src.orchestration.static_support import (
     BATCHES_PER_CATEGORY,
@@ -87,7 +92,11 @@ def build_question_nodes(support: StaticNodeSupport):
             for a in all_artifacts
             if a.type == "evidence"
         ]
-
+        knowledge_graph_skills = [
+            skill["name"]
+            for skill in state.curriculum.get("skills", [])
+            if isinstance(skill, dict) and skill.get("name")
+        ]
         qgen_input_base = {
             "company_name": state.company_name,
             "role_title": state.role_title,
@@ -95,6 +104,7 @@ def build_question_nodes(support: StaticNodeSupport):
             "candidate_gaps": gaps_list[:4],
             "culture_signals": culture_notes[:3],
             "evidence_citations": evidence_items,
+            "knowledge_graph_skills": knowledge_graph_skills,
         }
 
         batch_configs = [
@@ -103,12 +113,19 @@ def build_question_nodes(support: StaticNodeSupport):
             for part in range(1, BATCHES_PER_CATEGORY + 1)
         ]
 
+        recovery_context: AgentRecoveryContext | None = None
+        replan_count = 0
         for attempt in range(first_attempt, first_attempt + 2):
             task.attempt = attempt
             await ledger.save_task(task)
             try:
 
-                async def generate_category(category_name: str, part: int, count: int):
+                async def generate_category(
+                    category_name: str,
+                    part: int,
+                    count: int,
+                    recovery_context: AgentRecoveryContext | None = None,
+                ):
                     cat_input = {
                         **qgen_input_base,
                         "target_topics": tech_top[part - 1 :: BATCHES_PER_CATEGORY][:3]
@@ -118,23 +135,56 @@ def build_question_nodes(support: StaticNodeSupport):
                         "batch_part": part,
                         "batches_per_category": BATCHES_PER_CATEGORY,
                     }
-                    rec, data = await agent_runtime.execute_agent_loop(
-                        agent_id="interview-generation",
-                        objective=(
-                            f"Generate exactly {count} {category_name} interview questions with rigorous rubrics "
-                            f"for {state.role_title} at {state.company_name} "
-                            f"(batch {part} of {BATCHES_PER_CATEGORY}; focus on the given target_topics)"
-                        ),
-                        task_id=task.id,
-                        run_id=state.run_id,
-                        input_data=cat_input,
+                    skill_names_token = current_knowledge_graph_skill_names_var.set(
+                        frozenset(knowledge_graph_skills)
                     )
+                    try:
+                        rec, data = await agent_runtime.execute_agent_loop(
+                            agent_id="interview-generation",
+                            objective=(
+                                f"Generate exactly {count} {category_name} interview questions with rigorous rubrics "
+                                f"for {state.role_title} at {state.company_name} "
+                                f"(batch {part} of {BATCHES_PER_CATEGORY}; focus on the given target_topics)"
+                            ),
+                            task_id=task.id,
+                            run_id=state.run_id,
+                            input_data=cat_input,
+                            recovery_context=recovery_context,
+                        )
+                    finally:
+                        current_knowledge_graph_skill_names_var.reset(skill_names_token)
+                    questions = (
+                        data.get("questions", [])
+                        if isinstance(data, dict)
+                        else getattr(data, "questions", [])
+                    )
+                    for question in questions:
+                        question_data = (
+                            question
+                            if isinstance(question, dict)
+                            else question.model_dump()
+                        )
+                        validate_question_skill_names(
+                            question_data.get("skills_tested", []),
+                            frozenset(knowledge_graph_skills),
+                        )
                     return rec, data
 
-                async def safe_generate(cat: str, part: int, count: int):
+                async def safe_generate(
+                    cat: str,
+                    part: int,
+                    count: int,
+                    task_recovery_context: AgentRecoveryContext | None = None,
+                ):
+                    batch_recovery_context: AgentRecoveryContext | None = None
                     for cat_att in range(1, 3):
                         try:
-                            rec, data = await generate_category(cat, part, count)
+                            rec, data = await generate_category(
+                                cat,
+                                part,
+                                count,
+                                batch_recovery_context or task_recovery_context,
+                            )
                             return cat, rec, data
                         except Exception as ce:
                             logger.warning(
@@ -142,12 +192,18 @@ def build_question_nodes(support: StaticNodeSupport):
                             )
                             if cat_att == 2:
                                 raise
+                            batch_recovery_context = build_agent_recovery_context(
+                                "interview-generation", ce, cat_att
+                            )
                     raise RuntimeError(
                         f"Failed to generate questions for category {cat} batch {part}"
                     )
 
                 results = await asyncio.gather(
-                    *(safe_generate(cat, part, count) for cat, part, count in batch_configs)
+                    *(
+                        safe_generate(cat, part, count, recovery_context)
+                        for cat, part, count in batch_configs
+                    )
                 )
 
                 all_raw_questions = []
@@ -208,6 +264,10 @@ def build_question_nodes(support: StaticNodeSupport):
             except Exception as e:
                 logger.warning(f"Question generation task attempt {attempt} failed: {e}")
                 if attempt < first_attempt - 1 + 2:
+                    replan_count += 1
+                    recovery_context = build_agent_recovery_context(
+                        "interview-generation", e, replan_count
+                    )
                     delay_ms = 1000 * (attempt - first_attempt + 1)
                     await ledger.append_event_transactional(
                         run_id=state.run_id,

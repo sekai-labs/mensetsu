@@ -22,6 +22,12 @@ export default defineNuxtConfig({
     },
   },
   css: ['~/assets/css/main.css'],
+  postcss: {
+    plugins: {
+      'postcss-nested': {},
+      'tailwindcss/nesting': false,
+    },
+  },
   alias: {
     '@mensetsu/contracts': fileURLToPath(new URL('../../contracts/rest/src/index.ts', import.meta.url)),
   },

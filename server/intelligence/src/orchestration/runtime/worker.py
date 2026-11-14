@@ -1,5 +1,7 @@
 import asyncio
+import contextlib
 import logging
+import math
 import os
 import signal
 import socket
@@ -14,6 +16,7 @@ from redis import exceptions as redis_exceptions
 from src.contracts.v1 import WorkflowProgress
 from src.orchestration.dynamic_workflow import DynamicWorkflowState, build_dynamic_workflow
 from src.orchestration.ledger import SurrealLedgerRepository, set_event_publisher
+from src.orchestration.ledger.base import is_write_conflict
 from src.orchestration.redis_queue import CLAIM_BLOCK_MS, REDIS_CLIENT_OPTIONS, RedisStreamJobQueue
 from src.orchestration.static_workflow import StaticWorkflowState, build_static_workflow
 
@@ -32,6 +35,8 @@ RETRYABLE_NAME_MARKERS = (
 
 
 def is_retryable_error(err: BaseException) -> bool:
+    if is_write_conflict(err):
+        return True
     if isinstance(err, (asyncio.TimeoutError, TimeoutError, ConnectionError)):
         return True
     status_code = getattr(err, "status_code", None)
@@ -92,11 +97,31 @@ class DurableJobWorker:
             if lease_ttl_s is not None
             else float(os.environ.get("WORKER_LEASE_TTL_S", "20.0"))
         )
-        self.min_idle_time_ms = (
+        raw_min_idle = (
             min_idle_time_ms
             if min_idle_time_ms is not None
-            else int(os.environ.get("WORKER_MIN_IDLE_TIME_MS", "15000"))
+            else os.environ.get("WORKER_MIN_IDLE_TIME_MS")
         )
+        required_min_idle_time_ms = math.ceil(
+            (self.lease_ttl_s + self.heartbeat_interval_s) * 1000
+        )
+        if isinstance(raw_min_idle, bool):
+            raise ValueError("min_idle_time_ms must be an integer number of milliseconds.")
+        if raw_min_idle is None:
+            self.min_idle_time_ms = required_min_idle_time_ms
+        else:
+            try:
+                parsed_min_idle = int(raw_min_idle)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "min_idle_time_ms must be an integer number of milliseconds."
+                ) from exc
+            if parsed_min_idle < required_min_idle_time_ms:
+                raise ValueError(
+                    "min_idle_time_ms must be at least lease_ttl_s plus "
+                    f"heartbeat_interval_s ({required_min_idle_time_ms} ms)."
+                )
+            self.min_idle_time_ms = parsed_min_idle
         self.running = False
         self._semaphore = asyncio.Semaphore(max_concurrent_jobs)
         self.queue = RedisStreamJobQueue(redis_url=self.redis_url)
@@ -205,19 +230,24 @@ class DurableJobWorker:
 
             run = await self.ledger.get_workflow_run(run_id)
             if run and run.status == "cancelled":
-                logger.info(f"Run {run_id} is cancelled. Acknowledging message.")
+                logger.info(f"Run {run_id} is cancelled. Closing open work and acknowledging message.")
+                await self._close_cancelled_job(run_id, msg_id, lost_lease_event)
+                return
+            if run and run.status in ("completed", "failed"):
+                logger.info(f"Run {run_id} is already terminal ({run.status}). Acknowledging message.")
                 await self.queue.ack_job(msg_id)
                 return
 
-            if run and run.status in ("pending", "queued") and not run.started_at:
+            if run and run.status == "pending" and not run.started_at:
                 wf_type = payload.get("workflow_id", "interview-preparation-hybrid")
                 is_static = wf_type == "interview-preparation-static"
                 is_hybrid = wf_type == "interview-preparation-hybrid"
                 planned = STATIC_TASK_COUNT if is_static else (6 if is_hybrid else 0)
-                await self.ledger.update_workflow_run(
+                started = await self.ledger.transition_workflow_run_status(
                     run_id,
-                    {
-                        "status": "running",
+                    "running",
+                    from_statuses=("pending",),
+                    updates={
                         "started_at": datetime.now(timezone.utc),
                         "current_phase": "running",
                         "progress": WorkflowProgress(
@@ -230,6 +260,11 @@ class DurableJobWorker:
                         ),
                     },
                 )
+                if not started:
+                    refreshed = await self.ledger.get_workflow_run(run_id)
+                    if refreshed and refreshed.status == "cancelled":
+                        await self._close_cancelled_job(run_id, msg_id, lost_lease_event)
+                    return
                 await self.ledger.append_event_transactional(
                     run_id=run_id,
                     event_type="workflow.started",
@@ -329,16 +364,57 @@ class DurableJobWorker:
                     seniority=payload.get("seniority"),
                 )
             input_val = None if existing_checkpoint is not None else initial_state
-            with llm_config_scope(payload.get("llm_config")):
-                await graph.ainvoke(input_val, config=config)
+
+            async def invoke_graph():
+                with llm_config_scope(payload.get("llm_config")):
+                    await graph.ainvoke(input_val, config=config)
+
+            graph_task = asyncio.create_task(invoke_graph())
+            watch_task = asyncio.create_task(
+                self._watch_cancellation(run_id, lost_lease_event)
+            )
+            try:
+                done, _ = await asyncio.wait(
+                    {graph_task, watch_task}, return_when=asyncio.FIRST_COMPLETED
+                )
+            except asyncio.CancelledError:
+                graph_task.cancel()
+                watch_task.cancel()
+                await asyncio.gather(graph_task, watch_task, return_exceptions=True)
+                raise
+
+            if watch_task in done:
+                reason = watch_task.result()
+                graph_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError, Exception):
+                    await graph_task
+                if reason == "lease_lost":
+                    logger.warning(
+                        f"Lease was lost during execution of {run_id}. Aborting graph without acknowledging."
+                    )
+                    return
+                await self._close_cancelled_job(run_id, msg_id, lost_lease_event)
+                return
+
+            watch_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError, Exception):
+                await watch_task
+            await graph_task
 
             run_obj = await self.ledger.get_workflow_run(run_id)
+            if run_obj and run_obj.status == "cancelled":
+                await self._close_cancelled_job(run_id, msg_id, lost_lease_event)
+                return
             if not run_obj or run_obj.status != "completed":
                 raise RuntimeError(
                     f"Workflow execution graph for {run_id} terminated without completing finalize node."
                 )
-
+            if lost_lease_event.is_set():
+                logger.warning(f"Lease was lost before acknowledging {run_id}. Not acknowledging.")
+                return
             await self.queue.ack_job(msg_id)
+        except asyncio.CancelledError:
+            raise
         except Exception as e:
             err_str = str(e)
             logger.error(f"Job execution failed for {run_id}: {e}")
@@ -348,7 +424,7 @@ class DurableJobWorker:
                 return
             run = await self.ledger.get_workflow_run(run_id)
             if run and run.status == "cancelled":
-                await self.queue.ack_job(msg_id)
+                await self._close_cancelled_job(run_id, msg_id, lost_lease_event)
                 return
 
             exc_name = e.__class__.__name__
@@ -373,15 +449,20 @@ class DurableJobWorker:
                     },
                 )
 
-                await self.queue.ack_job(msg_id)
                 new_payload = dict(payload)
                 new_payload["attempt_count"] = current_attempt + 1
-                await self.queue.enqueue_job(run_id, new_payload, delay_ms=delay_ms)
+                await self.queue.reschedule_job(
+                    run_id=run_id,
+                    payload=new_payload,
+                    msg_id=msg_id,
+                    delay_ms=delay_ms,
+                    dedupe_key=f"{self.queue.stream_key}:retry:{run_id}:{current_attempt + 1}",
+                )
             else:
+                transitioned = True
                 if run:
                     failed_at = datetime.now(timezone.utc)
                     run_updates = {
-                        "status": "failed",
                         "current_phase": "failed",
                         "error_message": err_str,
                         "completed_at": failed_at,
@@ -390,20 +471,38 @@ class DurableJobWorker:
                         run_updates["duration_ms"] = (
                             failed_at - run.started_at
                         ).total_seconds() * 1000
-                    await self.ledger.update_workflow_run(run_id, run_updates)
-                try:
-                    await self.ledger.sweep_run_to_terminal(run_id, reason="run failed")
-                except Exception as se:
-                    logger.error(f"Run-end sweep failed for {run_id}: {se}")
-                await self.ledger.append_event_transactional(
-                    run_id=run_id,
-                    event_type="workflow.failed",
-                    payload={"error": err_str, "failed_task_id": None},
-                )
-                await self._set_workspace_progress(payload, "failed", 0, error_message=err_str)
-                logger.info(
-                    f"Run {run_id} failed; workspace status is only downgraded if it was not already ready."
-                )
+                    transitioned = await self.ledger.transition_workflow_run_status(
+                        run_id,
+                        "failed",
+                        from_statuses=("pending", "running"),
+                        updates=run_updates,
+                    )
+                    if not transitioned:
+                        fresh = await self.ledger.get_workflow_run(run_id)
+                        if fresh and fresh.status == "cancelled":
+                            await self._close_cancelled_job(run_id, msg_id, lost_lease_event)
+                            return
+                        logger.warning(
+                            f"Run {run_id} is already terminal ({fresh.status if fresh else 'missing'}); not overwriting."
+                        )
+                        await self.queue.ack_job(msg_id)
+                        return
+                if transitioned:
+                    try:
+                        await self.ledger.sweep_run_to_terminal(run_id, reason="run failed")
+                    except Exception as se:
+                        logger.error(f"Run-end sweep failed for {run_id}: {se}")
+                    await self.ledger.append_event_transactional(
+                        run_id=run_id,
+                        event_type="workflow.failed",
+                        payload={"error": err_str, "failed_task_id": None},
+                    )
+                    await self._set_workspace_progress(
+                        payload, "failed", 0, error_message=err_str
+                    )
+                    logger.info(
+                        f"Run {run_id} failed; workspace status is only downgraded if it was not already ready."
+                    )
                 await self.queue.ack_job(msg_id)
         finally:
             lost_lease_event.set()
@@ -412,6 +511,50 @@ class DurableJobWorker:
                 await self.queue.release_lease(run_id, lease_token)
             except Exception:
                 pass
+
+    async def _watch_cancellation(
+        self, run_id: str, lost_lease_event: asyncio.Event
+    ) -> str:
+        last_db_check = 0.0
+        while True:
+            if lost_lease_event.is_set():
+                return "lease_lost"
+            try:
+                checker = getattr(self.queue, "is_cancel_requested", None)
+                if checker is not None and await checker(run_id):
+                    current = await self.ledger.get_workflow_run(run_id)
+                    if current and current.status == "cancelled":
+                        return "cancelled"
+            except Exception as ce:
+                logger.debug(f"Cancel signal check failed for {run_id}: {ce}")
+
+            now = time.monotonic()
+            if now - last_db_check >= 1.0:
+                last_db_check = now
+                try:
+                    current = await self.ledger.get_workflow_run(run_id)
+                    if current and current.status == "cancelled":
+                        return "cancelled"
+                except Exception as de:
+                    logger.debug(f"Run status check failed for {run_id}: {de}")
+            await asyncio.sleep(0.2)
+
+    async def _close_cancelled_job(
+        self, run_id: str, msg_id: str, lost_lease_event: asyncio.Event
+    ) -> None:
+        if lost_lease_event.is_set():
+            logger.warning(f"Lease was lost while closing cancelled run {run_id}. Not acknowledging.")
+            return
+        try:
+            await self.ledger.sweep_run_to_terminal(run_id, reason="run cancelled")
+        except Exception as se:
+            logger.error(f"Run-end sweep failed for cancelled run {run_id}: {se}")
+        if lost_lease_event.is_set():
+            logger.warning(
+                f"Lease was lost after sweeping cancelled run {run_id}. Not acknowledging."
+            )
+            return
+        await self.queue.ack_job(msg_id)
 
     async def start(self) -> None:
 

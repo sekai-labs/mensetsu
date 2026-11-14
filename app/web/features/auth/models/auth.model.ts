@@ -1,4 +1,5 @@
 import type { UserRole } from '~/models/common.model'
+import type { components } from '@mensetsu/contracts'
 
 export interface User {
   id: string
@@ -23,7 +24,7 @@ export interface RegisterRequest {
 }
 
 export interface Login2faRequest {
-  temp_token: string
+  temp_token?: string
   code: string
 }
 
@@ -35,11 +36,7 @@ export interface AuthResponse {
   temp_token?: string
 }
 
-export interface TotpSetupResponse {
-  secret: string
-  qr_code_svg: string
-  otpauth_url: string
-}
+export type TotpSetupResponse = components['schemas']['TotpSetupResponseDto']
 
 export interface TotpVerifyRequest {
   code: string
@@ -48,3 +45,12 @@ export interface TotpVerifyRequest {
 export interface TotpDisableRequest {
   code: string
 }
+
+// OAuth DTOs use the Rust-generated canonical OpenAPI schemas.
+export type OAuthProviderSummaryDto = components['schemas']['OAuthProviderSummaryDto']
+export type OAuthIdentityDto = components['schemas']['OAuthIdentityDto']
+export type OAuthProviderAdminDto = components['schemas']['OAuthProviderAdminDto']
+export type OAuthProviderUpsertRequestDto = components['schemas']['OAuthProviderUpsertRequestDto']
+export type OAuthLinkStartResponseDto = components['schemas']['OAuthLinkStartResponseDto']
+export type OAuthExchangeRequestDto = components['schemas']['OAuthExchangeRequestDto']
+export type OAuthExchangeResponseDto = components['schemas']['OAuthExchangeResponseDto']

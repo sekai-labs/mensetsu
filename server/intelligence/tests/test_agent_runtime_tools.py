@@ -32,6 +32,17 @@ def requested_question_count(messages, default: int = 4) -> int:
     return default
 
 
+def requested_question_batch(messages, default: tuple[str, int] = ("general", 1)) -> tuple[str, int]:
+    for m in messages:
+        content = getattr(m, "content", "")
+        if isinstance(content, str) and '"target_category"' in content:
+            category = re.search(r'"target_category": "([^"]+)"', content)
+            part = re.search(r'"batch_part": (\d+)', content)
+            if category and part:
+                return category.group(1), int(part.group(1))
+    return default
+
+
 def shape_curriculum_payload(payload: dict, messages) -> tuple[type, dict]:
     from src.agents.schemas import CURRICULUM_STAGE_SCHEMAS, CurriculumOutput
 
@@ -184,6 +195,7 @@ class ScriptedToolCallingFakeModel(BaseChatModel):
                 ]
                 while len(saved_evs) < 4:
                     saved_evs.append(f"art_ev_{len(saved_evs)}")
+                q_category, q_part = requested_question_batch(messages)
                 claims = [
                     {
                         "statement": f"Acme uses Rust {i}",
@@ -235,11 +247,13 @@ class ScriptedToolCallingFakeModel(BaseChatModel):
                     "architecture_topology": {"system_type": "distributed_ledger"},
                     "questions": [
                         {
-                            "question": f"Explain Raft consensus {i}?",
+                            "question": (
+                                f"Explain Raft consensus for {q_category} batch {q_part} item {i}?"
+                            ),
                             "category": "system_design",
                             "difficulty": "medium",
                             "rationale": "Core stack",
-                            "skills_tested": ["Distributed Systems"],
+                            "skills_tested": ["Skill 0"],
                             "interviewer_intent": "Assess consensus knowledge",
                             "expected_signals": ["Raft mechanics", "Leader election"],
                             "answer_outline": [
@@ -534,3 +548,201 @@ async def test_persistently_empty_model_reply_fails_after_bounded_reprompts():
             model_override=model,
         )
     assert model.calls == 1 + MAX_MISSING_OUTPUT_TOOL_NUDGES
+
+
+class PlannerForcedSearchModel(BaseChatModel):
+    call_count: int = 0
+
+    @property
+    def _llm_type(self) -> str:
+        return "planner_forced_search_fake_model"
+
+    def bind_tools(self, tools, **kwargs):
+        return self
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        raise NotImplementedError
+
+    async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
+        from langchain_core.messages import AIMessage
+        from langchain_core.outputs import ChatGeneration, ChatResult
+
+        self.call_count += 1
+        if self.call_count == 1:
+            msg = AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "web_search",
+                        "args": {"query": "forbidden internal plan search"},
+                        "id": "tc_forbidden_search_1",
+                        "type": "tool_call",
+                    }
+                ],
+                usage_metadata={"input_tokens": 50, "output_tokens": 20, "total_tokens": 70},
+            )
+            return ChatResult(generations=[ChatGeneration(message=msg)])
+        else:
+            plan_payload = {
+                "summary": "Valid plan generated after denied search.",
+                "tasks": [
+                    {
+                        "id": "task_1",
+                        "name": "Analyze Job Requirements",
+                        "assigned_agent": "job-analysis",
+                        "dependencies": [],
+                        "required": True,
+                    }
+                ],
+            }
+            msg = AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "PlanOutput",
+                        "args": plan_payload,
+                        "id": "tc_plan_out_1",
+                        "type": "tool_call",
+                    }
+                ],
+                usage_metadata={"input_tokens": 50, "output_tokens": 50, "total_tokens": 100},
+            )
+            return ChatResult(generations=[ChatGeneration(message=msg)])
+
+
+@pytest.mark.asyncio
+async def test_forced_forbidden_planner_web_search_denied_with_no_fetch_while_company_research_retains_search(
+    offline_search_engine,
+):
+    from unittest.mock import AsyncMock, patch
+
+    run_id_planner = await create_scripted_run("planner_deny")
+    ledger = SurrealLedgerRepository()
+
+    queries_before_planner = len(offline_search_engine.queries)
+    planner_model = PlannerForcedSearchModel()
+
+    # 1. Planner attempts forbidden web_search
+    exec_planner, _ = await agent_runtime.execute_agent_loop(
+        agent_id="planner",
+        objective="Generate DAG plan",
+        task_id=f"task_{run_id_planner[:8]}",
+        run_id=run_id_planner,
+        input_data={"role": "Architect"},
+        model_override=planner_model,
+    )
+
+    # No search fetch was performed for planner
+    assert len(offline_search_engine.queries) == queries_before_planner
+
+    # Tool was logged as failed
+    tools_page = await ledger.list_tools_for_execution(exec_planner.id)
+    failed_tools = [t for t in tools_page.items if t.tool_name == "web_search"]
+    assert len(failed_tools) == 1
+    assert failed_tools[0].status == "failed"
+    assert "not allowed for agent 'planner'" in failed_tools[0].error
+
+    # 2. Company research attempts allowed web_search
+    run_id_company = await create_scripted_run("company_allow")
+    company_model = ScriptedToolCallingFakeModel()
+
+    with patch(
+        "src.agents.agent_tools.SafeResearchFetcher.fetch_clean_text", new_callable=AsyncMock
+    ) as mock_fetch:
+        mock_fetch.return_value = (
+            "Careers at Acme",
+            "We build distributed systems in Python and Rust.",
+        )
+        exec_company, _ = await agent_runtime.execute_agent_loop(
+            agent_id="company-research",
+            objective="Analyze company engineering culture",
+            task_id=f"task_{run_id_company[:8]}",
+            run_id=run_id_company,
+            input_data={"company": "Acme"},
+            model_override=company_model,
+        )
+
+    # Search fetch was performed for company-research
+    assert len(offline_search_engine.queries) > queries_before_planner
+    tools_company = await ledger.list_tools_for_execution(exec_company.id)
+    company_search_invs = [t for t in tools_company.items if t.tool_name == "web_search"]
+    assert len(company_search_invs) >= 1
+    assert company_search_invs[0].status == "completed"
+
+
+@pytest.mark.asyncio
+async def test_no_evaluator_tool_remains():
+    from src.agents.registry import registry
+    from src.contracts.v1 import AgentExecution
+
+    execution = AgentExecution(
+        id="exec_test_evaluator_tool",
+        run_id="run_test_eval",
+        task_id="task_test_eval",
+        agent_id="company-research",
+        objective="Verify tool removal",
+    )
+    tools = agent_runtime.create_tools_for_execution(
+        execution=execution,
+        run_id="run_test_eval",
+        depth=0,
+        ancestors=["company-research"],
+    )
+    tool_names = [t.name for t in tools]
+    assert "evaluate_findings" not in tool_names
+
+    # Check that evaluate_findings is not in registry allowlists for any agent
+    for agent_id in ["company-research", "evidence-evaluator", "job-analysis", "technical-research"]:
+        defn = registry.get(agent_id)
+        assert "evaluate_findings" not in defn.allowed_tools
+
+@pytest.mark.asyncio
+async def test_recovery_context_changes_strategy_without_changing_output_schema():
+    from src.agents.runtime_support import build_agent_recovery_context
+
+    class RecoveryAwareModel(ScriptedToolCallingFakeModel):
+        recovery_directive_seen: bool = False
+        diagnostic_boundary_seen: bool = False
+
+        async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
+            system_text = "\n".join(
+                str(message.content)
+                for message in messages
+                if getattr(message, "type", None) == "system"
+            )
+            user_text = "\n".join(
+                str(message.content)
+                for message in messages
+                if getattr(message, "type", None) == "human"
+            )
+            self.recovery_directive_seen = (
+                "Recovery mode" in system_text and "claim-to-evidence matrix" in system_text
+            )
+            self.diagnostic_boundary_seen = (
+                "EXTERNAL_UNTRUSTED_CONTENT" in user_text
+                and "schema rejected invalid claim" in user_text
+            )
+            return await super()._agenerate(messages, stop, run_manager, **kwargs)
+
+    run_id = await create_scripted_run("recovery_prompt")
+    model = RecoveryAwareModel()
+    recovery = build_agent_recovery_context(
+        "evidence-evaluator", "schema rejected invalid claim", attempt=1
+    )
+
+    execution, result = await agent_runtime.execute_agent_loop(
+        agent_id="evidence-evaluator",
+        objective="Audit candidate evidence coverage",
+        task_id=f"task_{run_id[:8]}",
+        run_id=run_id,
+        input_data={"claims": []},
+        model_override=model,
+        recovery_context=recovery,
+    )
+
+    assert execution.status == "completed"
+    assert model.recovery_directive_seen
+    assert model.diagnostic_boundary_seen
+    from src.agents.schemas import EvidenceEvaluatorOutput
+
+    assert set(result) == set(EvidenceEvaluatorOutput.model_fields)

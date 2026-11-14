@@ -41,18 +41,19 @@ fn heartbeat() -> bool {
     expect(html).toContain('heartbeat')
   })
 
-  it('sanitizes script tags and dangerous event handlers to prevent XSS', () => {
+  it('sanitizes active markup, event handlers, and dangerous URLs', () => {
     const malicious = `
 # Dangerous Injection
 <script>alert('xss')</script>
 <img src="x" onerror="alert(1)" />
-[Link](javascript:alert(1))
+<svg onload="alert(2)"><g></g></svg>
+[JavaScript link](javascript:alert(3))
+[Data link](data:text/html,alert(4))
 `
     const html = renderMarkdown(malicious)
-    expect(html).not.toContain('<script>')
-    expect(html).not.toContain('alert(\'xss\')</script>')
-    expect(html).not.toContain('javascript:')
-    expect(html).not.toContain('onerror=')
+    expect(html).not.toMatch(/<script|<svg|onerror\s*=|onload\s*=/i)
+    expect(html).not.toMatch(/(?:href|src)=["'](?:javascript|data):/i)
+    expect(html).not.toContain("alert('xss')</script>")
   })
 })
 

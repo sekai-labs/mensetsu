@@ -1,13 +1,11 @@
 pub mod dtos;
+pub mod oauth_dtos;
+pub mod oauth_service;
 
-use std::sync::Arc;
 use chrono::Utc;
+use std::sync::Arc;
 use validator::Validate;
 
-use dtos::{
-    AuthResponseDto, Login2faRequestDto, LoginRequestDto, LoginResponseDto, RegisterRequestDto,
-    TokenResponseDto, TotpSetupResponseDto, UserResponseDto,
-};
 use crate::contexts::identity::domain::{
     hasher::PasswordHasher,
     repository::{AuthSessionRepository, UserRepository},
@@ -15,6 +13,10 @@ use crate::contexts::identity::domain::{
     AuthSession, Email, SessionId, User, UserId, UserStatus,
 };
 use crate::shared::error::{AppError, Result};
+use dtos::{
+    AuthResponseDto, Login2faRequestDto, LoginRequestDto, LoginResponseDto, RegisterRequestDto,
+    TokenResponseDto, TotpSetupResponseDto, UserResponseDto,
+};
 
 pub struct IdentityService {
     user_repo: Arc<dyn UserRepository>,
@@ -50,7 +52,10 @@ impl IdentityService {
         let email = Email::new(dto.email)?;
 
         if self.user_repo.find_by_email(&email).await?.is_some() {
-            return Err(AppError::Conflict(format!("Email {} already registered", email.0)));
+            return Err(AppError::Conflict(format!(
+                "Email {} already registered",
+                email.0
+            )));
         }
 
         let password_hash = self.hasher.hash_password(&dto.password)?;
@@ -105,7 +110,9 @@ impl IdentityService {
             return Err(AppError::Unauthorized("Account is suspended".into()));
         }
 
-        let valid = self.hasher.verify_password(&dto.password, &user.password_hash)?;
+        let valid = self
+            .hasher
+            .verify_password(&dto.password, &user.password_hash)?;
         if !valid {
             return Err(AppError::Unauthorized("Invalid email or password".into()));
         }
@@ -175,7 +182,9 @@ impl IdentityService {
             .map_err(|e| AppError::Internal(format!("TOTP init error: {e}")))?;
 
         if totp.check_current(&dto.code).is_none() {
-            return Err(AppError::Unauthorized("Invalid 2FA authentication code".into()));
+            return Err(AppError::Unauthorized(
+                "Invalid 2FA authentication code".into(),
+            ));
         }
 
         let refresh_token = TokenService::generate_refresh_token();
@@ -236,17 +245,20 @@ impl IdentityService {
         })
     }
 
-    pub async fn verify_and_enable_totp(&self, user_id: &UserId, code: &str) -> Result<UserResponseDto> {
+    pub async fn verify_and_enable_totp(
+        &self,
+        user_id: &UserId,
+        code: &str,
+    ) -> Result<UserResponseDto> {
         let mut user = self
             .user_repo
             .find_by_id(user_id)
             .await?
             .ok_or_else(|| AppError::NotFound(format!("User {user_id} not found")))?;
 
-        let secret_str = user
-            .totp_secret
-            .as_deref()
-            .ok_or_else(|| AppError::Validation("TOTP setup not initiated. Call setup first.".into()))?;
+        let secret_str = user.totp_secret.as_deref().ok_or_else(|| {
+            AppError::Validation("TOTP setup not initiated. Call setup first.".into())
+        })?;
 
         let secret = totp_rs::Secret::try_from_base32(secret_str)
             .map_err(|e| AppError::Internal(format!("Invalid base32 secret: {e}")))?;
@@ -259,7 +271,9 @@ impl IdentityService {
             .map_err(|e| AppError::Internal(format!("TOTP error: {e}")))?;
 
         if totp.check_current(code).is_none() {
-            return Err(AppError::Unauthorized("Invalid TOTP verification code".into()));
+            return Err(AppError::Unauthorized(
+                "Invalid TOTP verification code".into(),
+            ));
         }
         user.totp_enabled = true;
         user.updated_at = Utc::now();
@@ -294,7 +308,9 @@ impl IdentityService {
             .map_err(|e| AppError::Internal(format!("TOTP error: {e}")))?;
 
         if totp.check_current(code).is_none() {
-            return Err(AppError::Unauthorized("Invalid 2FA verification code".into()));
+            return Err(AppError::Unauthorized(
+                "Invalid 2FA verification code".into(),
+            ));
         }
         user.totp_enabled = false;
         user.totp_secret = None;
@@ -304,10 +320,7 @@ impl IdentityService {
         Ok(user.into())
     }
 
-    pub async fn refresh(
-        &self,
-        raw_refresh_token: &str,
-    ) -> Result<TokenResponseDto> {
+    pub async fn refresh(&self, raw_refresh_token: &str) -> Result<TokenResponseDto> {
         let token_hash = TokenService::hash_refresh_token(raw_refresh_token);
         let session = self
             .session_repo
@@ -329,10 +342,10 @@ impl IdentityService {
             return Err(AppError::Unauthorized("Account is suspended".into()));
         }
 
-        
         let new_refresh_token = TokenService::generate_refresh_token();
         let new_refresh_hash = TokenService::hash_refresh_token(&new_refresh_token);
-        let new_expires_at = Utc::now() + chrono::Duration::seconds(self.token_service.refresh_ttl_seconds());
+        let new_expires_at =
+            Utc::now() + chrono::Duration::seconds(self.token_service.refresh_ttl_seconds());
 
         self.session_repo
             .update_token_hash(&session.id, &new_refresh_hash, new_expires_at)

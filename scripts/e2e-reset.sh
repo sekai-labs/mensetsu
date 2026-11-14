@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
 
-FAILURE_LOG="tests/e2e/.state/reset-failure.log"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+cd "${REPO_ROOT}"
+FAILURE_LOG="${REPO_ROOT}/tests/e2e/.state/reset-failure.log"
 
 dump_failure_diagnostics() {
   local exit_code=$?
@@ -24,16 +28,16 @@ dump_failure_diagnostics() {
       echo "=== Last 200 Logs: Web ==="
       docker compose logs --tail=200 web 2>&1 || true
     } > "${FAILURE_LOG}"
+    chmod 600 "${FAILURE_LOG}" 2>/dev/null || true
   fi
 }
-
-trap dump_failure_diagnostics EXIT
 
 if [[ "${MENSETSU_ALLOW_RESET:-0}" != "1" ]]; then
   echo "Error: e2e-reset refused because MENSETSU_ALLOW_RESET=1 is not set." >&2
   echo "Usage: MENSETSU_ALLOW_RESET=1 make e2e-reset" >&2
   exit 1
 fi
+trap dump_failure_diagnostics EXIT
 
 COMPOSE_CONFIG="$(docker compose config --format json)"
 COMPOSE_PROJECT="$(echo "${COMPOSE_CONFIG}" | jq -r '.name // "mensetsu"')"
@@ -45,6 +49,10 @@ SURREAL_PASS="$(echo "${COMPOSE_CONFIG}" | jq -r '.services.api.environment.SURR
 
 SURREAL_NS="${RESET_SURREAL_NS:-${DEFAULT_SURREAL_NS}}"
 SURREAL_DB="${RESET_SURREAL_DB:-${DEFAULT_SURREAL_DB}}"
+if [[ ! "${SURREAL_NS}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ || ! "${SURREAL_DB}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+  echo "SurrealDB namespace and database names must start with a letter or underscore and contain only letters, digits, or underscores." >&2
+  exit 1
+fi
 
 if [[ "${RESET_DRY_RUN:-0}" == "1" ]]; then
   echo "[e2e-reset:DRY_RUN] Mode active. Simulating actions without executing changes."
@@ -86,7 +94,10 @@ if [[ -n "${STILL_ORPHAN}" ]]; then
   exit 1
 fi
 
-POSTGRES_VOLS=$(docker volume ls --filter "label=com.docker.compose.project=mensetsu" --filter "label=com.docker.compose.project=docker" --format '{{.Name}}' | grep -E '(postgres|_postgres_data$)' || docker volume ls --format '{{.Name}}' | grep -E '(^mensetsu.*postgres|^docker.*postgres|_postgres_data$)' || true)
+POSTGRES_VOLS="$(docker volume ls \
+  --filter "label=com.docker.compose.project=${COMPOSE_PROJECT}" \
+  --filter "label=com.docker.compose.volume=postgres_data" \
+  --format '{{.Name}}')"
 if [[ -n "${POSTGRES_VOLS}" ]]; then
   echo "[e2e-reset] Removing orphan postgres volume(s):"
   while IFS= read -r vol; do
@@ -139,7 +150,7 @@ while [[ ${ELAPSED} -lt ${MAX_WAIT} ]]; do
   fi
 
   if [[ ${INTELLIGENCE_READY} -eq 0 ]]; then
-    if docker compose exec -T intelligence python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8001/health/ready').status==200 else 1)" 2>/dev/null; then
+    if docker compose exec -T intelligence python -c 'import grpc; from src.grpc.v1 import health_pb2, health_pb2_grpc; channel = grpc.insecure_channel("127.0.0.1:50051"); response = health_pb2_grpc.HealthStub(channel).Check(health_pb2.HealthCheckRequest(), timeout=2); channel.close(); raise SystemExit(response.status != health_pb2.HealthCheckResponse.SERVING)' 2>/dev/null; then
       INTELLIGENCE_READY=1
     fi
   fi

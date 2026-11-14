@@ -21,7 +21,7 @@ const { t, te } = useI18n()
 
 const isRouteActive = (subPath: string) => {
   const current = route.path
-  const target = `/interviews/${props.workspaceId}/${subPath}`
+  const target = `/interviews/${encodeURIComponent(props.workspaceId)}/${subPath}`
   return current === target || current.startsWith(`${target}/`)
 }
 
@@ -83,7 +83,7 @@ const itemKeyOrFallback = (key?: string, fallback?: string) => {
             <NuxtLink
               v-for="item in section.items"
               :key="item.id"
-              :to="`/interviews/${workspaceId}/${item.path}`"
+              :to="`/interviews/${encodeURIComponent(workspaceId)}/${item.path}`"
               class="group flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all"
               :class="[
                 isRouteActive(item.path)

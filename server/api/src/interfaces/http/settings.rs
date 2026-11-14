@@ -11,12 +11,17 @@ use validator::Validate;
 
 use crate::{
     contexts::identity::domain::UserRole,
-    interfaces::http::{
-        extractors::authenticated_user::AuthenticatedUser,
-        workspaces::AppState,
-    },
+    interfaces::http::{extractors::authenticated_user::AuthenticatedUser, workspaces::AppState},
     shared::{encryption::CryptoService, error::AppError, Result},
 };
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct DiscoverModelsRequestDto {
+    pub provider_key: String,
+    pub base_url: Option<String>,
+    pub api_key: Option<String>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UserProfileResponseDto {
@@ -93,38 +98,234 @@ pub struct UpdateUserRoutingRequestDto {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct DiscoverModelsRequestDto {
-    pub provider_key: String,
-    pub base_url: Option<String>,
-    pub api_key: Option<String>,
+#[serde(deny_unknown_fields)]
+pub struct CandidateProfileDto {
+    pub phone: Option<String>,
+    pub location: Option<String>,
+    pub linkedin_url: Option<String>,
+    pub github_url: Option<String>,
+    pub portfolio_url: Option<String>,
+    pub target_role: Option<String>,
+    pub required_keywords: Vec<String>,
+    pub excluded_keywords: Vec<String>,
+    pub target_locations: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct UpdateCandidateProfileRequestDto {
+    pub phone: Option<String>,
+    pub location: Option<String>,
+    pub linkedin_url: Option<String>,
+    pub github_url: Option<String>,
+    pub portfolio_url: Option<String>,
+    pub target_role: Option<String>,
+    pub required_keywords: Vec<String>,
+    pub excluded_keywords: Vec<String>,
+    pub target_locations: Vec<String>,
+}
+
+fn validate_candidate_profile(payload: &UpdateCandidateProfileRequestDto) -> Result<()> {
+    for value in [
+        &payload.phone,
+        &payload.location,
+        &payload.linkedin_url,
+        &payload.github_url,
+        &payload.portfolio_url,
+        &payload.target_role,
+    ] {
+        if value.as_ref().is_some_and(|v| v.trim().is_empty()) {
+            return Err(AppError::Validation(
+                "Candidate profile values cannot be blank".into(),
+            ));
+        }
+    }
+    if payload.phone.as_ref().is_some_and(|phone| {
+        !(7..=20).contains(&phone.chars().count())
+            || phone.chars().filter(|c| c.is_ascii_digit()).count() < 7
+            || phone
+                .chars()
+                .any(|c| !(c.is_ascii_digit() || "+()-. ".contains(c)))
+    }) || payload
+        .location
+        .as_ref()
+        .is_some_and(|v| v.chars().count() > 120)
+        || payload
+            .target_role
+            .as_ref()
+            .is_some_and(|v| v.chars().count() > 120)
+    {
+        return Err(AppError::Validation(
+            "Invalid phone, location, or target role".into(),
+        ));
+    }
+    for url in [
+        &payload.linkedin_url,
+        &payload.github_url,
+        &payload.portfolio_url,
+    ]
+    .into_iter()
+    .flatten()
+    {
+        if url.chars().count() > 2048
+            || reqwest::Url::parse(url)
+                .map(|parsed| {
+                    parsed.scheme() != "https"
+                        || !parsed.username().is_empty()
+                        || parsed.password().is_some()
+                })
+                .unwrap_or(true)
+        {
+            return Err(AppError::Validation(
+                "Profile URLs must be HTTPS without userinfo and at most 2048 characters".into(),
+            ));
+        }
+    }
+    let arrays = [
+        &payload.required_keywords,
+        &payload.excluded_keywords,
+        &payload.target_locations,
+    ];
+    if arrays.iter().any(|items| {
+        items.len() > 20
+            || items
+                .iter()
+                .any(|v| !(1..=80).contains(&v.chars().count()) || v.trim().is_empty())
+    }) {
+        return Err(AppError::Validation(
+            "Invalid profile preference arrays".into(),
+        ));
+    }
+    let unique = |items: &[String]| {
+        let mut seen = std::collections::HashSet::new();
+        items.iter().all(|item| seen.insert(item.to_lowercase()))
+    };
+    if !arrays.iter().all(|items| unique(items))
+        || payload.required_keywords.iter().any(|required| {
+            payload
+                .excluded_keywords
+                .iter()
+                .any(|excluded| required.to_lowercase() == excluded.to_lowercase())
+        })
+    {
+        return Err(AppError::Validation(
+            "Preferences must be case-insensitively unique with no required/excluded overlap"
+                .into(),
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod candidate_profile_validation_tests {
+    use super::*;
+
+    fn profile() -> UpdateCandidateProfileRequestDto {
+        UpdateCandidateProfileRequestDto {
+            phone: Some("+1 (555) 123-4567".into()),
+            location: Some("Montreal".into()),
+            linkedin_url: Some("https://linkedin.com/in/candidate".into()),
+            github_url: None,
+            portfolio_url: None,
+            target_role: Some("Engineer".into()),
+            required_keywords: vec!["Rust".into()],
+            excluded_keywords: vec!["Java".into()],
+            target_locations: vec!["Montreal".into()],
+        }
+    }
+
+    #[test]
+    fn candidate_profile_accepts_valid_data_and_rejects_invalid_constraints() {
+        assert!(validate_candidate_profile(&profile()).is_ok());
+        let mut invalid = profile();
+        invalid.phone = Some("123-456".into());
+        assert!(validate_candidate_profile(&invalid).is_err());
+        let mut invalid = profile();
+        invalid.target_role = Some("x".repeat(121));
+        assert!(validate_candidate_profile(&invalid).is_err());
+        let mut invalid = profile();
+        invalid.linkedin_url = Some("http://linkedin.com/in/candidate".into());
+        assert!(validate_candidate_profile(&invalid).is_err());
+        let mut invalid = profile();
+        invalid.required_keywords.push("rust".into());
+        assert!(validate_candidate_profile(&invalid).is_err());
+        let mut invalid = profile();
+        invalid.excluded_keywords.push("RUST".into());
+        assert!(validate_candidate_profile(&invalid).is_err());
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct StoredCandidateProfile {
+    phone: Option<String>,
+    location: Option<String>,
+    linkedin_url: Option<String>,
+    github_url: Option<String>,
+    portfolio_url: Option<String>,
+    target_role: Option<String>,
+    required_keywords: Vec<String>,
+    excluded_keywords: Vec<String>,
+    target_locations: Vec<String>,
 }
 
 pub fn settings_routes(state: AppState) -> Router {
     Router::new()
         .route("/api/v1/settings/profile", get(get_profile))
-        .route("/api/v1/settings/llm", get(get_llm_settings).put(upsert_llm_setting).post(upsert_llm_setting))
-        .route("/api/v1/settings/llm/{provider}", delete(delete_llm_setting))
-        .route("/api/v1/settings/llm/providers", get(get_combined_providers).put(upsert_user_provider).post(upsert_user_provider))
-        .route("/api/v1/settings/llm/providers/{provider_key}", delete(delete_user_provider))
-        .route("/api/v1/settings/llm/routing", get(get_user_routing).put(update_user_routing))
-        .route("/api/v1/settings/llm/models", axum::routing::post(discover_models))
+        .route(
+            "/api/v1/candidate-profile",
+            get(get_candidate_profile).put(update_candidate_profile),
+        )
+        .route(
+            "/api/v1/settings/llm",
+            get(get_llm_settings)
+                .put(upsert_llm_setting)
+                .post(upsert_llm_setting),
+        )
+        .route(
+            "/api/v1/settings/llm/{provider}",
+            delete(delete_llm_setting),
+        )
+        .route(
+            "/api/v1/settings/llm/providers",
+            get(get_combined_providers)
+                .put(upsert_user_provider)
+                .post(upsert_user_provider),
+        )
+        .route(
+            "/api/v1/settings/llm/providers/{provider_key}",
+            delete(delete_user_provider),
+        )
+        .route(
+            "/api/v1/settings/llm/routing",
+            get(get_user_routing).put(update_user_routing),
+        )
+        .route(
+            "/api/v1/settings/llm/models",
+            axum::routing::post(discover_models),
+        )
         .with_state(state)
 }
 
 fn mask_key(key: &str) -> String {
-    if key.len() <= 6 {
-        "***".to_string()
-    } else {
-        let last4 = &key[key.len() - 4..];
-        let prefix = if key.starts_with("sk-ant-") {
-            "sk-ant-..."
-        } else if key.starts_with("sk-") {
-            "sk-..."
-        } else {
-            "..."
-        };
-        format!("{prefix}{last4}")
+    let character_count = key.chars().count();
+    if character_count <= 6 {
+        return "***".to_string();
     }
+
+    let last_four_start = key
+        .char_indices()
+        .rev()
+        .nth(3)
+        .map(|(index, _)| index)
+        .unwrap_or(0);
+    let prefix = if key.starts_with("sk-ant-") {
+        "sk-ant-..."
+    } else if key.starts_with("sk-") {
+        "sk-..."
+    } else {
+        "..."
+    };
+    format!("{prefix}{}", &key[last_four_start..])
 }
 
 #[utoipa::path(
@@ -151,6 +352,104 @@ pub async fn get_profile(
         role: user.role,
     }))
 }
+#[utoipa::path(
+    get,
+    path = "/api/v1/candidate-profile",
+    responses((status = 200, body = CandidateProfileDto), (status = 401, description = "Unauthorized"))
+)]
+pub async fn get_candidate_profile(
+    State(state): State<AppState>,
+    auth_user: AuthenticatedUser,
+) -> Result<Json<CandidateProfileDto>> {
+    let mut response = state.db.client
+        .query("SELECT phone, location, linkedin_url, github_url, portfolio_url, target_role, required_keywords, excluded_keywords, target_locations FROM candidate_profile WHERE user_id = type::record('user', $uid) LIMIT 1;")
+        .bind(("uid", auth_user.user_id.0))
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+    let rows: Vec<serde_json::Value> = response
+        .take(0)
+        .map_err(|e| AppError::Database(e.to_string()))?;
+    let profile = rows
+        .into_iter()
+        .next()
+        .map(serde_json::from_value)
+        .transpose()
+        .map_err(|e| AppError::Database(format!("Malformed candidate profile: {e}")))?
+        .unwrap_or(StoredCandidateProfile {
+            phone: None,
+            location: None,
+            linkedin_url: None,
+            github_url: None,
+            portfolio_url: None,
+            target_role: None,
+            required_keywords: vec![],
+            excluded_keywords: vec![],
+            target_locations: vec![],
+        });
+    Ok(Json(CandidateProfileDto {
+        phone: profile.phone,
+        location: profile.location,
+        linkedin_url: profile.linkedin_url,
+        github_url: profile.github_url,
+        portfolio_url: profile.portfolio_url,
+        target_role: profile.target_role,
+        required_keywords: profile.required_keywords,
+        excluded_keywords: profile.excluded_keywords,
+        target_locations: profile.target_locations,
+    }))
+}
+
+#[utoipa::path(
+    put,
+    path = "/api/v1/candidate-profile",
+    request_body = UpdateCandidateProfileRequestDto,
+    responses((status = 200, body = CandidateProfileDto), (status = 400, description = "Invalid profile"), (status = 401, description = "Unauthorized"))
+)]
+pub async fn update_candidate_profile(
+    State(state): State<AppState>,
+    auth_user: AuthenticatedUser,
+    Json(payload): Json<UpdateCandidateProfileRequestDto>,
+) -> Result<Json<CandidateProfileDto>> {
+    validate_candidate_profile(&payload)?;
+    let user_id = auth_user.user_id.0;
+    let candidate_profile_id = format!(
+        "candidate_{}",
+        user_id.replace("user:", "").replace('`', "")
+    );
+    let mut response = state.db.client.query(
+        "UPSERT type::record('candidate_profile', $id) SET user_id = type::record('user', $uid), phone = $phone, location = $location, linkedin_url = $linkedin, github_url = $github, portfolio_url = $portfolio, target_role = $role, required_keywords = $required, excluded_keywords = $excluded, target_locations = $locations, updated_at = time::now() RETURN AFTER;"
+    )
+        .bind(("uid", user_id))
+        .bind(("id", candidate_profile_id))
+        .bind(("phone", payload.phone)).bind(("location", payload.location))
+        .bind(("linkedin", payload.linkedin_url)).bind(("github", payload.github_url))
+        .bind(("portfolio", payload.portfolio_url)).bind(("role", payload.target_role))
+        .bind(("required", payload.required_keywords)).bind(("excluded", payload.excluded_keywords))
+        .bind(("locations", payload.target_locations))
+        .await.map_err(|e| AppError::Database(e.to_string()))?;
+    let rows: Vec<serde_json::Value> = response
+        .take(0)
+        .map_err(|e| AppError::Database(e.to_string()))?;
+    let p: StoredCandidateProfile = rows
+        .into_iter()
+        .next()
+        .ok_or_else(|| AppError::Database("Candidate profile upsert returned no profile".into()))
+        .and_then(|value| {
+            serde_json::from_value(value)
+                .map_err(|e| AppError::Database(format!("Malformed candidate profile: {e}")))
+        })?;
+    Ok(Json(CandidateProfileDto {
+        phone: p.phone,
+        location: p.location,
+        linkedin_url: p.linkedin_url,
+        github_url: p.github_url,
+        portfolio_url: p.portfolio_url,
+        target_role: p.target_role,
+        required_keywords: p.required_keywords,
+        excluded_keywords: p.excluded_keywords,
+        target_locations: p.target_locations,
+    }))
+}
 
 #[utoipa::path(
     get,
@@ -171,7 +470,6 @@ pub async fn get_llm_settings(
     let db = &state.db.client;
     let crypto = CryptoService::new(&state.config.encryption_key);
 
-    
     let mut res_user = db
         .query("SELECT * FROM user_llm_config WHERE user_id = type::record('user', $uid);")
         .bind(("uid", user.id.clone()))
@@ -179,7 +477,6 @@ pub async fn get_llm_settings(
         .map_err(|e| AppError::Database(e.to_string()))?;
     let user_configs: Vec<serde_json::Value> = res_user.take(0).unwrap_or_default();
 
-    
     let mut shared_configs: Vec<serde_json::Value> = Vec::new();
     if user.role != UserRole::Admin {
         let mut res_shared = db
@@ -193,8 +490,9 @@ pub async fn get_llm_settings(
     let mut result = Vec::new();
 
     for p in providers {
-        
-        let user_cfg = user_configs.iter().find(|c| c["provider"].as_str() == Some(p));
+        let user_cfg = user_configs
+            .iter()
+            .find(|c| c["provider"].as_str() == Some(p));
         if let Some(cfg) = user_cfg {
             let enc_key = cfg["encrypted_api_key"].as_str();
             let has_key = enc_key.map(|k| !k.is_empty()).unwrap_or(false);
@@ -222,8 +520,9 @@ pub async fn get_llm_settings(
             continue;
         }
 
-        
-        let shared_cfg = shared_configs.iter().find(|c| c["provider"].as_str() == Some(p));
+        let shared_cfg = shared_configs
+            .iter()
+            .find(|c| c["provider"].as_str() == Some(p));
         if let Some(cfg) = shared_cfg {
             let enc_key = cfg["encrypted_api_key"].as_str();
             let has_key = enc_key.map(|k| !k.is_empty()).unwrap_or(false);
@@ -247,7 +546,6 @@ pub async fn get_llm_settings(
             continue;
         }
 
-        
         result.push(LlmConfigItemDto {
             provider: p.to_string(),
             base_url: None,
@@ -287,13 +585,14 @@ pub async fn upsert_llm_setting(
     let provider = payload.provider.to_lowercase();
     let valid_providers = ["openai", "anthropic", "openrouter", "ollama", "custom"];
     if !valid_providers.contains(&provider.as_str()) {
-        return Err(AppError::Validation(format!("Unsupported provider '{provider}'")));
+        return Err(AppError::Validation(format!(
+            "Unsupported provider '{provider}'"
+        )));
     }
 
     let db = &state.db.client;
     let crypto = CryptoService::new(&state.config.encryption_key);
 
-    
     let mut check_res = db
         .query("SELECT * FROM user_llm_config WHERE user_id = type::record('user', $uid) AND provider = $provider;")
         .bind(("uid", user.id.clone()))
@@ -454,23 +753,46 @@ pub async fn get_combined_providers(
         let base_url = sp["base_url"].as_str().map(|s| s.to_string());
         let allowed_models = sp["allowed_models"]
             .as_array()
-            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect()
+            })
             .unwrap_or_default();
 
         seen_keys.insert(pkey.clone());
-        let user_override = user_providers.iter().find(|up| up["provider_key"].as_str() == Some(&pkey));
+        let user_override = user_providers
+            .iter()
+            .find(|up| up["provider_key"].as_str() == Some(&pkey));
 
         let (source, is_override) = if let Some(up) = user_override {
-            let key_exists = up["encrypted_api_key"].as_str().map(|k| !k.is_empty()).unwrap_or(false);
+            let key_exists = up["encrypted_api_key"]
+                .as_str()
+                .map(|k| !k.is_empty())
+                .unwrap_or(false);
             if key_exists {
                 ("user".to_string(), true)
             } else {
-                let sys_has_key = sp["encrypted_api_key"].as_str().map(|k| !k.is_empty()).unwrap_or(false);
-                if sys_has_key { ("system".to_string(), false) } else { ("none".to_string(), false) }
+                let sys_has_key = sp["encrypted_api_key"]
+                    .as_str()
+                    .map(|k| !k.is_empty())
+                    .unwrap_or(false);
+                if sys_has_key {
+                    ("system".to_string(), false)
+                } else {
+                    ("none".to_string(), false)
+                }
             }
         } else {
-            let sys_has_key = sp["encrypted_api_key"].as_str().map(|k| !k.is_empty()).unwrap_or(false);
-            if sys_has_key { ("system".to_string(), false) } else { ("none".to_string(), false) }
+            let sys_has_key = sp["encrypted_api_key"]
+                .as_str()
+                .map(|k| !k.is_empty())
+                .unwrap_or(false);
+            if sys_has_key {
+                ("system".to_string(), false)
+            } else {
+                ("none".to_string(), false)
+            }
         };
 
         result.push(ProviderStatusItemDto {
@@ -486,10 +808,19 @@ pub async fn get_combined_providers(
 
     for (def_key, def_name) in default_providers {
         if !seen_keys.contains(def_key) {
-            let user_override = user_providers.iter().find(|up| up["provider_key"].as_str() == Some(def_key));
+            let user_override = user_providers
+                .iter()
+                .find(|up| up["provider_key"].as_str() == Some(def_key));
             let (source, is_override) = if let Some(up) = user_override {
-                let key_exists = up["encrypted_api_key"].as_str().map(|k| !k.is_empty()).unwrap_or(false);
-                if key_exists { ("user".to_string(), true) } else { ("none".to_string(), false) }
+                let key_exists = up["encrypted_api_key"]
+                    .as_str()
+                    .map(|k| !k.is_empty())
+                    .unwrap_or(false);
+                if key_exists {
+                    ("user".to_string(), true)
+                } else {
+                    ("none".to_string(), false)
+                }
             } else {
                 ("none".to_string(), false)
             };
@@ -539,19 +870,32 @@ pub async fn upsert_user_provider(
     let rec_id = format!("{}_{}", auth_user.user_id.0, pkey);
 
     let mut existing_result = db
-        .query(
-            "SELECT encrypted_api_key FROM type::record('user_llm_provider', $id);",
-        )
+        .query("SELECT encrypted_api_key, base_url FROM type::record('user_llm_provider', $id);")
         .bind(("id", rec_id.as_str()))
         .await
         .map_err(|e| AppError::Database(format!("Failed to read user provider: {e}")))?;
-    let existing_records: Vec<serde_json::Value> = existing_result
-        .take(0)
-        .unwrap_or_default();
-    let existing_key = existing_records
-        .first()
-        .and_then(|record| record["encrypted_api_key"].as_str());
+    let existing_records: Vec<serde_json::Value> = existing_result.take(0).unwrap_or_default();
+    let existing_record = existing_records.first();
+    let existing_key = existing_record.and_then(|record| record["encrypted_api_key"].as_str());
     let enc_key = resolve_user_provider_key(payload.api_key.as_deref(), existing_key, &crypto)?;
+
+    let resolved_base_url = match payload.base_url {
+        Some(url) if !url.trim().is_empty() => {
+            let trimmed = url.trim();
+            crate::shared::ssrf::resolve_and_verify_url(
+                trimmed,
+                false,
+                &state.config.allowed_private_hosts,
+            )
+            .await?;
+            Some(trimmed.to_string())
+        }
+        Some(_) => None,
+        None => existing_record
+            .and_then(|r| r.get("base_url"))
+            .and_then(|v| v.as_str())
+            .map(str::to_string),
+    };
 
     let query = "
         UPSERT type::record('user_llm_provider', $id) SET
@@ -566,7 +910,7 @@ pub async fn upsert_user_provider(
         .bind(("uid", auth_user.user_id.0))
         .bind(("pkey", pkey))
         .bind(("enc_key", enc_key))
-        .bind(("base_url", payload.base_url))
+        .bind(("base_url", resolved_base_url))
         .await
         .and_then(|r| r.check())
         .map_err(|e| AppError::Database(format!("Failed to save user provider: {e}")))?;
@@ -617,9 +961,14 @@ pub async fn get_user_routing(
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
     let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
-    let slots_val = rows.into_iter().next().and_then(|r| r.get("slots").cloned()).unwrap_or(serde_json::json!({}));
+    let slots_val = rows
+        .into_iter()
+        .next()
+        .and_then(|r| r.get("slots").cloned())
+        .unwrap_or(serde_json::json!({}));
 
-    let slots: std::collections::HashMap<String, ModelRoutingConfigDto> = serde_json::from_value(slots_val).unwrap_or_default();
+    let slots: std::collections::HashMap<String, ModelRoutingConfigDto> =
+        serde_json::from_value(slots_val).unwrap_or_default();
     Ok(Json(UserRoutingResponseDto { slots }))
 }
 
@@ -637,7 +986,8 @@ pub async fn update_user_routing(
     Json(payload): Json<UpdateUserRoutingRequestDto>,
 ) -> Result<StatusCode> {
     let db = &state.db.client;
-    let slots_val = serde_json::to_value(&payload.slots).map_err(|e| AppError::Validation(e.to_string()))?;
+    let slots_val =
+        serde_json::to_value(&payload.slots).map_err(|e| AppError::Validation(e.to_string()))?;
 
     let query = "
         UPSERT type::record('user_model_routing', $uid) SET
@@ -871,6 +1221,19 @@ mod provider_key_update_tests {
                 .unwrap()
                 .unwrap();
         assert_ne!(replacement, existing);
-        assert_eq!(crypto.decrypt(&replacement).unwrap(), "replacement test secret");
+        assert_eq!(
+            crypto.decrypt(&replacement).unwrap(),
+            "replacement test secret"
+        );
+    }
+}
+#[cfg(test)]
+mod key_mask_tests {
+    use super::mask_key;
+
+    #[test]
+    fn masks_unicode_keys_without_splitting_utf8() {
+        assert_eq!(mask_key("sk-abcdef"), "sk-...cdef");
+        assert_eq!(mask_key("sk-abcdef秘密"), "sk-...ef秘密");
     }
 }

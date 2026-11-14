@@ -1,0 +1,24 @@
+{
+  "name": "@mensetsu/browser-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mensetsu application assistant for Chrome and Firefox (Manifest V3)",
+  "scripts": {
+    "build": "tsx scripts/build.ts",
+    "build:chrome": "tsx scripts/build.ts --browser=chrome",
+    "build:firefox": "tsx scripts/build.ts --browser=firefox",
+    "typecheck": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json",
+    "test": "tsx --test test/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

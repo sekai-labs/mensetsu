@@ -9,7 +9,7 @@ from src.contracts.v1 import (
     ToolInvocationsPageResponse,
 )
 from src.orchestration.id_validator import validate_id
-from src.orchestration.ledger.base import extract_rows
+from src.orchestration.ledger.base import TERMINAL_RUN_STATUSES, extract_rows
 from src.orchestration.sanitizer import sanitize_data
 
 logger = logging.getLogger("mensetsu.orchestration.ledger")
@@ -290,6 +290,14 @@ class ExecutionMixin:
 
     async def sweep_run_to_terminal(self, run_id: str, reason: str) -> dict[str, int]:
         clean_run_id = validate_id(run_id, "run_id")
+        run = await self.get_workflow_run(clean_run_id)
+        if run is None or run.status not in TERMINAL_RUN_STATUSES:
+            raise ValueError(f"Run {clean_run_id} must be terminal before its records are swept.")
+        task_status = {
+            "completed": "skipped",
+            "failed": "failed",
+            "cancelled": "cancelled",
+        }[run.status]
         error = f"Closed at run end: {reason}"
         now = datetime.now(timezone.utc)
         counts = {"executions": 0, "tools": 0, "delegations": 0}
@@ -333,7 +341,7 @@ class ExecutionMixin:
         for execution in await self.list_agent_executions_for_run(clean_run_id):
             if execution.status not in ("pending", "running"):
                 continue
-            execution.status = "cancelled"
+            execution.status = "cancelled" if run.status == "cancelled" else "failed"
             execution.error = error
             execution.completed_at = now
             await self.save_agent_execution(execution)
@@ -345,6 +353,17 @@ class ExecutionMixin:
                 payload={"execution_id": execution.id, "error": error},
             )
             counts["executions"] += 1
+
+        closed_tasks = 0
+        for task in await self.list_tasks_for_run(clean_run_id):
+            if task.status in ("pending", "queued", "running", "retrying", "blocked"):
+                task.status = task_status
+                task.error = None if run.status == "completed" else error
+                await self.save_task(task)
+                closed_tasks += 1
+        if closed_tasks:
+            counts["tasks"] = closed_tasks
         if any(counts.values()):
             logger.warning(f"Run {clean_run_id} end sweep closed non-terminal records: {counts}")
         return counts
+

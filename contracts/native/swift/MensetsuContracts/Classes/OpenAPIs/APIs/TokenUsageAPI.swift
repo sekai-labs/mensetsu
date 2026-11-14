@@ -14,14 +14,70 @@ open class TokenUsageAPI {
 
     /**
 
-     - parameter beforeTimestamp: (query)  (optional)
-     - parameter beforeEventId: (query)  (optional)
      - parameter apiResponseQueue: The queue on which api response is dispatched.
      - parameter completion: completion handler to receive the data and the error objects
      */
     @discardableResult
-    open class func adminTokenUsage(beforeTimestamp: String? = nil, beforeEventId: String? = nil, apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: TokenUsageResponseDto?, _ error: Error?) -> Void)) -> RequestTask {
-        return adminTokenUsageWithRequestBuilder(beforeTimestamp: beforeTimestamp, beforeEventId: beforeEventId).execute(apiResponseQueue) { result in
+    open class func adminDailyTokenUsage(apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: DailyTokenUsageResponseDto?, _ error: Error?) -> Void)) -> RequestTask {
+        return adminDailyTokenUsageWithRequestBuilder().execute(apiResponseQueue) { result in
+            switch result {
+            case let .success(response):
+                completion(response.body, nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+        }
+    }
+
+    /**
+     - GET /api/v1/admin/usage/tokens/daily
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - returns: RequestBuilder<DailyTokenUsageResponseDto> 
+     */
+    open class func adminDailyTokenUsageWithRequestBuilder() -> RequestBuilder<DailyTokenUsageResponseDto> {
+        let localVariablePath = "/api/v1/admin/usage/tokens/daily"
+        let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<DailyTokenUsageResponseDto>.Type = MensetsuContractsAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+
+     - parameter beforeTimestamp: (query)  (optional)
+     - parameter beforeEventId: (query)  (optional)
+     - parameter limit: (query)  (optional)
+     - parameter q: (query)  (optional)
+     - parameter search: (query)  (optional)
+     - parameter provider: (query)  (optional)
+     - parameter modelProvider: (query)  (optional)
+     - parameter agent: (query)  (optional)
+     - parameter agentId: (query)  (optional)
+     - parameter from: (query)  (optional)
+     - parameter fromDate: (query)  (optional)
+     - parameter startDate: (query)  (optional)
+     - parameter to: (query)  (optional)
+     - parameter toDate: (query)  (optional)
+     - parameter endDate: (query)  (optional)
+     - parameter userId: (query)  (optional)
+     - parameter apiResponseQueue: The queue on which api response is dispatched.
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    @discardableResult
+    open class func adminTokenUsage(beforeTimestamp: String? = nil, beforeEventId: String? = nil, limit: Int? = nil, q: String? = nil, search: String? = nil, provider: String? = nil, modelProvider: String? = nil, agent: String? = nil, agentId: String? = nil, from: String? = nil, fromDate: String? = nil, startDate: String? = nil, to: String? = nil, toDate: String? = nil, endDate: String? = nil, userId: String? = nil, apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: TokenUsageResponseDto?, _ error: Error?) -> Void)) -> RequestTask {
+        return adminTokenUsageWithRequestBuilder(beforeTimestamp: beforeTimestamp, beforeEventId: beforeEventId, limit: limit, q: q, search: search, provider: provider, modelProvider: modelProvider, agent: agent, agentId: agentId, from: from, fromDate: fromDate, startDate: startDate, to: to, toDate: toDate, endDate: endDate, userId: userId).execute(apiResponseQueue) { result in
             switch result {
             case let .success(response):
                 completion(response.body, nil)
@@ -38,9 +94,23 @@ open class TokenUsageAPI {
        - name: bearerAuth
      - parameter beforeTimestamp: (query)  (optional)
      - parameter beforeEventId: (query)  (optional)
+     - parameter limit: (query)  (optional)
+     - parameter q: (query)  (optional)
+     - parameter search: (query)  (optional)
+     - parameter provider: (query)  (optional)
+     - parameter modelProvider: (query)  (optional)
+     - parameter agent: (query)  (optional)
+     - parameter agentId: (query)  (optional)
+     - parameter from: (query)  (optional)
+     - parameter fromDate: (query)  (optional)
+     - parameter startDate: (query)  (optional)
+     - parameter to: (query)  (optional)
+     - parameter toDate: (query)  (optional)
+     - parameter endDate: (query)  (optional)
+     - parameter userId: (query)  (optional)
      - returns: RequestBuilder<TokenUsageResponseDto> 
      */
-    open class func adminTokenUsageWithRequestBuilder(beforeTimestamp: String? = nil, beforeEventId: String? = nil) -> RequestBuilder<TokenUsageResponseDto> {
+    open class func adminTokenUsageWithRequestBuilder(beforeTimestamp: String? = nil, beforeEventId: String? = nil, limit: Int? = nil, q: String? = nil, search: String? = nil, provider: String? = nil, modelProvider: String? = nil, agent: String? = nil, agentId: String? = nil, from: String? = nil, fromDate: String? = nil, startDate: String? = nil, to: String? = nil, toDate: String? = nil, endDate: String? = nil, userId: String? = nil) -> RequestBuilder<TokenUsageResponseDto> {
         let localVariablePath = "/api/v1/admin/usage/tokens"
         let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
         let localVariableParameters: [String: Any]? = nil
@@ -49,6 +119,20 @@ open class TokenUsageAPI {
         localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
             "before_timestamp": (wrappedValue: beforeTimestamp?.encodeToJSON(), isExplode: true),
             "before_event_id": (wrappedValue: beforeEventId?.encodeToJSON(), isExplode: true),
+            "limit": (wrappedValue: limit?.encodeToJSON(), isExplode: true),
+            "q": (wrappedValue: q?.encodeToJSON(), isExplode: true),
+            "search": (wrappedValue: search?.encodeToJSON(), isExplode: true),
+            "provider": (wrappedValue: provider?.encodeToJSON(), isExplode: true),
+            "model_provider": (wrappedValue: modelProvider?.encodeToJSON(), isExplode: true),
+            "agent": (wrappedValue: agent?.encodeToJSON(), isExplode: true),
+            "agent_id": (wrappedValue: agentId?.encodeToJSON(), isExplode: true),
+            "from": (wrappedValue: from?.encodeToJSON(), isExplode: true),
+            "from_date": (wrappedValue: fromDate?.encodeToJSON(), isExplode: true),
+            "start_date": (wrappedValue: startDate?.encodeToJSON(), isExplode: true),
+            "to": (wrappedValue: to?.encodeToJSON(), isExplode: true),
+            "to_date": (wrappedValue: toDate?.encodeToJSON(), isExplode: true),
+            "end_date": (wrappedValue: endDate?.encodeToJSON(), isExplode: true),
+            "user_id": (wrappedValue: userId?.encodeToJSON(), isExplode: true),
         ])
 
         let localVariableNillableHeaders: [String: Any?] = [
@@ -64,14 +148,70 @@ open class TokenUsageAPI {
 
     /**
 
-     - parameter beforeTimestamp: (query)  (optional)
-     - parameter beforeEventId: (query)  (optional)
      - parameter apiResponseQueue: The queue on which api response is dispatched.
      - parameter completion: completion handler to receive the data and the error objects
      */
     @discardableResult
-    open class func userTokenUsage(beforeTimestamp: String? = nil, beforeEventId: String? = nil, apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: TokenUsageResponseDto?, _ error: Error?) -> Void)) -> RequestTask {
-        return userTokenUsageWithRequestBuilder(beforeTimestamp: beforeTimestamp, beforeEventId: beforeEventId).execute(apiResponseQueue) { result in
+    open class func userDailyTokenUsage(apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: DailyTokenUsageResponseDto?, _ error: Error?) -> Void)) -> RequestTask {
+        return userDailyTokenUsageWithRequestBuilder().execute(apiResponseQueue) { result in
+            switch result {
+            case let .success(response):
+                completion(response.body, nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+        }
+    }
+
+    /**
+     - GET /api/v1/usage/tokens/daily
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - returns: RequestBuilder<DailyTokenUsageResponseDto> 
+     */
+    open class func userDailyTokenUsageWithRequestBuilder() -> RequestBuilder<DailyTokenUsageResponseDto> {
+        let localVariablePath = "/api/v1/usage/tokens/daily"
+        let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<DailyTokenUsageResponseDto>.Type = MensetsuContractsAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+
+     - parameter beforeTimestamp: (query)  (optional)
+     - parameter beforeEventId: (query)  (optional)
+     - parameter limit: (query)  (optional)
+     - parameter q: (query)  (optional)
+     - parameter search: (query)  (optional)
+     - parameter provider: (query)  (optional)
+     - parameter modelProvider: (query)  (optional)
+     - parameter agent: (query)  (optional)
+     - parameter agentId: (query)  (optional)
+     - parameter from: (query)  (optional)
+     - parameter fromDate: (query)  (optional)
+     - parameter startDate: (query)  (optional)
+     - parameter to: (query)  (optional)
+     - parameter toDate: (query)  (optional)
+     - parameter endDate: (query)  (optional)
+     - parameter userId: (query)  (optional)
+     - parameter apiResponseQueue: The queue on which api response is dispatched.
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    @discardableResult
+    open class func userTokenUsage(beforeTimestamp: String? = nil, beforeEventId: String? = nil, limit: Int? = nil, q: String? = nil, search: String? = nil, provider: String? = nil, modelProvider: String? = nil, agent: String? = nil, agentId: String? = nil, from: String? = nil, fromDate: String? = nil, startDate: String? = nil, to: String? = nil, toDate: String? = nil, endDate: String? = nil, userId: String? = nil, apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: TokenUsageResponseDto?, _ error: Error?) -> Void)) -> RequestTask {
+        return userTokenUsageWithRequestBuilder(beforeTimestamp: beforeTimestamp, beforeEventId: beforeEventId, limit: limit, q: q, search: search, provider: provider, modelProvider: modelProvider, agent: agent, agentId: agentId, from: from, fromDate: fromDate, startDate: startDate, to: to, toDate: toDate, endDate: endDate, userId: userId).execute(apiResponseQueue) { result in
             switch result {
             case let .success(response):
                 completion(response.body, nil)
@@ -88,9 +228,23 @@ open class TokenUsageAPI {
        - name: bearerAuth
      - parameter beforeTimestamp: (query)  (optional)
      - parameter beforeEventId: (query)  (optional)
+     - parameter limit: (query)  (optional)
+     - parameter q: (query)  (optional)
+     - parameter search: (query)  (optional)
+     - parameter provider: (query)  (optional)
+     - parameter modelProvider: (query)  (optional)
+     - parameter agent: (query)  (optional)
+     - parameter agentId: (query)  (optional)
+     - parameter from: (query)  (optional)
+     - parameter fromDate: (query)  (optional)
+     - parameter startDate: (query)  (optional)
+     - parameter to: (query)  (optional)
+     - parameter toDate: (query)  (optional)
+     - parameter endDate: (query)  (optional)
+     - parameter userId: (query)  (optional)
      - returns: RequestBuilder<TokenUsageResponseDto> 
      */
-    open class func userTokenUsageWithRequestBuilder(beforeTimestamp: String? = nil, beforeEventId: String? = nil) -> RequestBuilder<TokenUsageResponseDto> {
+    open class func userTokenUsageWithRequestBuilder(beforeTimestamp: String? = nil, beforeEventId: String? = nil, limit: Int? = nil, q: String? = nil, search: String? = nil, provider: String? = nil, modelProvider: String? = nil, agent: String? = nil, agentId: String? = nil, from: String? = nil, fromDate: String? = nil, startDate: String? = nil, to: String? = nil, toDate: String? = nil, endDate: String? = nil, userId: String? = nil) -> RequestBuilder<TokenUsageResponseDto> {
         let localVariablePath = "/api/v1/usage/tokens"
         let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
         let localVariableParameters: [String: Any]? = nil
@@ -99,6 +253,20 @@ open class TokenUsageAPI {
         localVariableUrlComponents?.queryItems = APIHelper.mapValuesToQueryItems([
             "before_timestamp": (wrappedValue: beforeTimestamp?.encodeToJSON(), isExplode: true),
             "before_event_id": (wrappedValue: beforeEventId?.encodeToJSON(), isExplode: true),
+            "limit": (wrappedValue: limit?.encodeToJSON(), isExplode: true),
+            "q": (wrappedValue: q?.encodeToJSON(), isExplode: true),
+            "search": (wrappedValue: search?.encodeToJSON(), isExplode: true),
+            "provider": (wrappedValue: provider?.encodeToJSON(), isExplode: true),
+            "model_provider": (wrappedValue: modelProvider?.encodeToJSON(), isExplode: true),
+            "agent": (wrappedValue: agent?.encodeToJSON(), isExplode: true),
+            "agent_id": (wrappedValue: agentId?.encodeToJSON(), isExplode: true),
+            "from": (wrappedValue: from?.encodeToJSON(), isExplode: true),
+            "from_date": (wrappedValue: fromDate?.encodeToJSON(), isExplode: true),
+            "start_date": (wrappedValue: startDate?.encodeToJSON(), isExplode: true),
+            "to": (wrappedValue: to?.encodeToJSON(), isExplode: true),
+            "to_date": (wrappedValue: toDate?.encodeToJSON(), isExplode: true),
+            "end_date": (wrappedValue: endDate?.encodeToJSON(), isExplode: true),
+            "user_id": (wrappedValue: userId?.encodeToJSON(), isExplode: true),
         ])
 
         let localVariableNillableHeaders: [String: Any?] = [

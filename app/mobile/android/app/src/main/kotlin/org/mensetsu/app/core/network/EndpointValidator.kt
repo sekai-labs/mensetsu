@@ -1,6 +1,8 @@
 package org.mensetsu.app.core.network
 
+import java.net.IDN
 import java.net.URI
+import java.util.Locale
 
 object EndpointValidator {
 
@@ -45,12 +47,17 @@ object EndpointValidator {
             return ValidationResult.Invalid("Enter the API origin only, without a path.")
         }
 
-        val scheme = uri.scheme?.lowercase()
+        val scheme = uri.scheme?.lowercase(Locale.ROOT)
         if (scheme != "http" && scheme != "https") {
             return ValidationResult.Invalid("URL scheme must be http or https.")
         }
 
-        val host = uri.host?.lowercase()
+        val port = uri.port
+        if (port != -1 && port !in 1..65535) {
+            return ValidationResult.Invalid("URL port must be between 1 and 65535.")
+        }
+
+        val host = normalizedHost(uri)
         if (host.isNullOrBlank()) {
             return ValidationResult.Invalid("URL must include a valid host.")
         }
@@ -67,6 +74,29 @@ object EndpointValidator {
 
         return ValidationResult.Valid(trimmed)
     }
+
+    private fun normalizedHost(uri: URI): String? {
+        uri.host?.let { return it.trim('[', ']').lowercase(Locale.ROOT) }
+
+        val authority = uri.rawAuthority ?: return null
+        val host = when (authority.count { it == ':' }) {
+            0 -> authority
+            1 -> {
+                val (rawHost, rawPort) = authority.split(':', limit = 2)
+                val parsedPort = rawPort.toIntOrNull() ?: return null
+                if (parsedPort !in 1..65535) return null
+                rawHost
+            }
+            else -> return null
+        }
+
+        return try {
+            IDN.toASCII(host, IDN.USE_STD3_ASCII_RULES).lowercase(Locale.ROOT)
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+    }
+
     private fun isLocalHost(host: String): Boolean {
         if (host == "localhost" || host == "127.0.0.1") {
             return true

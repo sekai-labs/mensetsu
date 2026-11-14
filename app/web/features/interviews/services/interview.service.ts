@@ -5,6 +5,11 @@ import type {
   CreateResumeUploadRequestDto,
   CreateResumeUploadResponseDto,
   CompleteResumeUploadResponseDto,
+  ResumeUploadItemDto,
+  UserProfileResponseDto,
+  CandidateProfileDto,
+  UpdateCandidateProfileRequestDto,
+  JobApplicationResponseDto,
   MatchAnalysisResponse,
   CompanyResearchResponse,
   LearningUnitResponse,
@@ -42,7 +47,7 @@ export const useInterviewService = () => {
   ): Promise<CompleteResumeUploadResponseDto> => {
     const cleanUploadId = uploadId.replace(/^resume_upload:/, '').replace(/`/g, '')
     return await request<CompleteResumeUploadResponseDto>(
-      `/api/v1/resume-uploads/${cleanUploadId}/complete`,
+      `/api/v1/resume-uploads/${encodeURIComponent(cleanUploadId)}/complete`,
       {
         method: 'POST',
       }
@@ -72,7 +77,7 @@ export const useInterviewService = () => {
 
   const getWorkspace = async (id: string): Promise<WorkspaceResponse> => {
     const cleanId = cleanWorkspaceId(id)
-    return await request<WorkspaceResponse>(`/api/v1/workspaces/${cleanId}`)
+    return await request<WorkspaceResponse>(`/api/v1/workspaces/${encodeURIComponent(cleanId)}`)
   }
 
   const updateWorkspaceObjective = async (
@@ -81,7 +86,7 @@ export const useInterviewService = () => {
   ): Promise<{ workspace_id: string; current_objective: string; status: string }> => {
     const cleanId = cleanWorkspaceId(id)
     return await request<{ workspace_id: string; current_objective: string; status: string }>(
-      `/api/v1/workspaces/${cleanId}/objective`,
+      `/api/v1/workspaces/${encodeURIComponent(cleanId)}/objective`,
       {
         method: 'PATCH',
         body: { prompt },
@@ -91,27 +96,27 @@ export const useInterviewService = () => {
 
   const getWorkspaceRole = async (id: string): Promise<WorkspaceRoleResponse> => {
     const cleanId = cleanWorkspaceId(id)
-    return await request<WorkspaceRoleResponse>(`/api/v1/workspaces/${cleanId}/role`)
+    return await request<WorkspaceRoleResponse>(`/api/v1/workspaces/${encodeURIComponent(cleanId)}/role`)
   }
 
   const getWorkspaceMatch = async (id: string): Promise<MatchAnalysisResponse> => {
     const cleanId = cleanWorkspaceId(id)
-    return await request<MatchAnalysisResponse>(`/api/v1/workspaces/${cleanId}/match`)
+    return await request<MatchAnalysisResponse>(`/api/v1/workspaces/${encodeURIComponent(cleanId)}/match`)
   }
 
   const getWorkspaceCompany = async (id: string): Promise<CompanyResearchResponse> => {
     const cleanId = cleanWorkspaceId(id)
-    return await request<CompanyResearchResponse>(`/api/v1/workspaces/${cleanId}/company`)
+    return await request<CompanyResearchResponse>(`/api/v1/workspaces/${encodeURIComponent(cleanId)}/company`)
   }
 
   const getWorkspaceKnowledge = async (id: string): Promise<KnowledgeGraphResponse> => {
     const cleanId = cleanWorkspaceId(id)
-    return await request<KnowledgeGraphResponse>(`/api/v1/workspaces/${cleanId}/knowledge`)
+    return await request<KnowledgeGraphResponse>(`/api/v1/workspaces/${encodeURIComponent(cleanId)}/knowledge`)
   }
 
   const getWorkspaceLearning = async (id: string): Promise<LearningUnitResponse[]> => {
     const cleanId = cleanWorkspaceId(id)
-    return await request<LearningUnitResponse[]>(`/api/v1/workspaces/${cleanId}/learning`)
+    return await request<LearningUnitResponse[]>(`/api/v1/workspaces/${encodeURIComponent(cleanId)}/learning`)
   }
 
   const toggleLearningUnitCompleted = async (
@@ -121,7 +126,7 @@ export const useInterviewService = () => {
     const cleanWsId = cleanWorkspaceId(workspaceId)
     const cleanLid = lessonId.replace(/^learning_unit:/, '').replace(/`/g, '')
     return await request<ToggleLessonResponse>(
-      `/api/v1/workspaces/${cleanWsId}/learning/${cleanLid}/toggle`,
+      `/api/v1/workspaces/${encodeURIComponent(cleanWsId)}/learning/${encodeURIComponent(cleanLid)}/toggle`,
       {
         method: 'PUT',
       }
@@ -130,7 +135,7 @@ export const useInterviewService = () => {
 
   const getWorkspaceQuestions = async (id: string): Promise<InterviewQuestionResponse[]> => {
     const cleanId = cleanWorkspaceId(id)
-    return await request<InterviewQuestionResponse[]>(`/api/v1/workspaces/${cleanId}/questions`)
+    return await request<InterviewQuestionResponse[]>(`/api/v1/workspaces/${encodeURIComponent(cleanId)}/questions`)
   }
 
   const askWorkspaceKnowledgeQa = async (
@@ -144,7 +149,7 @@ export const useInterviewService = () => {
     has_sufficient_evidence: boolean
   }> => {
     const cleanId = cleanWorkspaceId(id)
-    return await request(`/api/v1/workspaces/${cleanId}/qa`, {
+    return await request(`/api/v1/workspaces/${encodeURIComponent(cleanId)}/qa`, {
       method: 'POST',
       body: { query },
     })
@@ -156,7 +161,7 @@ export const useInterviewService = () => {
     customTitle?: string
   ): Promise<{ workspace_id: string; status: string; source_url: string }> => {
     const cleanId = cleanWorkspaceId(id)
-    return await request(`/api/v1/workspaces/${cleanId}/import-jd`, {
+    return await request(`/api/v1/workspaces/${encodeURIComponent(cleanId)}/import-jd`, {
       method: 'POST',
       body: { url, custom_title: customTitle },
     })
@@ -166,14 +171,67 @@ export const useInterviewService = () => {
     id: string
   ): Promise<{ workspace_id: string; sources: SourceCitation[] }> => {
     const cleanId = cleanWorkspaceId(id)
-    return await request(`/api/v1/workspaces/${cleanId}/sources`)
+    return await request(`/api/v1/workspaces/${encodeURIComponent(cleanId)}/sources`)
   }
 
   const getWorkspaceClaims = async (
     id: string
   ): Promise<{ workspace_id: string; claims: Record<string, unknown>[] }> => {
     const cleanId = cleanWorkspaceId(id)
-    return await request(`/api/v1/workspaces/${cleanId}/claims`)
+    return await request(`/api/v1/workspaces/${encodeURIComponent(cleanId)}/claims`)
+  }
+
+  const listResumeUploads = async (): Promise<ResumeUploadItemDto[]> => {
+    return await request<ResumeUploadItemDto[]>('/api/v1/resume-uploads')
+  }
+
+  const deleteResumeUpload = async (uploadId: string): Promise<void> => {
+    const cleanUploadId = uploadId.replace(/^resume_upload:/, '').replace(/`/g, '')
+    await request<void>(`/api/v1/resume-uploads/${encodeURIComponent(cleanUploadId)}`, {
+      method: 'DELETE',
+    })
+  }
+
+  const getResumeDownloadUrl = (uploadId: string): string => {
+    const cleanUploadId = uploadId.replace(/^resume_upload:/, '').replace(/`/g, '')
+    return `/api/backend/resume-uploads/${encodeURIComponent(cleanUploadId)}/download`
+  }
+
+  const getUserProfile = async (): Promise<UserProfileResponseDto> => {
+    return await request<UserProfileResponseDto>('/api/v1/settings/profile')
+  }
+
+  const getCandidateProfile = async (): Promise<CandidateProfileDto> => {
+    return await request<CandidateProfileDto>('/api/v1/candidate-profile')
+  }
+
+  const updateCandidateProfile = async (
+    payload: UpdateCandidateProfileRequestDto
+  ): Promise<CandidateProfileDto> => {
+    return await request<CandidateProfileDto>('/api/v1/candidate-profile', {
+      method: 'PUT',
+      body: payload,
+    })
+  }
+
+  const listApplications = async (): Promise<JobApplicationResponseDto[]> => {
+    return await request<JobApplicationResponseDto[]>('/api/v1/applications')
+  }
+
+  const getApplication = async (id: string): Promise<JobApplicationResponseDto> => {
+    const cleanAppId = id.replace(/^job_application:/, '').replace(/`/g, '')
+    return await request<JobApplicationResponseDto>(`/api/v1/applications/${encodeURIComponent(cleanAppId)}`)
+  }
+
+  const reconcileApplication = async (
+    id: string,
+    submitted: boolean
+  ): Promise<JobApplicationResponseDto> => {
+    const cleanAppId = id.replace(/^job_application:/, '').replace(/`/g, '')
+    return await request<JobApplicationResponseDto>(`/api/v1/applications/${encodeURIComponent(cleanAppId)}/reconcile`, {
+      method: 'POST',
+      body: { submitted },
+    })
   }
 
   return {
@@ -196,5 +254,14 @@ export const useInterviewService = () => {
     createResumeUpload,
     completeResumeUpload,
     uploadResumeFileToSignedUrl,
+    listResumeUploads,
+    deleteResumeUpload,
+    getResumeDownloadUrl,
+    getUserProfile,
+    getCandidateProfile,
+    updateCandidateProfile,
+    listApplications,
+    getApplication,
+    reconcileApplication,
   }
 }

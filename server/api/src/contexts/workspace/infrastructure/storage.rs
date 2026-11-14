@@ -1,12 +1,7 @@
-use std::time::Duration;
-use aws_config::BehaviorVersion;
-use aws_sdk_s3::{
-    config::Region,
-    presigning::PresigningConfig,
-    primitives::ByteStream,
-    Client,
-};
 use crate::shared::{config::AppConfig, error::AppError};
+use aws_config::BehaviorVersion;
+use aws_sdk_s3::{config::Region, presigning::PresigningConfig, primitives::ByteStream, Client};
+use std::time::Duration;
 
 #[derive(Clone)]
 pub struct ResumeObjectStore {
@@ -24,8 +19,8 @@ impl ResumeObjectStore {
             .await;
 
         let make_client = |custom_endpoint: Option<&String>| -> Client {
-            let mut s3_conf_builder = aws_sdk_s3::config::Builder::from(&shared_config)
-                .region(region.clone());
+            let mut s3_conf_builder =
+                aws_sdk_s3::config::Builder::from(&shared_config).region(region.clone());
 
             if let Some(endpoint) = custom_endpoint {
                 s3_conf_builder = s3_conf_builder
@@ -48,7 +43,7 @@ impl ResumeObjectStore {
         })
     }
 
-            pub async fn presign_put(&self, key: &str, content_type: &str) -> Result<String, AppError> {
+    pub async fn presign_put(&self, key: &str, content_type: &str) -> Result<String, AppError> {
         let presign_config = PresigningConfig::expires_in(Duration::from_secs(300))
             .map_err(|e| AppError::Internal(format!("Failed to build presign config: {e}")))?;
 
@@ -60,12 +55,14 @@ impl ResumeObjectStore {
             .content_type(content_type)
             .presigned(presign_config)
             .await
-            .map_err(|e| AppError::ExternalService(format!("Failed to presign PUT request: {e}")))?;
+            .map_err(|e| {
+                AppError::ExternalService(format!("Failed to presign PUT request: {e}"))
+            })?;
 
         Ok(presigned.uri().to_string())
     }
 
-            pub async fn presign_get(&self, key: &str) -> Result<String, AppError> {
+    pub async fn presign_get(&self, key: &str) -> Result<String, AppError> {
         let presign_config = PresigningConfig::expires_in(Duration::from_secs(300))
             .map_err(|e| AppError::Internal(format!("Failed to build presign config: {e}")))?;
 
@@ -76,12 +73,14 @@ impl ResumeObjectStore {
             .key(key)
             .presigned(presign_config)
             .await
-            .map_err(|e| AppError::ExternalService(format!("Failed to presign GET request: {e}")))?;
+            .map_err(|e| {
+                AppError::ExternalService(format!("Failed to presign GET request: {e}"))
+            })?;
 
         Ok(presigned.uri().to_string())
     }
 
-        pub async fn head(&self, key: &str) -> Result<(u64, Option<String>), AppError> {
+    pub async fn head(&self, key: &str) -> Result<(u64, Option<String>), AppError> {
         let resp = self
             .internal_client
             .head_object()
@@ -98,8 +97,21 @@ impl ResumeObjectStore {
         let content_type = resp.content_type().map(|s| s.to_string());
         Ok((size, content_type))
     }
+    pub async fn get_pdf_stream(&self, key: &str) -> Result<ByteStream, AppError> {
+        let response = self
+            .internal_client
+            .get_object()
+            .bucket(&self.bucket)
+            .key(key)
+            .send()
+            .await
+            .map_err(|error| {
+                AppError::ExternalService(format!("Failed to get object {key}: {error}"))
+            })?;
+        Ok(response.body)
+    }
 
-        pub async fn get_prefix(&self, key: &str, len: u64) -> Result<Vec<u8>, AppError> {
+    pub async fn get_prefix(&self, key: &str, len: u64) -> Result<Vec<u8>, AppError> {
         if len == 0 {
             return Ok(Vec::new());
         }
@@ -112,18 +124,18 @@ impl ResumeObjectStore {
             .range(range)
             .send()
             .await
-            .map_err(|e| AppError::ExternalService(format!("Failed to get prefix for {key}: {e}")))?;
+            .map_err(|e| {
+                AppError::ExternalService(format!("Failed to get prefix for {key}: {e}"))
+            })?;
 
-        let data = resp
-            .body
-            .collect()
-            .await
-            .map_err(|e| AppError::ExternalService(format!("Failed to read stream for {key}: {e}")))?;
+        let data = resp.body.collect().await.map_err(|e| {
+            AppError::ExternalService(format!("Failed to read stream for {key}: {e}"))
+        })?;
 
         Ok(data.to_vec())
     }
 
-        pub async fn copy(&self, from: &str, to: &str) -> Result<(), AppError> {
+    pub async fn copy(&self, from: &str, to: &str) -> Result<(), AppError> {
         let copy_source = format!("{}/{}", self.bucket, from);
         self.internal_client
             .copy_object()
@@ -132,12 +144,14 @@ impl ResumeObjectStore {
             .key(to)
             .send()
             .await
-            .map_err(|e| AppError::ExternalService(format!("Failed to copy {from} to {to}: {e}")))?;
+            .map_err(|e| {
+                AppError::ExternalService(format!("Failed to copy {from} to {to}: {e}"))
+            })?;
 
         Ok(())
     }
 
-        pub async fn delete(&self, key: &str) -> Result<(), AppError> {
+    pub async fn delete(&self, key: &str) -> Result<(), AppError> {
         self.internal_client
             .delete_object()
             .bucket(&self.bucket)
@@ -149,7 +163,7 @@ impl ResumeObjectStore {
         Ok(())
     }
 
-        pub async fn put_pdf_bytes(&self, key: &str, bytes: Vec<u8>) -> Result<(), AppError> {
+    pub async fn put_pdf_bytes(&self, key: &str, bytes: Vec<u8>) -> Result<(), AppError> {
         self.internal_client
             .put_object()
             .bucket(&self.bucket)

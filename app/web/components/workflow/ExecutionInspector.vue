@@ -108,7 +108,7 @@ const selectTool = async (tool: ToolInvocation) => {
     })
     toolOutputContent.value = res.content
     toolOutputHasMore.value = res.has_more
-    toolOutputOffset.value = res.offset + res.limit
+    toolOutputOffset.value = res.offset + new TextEncoder().encode(res.content).byteLength
   } catch (err) {
     console.warn('[ExecutionInspector] Failed to load tool output:', err)
   } finally {
@@ -126,7 +126,7 @@ const loadMoreToolOutput = async () => {
     })
     toolOutputContent.value += res.content
     toolOutputHasMore.value = res.has_more
-    toolOutputOffset.value = res.offset + res.limit
+    toolOutputOffset.value = res.offset + new TextEncoder().encode(res.content).byteLength
   } catch (err) {
     console.warn('[ExecutionInspector] Failed to load more tool output:', err)
   } finally {

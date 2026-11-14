@@ -40,21 +40,17 @@ pub fn validate_and_normalize_url(raw: &str) -> Result<String, EndpointConfigErr
     let parsed = Url::parse(trimmed.trim_end_matches('/'))
         .map_err(|e| EndpointConfigError::InvalidUrl(e.to_string()))?;
 
-
     if !parsed.username().is_empty() || parsed.password().is_some() {
         return Err(EndpointConfigError::UserinfoNotAllowed);
     }
-
 
     if parsed.query().is_some() {
         return Err(EndpointConfigError::QueryNotAllowed);
     }
 
-
     if parsed.fragment().is_some() {
         return Err(EndpointConfigError::FragmentNotAllowed);
     }
-
 
     let path = parsed.path();
     if path != "" && path != "/" {
@@ -63,7 +59,9 @@ pub fn validate_and_normalize_url(raw: &str) -> Result<String, EndpointConfigErr
 
     let scheme = parsed.scheme().to_ascii_lowercase();
     if scheme != "http" && scheme != "https" {
-        return Err(EndpointConfigError::InvalidUrl("Scheme must be http or https".to_string()));
+        return Err(EndpointConfigError::InvalidUrl(
+            "Scheme must be http or https".to_string(),
+        ));
     }
 
     let host = match parsed.host_str() {
@@ -71,16 +69,12 @@ pub fn validate_and_normalize_url(raw: &str) -> Result<String, EndpointConfigErr
         None => return Err(EndpointConfigError::InvalidUrl("Missing host".to_string())),
     };
 
-
-    let is_loopback = host == "localhost"
-        || host == "127.0.0.1"
-        || host == "::1"
-        || host == "[::1]";
+    let is_loopback =
+        host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "[::1]";
 
     if scheme == "http" && !is_loopback {
         return Err(EndpointConfigError::InsecureHttp);
     }
-
 
     let port_str = parsed.port().map(|p| format!(":{p}")).unwrap_or_default();
     let normalized = format!("{scheme}://{host}{port_str}");
@@ -91,7 +85,9 @@ pub fn config_file_path() -> PathBuf {
     if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
         let trimmed = xdg.trim();
         if !trimmed.is_empty() {
-            return PathBuf::from(trimmed).join("mensetsu").join(CONFIG_FILE_NAME);
+            return PathBuf::from(trimmed)
+                .join("mensetsu")
+                .join(CONFIG_FILE_NAME);
         }
     }
     if let Some(config_dir) = dirs::config_dir() {

@@ -111,8 +111,18 @@ namespace Mensetsu.Contracts.Client
                 return boolean
                     ? "true"
                     : "false";
+            if (obj is ApplicationMethod applicationMethod)
+                return ApplicationMethodValueConverter.ToJsonValue(applicationMethod);
+            if (obj is ApplicationOutcome applicationOutcome)
+                return ApplicationOutcomeValueConverter.ToJsonValue(applicationOutcome);
+            if (obj is ApplicationSite applicationSite)
+                return ApplicationSiteValueConverter.ToJsonValue(applicationSite);
+            if (obj is ApplicationStatus applicationStatus)
+                return ApplicationStatusValueConverter.ToJsonValue(applicationStatus);
             if (obj is ArtifactType artifactType)
                 return ArtifactTypeValueConverter.ToJsonValue(artifactType);
+            if (obj is BlockReasonCode blockReasonCode)
+                return BlockReasonCodeValueConverter.ToJsonValue(blockReasonCode);
             if (obj is DelegationEdgeKind delegationEdgeKind)
                 return DelegationEdgeKindValueConverter.ToJsonValue(delegationEdgeKind);
             if (obj is DelegationStatus delegationStatus)
@@ -127,6 +137,8 @@ namespace Mensetsu.Contracts.Client
                 return ExecutionStatusValueConverter.ToJsonValue(executionStatus);
             if (obj is LogSeverity logSeverity)
                 return LogSeverityValueConverter.ToJsonValue(logSeverity);
+            if (obj is OAuthProviderType oAuthProviderType)
+                return OAuthProviderTypeValueConverter.ToJsonValue(oAuthProviderType);
             if (obj is PipelinePhase pipelinePhase)
                 return PipelinePhaseValueConverter.ToJsonValue(pipelinePhase);
             if (obj is QuestionCategory questionCategory)
@@ -135,6 +147,8 @@ namespace Mensetsu.Contracts.Client
                 return QuestionDifficultyValueConverter.ToJsonValue(questionDifficulty);
             if (obj is RunStatus runStatus)
                 return RunStatusValueConverter.ToJsonValue(runStatus);
+            if (obj is SavedJobStatus savedJobStatus)
+                return SavedJobStatusValueConverter.ToJsonValue(savedJobStatus);
             if (obj is SeniorityLevel seniorityLevel)
                 return SeniorityLevelValueConverter.ToJsonValue(seniorityLevel);
             if (obj is TaskStatus taskStatus)

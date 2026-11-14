@@ -14,6 +14,7 @@ import {
   Pause,
   Play,
 } from 'lucide-vue-next'
+import { safeExternalHttpUrl } from '~/utils/safe-external-url'
 import type { WorkflowEvent } from '~/models/generated/workflows.v1'
 
 export interface AgentStepItem {
@@ -367,8 +368,8 @@ watch(
           <div class="flex-1 min-w-0 flex flex-wrap items-center gap-2">
             <span class="font-medium text-emerald-300">{{ step.evidenceTitle }}</span>
             <a
-              v-if="step.evidenceUrl"
-              :href="step.evidenceUrl"
+              v-if="safeExternalHttpUrl(step.evidenceUrl)"
+              :href="safeExternalHttpUrl(step.evidenceUrl)"
               target="_blank"
               rel="noopener noreferrer"
               class="inline-flex items-center gap-1 text-[11px] text-indigo-400 hover:underline break-all"

@@ -6,6 +6,11 @@ from datetime import datetime, timezone
 from typing import Any
 
 from src.agents.runtime import agent_runtime
+from src.agents.runtime_support import AgentRecoveryContext, build_agent_recovery_context
+from src.agents.schemas import (
+    current_knowledge_graph_skill_names_var,
+    validate_question_skill_names,
+)
 from src.contracts.v1 import WorkflowProgress, WorkflowTask
 from src.orchestration.hybrid_curriculum import execute_curriculum_node
 from src.orchestration.hybrid_support import (
@@ -17,6 +22,7 @@ from src.orchestration.hybrid_support import (
     _persist_hybrid_outputs,
     _question_batch_plan,
     _task_failed_payload,
+    _validate_hybrid_run_outputs,
     check_lease,
 )
 from src.orchestration.ledger import SurrealLedgerRepository
@@ -43,12 +49,18 @@ def build_hybrid_output_nodes(ledger: SurrealLedgerRepository, set_run_phase):
             dependencies=[f"task_curriculum_{state.run_id[:8]}"],
             status="running",
         )
+        first_attempt = await ledger.next_task_attempt(state.run_id, task.id)
+        task.attempt = first_attempt
         await ledger.save_task(task)
         await ledger.append_event_transactional(
             run_id=state.run_id,
             event_type="task.started",
             task_id=task.id,
-            payload={"task_id": task.id, "attempt": 1, "assigned_agent": task.assigned_agent},
+            payload={
+                "task_id": task.id,
+                "attempt": first_attempt,
+                "assigned_agent": task.assigned_agent,
+            },
         )
 
         artifacts = await ledger.list_artifacts_for_run(state.run_id)
@@ -100,6 +112,11 @@ def build_hybrid_output_nodes(ledger: SurrealLedgerRepository, set_run_phase):
             ][:12],
             "experience_highlights": state.parsed_resume.get("experience_highlights", [])[:5],
         }
+        knowledge_graph_skills = [
+            skill["name"]
+            for skill in state.curriculum.get("skills", [])
+            if isinstance(skill, dict) and skill.get("name")
+        ]
         input_base = {
             "company_name": state.company_name,
             "role_title": state.role_title,
@@ -107,6 +124,7 @@ def build_hybrid_output_nodes(ledger: SurrealLedgerRepository, set_run_phase):
             "candidate_gaps": state.match_analysis.get("gaps", [])[:4],
             "culture_signals": company.get("engineering_culture", [])[:3],
             "candidate_background": candidate_background,
+            "knowledge_graph_skills": knowledge_graph_skills,
             "evidence_citations": evidence_citations,
             "user_prompt": state.user_prompt or "",
         }
@@ -129,25 +147,46 @@ def build_hybrid_output_nodes(ledger: SurrealLedgerRepository, set_run_phase):
                 "batches_per_category": QUESTION_BATCHES_PER_CATEGORY,
             }
             async with semaphore:
-                for attempt in range(2):
+                batch_recovery_context: AgentRecoveryContext | None = None
+                for attempt in range(1, 3):
                     try:
-                        execution, result = await agent_runtime.execute_agent_loop(
-                            agent_id="interview-generation",
-                            objective=objective,
-                            task_id=task.id,
-                            run_id=state.run_id,
-                            input_data=batch_input,
+                        skill_names_token = current_knowledge_graph_skill_names_var.set(
+                            frozenset(knowledge_graph_skills)
                         )
+                        try:
+                            execution, result = await agent_runtime.execute_agent_loop(
+                                agent_id="interview-generation",
+                                objective=objective,
+                                task_id=task.id,
+                                run_id=state.run_id,
+                                input_data=batch_input,
+                                recovery_context=batch_recovery_context,
+                            )
+                        finally:
+                            current_knowledge_graph_skill_names_var.reset(skill_names_token)
                         result_dict = result if isinstance(result, dict) else result.model_dump()
                         questions = result_dict.get("questions", [])
+                        for question in questions:
+                            question_data = (
+                                question
+                                if isinstance(question, dict)
+                                else question.model_dump()
+                            )
+                            validate_question_skill_names(
+                                question_data.get("skills_tested", []),
+                                frozenset(knowledge_graph_skills),
+                            )
                         if len(questions) != count:
                             raise ValueError(
                                 f"{category} batch {part} returned {len(questions)} questions; expected {count}"
                             )
                         return category, part, execution, questions, None
                     except Exception as exc:
-                        if attempt == 1:
+                        if attempt == 2:
                             return category, part, None, [], str(exc)
+                        batch_recovery_context = build_agent_recovery_context(
+                            "interview-generation", exc, attempt
+                        )
                         logger.warning(
                             f"Question batch {category}/{part} retrying after failure: {exc}"
                         )
@@ -241,18 +280,23 @@ def build_hybrid_output_nodes(ledger: SurrealLedgerRepository, set_run_phase):
         }
 
     async def finalize_node(state: HybridWorkflowState) -> dict[str, Any]:
+        check_lease()
         now_completed = datetime.now(timezone.utc)
         all_tasks = await ledger.list_tasks_for_run(state.run_id)
         completed_tasks = [t for t in all_tasks if t.status == "completed"]
         total_tasks_count = max(len(all_tasks), len(completed_tasks), 6)
 
         run_rec = await ledger.get_workflow_run(state.run_id)
+        if run_rec is not None and run_rec.status == "cancelled":
+            logger.info(f"Run {state.run_id} was cancelled before finalization; skipping completion.")
+            return {}
         started_at = run_rec.started_at if run_rec else None
         calc_duration_ms = (
             (now_completed - started_at).total_seconds() * 1000 if started_at else 0.0
         )
         all_artifacts = await ledger.list_artifacts_for_run(state.run_id)
-        await _persist_hybrid_outputs(state, ledger, all_artifacts)
+        resolved_outputs = _validate_hybrid_run_outputs(state, all_artifacts)
+        await _persist_hybrid_outputs(state, ledger, all_artifacts, resolved_outputs)
         degraded_reasons = [
             f"{area} research failed: {reason}"
             for area, reason in sorted(state.missing_research.items())
@@ -260,10 +304,11 @@ def build_hybrid_output_nodes(ledger: SurrealLedgerRepository, set_run_phase):
             f"{area} generation failed: {reason}"
             for area, reason in sorted(state.missing_outputs.items())
         ]
-        await ledger.update_workflow_run(
+        completed = await ledger.transition_workflow_run_status(
             state.run_id,
-            {
-                "status": "completed",
+            "completed",
+            from_statuses=("pending", "running"),
+            updates={
                 "current_phase": "completed",
                 "completed_at": now_completed,
                 "duration_ms": calc_duration_ms,
@@ -277,6 +322,12 @@ def build_hybrid_output_nodes(ledger: SurrealLedgerRepository, set_run_phase):
                 ),
             },
         )
+        if not completed:
+            logger.info(
+                f"Run {state.run_id} is no longer active; skipping completion finalization."
+            )
+            return {}
+        await ledger.sweep_run_to_terminal(state.run_id, reason="run completed")
         await ledger.append_event_transactional(
             run_id=state.run_id,
             event_type="workflow.completed",

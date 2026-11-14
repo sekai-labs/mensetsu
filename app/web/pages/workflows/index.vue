@@ -84,7 +84,7 @@ const handleCreateRun = async (payload: CreateWorkflowRunPayload) => {
   try {
     const newRun = await createWorkflowRun(payload)
     isCreateDialogOpen.value = false
-    router.push(`/workflows/runs/${newRun.id}`)
+    router.push(`/workflows/runs/${encodeURIComponent(newRun.id)}`)
   } catch (err) {
     console.error('Failed to create run:', err)
   }
@@ -250,7 +250,7 @@ const handlePrevPage = () => {
               v-for="run in filteredRuns"
               :key="run.id"
               class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
-              @click="router.push(`/workflows/runs/${run.id}`)"
+              @click="router.push(`/workflows/runs/${encodeURIComponent(run.id)}`)"
             >
 
               <td class="py-3 px-4">
@@ -322,7 +322,7 @@ const handlePrevPage = () => {
               <td class="py-3 px-4 text-right">
                 <button
                   class="p-1 rounded text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                  @click.stop="router.push(`/workflows/runs/${run.id}`)"
+                  @click.stop="router.push(`/workflows/runs/${encodeURIComponent(run.id)}`)"
                 >
                   <ArrowRight class="w-4 h-4" />
                 </button>

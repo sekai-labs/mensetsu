@@ -5,6 +5,7 @@ import time
 from typing import Any
 
 from src.agents.runtime import agent_runtime
+from src.agents.runtime_support import AgentRecoveryContext, build_agent_recovery_context
 from src.contracts.v1 import WorkflowTask
 from src.orchestration.hybrid_support import (
     CURRICULUM_MIN_UNITS,
@@ -36,12 +37,18 @@ async def execute_curriculum_node(
         dependencies=[f"task_synthesize_{state.run_id[:8]}"],
         status="running",
     )
+    first_attempt = await ledger.next_task_attempt(task.run_id, task.id)
+    task.attempt = first_attempt
     await ledger.save_task(task)
     await ledger.append_event_transactional(
         run_id=state.run_id,
         event_type="task.started",
         task_id=task.id,
-        payload={"task_id": task.id, "attempt": 1, "assigned_agent": task.assigned_agent},
+        payload={
+            "task_id": task.id,
+            "attempt": first_attempt,
+            "assigned_agent": task.assigned_agent,
+        },
     )
 
     match_gaps = (state.match_analysis or {}).get("gaps", [])
@@ -85,31 +92,57 @@ async def execute_curriculum_node(
         },
     )
 
-    try:
-        graph_rec, graph_data = await agent_runtime.execute_agent_loop(
-            agent_id="curriculum",
-            objective="Construct the knowledge graph of skills and prerequisite relations",
-            task_id=task.id,
-            run_id=state.run_id,
-            input_data={**curriculum_input, "curriculum_stage": "graph"},
-        )
-        graph_dict = graph_data if isinstance(graph_data, dict) else graph_data.model_dump()
-    except Exception as exc:
-        logger.warning(f"Knowledge graph generation failed ({exc}).")
-        task.status = "failed"
-        task.error = str(exc)
+    recovery_context: AgentRecoveryContext | None = None
+    graph_rec = None
+    graph_dict: dict[str, Any] = {}
+    for attempt in range(first_attempt, first_attempt + 2):
+        task.attempt = attempt
         await ledger.save_task(task)
-        await ledger.append_event_transactional(
-            run_id=state.run_id,
-            event_type="task.failed",
-            task_id=task.id,
-            payload=_task_failed_payload(task, str(exc)),
-        )
-        return {
-            "curriculum": {},
-            "failed_task_ids": [task.id],
-            "missing_outputs": {"knowledge graph": str(exc)},
-        }
+        try:
+            graph_rec, graph_data = await agent_runtime.execute_agent_loop(
+                agent_id="curriculum",
+                objective="Construct the knowledge graph of skills and prerequisite relations",
+                task_id=task.id,
+                run_id=state.run_id,
+                input_data={**curriculum_input, "curriculum_stage": "graph"},
+                recovery_context=recovery_context,
+            )
+            graph_dict = graph_data if isinstance(graph_data, dict) else graph_data.model_dump()
+            break
+        except Exception as exc:
+            logger.warning(f"Knowledge graph generation attempt {attempt} failed ({exc}).")
+            if attempt < first_attempt + 1:
+                recovery_context = build_agent_recovery_context(
+                    "curriculum", exc, attempt - first_attempt + 1
+                )
+                delay_ms = 1000 * (attempt - first_attempt + 1)
+                await ledger.append_event_transactional(
+                    run_id=state.run_id,
+                    event_type="task.retrying",
+                    task_id=task.id,
+                    payload={
+                        "task_id": task.id,
+                        "next_attempt": attempt + 1,
+                        "delay_ms": delay_ms,
+                    },
+                )
+                await asyncio.sleep(delay_ms / 1000.0)
+            else:
+                error_text = str(exc) or exc.__class__.__name__
+                task.status = "failed"
+                task.error = error_text
+                await ledger.save_task(task)
+                await ledger.append_event_transactional(
+                    run_id=state.run_id,
+                    event_type="task.failed",
+                    task_id=task.id,
+                    payload=_task_failed_payload(task, error_text),
+                )
+                return {
+                    "curriculum": {},
+                    "failed_task_ids": [task.id],
+                    "missing_outputs": {"knowledge graph": error_text},
+                }
 
     task.execution_ids.append(graph_rec.id)
     skills = graph_dict.get("skills", [])
@@ -152,7 +185,8 @@ async def execute_curriculum_node(
             "knowledge_graph_skills": skill_names,
         }
         async with semaphore:
-            for attempt in range(2):
+            unit_recovery_context: AgentRecoveryContext | None = None
+            for attempt in range(1, 3):
                 try:
                     execution, result = await agent_runtime.execute_agent_loop(
                         agent_id="curriculum",
@@ -160,6 +194,7 @@ async def execute_curriculum_node(
                         task_id=task.id,
                         run_id=state.run_id,
                         input_data=unit_input,
+                        recovery_context=unit_recovery_context,
                     )
                     result_dict = result if isinstance(result, dict) else result.model_dump()
                     units = result_dict.get("learning_units", [])
@@ -175,8 +210,11 @@ async def execute_curriculum_node(
                         )
                     return execution, unit, None
                 except Exception as exc:
-                    if attempt == 1:
+                    if attempt == 2:
                         return None, None, f"{target['name']}: {exc}"
+                    unit_recovery_context = build_agent_recovery_context(
+                        "curriculum", exc, attempt
+                    )
                     logger.warning(f"Learning unit generation for {target['name']} retrying: {exc}")
         return None, None, f"{target['name']}: generation retries exhausted"
 

@@ -1,4 +1,5 @@
 """Routing, planning, and per-agent execution nodes for the hybrid workflow."""
+import asyncio
 import logging
 import time
 from typing import Any
@@ -6,6 +7,7 @@ from typing import Any
 from langgraph.types import Send
 
 from src.agents.runtime import agent_runtime
+from src.agents.runtime_support import AgentRecoveryContext, build_agent_recovery_context
 from src.agents.workflow_router import route_workflow_request
 from src.contracts.v1 import Artifact, PlanTaskItem, WorkflowProgress, WorkflowTask
 from src.orchestration.dynamic_workflow import PLANNABLE_AGENTS, validate_plan_dag
@@ -269,12 +271,14 @@ def build_hybrid_nodes(checkpointer, ledger: SurrealLedgerRepository):
             dependencies=t_info.get("dependencies", []),
             status="running",
         )
+        first_attempt = await ledger.next_task_attempt(run_id, task.id)
+        task.attempt = first_attempt
         await ledger.save_task(task)
         await ledger.append_event_transactional(
             run_id=run_id,
             event_type="task.started",
             task_id=task.id,
-            payload={"task_id": task.id, "attempt": 1, "assigned_agent": agent_id},
+            payload={"task_id": task.id, "attempt": first_attempt, "assigned_agent": agent_id},
         )
 
         task_input = {
@@ -287,54 +291,80 @@ def build_hybrid_nodes(checkpointer, ledger: SurrealLedgerRepository):
             "objective": objective,
         }
 
-        try:
-            exec_rec, res_data = await agent_runtime.execute_agent_loop(
-                agent_id=agent_id,
-                objective=objective,
-                task_id=task.id,
-                run_id=run_id,
-                input_data=task_input,
-            )
-            dur = (time.perf_counter() - start_t) * 1000
-            task.status = "completed"
-            task.execution_ids.append(exec_rec.id)
+        recovery_context: AgentRecoveryContext | None = None
+        for attempt in range(first_attempt, first_attempt + 2):
+            task.attempt = attempt
             await ledger.save_task(task)
-            await ledger.append_event_transactional(
-                run_id=run_id,
-                event_type="task.completed",
-                task_id=task.id,
-                payload={
-                    "task_id": task.id,
-                    "duration_ms": dur,
-                    "output_summary": exec_rec.public_summary,
-                },
-            )
+            try:
+                exec_rec, res_data = await agent_runtime.execute_agent_loop(
+                    agent_id=agent_id,
+                    objective=objective,
+                    task_id=task.id,
+                    run_id=run_id,
+                    input_data=task_input,
+                    recovery_context=recovery_context,
+                )
+                res_dict = (
+                    res_data
+                    if isinstance(res_data, dict)
+                    else (res_data.model_dump() if hasattr(res_data, "model_dump") else {})
+                )
+                dur = (time.perf_counter() - start_t) * 1000
+                task.status = "completed"
+                task.execution_ids.append(exec_rec.id)
+                await ledger.save_task(task)
+                await ledger.append_event_transactional(
+                    run_id=run_id,
+                    event_type="task.completed",
+                    task_id=task.id,
+                    payload={
+                        "task_id": task.id,
+                        "duration_ms": dur,
+                        "output_summary": exec_rec.public_summary,
+                    },
+                )
 
-            res_dict = (
-                res_data
-                if isinstance(res_data, dict)
-                else (res_data.model_dump() if hasattr(res_data, "model_dump") else {})
-            )
-            cat = PLANNABLE_AGENTS.get(agent_id, agent_id)
-            return {
-                "completed_task_ids": [task.id],
-                "research_results": {cat: res_dict},
-            }
-        except Exception as e:
-            task.status = "failed"
-            task.error = str(e)
-            await ledger.save_task(task)
-            await ledger.append_event_transactional(
-                run_id=run_id,
-                event_type="task.failed",
-                task_id=task.id,
-                payload=_task_failed_payload(task, str(e)),
-            )
-            cat = PLANNABLE_AGENTS.get(agent_id, agent_id)
-            return {
-                "failed_task_ids": [task.id],
-                "missing_research": {cat: str(e)},
-            }
+                cat = PLANNABLE_AGENTS.get(agent_id, agent_id)
+                return {
+                    "completed_task_ids": [task.id],
+                    "research_results": {cat: res_dict},
+                }
+            except Exception as e:
+                logger.warning(
+                    f"Dynamic task {task.id} ({agent_id}) attempt {attempt} failed: {e}"
+                )
+                if attempt < first_attempt + 1:
+                    recovery_context = build_agent_recovery_context(
+                        agent_id, e, attempt - first_attempt + 1
+                    )
+                    delay_ms = 1000 * (attempt - first_attempt + 1)
+                    await ledger.append_event_transactional(
+                        run_id=run_id,
+                        event_type="task.retrying",
+                        task_id=task.id,
+                        payload={
+                            "task_id": task.id,
+                            "next_attempt": attempt + 1,
+                            "delay_ms": delay_ms,
+                        },
+                    )
+                    await asyncio.sleep(delay_ms / 1000.0)
+                else:
+                    error_text = str(e) or e.__class__.__name__
+                    task.status = "failed"
+                    task.error = error_text
+                    await ledger.save_task(task)
+                    await ledger.append_event_transactional(
+                        run_id=run_id,
+                        event_type="task.failed",
+                        task_id=task.id,
+                        payload=_task_failed_payload(task, error_text),
+                    )
+                    cat = PLANNABLE_AGENTS.get(agent_id, agent_id)
+                    return {
+                        "failed_task_ids": [task.id],
+                        "missing_research": {cat: error_text},
+                    }
 
     async def synthesize_node(state: HybridWorkflowState) -> dict[str, Any]:
         check_lease()
@@ -351,12 +381,18 @@ def build_hybrid_nodes(checkpointer, ledger: SurrealLedgerRepository):
             dependencies=[t["id"] for t in state.tasks],
             status="running",
         )
+        first_attempt = await ledger.next_task_attempt(state.run_id, task.id)
+        task.attempt = first_attempt
         await ledger.save_task(task)
         await ledger.append_event_transactional(
             run_id=state.run_id,
             event_type="task.started",
             task_id=task.id,
-            payload={"task_id": task.id, "attempt": 1, "assigned_agent": task.assigned_agent},
+            payload={
+                "task_id": task.id,
+                "attempt": first_attempt,
+                "assigned_agent": task.assigned_agent,
+            },
         )
 
         synthesis_input = {
@@ -381,46 +417,69 @@ def build_hybrid_nodes(checkpointer, ledger: SurrealLedgerRepository):
             },
         )
 
-        try:
-            exec_rec, eval_data = await agent_runtime.execute_agent_loop(
-                agent_id="evidence-evaluator",
-                objective="Evaluate candidate CV and JD match, verify claims, and identify skill gaps",
-                task_id=task.id,
-                run_id=state.run_id,
-                input_data=synthesis_input,
-            )
-            dur = (time.perf_counter() - start_t) * 1000
-            task.status = "completed"
-            task.execution_ids.append(exec_rec.id)
+        recovery_context: AgentRecoveryContext | None = None
+        for attempt in range(first_attempt, first_attempt + 2):
+            task.attempt = attempt
             await ledger.save_task(task)
-            await ledger.append_event_transactional(
-                run_id=state.run_id,
-                event_type="task.completed",
-                task_id=task.id,
-                payload={
-                    "task_id": task.id,
-                    "duration_ms": dur,
-                    "output_summary": exec_rec.public_summary,
-                },
-            )
-            dict_eval = eval_data if isinstance(eval_data, dict) else eval_data.model_dump()
-            return {"match_analysis": dict_eval, "completed_task_ids": [task.id]}
-        except Exception as e:
-            logger.warning(f"Synthesis failed ({e}).")
-            task.status = "failed"
-            task.error = str(e)
-            await ledger.save_task(task)
-            await ledger.append_event_transactional(
-                run_id=state.run_id,
-                event_type="task.failed",
-                task_id=task.id,
-                payload=_task_failed_payload(task, str(e)),
-            )
-            return {
-                "match_analysis": {},
-                "failed_task_ids": [task.id],
-                "missing_outputs": {"match analysis": str(e)},
-            }
+            try:
+                exec_rec, eval_data = await agent_runtime.execute_agent_loop(
+                    agent_id="evidence-evaluator",
+                    objective="Evaluate candidate CV and JD match, verify claims, and identify skill gaps",
+                    task_id=task.id,
+                    run_id=state.run_id,
+                    input_data=synthesis_input,
+                    recovery_context=recovery_context,
+                )
+                dict_eval = eval_data if isinstance(eval_data, dict) else eval_data.model_dump()
+                dur = (time.perf_counter() - start_t) * 1000
+                task.status = "completed"
+                task.execution_ids.append(exec_rec.id)
+                await ledger.save_task(task)
+                await ledger.append_event_transactional(
+                    run_id=state.run_id,
+                    event_type="task.completed",
+                    task_id=task.id,
+                    payload={
+                        "task_id": task.id,
+                        "duration_ms": dur,
+                        "output_summary": exec_rec.public_summary,
+                    },
+                )
+                return {"match_analysis": dict_eval, "completed_task_ids": [task.id]}
+            except Exception as e:
+                logger.warning(f"Synthesis attempt {attempt} failed ({e}).")
+                if attempt < first_attempt + 1:
+                    recovery_context = build_agent_recovery_context(
+                        "evidence-evaluator", e, attempt - first_attempt + 1
+                    )
+                    delay_ms = 1000 * (attempt - first_attempt + 1)
+                    await ledger.append_event_transactional(
+                        run_id=state.run_id,
+                        event_type="task.retrying",
+                        task_id=task.id,
+                        payload={
+                            "task_id": task.id,
+                            "next_attempt": attempt + 1,
+                            "delay_ms": delay_ms,
+                        },
+                    )
+                    await asyncio.sleep(delay_ms / 1000.0)
+                else:
+                    error_text = str(e) or e.__class__.__name__
+                    task.status = "failed"
+                    task.error = error_text
+                    await ledger.save_task(task)
+                    await ledger.append_event_transactional(
+                        run_id=state.run_id,
+                        event_type="task.failed",
+                        task_id=task.id,
+                        payload=_task_failed_payload(task, error_text),
+                    )
+                    return {
+                        "match_analysis": {},
+                        "failed_task_ids": [task.id],
+                        "missing_outputs": {"match analysis": error_text},
+                    }
 
     return {
         "set_run_phase": set_run_phase,

@@ -1,0 +1,46 @@
+---
+interface Props {
+  type?: 'note' | 'tip' | 'important' | 'warning' | 'caution';
+  title?: string;
+  class?: string;
+}
+
+const { type = 'note', title, class: className = '' } = Astro.props;
+
+let borderClass = 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/60 text-slate-800 dark:text-slate-200';
+let defaultTitle = 'Note';
+let tagColor = 'text-slate-600 dark:text-slate-400';
+
+switch (type) {
+  case 'tip':
+    borderClass = 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/40 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-200';
+    defaultTitle = 'Tip';
+    tagColor = 'text-emerald-600 dark:text-emerald-400';
+    break;
+  case 'important':
+    borderClass = 'border-indigo-200 bg-indigo-50/70 dark:border-indigo-900/40 dark:bg-indigo-950/20 text-indigo-900 dark:text-indigo-200';
+    defaultTitle = 'Important';
+    tagColor = 'text-indigo-600 dark:text-indigo-400';
+    break;
+  case 'warning':
+    borderClass = 'border-amber-200 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200';
+    defaultTitle = 'Warning';
+    tagColor = 'text-amber-600 dark:text-amber-400';
+    break;
+  case 'caution':
+    borderClass = 'border-rose-200 bg-rose-50/70 dark:border-rose-900/40 dark:bg-rose-950/20 text-rose-900 dark:text-rose-200';
+    defaultTitle = 'Caution';
+    tagColor = 'text-rose-600 dark:text-rose-400';
+    break;
+}
+---
+
+<div class={`my-4 rounded-lg border p-4 text-sm leading-relaxed ${borderClass} ${className}`}>
+  <div class="flex items-center gap-2 mb-1.5 font-semibold font-mono text-xs uppercase tracking-wider">
+    <span class={tagColor}>[{type.toUpperCase()}]</span>
+    <span>{title || defaultTitle}</span>
+  </div>
+  <div class="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+    <slot />
+  </div>
+</div>

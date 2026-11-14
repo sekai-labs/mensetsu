@@ -1,0 +1,103 @@
+---
+import { getWorkspaceLinks } from '~/data/workspace';
+import Button from '../ui/Button.astro';
+import Badge from '../ui/Badge.astro';
+
+const links = getWorkspaceLinks();
+---
+
+<section class="relative pt-12 pb-16 sm:pt-20 sm:pb-24 border-b border-slate-200 dark:border-slate-800 overflow-hidden">
+  <div class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <!-- Top Badges -->
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-900 bg-indigo-50/70 dark:bg-indigo-950/40 text-xs font-mono font-medium text-indigo-700 dark:text-indigo-300">
+        <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400"></span>
+        <span>Self-Hosted & Contained</span>
+      </div>
+      <Badge variant="evidence" confidence={0.95} source="Citation Provenance First" />
+      <Badge variant="info">SurrealDB Multi-Model Graph</Badge>
+    </div>
+
+    <!-- Main Headline & Subtitle -->
+    <div class="space-y-6 max-w-4xl">
+      <h1 class="text-4xl sm:text-6xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
+        Evidence-backed preparation for <span class="text-indigo-600 dark:text-indigo-400">technical interviews</span>.
+      </h1>
+      <p class="text-base sm:text-xl text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl">
+        Mensetsu brings your résumé, target role, and verified company research into a single workspace. It connects every requirement to cited sources, identifies concrete experience gaps, and builds an actionable learning path and interview practice.
+      </p>
+    </div>
+
+    <!-- Call to Action Buttons -->
+    <div class="flex flex-wrap items-center gap-4 pt-2">
+      <Button href={links.registerUrl} size="lg" variant="primary">
+        <span>Launch Workspace</span>
+        <span class="ml-1.5">↗</span>
+      </Button>
+
+      <Button href="/docs" size="lg" variant="outline">
+        <span>Read Documentation</span>
+      </Button>
+
+      <Button href="/docs/setup" size="lg" variant="ghost">
+        <span>Local Quickstart</span>
+      </Button>
+    </div>
+
+    <!-- Interactive Evidence Teaser Card -->
+    <div class="mt-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-7 shadow-xs space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-mono font-bold uppercase tracking-wider text-slate-500">
+            Sample Workspace Evidence Match
+          </span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+            Verified Pipeline Output
+          </span>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-mono text-slate-500">
+          <span>Run: #wk_9812a</span>
+          <span>•</span>
+          <Badge variant="evidence" confidence={0.95} source="CV & JD Grounding" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+        <!-- Requirement Column -->
+        <div class="space-y-1.5">
+          <div class="font-mono text-slate-400 uppercase tracking-wider text-[11px]">Target Role Requirement</div>
+          <div class="text-sm font-semibold text-slate-800 dark:text-slate-200">
+            Distributed Systems & Consensus
+          </div>
+          <p class="text-slate-600 dark:text-slate-400 text-xs">
+            "Experience with multi-region replication, fault tolerance, and consensus protocols (Raft/Paxos)."
+          </p>
+        </div>
+
+        <!-- Evidence Column -->
+        <div class="space-y-1.5">
+          <div class="font-mono text-slate-400 uppercase tracking-wider text-[11px]">Parsed CV Evidence</div>
+          <div class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+            <span>✓ Evidence Tagged (Page 2, L14-19)</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-400 text-xs font-mono bg-slate-50 dark:bg-slate-850 p-2 rounded border border-slate-200 dark:border-slate-700">
+            "Engineered distributed log replication using Raft in Rust; maintained 99.99% availability across 3 AZs."
+          </p>
+        </div>
+
+        <!-- Actionable Gap & Learning Path -->
+        <div class="space-y-1.5">
+          <div class="font-mono text-slate-400 uppercase tracking-wider text-[11px]">Identified Gap & Next Step</div>
+          <div class="text-sm font-semibold text-amber-700 dark:text-amber-400">
+            Partial Match: Multi-Region Failover
+          </div>
+          <p class="text-slate-600 dark:text-slate-400 text-xs">
+            Syllabus Module 04 auto-generated: "Cross-region partition tolerance & consensus edge cases".
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

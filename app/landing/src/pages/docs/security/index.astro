@@ -1,0 +1,86 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import DocsBreadcrumb from '../../../components/docs/DocsBreadcrumb.astro';
+import Callout from '../../../components/ui/Callout.astro';
+---
+
+<DocsLayout
+  title="Security & Privacy Boundaries | Mensetsu Documentation"
+  description="SSRF prevention guardrails, prompt injection mitigation, presigned storage isolation, and zero telemetry leakage."
+>
+  <div class="space-y-8">
+    <DocsBreadcrumb crumbs={[{ label: 'Security & Privacy Boundaries' }]} />
+
+    <header class="space-y-3 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div class="text-xs font-mono font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+        Governance / Security
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Security & Privacy Boundaries
+      </h1>
+      <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        SSRF prevention guardrails, prompt injection mitigation, presigned storage isolation, and zero telemetry leakage.
+      </p>
+    </header>
+
+    <!-- SSRF Defense -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        1. SSRF Protection on User-Supplied URLs
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Candidates may provide company URLs (engineering blogs, career pages, architecture notes). Mensetsu enforces a strict Server-Side Request Forgery (SSRF) defense layer inside the Python research engine:
+      </p>
+
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <li><strong>Blocked CIDR Ranges</strong>: RFC1918 private subnets (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16).</li>
+        <li><strong>Loopback & Link-Local</strong>: 127.0.0.0/8, ::1, and 169.254.0.0/16.</li>
+        <li><strong>Cloud Metadata Services</strong>: AWS/GCP/Azure instance metadata endpoints (e.g. 169.254.169.254).</li>
+        <li><strong>DNS Rebinding Defense</strong>: The hostname is resolved first and every resolved address is validated before connecting. Redirects and proxy use are disabled entirely in the guarded client.</li>
+      </ul>
+
+      <Callout type="caution" title="Fail-Closed Scraping Invariant">
+        If a user supplies a URL that resolves to an internal or private IP address, the research worker aborts the fetch immediately with a security violation event and logs the blocked destination.
+      </Callout>
+    </section>
+
+    <!-- Prompt Injection -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        2. Indirect Prompt Injection Mitigation
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Candidate résumés and external web pages are considered <strong>untrusted user input</strong>. An attacker or malicious website could attempt prompt injection (e.g., hidden text attempting to override LLM system prompts or invoke arbitrary tools).
+      </p>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Mensetsu mitigates this through:
+      </p>
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <li><strong>Delimiter Boundary Isolation</strong>: Inputs are quarantined within strict XML/JSON data envelopes with explicit parser isolation.</li>
+        <li><strong>Typed Pydantic Output Enforcement</strong>: AI models emit structured Pydantic models only; arbitrary code execution or unconstrained tool invocations are blocked.</li>
+        <li><strong>No Executable Side Effects</strong>: Tool outputs cannot alter authentication state, database credentials, or internal gRPC tokens.</li>
+      </ul>
+    </section>
+
+    <!-- Authentication & Object Storage -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        3. Identity & Presigned S3 Object Isolation
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 space-y-2">
+          <div class="font-mono font-bold text-slate-900 dark:text-white">Argon2id + JWT + 2FA</div>
+          <p class="text-slate-600 dark:text-slate-400">
+            Passwords are hashed with Argon2id. The Rust API issues short-lived access JWTs (15 minutes by default) and rotating refresh tokens. The workspace BFF keeps both tokens server-side in Redis; the browser only holds an HttpOnly session-ID cookie. TOTP 2FA is supported.
+          </p>
+        </div>
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 space-y-2">
+          <div class="font-mono font-bold text-slate-900 dark:text-white">Presigned S3 Storage</div>
+          <p class="text-slate-600 dark:text-slate-400">
+            Résumés are stored privately in MinIO/S3. The API generates short-lived presigned download URLs for workers. Raw files are never stored in public web directories or logged in telemetry.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+</DocsLayout>

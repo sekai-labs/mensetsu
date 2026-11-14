@@ -1,9 +1,9 @@
-use std::convert::Infallible;
-use std::time::Duration;
 use axum::{
     extract::{Path, State},
     response::sse::{Event, KeepAlive, Sse},
 };
+use std::convert::Infallible;
+use std::time::Duration;
 use tokio::time::sleep;
 use tokio_stream::Stream;
 
@@ -21,7 +21,8 @@ pub async fn workspace_events(
     State(state): State<AppState>,
     auth_user: AuthenticatedUser,
     Path(id): Path<String>,
-) -> std::result::Result<Sse<impl Stream<Item = std::result::Result<Event, Infallible>>>, AppError> {
+) -> std::result::Result<Sse<impl Stream<Item = std::result::Result<Event, Infallible>>>, AppError>
+{
     let clean_id = id.replace("workspace:", "").replace('`', "");
     verify_workspace_owner(&state.db.client, &clean_id, &auth_user.user_id.0).await?;
 

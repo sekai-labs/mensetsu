@@ -1,0 +1,128 @@
+---
+import { DOCS_SECTIONS } from '~/data/docsNavigation';
+import { getWorkspaceLinks } from '~/data/workspace';
+
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+const cleanCurrent = currentPath.replace(/\/+$/, '') || '/docs';
+const links = getWorkspaceLinks();
+---
+
+<aside class="w-full lg:w-64 flex-shrink-0 space-y-6">
+  <!-- Search Input (Client side) -->
+  <div class="relative">
+    <input
+      id="doc-search-input"
+      type="text"
+      placeholder="Search documentation..."
+      class="w-full pl-3 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+    />
+  </div>
+
+  <div id="doc-search-results" class="hidden space-y-2">
+    <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Search Results</div>
+    <ul id="doc-search-list" class="space-y-1"></ul>
+  </div>
+
+  <!-- Standard Navigation -->
+  <nav id="doc-nav-sections" class="space-y-6" aria-label="Documentation Navigation">
+    {
+      DOCS_SECTIONS.map((section) => (
+        <div class="space-y-2">
+          <div class="text-xs font-mono font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            {section.title}
+          </div>
+          <ul class="space-y-1 pl-1">
+            {section.items.map((item) => {
+              const active = cleanCurrent === item.path.replace(/\/+$/, '');
+              return (
+                <li>
+                  <a
+                    href={item.path}
+                    class={`flex items-center justify-between px-2.5 py-1.5 text-xs rounded-md transition-colors ${
+                      active
+                        ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-semibold border-l-2 border-indigo-600 dark:border-indigo-400'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/60 dark:hover:bg-slate-900/60'
+                    }`}
+                  >
+                    <span>{item.title}</span>
+                    {item.badge && (
+                      <span
+                        class={`text-[10px] font-mono px-1.5 py-0.2 rounded border ${
+                          active
+                            ? 'border-indigo-200 dark:border-indigo-800 bg-white/60 dark:bg-indigo-900/40'
+                            : 'border-slate-200 dark:border-slate-800 text-slate-400'
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))
+    }
+
+    <!-- Quick External Link -->
+    <div class="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+      <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Workspace Access</div>
+      <a
+        href={links.baseUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex items-center justify-between px-2.5 py-1.5 text-xs rounded text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-850 transition-colors"
+      >
+        <span>Open Workspace</span>
+        <span class="text-xs opacity-60">↗</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<script>
+  import { searchDocs } from '../../data/docsNavigation';
+
+  const input = document.getElementById('doc-search-input') as HTMLInputElement | null;
+  const resultsBox = document.getElementById('doc-search-results');
+  const resultsList = document.getElementById('doc-search-list');
+  const navSections = document.getElementById('doc-nav-sections');
+
+  if (input && resultsBox && resultsList && navSections) {
+    input.addEventListener('input', (e) => {
+      const q = (e.target as HTMLInputElement).value.trim();
+      if (!q) {
+        resultsBox.classList.add('hidden');
+        navSections.classList.remove('hidden');
+        resultsList.innerHTML = '';
+        return;
+      }
+
+      const results = searchDocs(q);
+      resultsBox.classList.remove('hidden');
+      navSections.classList.add('hidden');
+
+      if (results.length === 0) {
+        resultsList.innerHTML = '<li class="text-xs text-slate-500 py-2">No matching documentation.</li>';
+      } else {
+        resultsList.innerHTML = results
+          .map(
+            (item) => `
+          <li>
+            <a href="${item.path}" class="block px-2.5 py-1.5 text-xs rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300">
+              <div class="font-medium text-slate-900 dark:text-slate-100">${item.title}</div>
+              <div class="text-[11px] text-slate-500 line-clamp-1">${item.description}</div>
+            </a>
+          </li>
+        `
+          )
+          .join('');
+      }
+    });
+  }
+</script>

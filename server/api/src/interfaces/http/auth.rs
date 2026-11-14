@@ -8,14 +8,11 @@ use axum::{
 
 use crate::{
     contexts::identity::application::dtos::{
-        AuthResponseDto, Login2faRequestDto, LoginRequestDto, LoginResponseDto,
-        MessageResponseDto, RefreshTokenRequestDto, RegisterRequestDto, TokenResponseDto,
-        TotpSetupResponseDto, UserResponseDto, VerifyTotpRequestDto,
+        AuthResponseDto, Login2faRequestDto, LoginRequestDto, LoginResponseDto, MessageResponseDto,
+        RefreshTokenRequestDto, RegisterRequestDto, TokenResponseDto, TotpSetupResponseDto,
+        UserResponseDto, VerifyTotpRequestDto,
     },
-    interfaces::http::{
-        extractors::authenticated_user::AuthenticatedUser,
-        workspaces::AppState,
-    },
+    interfaces::http::{extractors::authenticated_user::AuthenticatedUser, workspaces::AppState},
     shared::error::{AppError, Result},
 };
 
@@ -229,7 +226,10 @@ pub async fn setup_2fa(
     State(state): State<AppState>,
     auth_user: AuthenticatedUser,
 ) -> Result<Json<crate::contexts::identity::application::dtos::TotpSetupResponseDto>> {
-    let setup = state.identity_service.setup_totp(&auth_user.user_id).await?;
+    let setup = state
+        .identity_service
+        .setup_totp(&auth_user.user_id)
+        .await?;
     Ok(Json(setup))
 }
 
@@ -295,10 +295,7 @@ pub async fn refresh(
         .or_else(|| extract_refresh_token_from_cookies(&headers))
         .ok_or_else(|| AppError::Unauthorized("Refresh token missing".into()))?;
 
-    let token_data = state
-        .identity_service
-        .refresh(&raw_refresh_token)
-        .await?;
+    let token_data = state.identity_service.refresh(&raw_refresh_token).await?;
 
     let cookies = build_auth_cookies(
         &token_data.access_token,

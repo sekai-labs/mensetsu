@@ -1,40 +1,52 @@
 import { describe, it, expect } from 'vitest'
-import { ALL_WORKSPACE_NAV_ROUTES, WORKSPACE_NAV_SECTIONS } from '../components/navigation/types'
+import { resolvePostAuthRedirect, sanitizeRedirectPath } from '../features/auth/utils/auth.util'
 
-describe('Web Client Layouts & Contracts', () => {
-  it('has workspace layout defined with expected sub-routes', () => {
-    const workspaceNavRoutes = ALL_WORKSPACE_NAV_ROUTES
-    expect(workspaceNavRoutes).toHaveLength(11)
-    expect(workspaceNavRoutes).toContain('overview')
-    expect(workspaceNavRoutes).toContain('company')
-    expect(workspaceNavRoutes).toContain('role')
-    expect(workspaceNavRoutes).toContain('match')
-    expect(workspaceNavRoutes).toContain('skills')
-    expect(workspaceNavRoutes).toContain('knowledge')
-    expect(workspaceNavRoutes).toContain('learning')
-    expect(workspaceNavRoutes).toContain('questions')
-    expect(workspaceNavRoutes).toContain('practice')
-    expect(workspaceNavRoutes).toContain('sources')
-    expect(workspaceNavRoutes).toContain('settings')
+describe('protected account routes and redirect safety', () => {
+  it.each(['/cvs', '/profile', '/applications', '/settings?tab=usage'])(
+    'redirects unauthenticated visits to %s through login',
+    (path) => {
+      expect(resolvePostAuthRedirect(false, path)).toBe(
+        `/login?redirect=${encodeURIComponent(path)}`
+      )
+    }
+  )
+
+  it('defaults successful login to /dashboard when no explicit redirect is provided', () => {
+    expect(resolvePostAuthRedirect(true, '/login', null)).toBe('/dashboard')
+    expect(resolvePostAuthRedirect(true, '/login', undefined)).toBe('/dashboard')
+    expect(resolvePostAuthRedirect(true, '/login', '')).toBe('/dashboard')
+    expect(sanitizeRedirectPath(null)).toBe('/dashboard')
+    expect(sanitizeRedirectPath('')).toBe('/dashboard')
+    expect(sanitizeRedirectPath('   ')).toBe('/dashboard')
   })
 
-  it('has 4 semantic navigation sections in sidebar configuration', () => {
-    expect(WORKSPACE_NAV_SECTIONS).toHaveLength(4)
-    const titles = WORKSPACE_NAV_SECTIONS.map((s) => s.title)
-    expect(titles).toEqual([
-      'Overview & Match',
-      'Company & Role',
-      'Preparation & Questions',
-      'Settings',
-    ])
+  it('preserves valid explicit redirect destination upon login', () => {
+    expect(resolvePostAuthRedirect(true, '/login', '/settings?tab=usage')).toBe('/settings?tab=usage')
+    expect(resolvePostAuthRedirect(true, '/login', '/interviews/new')).toBe('/interviews/new')
+    expect(sanitizeRedirectPath('/settings?tab=usage')).toBe('/settings?tab=usage')
+    expect(sanitizeRedirectPath('/settings?tab=security#totp')).toBe('/settings?tab=security#totp')
   })
 
-  it('defines authentication and public routes', () => {
-    const publicRoutes = ['/', '/login', '/register']
-    const protectedRoutes = ['/dashboard', '/interviews', '/settings', '/profile']
+  it('rejects external, protocol-relative, backslash, or malformed redirect targets, defaulting to /dashboard', () => {
+    // Absolute URLs
+    expect(sanitizeRedirectPath('https://malicious-site.com')).toBe('/dashboard')
+    expect(sanitizeRedirectPath('http://malicious-site.com')).toBe('/dashboard')
+    expect(sanitizeRedirectPath('ftp://malicious-site.com')).toBe('/dashboard')
 
-    expect(publicRoutes).toContain('/login')
-    expect(publicRoutes).toContain('/register')
-    expect(protectedRoutes).toContain('/dashboard')
+    // Protocol-relative URLs
+    expect(sanitizeRedirectPath('//malicious-site.com')).toBe('/dashboard')
+    expect(sanitizeRedirectPath('///malicious-site.com')).toBe('/dashboard')
+    expect(sanitizeRedirectPath('////malicious-site.com')).toBe('/dashboard')
+
+    // Backslash escapes
+    expect(sanitizeRedirectPath('\\\\malicious-site.com')).toBe('/dashboard')
+    expect(sanitizeRedirectPath('/\\malicious-site.com')).toBe('/dashboard')
+    expect(sanitizeRedirectPath('/\\/\\malicious-site.com')).toBe('/dashboard')
+    expect(sanitizeRedirectPath('/%5cmalicious-site.com')).toBe('/dashboard')
+    expect(sanitizeRedirectPath('/%2f%2fmalicious-site.com')).toBe('/dashboard')
+
+    // Dangerous pseudo-protocols
+    expect(sanitizeRedirectPath('javascript:alert(1)')).toBe('/dashboard')
+    expect(sanitizeRedirectPath('data:text/html,<script>alert(1)</script>')).toBe('/dashboard')
   })
 })

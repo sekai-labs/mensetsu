@@ -1,0 +1,227 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import DocsBreadcrumb from '../../../components/docs/DocsBreadcrumb.astro';
+import Callout from '../../../components/ui/Callout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const usageQuery = `GET /api/v1/usage/tokens?limit=25&provider=openai&agent=company-research
+Authorization: Bearer <user_jwt>
+
+{
+  "items": [
+    {
+      "id": "usage_01",
+      "run_id": "run_01",
+      "execution_id": "exec_01",
+      "agent_id": "company-research",
+      "model_provider": "openai",
+      "model_name": "gpt-4o",
+      "input_tokens": 1820,
+      "output_tokens": 640,
+      "total_tokens": 2460,
+      "timestamp": "2026-11-14T09:12:41Z"
+    }
+  ],
+  "totals": {
+    "request_count": 1,
+    "input_tokens": 1820,
+    "output_tokens": 640,
+    "total_tokens": 2460
+  },
+  "next_cursor": null
+}`;
+
+const dailyQuery = `GET /api/v1/usage/tokens/daily
+Authorization: Bearer <user_jwt>
+
+{
+  "items": [
+    { "date": "2026-11-13", "request_count": 12, "input_tokens": 24000, "output_tokens": 7800, "total_tokens": 31800 }
+  ],
+  "totals": { "request_count": 12, "input_tokens": 24000, "output_tokens": 7800, "total_tokens": 31800 }
+}`;
+
+const summaryResponse = `GET /api/v1/metrics/summary
+Authorization: Bearer <user_jwt>
+
+{
+  "token_totals": { "request_count": 12, "input_tokens": 24000, "output_tokens": 7800, "total_tokens": 31800 },
+  "platform_token_totals": null,
+  "service_metrics": null
+}`;
+
+const prometheusConfig = `scrape_configs:
+  - job_name: mensetsu-api
+    scheme: http
+    authorization:
+      type: Bearer
+      credentials_file: /run/secrets/mensetsu_prometheus_token
+    static_configs:
+      - targets: ["api:3000"]`;
+---
+
+<DocsLayout
+  title="Metrics & Usage | Mensetsu Documentation"
+  description="Role-scoped token usage, daily analytics, dashboard summary, and bearer-protected Prometheus metrics."
+>
+  <div class="space-y-8">
+    <DocsBreadcrumb crumbs={[{ label: 'Metrics & Usage' }]} />
+
+    <header class="space-y-3 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div class="text-xs font-mono font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+        Observability / Usage
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Metrics & Usage
+      </h1>
+      <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        Candidate-scoped token history, administrator-wide analytics, dashboard summaries, and Prometheus scraping.
+      </p>
+    </header>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">1. Token Usage Source</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Model calls emit <code class="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">agent.model_usage</code>
+        execution events. Each row records the run, optional execution, agent, provider, model, input tokens, output
+        tokens, total tokens, and timestamp. Token history is served by the Rust API, not by the intelligence service.
+      </p>
+      <Callout type="note" title="Role Scoping">
+        Regular users only receive their own rows and totals. Administrators may query platform-wide rows and may use
+        the <code class="font-mono text-xs">user_id</code> filter. The scope is enforced server-side; the browser cannot widen it.
+      </Callout>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">2. Usage Endpoints</h2>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 dark:bg-slate-900 font-mono text-[11px] text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800">
+            <tr>
+              <th class="p-3">Endpoint</th>
+              <th class="p-3">Scope</th>
+              <th class="p-3">Purpose</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono">
+            <tr>
+              <td class="p-3 text-indigo-600 dark:text-indigo-400">GET /api/v1/usage/tokens</td>
+              <td class="p-3">Authenticated user</td>
+              <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Cursor-paginated request history for the caller.</td>
+            </tr>
+            <tr>
+              <td class="p-3 text-indigo-600 dark:text-indigo-400">GET /api/v1/admin/usage/tokens</td>
+              <td class="p-3">Administrator</td>
+              <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Platform-wide history with user filtering.</td>
+            </tr>
+            <tr>
+              <td class="p-3 text-indigo-600 dark:text-indigo-400">GET /api/v1/usage/tokens/daily</td>
+              <td class="p-3">Authenticated user</td>
+              <td class="p-3 font-sans text-slate-600 dark:text-slate-300">30-day daily token analytics for the caller.</td>
+            </tr>
+            <tr>
+              <td class="p-3 text-indigo-600 dark:text-indigo-400">GET /api/v1/admin/usage/tokens/daily</td>
+              <td class="p-3">Administrator</td>
+              <td class="p-3 font-sans text-slate-600 dark:text-slate-300">30-day daily analytics across all users.</td>
+            </tr>
+            <tr>
+              <td class="p-3 text-indigo-600 dark:text-indigo-400">GET /api/v1/metrics/summary</td>
+              <td class="p-3">Authenticated user</td>
+              <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Dashboard token totals; administrators also receive platform totals and traffic health.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        Compatibility aliases also exist for the daily analytics routes:
+        <code class="font-mono">/api/v1/analytics/tokens/daily</code> and
+        <code class="font-mono">/api/v1/admin/analytics/tokens/daily</code>.
+      </p>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">3. Filters and Pagination</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        History routes accept server-side search and filters. The default page size is 25; the maximum is 100. Totals
+        are scope-wide and do not change with the cursor or filters.
+      </p>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 dark:bg-slate-900 font-mono text-[11px] text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800">
+            <tr>
+              <th class="p-3">Parameter</th>
+              <th class="p-3">Meaning</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono">
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">limit</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Page size, clamped to 1–100.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">before_timestamp, before_event_id</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Stable cursor pair; both are required when paginating.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">q, search</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Search available identifiers, model, and agent fields.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">provider, model_provider</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Filter by model provider.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">agent, agent_id</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Filter by agent role.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">from, from_date, start_date; to, to_date, end_date</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Inclusive date-range filters; aliases are accepted.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">user_id</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Admin-only platform filter.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <CodeBlock code={usageQuery} language="http" filename="User token history" />
+      <CodeBlock code={dailyQuery} language="http" filename="Daily analytics" />
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">4. Dashboard Summary</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        <code class="font-mono text-xs">GET /api/v1/metrics/summary</code> is the compact dashboard contract. A regular
+        user receives only <code class="font-mono text-xs">token_totals</code>. An administrator also receives
+        <code class="font-mono text-xs">platform_token_totals</code> and <code class="font-mono text-xs">service_metrics</code>.
+      </p>
+      <CodeBlock code={summaryResponse} language="http" filename="Regular-user summary response" />
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Admin service metrics define success rate as the percentage of HTTP responses with status below 500 over the
+        last five minutes, and request rate as the average requests per second over the last 60 seconds. These values
+        are computed from a bounded in-process sliding window, not per-user labels.
+      </p>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">5. Prometheus Metrics</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        The API exposes <code class="font-mono text-xs">GET /metrics</code> in Prometheus text format. The endpoint is
+        disabled unless <code class="font-mono text-xs">PROMETHEUS_METRICS_TOKEN</code> is set. A missing or mismatched
+        bearer token returns HTTP 401; comparison is constant-time.
+      </p>
+      <CodeBlock
+        code='curl -H "Authorization: Bearer $PROMETHEUS_METRICS_TOKEN" http://localhost:3000/metrics'
+        language="bash"
+        filename="Manual scrape"
+      />
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 dark:bg-slate-900 font-mono text-[11px] text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800">
+            <tr><th class="p-3">Metric</th><th class="p-3">Type</th><th class="p-3">Meaning</th></tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono">
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">http_requests_total</td><td class="p-3">counter</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Requests labeled by method, normalized route path, and status.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">http_request_duration_seconds</td><td class="p-3">histogram</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Latency buckets, sum, and count by method and normalized path.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">mensetsu_service_success_rate_percent</td><td class="p-3">gauge</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Share of responses below 500 over the last five minutes.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">mensetsu_service_requests_per_second</td><td class="p-3">gauge</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Average request rate over the last 60 seconds.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <CodeBlock code={prometheusConfig} language="yaml" filename="prometheus.yml excerpt" />
+      <Callout type="caution" title="No User Labels">
+        Route templates are normalized before recording and user IDs are never used as labels. This keeps series
+        cardinality bounded and avoids leaking candidate identifiers into monitoring storage.
+      </Callout>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">6. Workspace UI</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        The dashboard shows a compact usage card. Detailed history and the 30-day daily chart live under
+        <strong>Settings → Usage</strong> (<code class="font-mono text-xs">/settings?tab=usage</code>). Regular users see only
+        their own requests; administrators additionally see user IDs, platform totals, and service health.
+      </p>
+    </section>
+  </div>
+</DocsLayout>

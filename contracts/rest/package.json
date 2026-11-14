@@ -6,7 +6,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "generate:api": "bun scripts/generate-ts.mjs",
+    "generate:api": "bun scripts/generate-ts.ts",
     "generate:workflows": "bun scripts/generate-workflows-ts.ts",
     "generate": "bun run generate:api && bun run generate:workflows"
   },

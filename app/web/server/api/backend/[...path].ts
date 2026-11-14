@@ -1,6 +1,6 @@
 import { sessionManager } from '~/server/utils/session'
 import { getBackendApiBase, SESSION_COOKIE_NAME } from '~/server/utils/config'
-import { isEventsPath, buildProxyHeaders, buildTargetUrl } from '~/server/utils/routes'
+import { isEventsPath, isPdfDownloadPath, buildProxyHeaders, buildTargetUrl } from '~/server/utils/routes'
 import { refreshSessionToken } from '~/server/utils/auth-refresh'
 
 export default defineEventHandler(async (event) => {
@@ -31,6 +31,93 @@ export default defineEventHandler(async (event) => {
         statusCode: 400,
         message: 'Invalid JSON request payload',
       })
+    }
+  }
+
+  if (isPdfDownloadPath(cleanPathname)) {
+    const downloadHeaders: Record<string, string> = {}
+    if (token) {
+      downloadHeaders.Authorization = `Bearer ${token}`
+    }
+
+    const abortController = new AbortController()
+    event.node.req.on('close', () => {
+      abortController.abort()
+    })
+
+    const upstreamUrl = `${targetUrl}?${event.path.split('?')[1] || ''}`.replace(/\?$/, '')
+
+    let upstreamRes: Response
+    try {
+      upstreamRes = await fetch(upstreamUrl, {
+        method: 'GET',
+        headers: downloadHeaders,
+        signal: abortController.signal,
+      })
+    } catch (err: unknown) {
+      if (abortController.signal.aborted) {
+        return
+      }
+      throw createError({
+        statusCode: 502,
+        message: 'Failed to connect to upstream download service',
+      })
+    }
+
+    if (upstreamRes.status === 401 && session?.refreshToken && tokenId) {
+      try {
+        const newAccessToken = await refreshSessionToken(apiBase, tokenId, session)
+        downloadHeaders.Authorization = `Bearer ${newAccessToken}`
+        upstreamRes = await fetch(upstreamUrl, {
+          method: 'GET',
+          headers: downloadHeaders,
+          signal: abortController.signal,
+        })
+      } catch {
+        await sessionManager.deleteSession(tokenId)
+        deleteCookie(event, SESSION_COOKIE_NAME, { path: '/' })
+        throw createError({
+          statusCode: 401,
+          message: 'Session expired',
+        })
+      }
+    }
+
+    if (!upstreamRes.ok) {
+      throw createError({
+        statusCode: upstreamRes.status,
+        message: `Upstream download failed with status ${upstreamRes.status}`,
+      })
+    }
+
+    setResponseStatus(event, upstreamRes.status)
+
+    const responseHeaders: Record<string, string> = {}
+    const ct = upstreamRes.headers.get('content-type')
+    const cd = upstreamRes.headers.get('content-disposition')
+    const cc = upstreamRes.headers.get('cache-control')
+
+    if (ct) responseHeaders['content-type'] = ct
+    if (cd) responseHeaders['content-disposition'] = cd
+    if (cc) responseHeaders['cache-control'] = cc
+
+    setResponseHeaders(event, responseHeaders)
+
+    if (!upstreamRes.body) {
+      return
+    }
+
+    try {
+      return await sendStream(event, upstreamRes.body)
+    } catch (err: unknown) {
+      abortController.abort()
+      if (
+        (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') ||
+        (err && typeof err === 'object' && 'code' in err && err.code === 'ERR_STREAM_PREMATURE_CLOSE')
+      ) {
+        return
+      }
+      throw err
     }
   }
 

@@ -1,76 +1,96 @@
-import { FullConfig, chromium } from '@playwright/test'
+import { chromium } from '@playwright/test'
+import type { FullConfig } from '@playwright/test'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { setTimeout as delay } from 'node:timers/promises'
 
 async function globalSetup(config: FullConfig) {
-  const baseURL = config.projects[0].use.baseURL || 'http://localhost:3001'
+  const baseURL = config.projects.find((project) => project.name === 'desktop')?.use.baseURL || 'http://localhost:3001'
   const apiURL = process.env.API_URL || 'http://localhost:3000'
-  const maxAttempts = 90
-  const delayMs = 2000
-
+  const readyTimeoutMs = 3 * 60_000
+  const requestTimeoutMs = 5_000
+  const retryDelayMs = 2_000
+  const readyDeadline = Date.now() + readyTimeoutMs
   let isReady = false
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  let lastProbeError = ''
+
+  while (Date.now() < readyDeadline) {
+    const timeoutMs = Math.max(1, Math.min(requestTimeoutMs, readyDeadline - Date.now()))
+    const signal = AbortSignal.timeout(timeoutMs)
     try {
       const [webRes, apiRes] = await Promise.all([
-        fetch(`${baseURL}/login`, { method: 'GET' }),
-        fetch(`${apiURL}/health/ready`, { method: 'GET' }),
+        fetch(`${baseURL}/login`, { method: 'GET', signal }),
+        fetch(`${apiURL}/health/ready`, { method: 'GET', signal }),
       ])
       if (webRes.ok && apiRes.ok) {
         isReady = true
         break
       }
-    } catch {
+      lastProbeError = `web status ${webRes.status}, API status ${apiRes.status}`
+    } catch (error) {
+      lastProbeError = error instanceof Error ? error.message : String(error)
     }
-    await new Promise((resolve) => setTimeout(resolve, delayMs))
+
+    const remainingMs = readyDeadline - Date.now()
+    if (remainingMs > 0) {
+      await delay(Math.min(retryDelayMs, remainingMs))
+    }
   }
 
   if (!isReady) {
-    throw new Error(`[globalSetup] Backend/Frontend stack (web: ${baseURL}/login, api: ${apiURL}/health/ready) not healthy with HTTP 200 within 3 minutes.`)
+    const detail = lastProbeError ? ` Last probe: ${lastProbeError}.` : ''
+    throw new Error(`[globalSetup] Backend/Frontend stack (web: ${baseURL}/login, api: ${apiURL}/health/ready) not healthy with HTTP 200 within 3 minutes.${detail}`)
   }
 
-  const authDir = path.resolve(process.cwd(), 'tests/e2e/.auth')
-  const stateDir = path.resolve(process.cwd(), 'tests/e2e/.state')
+  const authDir = path.resolve(config.rootDir, 'tests/e2e/.auth')
   fs.mkdirSync(authDir, { recursive: true })
-  fs.mkdirSync(stateDir, { recursive: true })
-
   const authFile = path.join(authDir, 'user.json')
 
   if (fs.existsSync(authFile)) {
+    const browser = await chromium.launch()
     try {
-      const browser = await chromium.launch()
       const existingContext = await browser.newContext({ baseURL, storageState: authFile })
       const meRes = await existingContext.request.get('/api/backend/auth/me')
       if (meRes.ok()) {
-        await browser.close()
+        fs.chmodSync(authFile, 0o600)
         return
       }
+      console.warn(`[globalSetup] Existing auth state returned HTTP ${meRes.status()}; registering a fresh user.`)
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error)
+      console.warn(`[globalSetup] Existing auth state could not be reused; registering a fresh user: ${detail}`)
+    } finally {
       await browser.close()
-    } catch {
     }
   }
 
   const browser = await chromium.launch()
-  const context = await browser.newContext({ baseURL })
-  const page = await context.newPage()
+  try {
+    const context = await browser.newContext({ baseURL })
+    const page = await context.newPage()
 
-  const timestamp = Date.now()
-  const email = `e2e_user_${timestamp}@example.com`
-  const password = 'StrongPassword123!'
+    const timestamp = Date.now()
+    const email = `e2e_user_${timestamp}@example.com`
+    const password = 'StrongPassword123!'
 
-  await page.goto('/register')
-  await page.fill('#name', 'E2E User')
-  await page.fill('input[type="email"]', email)
-  await page.fill('input[type="password"]', password)
-  await page.click('button[type="submit"]')
-  await page.waitForURL('**/dashboard', { timeout: 30000 })
+    await page.goto('/register')
+    await page.fill('#name', 'E2E User')
+    await page.fill('input[type="email"]', email)
+    await page.fill('input[type="password"]', password)
+    await page.click('button[type="submit"]')
+    await page.waitForURL('**/dashboard', { timeout: 30000 })
 
-  const meRes = await context.request.get('/api/backend/auth/me')
-  if (!meRes.ok()) {
-    throw new Error(`[globalSetup] Failed to verify authenticated user (/api/backend/auth/me): status ${meRes.status()}`)
+    const meRes = await context.request.get('/api/backend/auth/me')
+    if (!meRes.ok()) {
+      throw new Error(`[globalSetup] Failed to verify authenticated user (/api/backend/auth/me): status ${meRes.status()}`)
+    }
+
+    await context.storageState({ path: authFile })
+    fs.chmodSync(authFile, 0o600)
+  } finally {
+    await browser.close()
   }
-
-  await context.storageState({ path: authFile })
-  await browser.close()
 }
 
 export default globalSetup
+

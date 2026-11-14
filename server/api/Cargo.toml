@@ -37,10 +37,10 @@ dashmap = "6.1"
 aws-config = "1.12"
 aws-sdk-s3 = "1.149"
 subtle = "2.6"
+parking_lot = "0.12"
 
 [build-dependencies]
 tonic-build = "0.12"
 protoc-bin-vendored = "3.1.0"
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
-parking_lot = "0.12"

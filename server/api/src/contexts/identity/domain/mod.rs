@@ -1,4 +1,5 @@
 pub mod hasher;
+pub mod oauth;
 pub mod repository;
 pub mod token;
 
@@ -112,12 +113,7 @@ pub struct User {
 }
 
 impl User {
-    pub fn new(
-        email: Email,
-        name: String,
-        password_hash: String,
-        role: UserRole,
-    ) -> Result<Self> {
+    pub fn new(email: Email, name: String, password_hash: String, role: UserRole) -> Result<Self> {
         let trimmed_name = name.trim().to_string();
         if trimmed_name.is_empty() {
             return Err(AppError::Validation("Name cannot be empty".into()));

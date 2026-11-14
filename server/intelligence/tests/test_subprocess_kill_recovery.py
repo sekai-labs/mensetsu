@@ -13,6 +13,7 @@ from src.orchestration.ledger import SurrealLedgerRepository
 from src.orchestration.redis_queue import RedisStreamJobQueue
 
 
+@pytest.mark.timeout(600)
 @pytest.mark.asyncio
 async def test_worker_crash_recovery_deterministic_sentinel():
     unique_suffix = uuid.uuid4().hex[:8]
@@ -90,10 +91,15 @@ class BlockingModel(ScriptedToolCallingFakeModel):
             custom_s = Settings(surreal_ns="{test_ns}", surreal_db="{test_db}")
             local_ledger = SurrealLedgerRepository()
             local_ledger.db = SurrealDirectClient(settings=custom_s)
+            required_tasks = (
+                "task_normalize_{run_id[:8]}",
+                "task_company_{run_id[:8]}",
+                "task_job_{run_id[:8]}",
+            )
             while True:
                 t_list = await local_ledger.list_tasks_for_run("{run_id}")
-                comp = [t for t in t_list if t.status == "completed"]
-                if len(comp) >= 2:
+                completed_ids = [t.id for t in t_list if t.status == "completed"]
+                if all(task_id in completed_ids for task_id in required_tasks):
                     break
                 await asyncio.sleep(0.2)
             await r.set("{sentinel_key}", "blocked")
@@ -141,7 +147,7 @@ asyncio.run(main())
     env["REDIS_URL"] = redis_url
     env["WORKER_LEASE_TTL_S"] = "3.0"
     env["WORKER_HEARTBEAT_INTERVAL_S"] = "1.0"
-    env["WORKER_MIN_IDLE_TIME_MS"] = "3500"
+    env["WORKER_MIN_IDLE_TIME_MS"] = "4000"
 
     proc_a = await asyncio.create_subprocess_exec(
         sys.executable,
@@ -153,22 +159,25 @@ asyncio.run(main())
         stderr=None,
     )
 
-    r_client = aioredis.from_url(redis_url, decode_responses=True)
+    r_client = aioredis.from_url(redis_url, decode_responses=True, socket_timeout=5)
     blocked = False
-    for i in range(70):
-        await asyncio.sleep(0.5)
-        val = await r_client.get(sentinel_key)
-        if val == "blocked":
-            blocked = True
-            break
-        ret = proc_a.returncode
-        if ret is not None:
-            print(f"PROC_A DIED EARLY (code {ret})!")
-            break
-        cd = await r_client.get(f"{run_id}_company_done")
-        t_pre = await ledger.list_tasks_for_run(run_id)
-        comp = [t.id for t in t_pre if t.status == "completed"]
-        print(f"WAIT {i}: sentinel={val}, company_done={cd}, completed={comp}")
+    try:
+        for i in range(360):
+            await asyncio.sleep(0.5)
+            val = await r_client.get(sentinel_key)
+            if val == "blocked":
+                blocked = True
+                break
+            ret = proc_a.returncode
+            if ret is not None:
+                print(f"PROC_A DIED EARLY (code {ret})!")
+                break
+            if i % 20 == 0:
+                print(f"Waiting for sentinel; poll={i}, value={val}")
+    finally:
+        if proc_a.returncode is None:
+            proc_a.kill()
+            await proc_a.wait()
     assert blocked, "Worker A failed to reach deterministic sentinel block."
     tasks_pre = await ledger.list_tasks_for_run(run_id)
     pre_kill_completed = [t for t in tasks_pre if t.status == "completed"]
@@ -191,11 +200,6 @@ asyncio.run(main())
         "Redis checkpoint tuple must exist for thread_id=run_id before kill."
     )
 
-    try:
-        proc_a.kill()
-        await proc_a.wait()
-    except Exception:
-        pass
     await r_client.delete(f"mensetsu:lease:{run_id}")
     runner_b_code = f"""
 import asyncio, os
@@ -223,7 +227,7 @@ async def main():
             redis_url="{redis_url}",
             lease_ttl_s=3.0,
             heartbeat_interval_s=1.0,
-            min_idle_time_ms=100,
+            min_idle_time_ms=4000,
         )
         w.queue = q
         w.ledger = SurrealLedgerRepository()

@@ -1,0 +1,411 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import DocsBreadcrumb from '../../../components/docs/DocsBreadcrumb.astro';
+import Callout from '../../../components/ui/Callout.astro';
+
+const repositoryTree = `mensetsu/
+├── app/
+│   ├── web/                 Nuxt workspace client and server BFF
+│   ├── landing/             Astro public landing and documentation (this app)
+│   ├── extension/           Manifest V3 browser assistant
+│   ├── mobile/              Flutter Android and iOS clients
+│   └── desktop/             Rust + webview desktop client
+├── server/
+│   ├── api/                 Rust Axum API, REST/SSE, gRPC client, OpenAPI
+│   └── intelligence/        Python gRPC service, workflow orchestrator, workers
+├── contracts/
+│   ├── rest/                OpenAPI JSON, generated TypeScript, fixtures
+│   ├── grpc/                Protobuf definitions and generated Python stubs
+│   └── native/              Generated Rust, Swift, Kotlin, and C# clients
+├── infra/
+│   ├── migrations/          Ordered SurrealQL migrations
+│   ├── searxng/             SearXNG configuration
+│   ├── minio-init.sh        Private bucket initialization
+│   └── verify_and_migrate.sh Legacy resume-object migration helper
+├── docs/                    Architecture and implementation specifications
+├── scripts/                 Parity, upgrade rehearsal, and E2E helpers
+├── docker-compose.yml       Local service topology
+└── Makefile                 Development, contract, test, and check targets`;
+
+const rustTree = `server/api/src/
+├── main.rs                  Process bootstrap, migrations, routers, gRPC client
+├── lib.rs                   Library surface used by binaries and tests
+├── contexts/
+│   ├── identity/            Users, credentials, sessions, roles, OAuth
+│   ├── workspace/           Workspace aggregate, phases, CV library, applications
+│   ├── workflow/            Runs, tasks, artifacts, events, dispatch records
+│   ├── knowledge/           Knowledge-graph domain types
+│   ├── learning/            Learning-path domain types
+│   └── practice/            Question-book domain types
+├── interfaces/
+│   ├── http/                Axum routers, extractors, middleware, DTOs
+│   └── grpc/                Intelligence client and resume-storage bridge
+├── shared/                  Config, encryption, errors, SSRF, record IDs
+└── bin/                     export-openapi, migrate-resume-objects`;
+
+const pythonTree = `server/intelligence/src/
+├── main.py                  gRPC server bootstrap
+├── worker.py                Durable worker entrypoint
+├── grpc/
+│   ├── control_servicer.py  DataControlService implementation
+│   ├── streaming_servicer.py WorkflowEventStreamService implementation
+│   ├── health_servicer.py   gRPC health service
+│   └── auth_interceptor.py  Fail-closed internal bearer check
+├── orchestration/
+│   ├── service.py           Workflow commands and persistence coordination
+│   ├── redis_queue.py       Redis Streams enqueue/claim/ack
+│   ├── runtime/worker.py    Job consumer and workspace progress
+│   ├── static_*.py          Deterministic interview-preparation pipeline
+│   ├── hybrid_*.py          Hybrid planning and curriculum nodes
+│   ├── dynamic_workflow.py  Dynamic plan/revision execution
+│   ├── sanitizer.py         Untrusted-input isolation
+│   └── limits.py            Concurrency and budget guards
+├── agents/                  Runtime, registry, model router, tools, schemas
+├── fetcher/                 SearXNG client, page reader, SSRF-safe HTTP
+├── extractor/               Document and entity extraction models
+├── generation/              PDF, resume, persistence, progress helpers
+├── contracts/               Pydantic v1 contract models and schema export
+└── db/                      SurrealDB client`;
+
+const webTree = `app/web/
+├── pages/                   Nuxt routes (dashboard, login, workspaces, usage…)
+├── layouts/                 Authenticated workspace chrome
+├── components/              Navigation, workflow, knowledge, usage, admin UI
+├── features/
+│   ├── auth/                Session-aware auth service and redirect helpers
+│   ├── interviews/          Workspace creation, events, markdown, models
+│   ├── workflows/           Generated-contract adapters
+│   ├── usage/               Token-usage queries
+│   └── admin/               Administration services
+├── server/
+│   ├── api/auth/            Login, registration, 2FA, logout, OAuth BFF
+│   ├── api/backend/         Authenticated API proxy and SSE forwarding
+│   ├── routes/auth/         Browser OAuth callback
+│   └── utils/               Redis sessions, refresh, proxy, OAuth exchange
+├── services/                Browser API client
+├── models/generated/        Generated workflow contracts
+└── test/                    Focused Vitest coverage`;
+
+const landingTree = `app/landing/
+├── astro.config.mjs         Static Astro configuration
+├── Dockerfile               Bun build + nginx static runtime
+├── nginx.conf               Clean-URL and asset-cache rules
+├── package.json             Astro, Tailwind v4, Vitest
+├── public/                  Logo and favicon
+├── src/
+│   ├── components/
+│   │   ├── landing/         Hero, pipeline, features, architecture, CTA
+│   │   ├── docs/            Sidebar, breadcrumbs, pager
+│   │   ├── navigation/      Header and footer
+│   │   └── ui/              Button, badge, callout, code block
+│   ├── data/
+│   │   ├── docsNavigation.ts Documentation tree and search index
+│   │   └── workspace.ts      PUBLIC_WORKSPACE_URL handoff links
+│   ├── layouts/             Base and documentation layouts
+│   ├── pages/               Landing and /docs routes
+│   └── styles/global.css    Tailwind v4 theme and design tokens
+├── docs/                    Landing-specific architecture and runbooks
+└── test/                    Focused Vitest checks`;
+
+const modules = [
+  {
+    area: 'Rust API',
+    module: 'contexts/identity',
+    responsibility: 'User lifecycle, Argon2id credentials, JWT access/refresh sessions, TOTP 2FA, roles, OAuth provider records and linked identities.',
+    boundary: 'REST auth routes, OAuth BFF handoff, admin role checks.',
+  },
+  {
+    area: 'Rust API',
+    module: 'contexts/workspace',
+    responsibility: 'Workspace aggregate and progress phases, company/role inputs, candidate profile, CV library, saved jobs and applications.',
+    boundary: 'Workspace, resume-upload, saved-job, and application REST routes.',
+  },
+  {
+    area: 'Rust API',
+    module: 'contexts/workflow',
+    responsibility: 'Run and task state, artifact and event ledger, dispatch leases, gRPC command/stream coordination.',
+    boundary: 'Workflow REST/SSE routes and Intelligence gRPC client.',
+  },
+  {
+    area: 'Rust API',
+    module: 'contexts/knowledge, learning, practice',
+    responsibility: 'Domain types for graph entities, prerequisite-ordered learning plans, and the interview question book.',
+    boundary: 'Persisted through workflow artifacts and read by workspace responses.',
+  },
+  {
+    area: 'Rust API',
+    module: 'interfaces/http',
+    responsibility: 'Axum routers for auth, OAuth, setup, settings, workspaces, resume uploads, saved jobs, applications, workflows, token usage, admin, and metrics.',
+    boundary: 'Public OpenAPI contract generated by utoipa.',
+  },
+  {
+    area: 'Rust API',
+    module: 'interfaces/grpc',
+    responsibility: 'Bidirectional gRPC client to the intelligence service and the internal resume-storage bridge.',
+    boundary: 'Internal HTTP/2 only; bearer token required.',
+  },
+  {
+    area: 'Rust API',
+    module: 'shared',
+    responsibility: 'Environment configuration, AES-256-GCM secret encryption, typed errors, SSRF validation, record-ID helpers.',
+    boundary: 'Used by every context; no persistence ownership.',
+  },
+  {
+    area: 'Python intelligence',
+    module: 'grpc',
+    responsibility: 'Control, streaming, and health servicers with fail-closed internal token validation.',
+    boundary: 'Private gRPC port 50051; never published by the sample Compose file.',
+  },
+  {
+    area: 'Python intelligence',
+    module: 'orchestration',
+    responsibility: 'Static, hybrid, and dynamic workflows; Redis Streams queue; SurrealDB ledger; progress, cancellation, retries, and sanitization.',
+    boundary: 'Consumes API commands and emits ordered execution events.',
+  },
+  {
+    area: 'Python intelligence',
+    module: 'agents',
+    responsibility: 'Agent runtime, registry, model routing, typed schemas, and controlled tool invocations.',
+    boundary: 'No direct browser or public network exposure.',
+  },
+  {
+    area: 'Python intelligence',
+    module: 'fetcher',
+    responsibility: 'SearXNG queries, page retrieval, and SSRF-safe HTTP clients for research.',
+    boundary: 'Private SearXNG service and allowlisted external URLs.',
+  },
+  {
+    area: 'Python intelligence',
+    module: 'generation, extractor, contracts, db',
+    responsibility: 'PDF/resume extraction, persistence helpers, Pydantic contract models, and SurrealDB access.',
+    boundary: 'Schema exports under contracts/rest/schema.',
+  },
+  {
+    area: 'Contracts',
+    module: 'contracts/rest',
+    responsibility: 'Canonical OpenAPI JSON, generated TypeScript types, workflow JSON Schema, and golden fixtures.',
+    boundary: 'Generated by make contracts; checked by make contracts-check.',
+  },
+  {
+    area: 'Contracts',
+    module: 'contracts/grpc',
+    responsibility: 'control.proto, streaming.proto, health.proto, and generated Python stubs.',
+    boundary: 'Internal service boundary only.',
+  },
+  {
+    area: 'Contracts',
+    module: 'contracts/native',
+    responsibility: 'Generated Rust, Swift, Kotlin, and C# clients for desktop and mobile.',
+    boundary: 'Consumed from app/desktop and app/mobile.',
+  },
+  {
+    area: 'Clients',
+    module: 'app/web',
+    responsibility: 'Nuxt workspace UI and Nitro BFF: Redis-backed sessions, API proxying, SSE forwarding, OAuth exchange, role-scoped pages.',
+    boundary: 'Browser-facing port 3001; no direct API tokens in the browser.',
+  },
+  {
+    area: 'Clients',
+    module: 'app/landing',
+    responsibility: 'Astro static landing and documentation. No authenticated state; links out to the workspace.',
+    boundary: 'Public port 3002; build-time workspace URL.',
+  },
+  {
+    area: 'Clients',
+    module: 'app/extension',
+    responsibility: 'Manifest V3 job scanner, reviewed application drafts, saved-job review, and interview-preparation queueing.',
+    boundary: 'Calls the Rust API directly with user-approved host permissions.',
+  },
+  {
+    area: 'Clients',
+    module: 'app/mobile, app/desktop',
+    responsibility: 'Flutter Android/iOS and Rust desktop clients using generated native contracts.',
+    boundary: 'Connect to a user-supplied Rust API origin.',
+  },
+  {
+    area: 'Infrastructure',
+    module: 'infra/',
+    responsibility: 'SurrealQL migrations, SearXNG settings, MinIO bucket initialization, resume migration verification, and backup helpers.',
+    boundary: 'Applied by the API on startup; operated by deployment owners.',
+  },
+];
+
+const webModules = [
+  { path: 'server/api/auth/*', role: 'Sets an HttpOnly session ID cookie and stores API tokens server-side in Redis.' },
+  { path: 'server/api/backend/[...path].ts', role: 'Authenticated proxy for REST calls and SSE streams, including Last-Event-ID forwarding.' },
+  { path: 'server/utils/session.ts', role: 'Redis session records with TTL and refresh-token rotation.' },
+  { path: 'server/utils/oauth-exchange.ts', role: 'Browser OAuth callback, one-use handoff exchange, 2FA/redirect handling.' },
+  { path: 'features/auth/', role: 'Client auth state, redirect sanitization, 2FA, and OAuth actions.' },
+  { path: 'features/interviews/', role: 'Workspace creation, workflow event consumption, and rendered research artifacts.' },
+  { path: 'features/usage/', role: 'Token-usage and daily analytics queries for the settings page.' },
+  { path: 'pages/index.vue', role: 'Workspace root handoff: authenticated to /dashboard, otherwise to /login.' },
+];
+---
+
+<DocsLayout
+  title="Module Tree & Ownership | Mensetsu Documentation"
+  description="Repository layout, Rust bounded contexts, Python packages, clients, contracts, and infrastructure ownership."
+>
+  <div class="space-y-8">
+    <DocsBreadcrumb crumbs={[{ label: 'Module Tree & Ownership' }]} />
+
+    <header class="space-y-3 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div class="text-xs font-mono font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+        Engineering / Code Map
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Module Tree & Ownership
+      </h1>
+      <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        A map of the monorepo, the responsibility of each module, and the contracts that connect them.
+      </p>
+    </header>
+
+    <Callout type="important" title="Ownership Invariant">
+      The Rust API owns identity, authorization, workspace state, persistence queries, and the canonical OpenAPI
+      contract. The Python intelligence service owns workflow execution, extraction, research, and generation. No
+      client may bypass the API for candidate-scoped data.
+    </Callout>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">1. Repository Layout</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Mensetsu is a polyglot monorepo. Each top-level directory has one primary runtime and one contract surface.
+      </p>
+      <div class="bg-slate-950 text-slate-200 p-4 rounded-lg font-mono text-xs overflow-x-auto leading-relaxed border border-slate-800">
+        <pre><code>{repositoryTree}</code></pre>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">2. Rust API Tree</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        The API follows a domain-driven layout. Contexts are grouped by business capability; each context may expose
+        domain, application, and infrastructure modules. HTTP and gRPC are interface layers, not domain owners.
+      </p>
+      <div class="bg-slate-950 text-slate-200 p-4 rounded-lg font-mono text-xs overflow-x-auto leading-relaxed border border-slate-800">
+        <pre><code>{rustTree}</code></pre>
+      </div>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 dark:bg-slate-900 font-mono text-[11px] text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800">
+            <tr>
+              <th class="p-3">Area</th>
+              <th class="p-3">Module</th>
+              <th class="p-3">Responsibility</th>
+              <th class="p-3">Boundary</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+            {modules.map((entry) => (
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 align-top">
+                <td class="p-3 font-mono text-slate-500 whitespace-nowrap">{entry.area}</td>
+                <td class="p-3 font-mono font-semibold text-indigo-600 dark:text-indigo-400">{entry.module}</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">{entry.responsibility}</td>
+                <td class="p-3 text-slate-500 dark:text-slate-400">{entry.boundary}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">3. Python Intelligence Tree</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        The intelligence process has two entrypoints that share one package: the gRPC server (<code class="font-mono text-xs">main.py</code>)
+        and the durable worker (<code class="font-mono text-xs">worker.py</code>). Redis Streams carry jobs; SurrealDB is the ground-truth
+        ledger for runs, tasks, artifacts, and events.
+      </p>
+      <div class="bg-slate-950 text-slate-200 p-4 rounded-lg font-mono text-xs overflow-x-auto leading-relaxed border border-slate-800">
+        <pre><code>{pythonTree}</code></pre>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">4. Workspace Client (app/web)</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        The Nuxt app is both a browser client and a small server-side BFF. The browser never receives API access or
+        refresh tokens; it receives an HttpOnly session cookie whose record lives in Redis.
+      </p>
+      <div class="bg-slate-950 text-slate-200 p-4 rounded-lg font-mono text-xs overflow-x-auto leading-relaxed border border-slate-800">
+        <pre><code>{webTree}</code></pre>
+      </div>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 dark:bg-slate-900 font-mono text-[11px] text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800">
+            <tr>
+              <th class="p-3">Path</th>
+              <th class="p-3">Role</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+            {webModules.map((entry) => (
+              <tr>
+                <td class="p-3 font-mono text-indigo-600 dark:text-indigo-400">{entry.path}</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">{entry.role}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">5. Landing & Documentation (app/landing)</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        This app is a static Astro build. It has no database, session, or API credentials. The only runtime input is
+        the build-time <code class="font-mono text-xs">PUBLIC_WORKSPACE_URL</code> used for sign-in and workspace handoff links.
+      </p>
+      <div class="bg-slate-950 text-slate-200 p-4 rounded-lg font-mono text-xs overflow-x-auto leading-relaxed border border-slate-800">
+        <pre><code>{landingTree}</code></pre>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">6. Contracts, Clients, and Infrastructure</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 space-y-2">
+          <div class="font-mono font-bold text-slate-900 dark:text-white">contracts/rest</div>
+          <p class="text-slate-600 dark:text-slate-300">
+            Canonical <code class="font-mono text-[11px]">openapi.json</code> exported from Rust, generated TypeScript
+            bindings, workflow JSON Schema, and golden fixtures. Regenerate with <code class="font-mono text-[11px]">make contracts</code>.
+          </p>
+        </div>
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 space-y-2">
+          <div class="font-mono font-bold text-slate-900 dark:text-white">contracts/grpc</div>
+          <p class="text-slate-600 dark:text-slate-300">
+            <code class="font-mono text-[11px]">control.proto</code>, <code class="font-mono text-[11px]">streaming.proto</code>,
+            and <code class="font-mono text-[11px]">health.proto</code>. Python stubs are generated into
+            <code class="font-mono text-[11px]">server/intelligence/src/grpc/v1</code>.
+          </p>
+        </div>
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 space-y-2">
+          <div class="font-mono font-bold text-slate-900 dark:text-white">contracts/native</div>
+          <p class="text-slate-600 dark:text-slate-300">
+            Generated Rust, Swift, Kotlin, and C# clients used by <code class="font-mono text-[11px]">app/desktop</code> and
+            <code class="font-mono text-[11px]">app/mobile</code>. Never hand-edit generated files.
+          </p>
+        </div>
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 space-y-2">
+          <div class="font-mono font-bold text-slate-900 dark:text-white">infra/</div>
+          <p class="text-slate-600 dark:text-slate-300">
+            Ordered SurrealQL migrations applied by the API, SearXNG settings, MinIO bucket initialization, and the
+            legacy resume-object migration verifier.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">7. Change Ownership Rules</h2>
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
+        <li>Changing an API route or DTO requires regenerated REST and native contracts in the same change.</li>
+        <li>Changing a protobuf definition requires regenerating Python stubs and the Rust gRPC client.</li>
+        <li>Schema changes require a new ordered migration under <code class="font-mono">infra/migrations/</code>; never edit an applied migration in place.</li>
+        <li>Landing changes stay inside <code class="font-mono">app/landing/</code>; the landing app must never import workspace session code or API tokens.</li>
+        <li>Workspace-root routing belongs to <code class="font-mono">app/web/pages/index.vue</code>; marketing content stays in the landing app.</li>
+      </ul>
+    </section>
+  </div>
+</DocsLayout>

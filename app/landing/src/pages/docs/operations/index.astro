@@ -1,0 +1,249 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import DocsBreadcrumb from '../../../components/docs/DocsBreadcrumb.astro';
+import Callout from '../../../components/ui/Callout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const healthChecks = `# API liveness and readiness
+curl -fsS http://localhost:3000/health/live
+curl -fsS http://localhost:3000/health/ready
+
+# Container state and health
+docker compose ps
+docker compose logs --tail=100 api`;
+
+const backupCommands = `# Stop writes while taking a consistent backup.
+docker compose stop api worker intelligence web landing
+
+# SurrealDB logical export.
+docker compose exec surrealdb surreal export \\
+  --endpoint http://127.0.0.1:8000 \\
+  --user root --pass root \\
+  --ns mensetsu --db production \\
+  /data/backup-$(date +%F).surql
+
+# Copy the export, Redis snapshot, and private objects out of the host.
+docker compose cp surrealdb:/data/backup-$(date +%F).surql ./backups/
+docker compose cp redis:/data/dump.rdb ./backups/
+# Use your S3 client to mirror the MinIO bucket.
+aws --endpoint-url http://127.0.0.1:9000 s3 sync \\
+  s3://mensetsu-resumes ./backups/minio/mensetsu-resumes
+
+# Restart after the backup completes.
+docker compose up -d`;
+
+const upgradeCommands = `# 1. Back up the database, Redis, object store, and .env.
+# 2. Pull the new source and rebuild only the affected services.
+docker compose build api intelligence worker web landing
+# 3. Start the API first; it applies missing migrations in order.
+docker compose up -d surrealdb redis searxng minio minio-init api
+docker compose logs --tail=100 api
+# 4. Start the remaining services once the API is healthy.
+docker compose up -d intelligence worker web landing
+docker compose ps`;
+
+const logsCommands = `# Follow one service.
+docker compose logs -f --tail=100 api
+docker compose logs -f --tail=100 worker
+
+# Increase Rust API verbosity for a debugging session.
+RUST_LOG=info,tower_http=debug docker compose up -d api
+
+# Inspect the landing static site.
+docker compose logs -f landing
+curl -I http://localhost:3002/`;
+---
+
+<DocsLayout
+  title="Operations & Maintenance | Mensetsu Documentation"
+  description="Migrations, backups, health probes, logs, resource limits, upgrades, and troubleshooting for a self-hosted deployment."
+>
+  <div class="space-y-8">
+    <DocsBreadcrumb crumbs={[{ label: 'Operations & Maintenance' }]} />
+
+    <header class="space-y-3 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div class="text-xs font-mono font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+        Operations / Runbook
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Operations & Maintenance
+      </h1>
+      <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        Day-two procedures for a self-hosted deployment: health checks, migrations, backups, upgrades, scaling, and
+        failure recovery.
+      </p>
+    </header>
+
+    <Callout type="caution" title="Local Compose Is Not a Public Production Profile">
+      The supplied <code class="font-mono text-xs">docker-compose.yml</code> publishes development ports and uses sample
+      credentials. For any shared or internet-facing deployment, terminate TLS at a reverse proxy, stop publishing
+      SurrealDB and Redis, replace all sample credentials, restrict internal service access, and configure backups.
+    </Callout>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">1. Service Inventory</h2>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 dark:bg-slate-900 font-mono text-[11px] text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800">
+            <tr><th class="p-3">Service</th><th class="p-3">Published</th><th class="p-3">Operational note</th></tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono">
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">api</td><td class="p-3">3000</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Health probes, migrations, REST/SSE, internal gRPC on 50052.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">web</td><td class="p-3">3001</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Authenticated workspace; BFF session and API proxy.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">landing</td><td class="p-3">3002</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Static Astro landing and docs; no database or session.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">intelligence</td><td class="p-3">internal 50051</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">gRPC control and event streaming; private network only.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">worker</td><td class="p-3">internal</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Redis Streams consumer; scales horizontally.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">surrealdb</td><td class="p-3">8000</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">System of record; back up before every upgrade.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">redis</td><td class="p-3">6379</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Job streams, telemetry pub/sub, and web session records.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">searxng</td><td class="p-3">internal 8080</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Research search; not published in the sample Compose file.</td></tr>
+            <tr><td class="p-3 text-indigo-600 dark:text-indigo-400">minio</td><td class="p-3">127.0.0.1:9000/9001</td><td class="p-3 font-sans text-slate-600 dark:text-slate-300">Private resume objects; CORS must match the web origin.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">2. Health Checks</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        The API exposes a liveness route and a readiness route. Compose also checks SurrealDB, Redis, MinIO, SearXNG,
+        the intelligence gRPC channel, and the landing nginx server.
+      </p>
+      <CodeBlock code={healthChecks} language="bash" filename="Health verification" />
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        The API readiness route is a process-level probe; it does not replace a database or object-store check. Use
+        <code class="font-mono">docker compose ps</code> and the dependency health checks for the full picture.
+      </p>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">3. Migrations</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        The API applies ordered SurrealQL migrations during startup and records completed versions in
+        <code class="font-mono text-xs">schema_migration</code>. A fresh database receives the consolidated
+        <code class="font-mono text-xs">server/api/src/schema.surql</code> once and records every known migration,
+        currently through <code class="font-mono text-xs">017_oauth_identity_providers</code>, as its baseline. Never
+        create tables or replay numbered files by hand on a fresh database.
+      </p>
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
+        <li>A versioned database applies only missing migrations, in order.</li>
+        <li>Migration errors stop API startup; read the API log before retrying.</li>
+        <li><code class="font-mono">014_cv_library</code> refuses to continue when an attached résumé upload has no matching <code class="font-mono">resume.source_upload_id</code>.</li>
+        <li><code class="font-mono">016_application_dispatch_and_saved_job_index</code> adds the durable dispatch record and backfills pending submissions.</li>
+        <li><code class="font-mono">017_oauth_identity_providers</code> adds OAuth provider, linked-identity, state, and handoff tables.</li>
+        <li>Legacy inline/base64 résumés must be migrated with <code class="font-mono">infra/verify_and_migrate.sh</code> before starting the updated API.</li>
+      </ul>
+      <Callout type="warning" title="Schema Parity Is a Disposable-Environment Check">
+        <code class="font-mono text-xs">scripts/check-schema-parity.py</code> creates and removes the
+        <code class="font-mono text-xs">parity_schema</code> and <code class="font-mono text-xs">parity_migr</code>
+        namespaces. Never point it at a shared or production SurrealDB endpoint.
+      </Callout>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">4. Backup and Restore</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        A complete backup covers four things: SurrealDB, Redis, the private object store, and <code class="font-mono text-xs">.env</code>
+        (which holds the JWT, encryption, internal-service, SearXNG, and Prometheus secrets). Losing the encryption key
+        makes encrypted OAuth client secrets and other encrypted values unrecoverable.
+      </p>
+      <CodeBlock code={backupCommands} language="bash" filename="Consistent local backup" />
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 dark:bg-slate-900 font-mono text-[11px] text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800">
+            <tr><th class="p-3">Data</th><th class="p-3">What to capture</th><th class="p-3">Restore note</th></tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+            <tr><td class="p-3 font-mono text-indigo-600 dark:text-indigo-400">SurrealDB</td><td class="p-3 text-slate-600 dark:text-slate-300">Logical export of the <code class="font-mono">mensetsu/production</code> namespace/database.</td><td class="p-3 text-slate-500">Import into a disposable instance first and run the API migration check.</td></tr>
+            <tr><td class="p-3 font-mono text-indigo-600 dark:text-indigo-400">Redis</td><td class="p-3 text-slate-600 dark:text-slate-300">RDB snapshot. Sessions are disposable; queued jobs and checkpoints are not.</td><td class="p-3 text-slate-500">Restoring an old RDB may replay stale jobs; drain or inspect before production use.</td></tr>
+            <tr><td class="p-3 font-mono text-indigo-600 dark:text-indigo-400">MinIO / S3</td><td class="p-3 text-slate-600 dark:text-slate-300">The private resume bucket.</td><td class="p-3 text-slate-500">Presigned URLs are short-lived; no URL needs to be preserved.</td></tr>
+            <tr><td class="p-3 font-mono text-indigo-600 dark:text-indigo-400">.env</td><td class="p-3 text-slate-600 dark:text-slate-300">All secrets and endpoint configuration.</td><td class="p-3 text-slate-500">Store offline or in a secret manager, never in the repository.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">5. Upgrade Procedure</h2>
+      <CodeBlock code={upgradeCommands} language="bash" filename="Rolling upgrade" />
+      <ol class="list-decimal list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
+        <li>Read the release notes and identify new migrations and contract changes.</li>
+        <li>Back up SurrealDB, Redis, the object store, and <code class="font-mono">.env</code>.</li>
+        <li>Rehearse the upgrade on a restored copy in a disposable environment.</li>
+        <li>Start the API first so migrations complete before workers consume work.</li>
+        <li>Verify health, then start the intelligence, worker, web, and landing services.</li>
+        <li>Keep the previous images and the backup until the new deployment has served real traffic.</li>
+      </ol>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">6. Logs and Resource Limits</h2>
+      <CodeBlock code={logsCommands} language="bash" filename="Log inspection" />
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Compose uses the <code class="font-mono text-xs">json-file</code> driver with 50 MB × 3 rotation per service.
+        The Rust API accepts <code class="font-mono text-xs">RUST_LOG</code>; the intelligence service and worker use
+        Python logging. Never enable request-body or token logging in a shared environment.
+      </p>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 dark:bg-slate-900 font-mono text-[11px] text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800">
+            <tr><th class="p-3">Service</th><th class="p-3">Memory</th><th class="p-3">CPUs</th></tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono">
+            <tr><td class="p-3">surrealdb</td><td class="p-3">1g</td><td class="p-3">1.0</td></tr>
+            <tr><td class="p-3">redis</td><td class="p-3">3584m</td><td class="p-3">1.5</td></tr>
+            <tr><td class="p-3">searxng</td><td class="p-3">384m</td><td class="p-3">1.0</td></tr>
+            <tr><td class="p-3">minio</td><td class="p-3">1g</td><td class="p-3">1.0</td></tr>
+            <tr><td class="p-3">api</td><td class="p-3">512m</td><td class="p-3">1.0</td></tr>
+            <tr><td class="p-3">intelligence</td><td class="p-3">1g</td><td class="p-3">1.0</td></tr>
+            <tr><td class="p-3">worker</td><td class="p-3">2g</td><td class="p-3">2.0</td></tr>
+            <tr><td class="p-3">web</td><td class="p-3">512m</td><td class="p-3">1.0</td></tr>
+            <tr><td class="p-3">landing</td><td class="p-3">512m</td><td class="p-3">1.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">7. Scaling and Restarts</h2>
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
+        <li>Additional worker containers claim jobs from the same Redis Streams queue; keep one shared Redis instance.</li>
+        <li>Intelligence replicas stream events through Redis Pub/Sub, so any replica can serve a subscriber.</li>
+        <li>The API recreates a closed intelligence gRPC control connection on a later attempt; restarting the API drains pending <code class="font-mono">application_dispatch</code> work on startup and then every five seconds.</li>
+        <li>The landing container is stateless and can be replaced or scaled behind a reverse proxy without coordination.</li>
+        <li>Do not scale the worker beyond the LLM and memory budget configured by <code class="font-mono">MAX_CONCURRENT_AGENTS</code>, <code class="font-mono">MAX_CONCURRENT_AGENTS_PER_RUN</code>, and <code class="font-mono">LLM_MAX_INFLIGHT</code>.</li>
+      </ul>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">8. Troubleshooting</h2>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 dark:bg-slate-900 font-mono text-[11px] text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800">
+            <tr><th class="p-3">Symptom</th><th class="p-3">Check</th><th class="p-3">Likely cause</th></tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+            <tr><td class="p-3 text-slate-700 dark:text-slate-200">API exits during startup</td><td class="p-3 text-slate-500">API log; SurrealDB credentials; migration version</td><td class="p-3 text-slate-500">Unapplied migration, bad database URL, or invalid secret configuration.</td></tr>
+            <tr><td class="p-3 text-slate-700 dark:text-slate-200">Worker will not start</td><td class="p-3 text-slate-500"><code class="font-mono">LLM_OPENAI_BASE_URL</code>, <code class="font-mono">LLM_OPENAI_API_KEY</code></td><td class="p-3 text-slate-500">The worker refuses to start without model credentials.</td></tr>
+            <tr><td class="p-3 text-slate-700 dark:text-slate-200">PDF upload fails</td><td class="p-3 text-slate-500"><code class="font-mono">S3_ENDPOINT_PUBLIC</code>, <code class="font-mono">S3_CORS_ORIGIN</code>, bucket init</td><td class="p-3 text-slate-500">Browser cannot reach the advertised object-store origin or CORS is wrong.</td></tr>
+            <tr><td class="p-3 text-slate-700 dark:text-slate-200">OAuth redirect fails</td><td class="p-3 text-slate-500"><code class="font-mono">OAUTH_WEB_CALLBACK_URL</code>, provider <code class="font-mono">redirect_uri</code></td><td class="p-3 text-slate-500">Callback origin/path mismatch or provider console redirect URI mismatch.</td></tr>
+            <tr><td class="p-3 text-slate-700 dark:text-slate-200">/metrics returns 401</td><td class="p-3 text-slate-500"><code class="font-mono">PROMETHEUS_METRICS_TOKEN</code></td><td class="p-3 text-slate-500">Token unset or the scrape bearer token is wrong.</td></tr>
+            <tr><td class="p-3 text-slate-700 dark:text-slate-200">Workspace never advances</td><td class="p-3 text-slate-500">Redis, worker log, intelligence gRPC log, SSE stream</td><td class="p-3 text-slate-500">Worker not consuming, queue stalled, or gRPC subscription broken.</td></tr>
+            <tr><td class="p-3 text-slate-700 dark:text-slate-200">Landing links to the wrong workspace</td><td class="p-3 text-slate-500"><code class="font-mono">PUBLIC_WORKSPACE_URL</code> build argument</td><td class="p-3 text-slate-500">The Astro site is static; change the build arg and rebuild the image.</td></tr>
+            <tr><td class="p-3 text-slate-700 dark:text-slate-200">Session disappears after restart</td><td class="p-3 text-slate-500">Redis persistence and <code class="font-mono">REDIS_URL</code></td><td class="p-3 text-slate-500">Web session records live in Redis; an ephemeral Redis clears them.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">9. Secret Rotation</h2>
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
+        <li><strong>JWT_SECRET:</strong> rotate during a maintenance window; existing access tokens become invalid and users must sign in again.</li>
+        <li><strong>INTERNAL_SERVICE_TOKEN:</strong> update the API, intelligence service, and worker together; mismatched tokens fail closed.</li>
+        <li><strong>ENCRYPTION_KEY:</strong> do not rotate without a migration plan; encrypted OAuth client secrets and stored payloads depend on it.</li>
+        <li><strong>OAuth client secrets:</strong> update a provider through the admin API or Admin Settings; the stored value is encrypted and never returned.</li>
+        <li><strong>PROMETHEUS_METRICS_TOKEN:</strong> rotate the API environment and every Prometheus scrape configuration together.</li>
+      </ul>
+    </section>
+  </div>
+</DocsLayout>

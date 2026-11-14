@@ -1,0 +1,96 @@
+---
+const stages = [
+  {
+    step: '01',
+    name: 'Structured Ingestion',
+    desc: 'Extracts skills, experiences, and metrics from PDF résumés and job descriptions into evidence-tagged records.',
+    details: ['PDF presigned S3 upload', 'Prompt injection mitigation', 'Structured entity schemas'],
+  },
+  {
+    step: '02',
+    name: 'Verified Company Research',
+    desc: 'Performs deep web research on target company engineering culture, stack, and practices with SSRF protection.',
+    details: ['SearXNG private search', 'Mandatory URL provenance', 'Zero hallucinated claims'],
+  },
+  {
+    step: '03',
+    name: 'SurrealDB Knowledge Graph',
+    desc: 'Constructs an interconnected graph linking candidate experience directly to role requirements and technical domains.',
+    details: ['Transparent gap analysis', 'Graph traversal queries', 'Prerequisite ordering'],
+  },
+  {
+    step: '04',
+    name: 'Question Book & Syllabus',
+    desc: 'Generates context-grounded interview questions with answer outlines, pitfalls, and structured learning roadmaps.',
+    details: ['System design & behavioral', 'Evaluation rubrics', 'Interactive practice modes'],
+  },
+];
+---
+
+<section id="pipeline" class="py-16 sm:py-24 border-b border-slate-200 dark:border-slate-800">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <!-- Section Header -->
+    <div class="space-y-3 max-w-3xl">
+      <div class="text-xs font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+        Durable Research Pipeline
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Asynchronous, verifiable execution from CV to question book.
+      </h2>
+      <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        Behind every workspace is a durable workflow executed across Python intelligence workers and the Rust API. Telemetry streams via Server-Sent Events (SSE) so you can monitor research steps live.
+      </p>
+    </div>
+
+    <!-- 4 Stages Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {
+        stages.map((stage) => (
+          <div class="relative rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 flex flex-col justify-between space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-xs">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                  STAGE {stage.step}
+                </span>
+                <span class="text-xs font-mono text-slate-400">#pipeline</span>
+              </div>
+
+              <div class="space-y-2">
+                <h3 class="text-base font-semibold text-slate-900 dark:text-white">
+                  {stage.name}
+                </h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  {stage.desc}
+                </p>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
+              {stage.details.map((item) => (
+                <div class="flex items-center gap-1.5 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                  <span class="w-1 h-1 rounded-full bg-slate-400"></span>
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- Protocol Boundary Banner -->
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
+      <div class="flex items-center gap-3">
+        <span class="p-2 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-bold">
+          SSE + gRPC
+        </span>
+        <span class="text-slate-700 dark:text-slate-300">
+          Real-time stage transitions stream directly from the Python intelligence worker to your browser session.
+        </span>
+      </div>
+      <a href="/docs/workflows" class="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline">
+        <span>Read workflow specification →</span>
+      </a>
+    </div>
+  </div>
+</section>

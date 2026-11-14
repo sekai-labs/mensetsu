@@ -1,9 +1,12 @@
+use crate::services::secure_store::KeyringStore;
+use mensetsu_contracts::apis::configuration::Configuration;
+use mensetsu_contracts::apis::{
+    auth_api, resume_uploads_api, settings_api, token_usage_api, workspaces_api,
+    workspaces_learning_handlers_api, workspaces_research_handlers_api,
+};
+use mensetsu_contracts::models;
 use std::{path::Path, sync::Arc};
 use tokio::sync::{Mutex, RwLock};
-use mensetsu_contracts::apis::configuration::Configuration;
-use mensetsu_contracts::apis::{auth_api, resume_uploads_api, workspaces_api, workspaces_learning_handlers_api, workspaces_research_handlers_api, settings_api, token_usage_api};
-use mensetsu_contracts::models;
-use crate::services::secure_store::KeyringStore;
 
 #[derive(Clone)]
 pub struct ApiService {
@@ -70,8 +73,14 @@ impl ApiService {
         self.keyring.get_refresh_token().ok().flatten().is_some()
     }
 
-    pub async fn set_tokens(&self, access_token: String, refresh_token: String) -> Result<(), ApiError> {
-        self.keyring.set_refresh_token(&refresh_token).map_err(|e| ApiError::Keyring(e.to_string()))?;
+    pub async fn set_tokens(
+        &self,
+        access_token: String,
+        refresh_token: String,
+    ) -> Result<(), ApiError> {
+        self.keyring
+            .set_refresh_token(&refresh_token)
+            .map_err(|e| ApiError::Keyring(e.to_string()))?;
         let mut guard = self.access_token.write().await;
         *guard = Some(access_token);
         Ok(())
@@ -80,7 +89,9 @@ impl ApiService {
     pub async fn clear_tokens(&self) -> Result<(), ApiError> {
         let mut guard = self.access_token.write().await;
         *guard = None;
-        self.keyring.delete_refresh_token().map_err(|e| ApiError::Keyring(e.to_string()))?;
+        self.keyring
+            .delete_refresh_token()
+            .map_err(|e| ApiError::Keyring(e.to_string()))?;
         Ok(())
     }
 
@@ -93,31 +104,42 @@ impl ApiService {
         cfg
     }
 
-
     pub async fn refresh_access_token(&self) -> Result<String, ApiError> {
         let _guard = self.refresh_lock.lock().await;
 
-        let refresh_token = match self.keyring.get_refresh_token().map_err(|e| ApiError::Keyring(e.to_string()))? {
+        let refresh_token = match self
+            .keyring
+            .get_refresh_token()
+            .map_err(|e| ApiError::Keyring(e.to_string()))?
+        {
             Some(t) => t,
             None => return Err(ApiError::NotAuthenticated),
         };
 
         let cfg = self.config(None);
-        let req = models::RefreshTokenRequestDto { refresh_token: Some(Some(refresh_token)) };
+        let req = models::RefreshTokenRequestDto {
+            refresh_token: Some(Some(refresh_token)),
+        };
 
         match auth_api::refresh(&cfg, Some(req)).await {
             Ok(tokens) => {
-                self.keyring.set_refresh_token(&tokens.refresh_token).map_err(|e| ApiError::Keyring(e.to_string()))?;
+                self.keyring
+                    .set_refresh_token(&tokens.refresh_token)
+                    .map_err(|e| ApiError::Keyring(e.to_string()))?;
                 let mut tok_guard = self.access_token.write().await;
                 *tok_guard = Some(tokens.access_token.clone());
                 Ok(tokens.access_token)
             }
             Err(mensetsu_contracts::apis::Error::ResponseError(resp))
-                if resp.status == reqwest::StatusCode::UNAUTHORIZED => {
+                if resp.status == reqwest::StatusCode::UNAUTHORIZED =>
+            {
                 let mut guard = self.access_token.write().await;
                 *guard = None;
                 let _ = self.keyring.delete_refresh_token();
-                Err(ApiError::Auth(format!("Refresh rejected (HTTP {})", resp.status)))
+                Err(ApiError::Auth(format!(
+                    "Refresh rejected (HTTP {})",
+                    resp.status
+                )))
             }
             Err(e) => Err(ApiError::Auth(format!("Refresh failed: {e}"))),
         }
@@ -126,7 +148,9 @@ impl ApiService {
     pub async fn login(&self, email: &str, password: &str) -> Result<(), ApiError> {
         let cfg = self.config(None);
         let req = models::LoginRequestDto::new(email.to_string(), password.to_string());
-        let res = auth_api::login(&cfg, req).await.map_err(|e| ApiError::Auth(format!("{e}")))?;
+        let res = auth_api::login(&cfg, req)
+            .await
+            .map_err(|e| ApiError::Auth(format!("{e}")))?;
 
         if let Some(true) = res.requires_2fa {
             if let Some(Some(temp)) = res.temp_token {
@@ -138,22 +162,32 @@ impl ApiService {
             self.set_tokens(access, refresh).await?;
             Ok(())
         } else {
-            Err(ApiError::Auth("Invalid login response: missing tokens".to_string()))
+            Err(ApiError::Auth(
+                "Invalid login response: missing tokens".to_string(),
+            ))
         }
     }
 
     pub async fn login_2fa(&self, temp_token: &str, code: &str) -> Result<(), ApiError> {
         let cfg = self.config(None);
         let req = models::Login2faRequestDto::new(code.to_string(), temp_token.to_string());
-        let res = auth_api::login2fa(&cfg, req).await.map_err(|e| ApiError::Auth(format!("{e}")))?;
+        let res = auth_api::login2fa(&cfg, req)
+            .await
+            .map_err(|e| ApiError::Auth(format!("{e}")))?;
         self.set_tokens(res.access_token, res.refresh_token).await?;
         Ok(())
     }
 
     pub async fn register(&self, name: &str, email: &str, password: &str) -> Result<(), ApiError> {
         let cfg = self.config(None);
-        let req = models::RegisterRequestDto::new(email.to_string(), name.to_string(), password.to_string());
-        let res = auth_api::register(&cfg, req).await.map_err(|e| ApiError::Auth(format!("{e}")))?;
+        let req = models::RegisterRequestDto::new(
+            email.to_string(),
+            name.to_string(),
+            password.to_string(),
+        );
+        let res = auth_api::register(&cfg, req)
+            .await
+            .map_err(|e| ApiError::Auth(format!("{e}")))?;
         self.set_tokens(res.access_token, res.refresh_token).await?;
         Ok(())
     }
@@ -186,10 +220,14 @@ impl ApiService {
         let cfg = self.config(Some(&token));
         match workspaces_api::list_workspaces(&cfg).await {
             Ok(list) => Ok(list),
-            Err(mensetsu_contracts::apis::Error::ResponseError(resp)) if resp.status == reqwest::StatusCode::UNAUTHORIZED => {
+            Err(mensetsu_contracts::apis::Error::ResponseError(resp))
+                if resp.status == reqwest::StatusCode::UNAUTHORIZED =>
+            {
                 let new_token = self.refresh_access_token().await?;
                 let cfg_retry = self.config(Some(&new_token));
-                workspaces_api::list_workspaces(&cfg_retry).await.map_err(|e| ApiError::Api(format!("{e}")))
+                workspaces_api::list_workspaces(&cfg_retry)
+                    .await
+                    .map_err(|e| ApiError::Api(format!("{e}")))
             }
             Err(e) => Err(ApiError::Api(format!("{e}"))),
         }
@@ -207,16 +245,26 @@ impl ApiService {
         let cfg = self.config(Some(&token));
         match workspaces_api::get_workspace(&cfg, id).await {
             Ok(ws) => Ok(ws),
-            Err(mensetsu_contracts::apis::Error::ResponseError(resp)) if resp.status == reqwest::StatusCode::UNAUTHORIZED => {
+            Err(mensetsu_contracts::apis::Error::ResponseError(resp))
+                if resp.status == reqwest::StatusCode::UNAUTHORIZED =>
+            {
                 let new_token = self.refresh_access_token().await?;
                 let cfg_retry = self.config(Some(&new_token));
-                workspaces_api::get_workspace(&cfg_retry, id).await.map_err(|e| ApiError::Api(format!("{e}")))
+                workspaces_api::get_workspace(&cfg_retry, id)
+                    .await
+                    .map_err(|e| ApiError::Api(format!("{e}")))
             }
             Err(e) => Err(ApiError::Api(format!("{e}"))),
         }
     }
 
-    pub async fn create_workspace(&self, company_name: &str, role_title: &str, resume_text: &str, job_description: &str) -> Result<models::WorkspaceResponseDto, ApiError> {
+    pub async fn create_workspace(
+        &self,
+        company_name: &str,
+        role_title: &str,
+        resume_text: &str,
+        job_description: &str,
+    ) -> Result<models::WorkspaceResponseDto, ApiError> {
         let mut req = models::CreateWorkspaceRequestDto::default();
         req.company_name = Some(Some(company_name.to_string()));
         req.role_title = Some(Some(role_title.to_string()));
@@ -252,13 +300,20 @@ impl ApiService {
             filename,
             size_bytes,
         };
-        let upload = match resume_uploads_api::create_resume_upload(&self.config(Some(&token)), upload_req.clone()).await {
+        let upload = match resume_uploads_api::create_resume_upload(
+            &self.config(Some(&token)),
+            upload_req.clone(),
+        )
+        .await
+        {
             Ok(upload) => upload,
             Err(mensetsu_contracts::apis::Error::ResponseError(response))
-                if response.status == reqwest::StatusCode::UNAUTHORIZED => {
+                if response.status == reqwest::StatusCode::UNAUTHORIZED =>
+            {
                 let token = self.refresh_access_token().await?;
                 resume_uploads_api::create_resume_upload(&self.config(Some(&token)), upload_req)
-                    .await.map_err(|error| ApiError::Api(format!("{error}")))?
+                    .await
+                    .map_err(|error| ApiError::Api(format!("{error}")))?
             }
             Err(error) => return Err(ApiError::Api(format!("{error}"))),
         };
@@ -285,7 +340,10 @@ impl ApiService {
         self.create_workspace_request(request).await
     }
 
-    async fn create_workspace_request(&self, req: models::CreateWorkspaceRequestDto) -> Result<models::WorkspaceResponseDto, ApiError> {
+    async fn create_workspace_request(
+        &self,
+        req: models::CreateWorkspaceRequestDto,
+    ) -> Result<models::WorkspaceResponseDto, ApiError> {
         let token = match self.access_token.read().await.clone() {
             Some(token) => token,
             None => self.refresh_access_token().await?,
@@ -293,10 +351,12 @@ impl ApiService {
         match workspaces_api::create_workspace(&self.config(Some(&token)), req.clone()).await {
             Ok(workspace) => Ok(workspace),
             Err(mensetsu_contracts::apis::Error::ResponseError(response))
-                if response.status == reqwest::StatusCode::UNAUTHORIZED => {
+                if response.status == reqwest::StatusCode::UNAUTHORIZED =>
+            {
                 let token = self.refresh_access_token().await?;
                 workspaces_api::create_workspace(&self.config(Some(&token)), req)
-                    .await.map_err(|error| ApiError::Api(format!("{error}")))
+                    .await
+                    .map_err(|error| ApiError::Api(format!("{error}")))
             }
             Err(error) => Err(ApiError::Api(format!("{error}"))),
         }
@@ -314,15 +374,20 @@ impl ApiService {
         let cfg = self.config(Some(&token));
         let res = match workspaces_learning_handlers_api::get_workspace_match(&cfg, id).await {
             Ok(v) => Ok(v),
-            Err(mensetsu_contracts::apis::Error::ResponseError(resp)) if resp.status == reqwest::StatusCode::UNAUTHORIZED => {
+            Err(mensetsu_contracts::apis::Error::ResponseError(resp))
+                if resp.status == reqwest::StatusCode::UNAUTHORIZED =>
+            {
                 let new_token = self.refresh_access_token().await?;
                 let cfg_retry = self.config(Some(&new_token));
-                workspaces_learning_handlers_api::get_workspace_match(&cfg_retry, id).await.map_err(|e| ApiError::Api(format!("{e}")))
+                workspaces_learning_handlers_api::get_workspace_match(&cfg_retry, id)
+                    .await
+                    .map_err(|e| ApiError::Api(format!("{e}")))
             }
             Err(e) => Err(ApiError::Api(format!("{e}"))),
         }?;
 
-        serde_json::from_value::<models::MatchAnalysis>(res).map_err(|e| ApiError::Api(format!("JSON decode error: {e}")))
+        serde_json::from_value::<models::MatchAnalysis>(res)
+            .map_err(|e| ApiError::Api(format!("JSON decode error: {e}")))
     }
 
     pub async fn get_workspace_company(&self, id: &str) -> Result<serde_json::Value, ApiError> {
@@ -338,17 +403,22 @@ impl ApiService {
         match workspaces_research_handlers_api::get_workspace_company(&cfg, id).await {
             Ok(value) => Ok(value),
             Err(mensetsu_contracts::apis::Error::ResponseError(resp))
-                if resp.status == reqwest::StatusCode::UNAUTHORIZED => {
+                if resp.status == reqwest::StatusCode::UNAUTHORIZED =>
+            {
                 let new_token = self.refresh_access_token().await?;
                 let cfg_retry = self.config(Some(&new_token));
                 workspaces_research_handlers_api::get_workspace_company(&cfg_retry, id)
-                    .await.map_err(|e| ApiError::Api(format!("{e}")))
+                    .await
+                    .map_err(|e| ApiError::Api(format!("{e}")))
             }
             Err(e) => Err(ApiError::Api(format!("{e}"))),
         }
     }
 
-    pub async fn get_workspace_learning(&self, id: &str) -> Result<Vec<models::LearningUnit>, ApiError> {
+    pub async fn get_workspace_learning(
+        &self,
+        id: &str,
+    ) -> Result<Vec<models::LearningUnit>, ApiError> {
         let token = {
             let guard = self.access_token.read().await;
             guard.clone()
@@ -360,10 +430,14 @@ impl ApiService {
         let cfg = self.config(Some(&token));
         match workspaces_learning_handlers_api::get_workspace_learning(&cfg, id).await {
             Ok(v) => Ok(v),
-            Err(mensetsu_contracts::apis::Error::ResponseError(resp)) if resp.status == reqwest::StatusCode::UNAUTHORIZED => {
+            Err(mensetsu_contracts::apis::Error::ResponseError(resp))
+                if resp.status == reqwest::StatusCode::UNAUTHORIZED =>
+            {
                 let new_token = self.refresh_access_token().await?;
                 let cfg_retry = self.config(Some(&new_token));
-                workspaces_learning_handlers_api::get_workspace_learning(&cfg_retry, id).await.map_err(|e| ApiError::Api(format!("{e}")))
+                workspaces_learning_handlers_api::get_workspace_learning(&cfg_retry, id)
+                    .await
+                    .map_err(|e| ApiError::Api(format!("{e}")))
             }
             Err(e) => Err(ApiError::Api(format!("{e}"))),
         }
@@ -381,16 +455,24 @@ impl ApiService {
         let cfg = self.config(Some(&token));
         match workspaces_api::toggle_learning_unit_completed(&cfg, id, lesson_id).await {
             Ok(_) => Ok(()),
-            Err(mensetsu_contracts::apis::Error::ResponseError(resp)) if resp.status == reqwest::StatusCode::UNAUTHORIZED => {
+            Err(mensetsu_contracts::apis::Error::ResponseError(resp))
+                if resp.status == reqwest::StatusCode::UNAUTHORIZED =>
+            {
                 let new_token = self.refresh_access_token().await?;
                 let cfg_retry = self.config(Some(&new_token));
-                workspaces_api::toggle_learning_unit_completed(&cfg_retry, id, lesson_id).await.map_err(|e| ApiError::Api(format!("{e}"))).map(|_| ())
+                workspaces_api::toggle_learning_unit_completed(&cfg_retry, id, lesson_id)
+                    .await
+                    .map_err(|e| ApiError::Api(format!("{e}")))
+                    .map(|_| ())
             }
             Err(e) => Err(ApiError::Api(format!("{e}"))),
         }
     }
 
-    pub async fn get_workspace_questions(&self, id: &str) -> Result<Vec<models::InterviewQuestion>, ApiError> {
+    pub async fn get_workspace_questions(
+        &self,
+        id: &str,
+    ) -> Result<Vec<models::InterviewQuestion>, ApiError> {
         let token = {
             let guard = self.access_token.read().await;
             guard.clone()
@@ -402,10 +484,14 @@ impl ApiService {
         let cfg = self.config(Some(&token));
         match workspaces_learning_handlers_api::get_workspace_questions(&cfg, id).await {
             Ok(v) => Ok(v),
-            Err(mensetsu_contracts::apis::Error::ResponseError(resp)) if resp.status == reqwest::StatusCode::UNAUTHORIZED => {
+            Err(mensetsu_contracts::apis::Error::ResponseError(resp))
+                if resp.status == reqwest::StatusCode::UNAUTHORIZED =>
+            {
                 let new_token = self.refresh_access_token().await?;
                 let cfg_retry = self.config(Some(&new_token));
-                workspaces_learning_handlers_api::get_workspace_questions(&cfg_retry, id).await.map_err(|e| ApiError::Api(format!("{e}")))
+                workspaces_learning_handlers_api::get_workspace_questions(&cfg_retry, id)
+                    .await
+                    .map_err(|e| ApiError::Api(format!("{e}")))
             }
             Err(e) => Err(ApiError::Api(format!("{e}"))),
         }
@@ -423,16 +509,23 @@ impl ApiService {
         let cfg = self.config(Some(&token));
         match settings_api::get_llm_settings(&cfg).await {
             Ok(v) => Ok(v),
-            Err(mensetsu_contracts::apis::Error::ResponseError(resp)) if resp.status == reqwest::StatusCode::UNAUTHORIZED => {
+            Err(mensetsu_contracts::apis::Error::ResponseError(resp))
+                if resp.status == reqwest::StatusCode::UNAUTHORIZED =>
+            {
                 let new_token = self.refresh_access_token().await?;
                 let cfg_retry = self.config(Some(&new_token));
-                settings_api::get_llm_settings(&cfg_retry).await.map_err(|e| ApiError::Api(format!("{e}")))
+                settings_api::get_llm_settings(&cfg_retry)
+                    .await
+                    .map_err(|e| ApiError::Api(format!("{e}")))
             }
             Err(e) => Err(ApiError::Api(format!("{e}"))),
         }
     }
 
-    pub async fn update_llm_setting(&self, req: models::UpsertLlmConfigRequestDto) -> Result<models::LlmConfigItemDto, ApiError> {
+    pub async fn update_llm_setting(
+        &self,
+        req: models::UpsertLlmConfigRequestDto,
+    ) -> Result<models::LlmConfigItemDto, ApiError> {
         let token = {
             let guard = self.access_token.read().await;
             guard.clone()
@@ -444,10 +537,14 @@ impl ApiService {
         let cfg = self.config(Some(&token));
         match settings_api::upsert_llm_setting(&cfg, req.clone()).await {
             Ok(v) => Ok(v),
-            Err(mensetsu_contracts::apis::Error::ResponseError(resp)) if resp.status == reqwest::StatusCode::UNAUTHORIZED => {
+            Err(mensetsu_contracts::apis::Error::ResponseError(resp))
+                if resp.status == reqwest::StatusCode::UNAUTHORIZED =>
+            {
                 let new_token = self.refresh_access_token().await?;
                 let cfg_retry = self.config(Some(&new_token));
-                settings_api::upsert_llm_setting(&cfg_retry, req).await.map_err(|e| ApiError::Api(format!("{e}")))
+                settings_api::upsert_llm_setting(&cfg_retry, req)
+                    .await
+                    .map_err(|e| ApiError::Api(format!("{e}")))
             }
             Err(e) => Err(ApiError::Api(format!("{e}"))),
         }
@@ -463,14 +560,53 @@ impl ApiService {
         };
         let before_timestamp = cursor.as_ref().map(|value| value.before_timestamp.as_str());
         let before_event_id = cursor.as_ref().map(|value| value.before_event_id.as_str());
-        match token_usage_api::user_token_usage(&self.config(Some(&token)), before_timestamp, before_event_id).await {
+        match token_usage_api::user_token_usage(
+            &self.config(Some(&token)),
+            before_timestamp,
+            before_event_id,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await
+        {
             Ok(value) => Ok(value),
             Err(mensetsu_contracts::apis::Error::ResponseError(response))
                 if response.status == reqwest::StatusCode::UNAUTHORIZED =>
             {
                 let token = self.refresh_access_token().await?;
-                token_usage_api::user_token_usage(&self.config(Some(&token)), before_timestamp, before_event_id)
-                    .await.map_err(|error| ApiError::Api(format!("{error}")))
+                token_usage_api::user_token_usage(
+                    &self.config(Some(&token)),
+                    before_timestamp,
+                    before_event_id,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                .await
+                .map_err(|error| ApiError::Api(format!("{error}")))
             }
             Err(error) => Err(ApiError::Api(format!("{error}"))),
         }

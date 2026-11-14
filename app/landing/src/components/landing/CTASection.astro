@@ -1,0 +1,47 @@
+---
+import { getWorkspaceLinks } from '~/data/workspace';
+import Button from '../ui/Button.astro';
+import CodeBlock from '../ui/CodeBlock.astro';
+
+const links = getWorkspaceLinks();
+const quickstartCommand = `git clone https://github.com/sekai-labs/mensetsu.git && cd mensetsu
+cp .env.example .env
+docker compose up -d --build`;
+---
+
+<section class="py-16 sm:py-24 bg-slate-900 text-white relative overflow-hidden">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+    <div class="max-w-3xl space-y-4">
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-700 bg-slate-800/80 text-xs font-mono text-emerald-400">
+        <span>Local Deployment • Full Data Ownership</span>
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+        Ready to prepare for your next technical interview?
+      </h2>
+      <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+        Deploy Mensetsu on your local machine or private cloud in minutes. No external tracking, no data leakage, and complete citation transparency.
+      </p>
+    </div>
+
+    <!-- Quickstart Command Snippet -->
+    <div class="max-w-2xl">
+      <CodeBlock code={quickstartCommand} language="bash" filename="Quickstart in three commands" />
+    </div>
+
+    <!-- Action buttons -->
+    <div class="flex flex-wrap items-center gap-4 pt-2">
+      <Button href={links.registerUrl} size="lg" variant="primary" class="bg-indigo-500 hover:bg-indigo-400">
+        <span>Launch Workspace</span>
+        <span class="ml-1.5">↗</span>
+      </Button>
+
+      <Button href="/docs/setup" size="lg" variant="outline" class="border-slate-700 text-slate-200 hover:bg-slate-800">
+        <span>Setup & Deployment Guide</span>
+      </Button>
+
+      <Button href="/docs" size="lg" variant="ghost" class="text-slate-300 hover:text-white hover:bg-slate-800">
+        <span>Explore Documentation</span>
+      </Button>
+    </div>
+  </div>
+</section>

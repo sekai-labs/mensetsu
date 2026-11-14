@@ -9,7 +9,10 @@ from src.contracts.v1 import ExecutionEvent, RunsPageResponse, WorkflowProgress,
 from src.orchestration.id_validator import validate_id
 from src.orchestration.ledger.base import (
     DYNAMIC_EXPANDABLE_PHASES,
+    NON_TERMINAL_RUN_STATUSES,
     PROGRESS_RETRY_ATTEMPTS,
+    RUN_STATUSES,
+    TERMINAL_RUN_STATUSES,
     WORKFLOW_RUN_ALLOWED_FIELDS,
     IdempotencyConflict,
     extract_rows,
@@ -186,14 +189,12 @@ class RunMixin:
                         return WorkflowRun.model_validate(row)
         return None
 
-    async def update_workflow_run(self, run_id: str, updates: dict[str, Any]) -> None:
-        clean_id = validate_id(run_id, "run_id")
-        clean_updates = dict(updates)
-        clean_updates.pop("id", None)
-
-        assignments = []
-        vars_payload = {"run_id": clean_id}
-
+    @staticmethod
+    def _build_update_assignments(
+        clean_updates: dict[str, Any],
+    ) -> tuple[list[str], dict[str, Any]]:
+        assignments: list[str] = []
+        vars_payload: dict[str, Any] = {}
         for k, v in clean_updates.items():
             if k in WORKFLOW_RUN_ALLOWED_FIELDS and v is not None:
                 if k == "started_at":
@@ -206,9 +207,55 @@ class RunMixin:
                     assignments.append(f"{k} = ${k}")
                     vars_payload[k] = v.model_dump() if hasattr(v, "model_dump") else v
         assignments.append("updated_at = time::now()")
-        set_str = ", ".join(assignments)
-        query = "UPDATE type::record('workflow_run', $run_id) SET " + set_str + ";"
-        await self.db.execute_query(query, vars=vars_payload)
+        return assignments, vars_payload
+
+    async def update_workflow_run(self, run_id: str, updates: dict[str, Any]) -> bool:
+        clean_id = validate_id(run_id, "run_id")
+        clean_updates = dict(updates)
+        clean_updates.pop("id", None)
+
+        assignments, vars_payload = self._build_update_assignments(clean_updates)
+        vars_payload["run_id"] = clean_id
+        query = "UPDATE type::record('workflow_run', $run_id) SET " + ", ".join(assignments)
+        if clean_updates.get("status") is not None:
+            vars_payload["terminal_statuses"] = sorted(TERMINAL_RUN_STATUSES)
+            query += (
+                " WHERE status NOT IN $terminal_statuses OR status = $status"
+            )
+        query += ";"
+        return bool(extract_rows(await self.db.execute_query(query, vars=vars_payload)))
+
+    async def transition_workflow_run_status(
+        self,
+        run_id: str,
+        to_status: str,
+        *,
+        from_statuses: tuple[str, ...] | list[str] | None = None,
+        updates: dict[str, Any] | None = None,
+    ) -> bool:
+        if to_status not in RUN_STATUSES:
+            raise ValueError(f"Unknown workflow run status '{to_status}'.")
+        allowed_from = tuple(from_statuses if from_statuses is not None else NON_TERMINAL_RUN_STATUSES)
+        unknown = [status for status in allowed_from if status not in RUN_STATUSES]
+        if unknown:
+            raise ValueError(f"Unknown source workflow run status: {unknown}.")
+        if not allowed_from:
+            return False
+
+        clean_id = validate_id(run_id, "run_id")
+        clean_updates = dict(updates or {})
+        clean_updates.pop("id", None)
+        clean_updates["status"] = to_status
+
+        assignments, vars_payload = self._build_update_assignments(clean_updates)
+        vars_payload["run_id"] = clean_id
+        vars_payload["from_statuses"] = list(allowed_from)
+        query = (
+            "UPDATE type::record('workflow_run', $run_id) SET "
+            + ", ".join(assignments)
+            + " WHERE status IN $from_statuses;"
+        )
+        return bool(extract_rows(await self.db.execute_query(query, vars=vars_payload)))
 
     async def refresh_run_progress(self, run_id: str) -> WorkflowProgress:
         clean_run_id = validate_id(run_id, "run_id")

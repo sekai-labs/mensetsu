@@ -1,0 +1,48 @@
+---
+import { getAdjacentItems } from '~/data/docsNavigation';
+
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+const adjacent = getAdjacentItems(currentPath);
+---
+
+<div class="mt-12 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+  <div class="flex-1">
+    {
+      adjacent.prev && (
+        <a
+          href={adjacent.prev.path}
+          class="group flex flex-col p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors"
+        >
+          <div class="flex items-center gap-1 text-xs font-mono text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+            <span>← Previous</span>
+          </div>
+          <div class="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-1 truncate">
+            {adjacent.prev.title}
+          </div>
+        </a>
+      )
+    }
+  </div>
+
+  <div class="flex-1 text-right">
+    {
+      adjacent.next && (
+        <a
+          href={adjacent.next.path}
+          class="group flex flex-col p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors"
+        >
+          <div class="flex items-center justify-end gap-1 text-xs font-mono text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+            <span>Next →</span>
+          </div>
+          <div class="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-1 truncate">
+            {adjacent.next.title}
+          </div>
+        </a>
+      )
+    }
+  </div>
+</div>

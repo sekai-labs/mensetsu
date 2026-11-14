@@ -1,7 +1,8 @@
 pub fn clean_record_id(raw: &str) -> String {
     let s = raw.trim().trim_matches('`');
     let s = s.split_once(':').map_or(s, |(_, id)| id);
-    s.trim_matches(|c| c == '`' || c == '⟨' || c == '⟩').to_string()
+    s.trim_matches(|c| c == '`' || c == '⟨' || c == '⟩')
+        .to_string()
 }
 
 pub fn normalize_record_fields(value: &mut serde_json::Value, fields: &[&str]) {
@@ -28,7 +29,10 @@ mod tests {
 
     #[test]
     fn strips_table_prefix_and_backticks() {
-        assert_eq!(clean_record_id("workspace:`c893b383-dd67`"), "c893b383-dd67");
+        assert_eq!(
+            clean_record_id("workspace:`c893b383-dd67`"),
+            "c893b383-dd67"
+        );
         assert_eq!(clean_record_id("`c893b383-dd67`"), "c893b383-dd67");
         assert_eq!(clean_record_id("learning_unit:⟨lu_1⟩"), "lu_1");
         assert_eq!(clean_record_id("run_abc"), "run_abc");

@@ -14,6 +14,7 @@ public struct TokenUsageResponseDto: Codable, JSONEncodable, Hashable {
 
     public var items: [TokenUsageRowDto]
     public var nextCursor: TokenUsageCursorDto?
+    /** Scope-wide token totals across all requests in the user or platform scope (independent of page cursor or filters) */
     public var totals: TokenUsageTotalsDto
 
     public init(items: [TokenUsageRowDto], nextCursor: TokenUsageCursorDto? = nil, totals: TokenUsageTotalsDto) {

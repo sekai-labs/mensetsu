@@ -74,7 +74,7 @@ pub struct LoginResponseDto {
 #[serde(deny_unknown_fields)]
 pub struct Login2faRequestDto {
     pub temp_token: String,
-    #[validate(length(min = 6, max = 8, message = "Code must be 6 digits"))]
+    #[validate(length(min = 6, max = 8, message = "Code must contain 6 to 8 characters"))]
     pub code: String,
 }
 
@@ -88,7 +88,7 @@ pub struct TotpSetupResponseDto {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate, ToSchema)]
 #[serde(deny_unknown_fields)]
 pub struct VerifyTotpRequestDto {
-    #[validate(length(min = 6, max = 8, message = "Code must be 6 digits"))]
+    #[validate(length(min = 6, max = 8, message = "Code must contain 6 to 8 characters"))]
     pub code: String,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

@@ -2,9 +2,9 @@ use async_trait::async_trait;
 use serde::Deserialize;
 
 use crate::contexts::identity::domain::UserId;
+use crate::contexts::workflow::domain::{WorkflowRunId, WorkflowRunRepository};
 use crate::contexts::workspace::domain::WorkspaceId;
 use crate::contexts::workspace::infrastructure::db::Db;
-use crate::contexts::workflow::domain::{WorkflowRunId, WorkflowRunRepository};
 use crate::shared::error::{AppError, Result};
 
 #[derive(Debug, Deserialize)]
@@ -27,7 +27,8 @@ impl WorkflowRunRepository for SurrealWorkflowRunRepository {
     async fn find_workspace_id(&self, run_id: &WorkflowRunId) -> Result<Option<WorkspaceId>> {
         let clean_run = run_id.0.replace("workflow_run:", "").replace('`', "");
 
-        let query = "SELECT VALUE record::id(workspace_id) FROM ONLY type::record('workflow_run', $id);";
+        let query =
+            "SELECT VALUE record::id(workspace_id) FROM ONLY type::record('workflow_run', $id);";
         let mut res = self
             .client
             .query(query)
@@ -35,7 +36,8 @@ impl WorkflowRunRepository for SurrealWorkflowRunRepository {
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
-        let mut item: Option<String> = res.take(0).map_err(|e| AppError::Database(e.to_string()))?;
+        let mut item: Option<String> =
+            res.take(0).map_err(|e| AppError::Database(e.to_string()))?;
 
         if item.is_none() {
             let fallback = "SELECT VALUE record::id(workspace_id) FROM ONLY workflow_run WHERE id = type::record('workflow_run', $id) OR id = $id;";

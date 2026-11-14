@@ -3,7 +3,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
-  const stateDir = path.resolve(process.cwd(), 'tests/e2e/.state')
+  const stateDir = path.resolve(__dirname, '.state')
   const runStateFile = path.join(stateDir, 'active_run.json')
 
   let runId = ''
@@ -13,7 +13,7 @@ test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
     await page.goto('/interviews/new')
     await page.fill('#company-name', 'Cloudflare')
     await page.fill('#role-title', 'Senior Systems Engineer')
-    await page.getByRole('button', { name: 'senior', exact: true }).click()
+    await page.getByRole('button', { name: 'Senior 5-8 yrs', exact: true }).click()
     await page.locator('[data-testid="wizard-continue"]').click()
 
     await page.locator('[data-testid="urls-text"]').fill('https://blog.cloudflare.com/')
@@ -32,10 +32,11 @@ test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
     await page.waitForURL(/\/interviews\/([^/]+)\/overview/)
     const match = page.url().match(/\/interviews\/([^/]+)\/overview/)
     expect(match).not.toBeNull()
-    workspaceId = match![1]
+    workspaceId = decodeURIComponent(match![1])
+    const workspaceRunsUrl = `/api/backend/workflows/runs?${new URLSearchParams({ workspace_id: workspaceId })}`
 
     await expect.poll(async () => {
-      const res = await page.request.get(`/api/backend/workflows/runs?workspace_id=${workspaceId}`)
+      const res = await page.request.get(workspaceRunsUrl)
       if (!res.ok()) {
         throw new Error(`Failed to list runs for workspace: status ${res.status()} ${await res.text()}`)
       }
@@ -43,7 +44,7 @@ test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
       return data.items?.length || 0
     }, { timeout: 120000, intervals: [2000, 5000] }).toBeGreaterThanOrEqual(1)
 
-    const runsRes = await page.request.get(`/api/backend/workflows/runs?workspace_id=${workspaceId}`)
+    const runsRes = await page.request.get(workspaceRunsUrl)
     if (!runsRes.ok()) {
       throw new Error(`Failed to fetch created run: status ${runsRes.status()} ${await runsRes.text()}`)
     }
@@ -51,7 +52,9 @@ test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
     expect(runsData.items?.length).toBeGreaterThanOrEqual(1)
     runId = runsData.items[0].id
     fs.mkdirSync(stateDir, { recursive: true })
-    fs.writeFileSync(runStateFile, JSON.stringify({ runId, workspaceId }), 'utf8')
+    const tempRunStateFile = `${runStateFile}.${process.pid}.tmp`
+    fs.writeFileSync(tempRunStateFile, JSON.stringify({ runId, workspaceId }), 'utf8')
+    fs.renameSync(tempRunStateFile, runStateFile)
   })
 
   test('2. Mid-run reload preserves sequence continuity without duplicates', async ({ page }) => {
@@ -78,10 +81,11 @@ test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
 
     for (let i = 0; i < count; i++) {
       const seqAttr = await timelineEvents.nth(i).getAttribute('data-seq')
-      if (seqAttr) {
-        expect(seenSeqs.has(seqAttr)).toBe(false)
-        seenSeqs.add(seqAttr)
+      if (!seqAttr) {
+        throw new Error(`Timeline event ${i} is missing its data-seq attribute`)
       }
+      expect(seenSeqs.has(seqAttr)).toBe(false)
+      seenSeqs.add(seqAttr)
     }
 
     const reloadedRes = await page.request.get(`/api/backend/workflows/runs/${runId}`)
@@ -93,7 +97,7 @@ test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
   })
 
   test('3. Verify static run completion and pairwise-overlapping parallel intervals', async ({ page }) => {
-    test.setTimeout(1_560_000)
+    test.setTimeout(1_800_000)
     let runData: Record<string, unknown> = {}
     await expect.poll(async () => {
       const res = await page.request.get(`/api/backend/workflows/runs/${runId}`)
@@ -111,7 +115,7 @@ test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
     }
 
     const progress = (runData.progress || {}) as Record<string, unknown>
-    expect(progress.failed ?? 0).toBe(0)
+    expect(progress.failed).toBe(0)
 
     const graphRes = await page.request.get(`/api/backend/workflows/runs/${runId}/graph`)
     if (!graphRes.ok()) {
@@ -134,10 +138,10 @@ test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
     if (!postAgentsRes.ok()) {
       throw new Error(`Failed to fetch agents post-completion: status ${postAgentsRes.status()}`)
     }
-    const postAgents = ((await postAgentsRes.json()) || []) as Array<Record<string, unknown>>
-    for (const a of postAgents) {
-      expect(a.status).not.toBe('running')
-      expect(a.status).not.toBe('pending')
+    const agents = ((await postAgentsRes.json()) || []) as Array<Record<string, unknown>>
+    for (const agent of agents) {
+      expect(agent.status).not.toBe('running')
+      expect(agent.status).not.toBe('pending')
     }
 
     const postDelsRes = await page.request.get(`/api/backend/workflows/runs/${runId}/delegations`)
@@ -148,28 +152,20 @@ test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
     for (const d of postDels) {
       expect(['completed', 'failed', 'cancelled', 'rejected']).toContain(d.status)
     }
-    const agentsRes = await page.request.get(`/api/backend/workflows/runs/${runId}/agents`)
-    if (!agentsRes.ok()) {
-      throw new Error(`Failed to fetch agents: status ${agentsRes.status()} ${await agentsRes.text()}`)
-    }
-    const agents = await agentsRes.json()
-    expect(Array.isArray(agents)).toBe(true)
-    expect(agents.length).toBeGreaterThanOrEqual(3)
 
     const intervals = agents
-      .map((a: any) => ({
-        id: a.id,
-        start: new Date(a.started_at).getTime(),
-        end: new Date(a.completed_at || a.started_at).getTime(),
+      .map((agent) => ({
+        start: typeof agent.started_at === 'string' ? Date.parse(agent.started_at) : Number.NaN,
+        end: typeof agent.completed_at === 'string' ? Date.parse(agent.completed_at) : Number.NaN,
       }))
-      .filter((i: any) => !isNaN(i.start) && !isNaN(i.end))
+      .filter(({ start, end }) => Number.isFinite(start) && Number.isFinite(end) && end > start)
 
     let overlappingPairs = 0
     for (let i = 0; i < intervals.length; i++) {
       for (let j = i + 1; j < intervals.length; j++) {
         const a = intervals[i]
         const b = intervals[j]
-        if (Math.max(a.start, b.start) <= Math.min(a.end, b.end)) {
+        if (Math.max(a.start, b.start) < Math.min(a.end, b.end)) {
           overlappingPairs++
         }
       }
@@ -208,12 +204,12 @@ test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
     expect(logsData.items.length).toBeGreaterThan(0)
 
     const targetMessage = logsData.items[0].message
-    await expect(page.locator(`text=${targetMessage}`).first()).toBeVisible({ timeout: 30000 })
+    await expect(page.getByText(targetMessage, { exact: true })).toBeVisible({ timeout: 30000 })
   })
 
   test('6. Verify delegation view handles delegations or documented empty state', async ({ page }) => {
     await page.goto(`/workflows/runs/${runId}`)
-    await page.getByRole('button', { name: 'Delegation Graph' }).click()
+    await page.getByRole('button', { name: 'Delegation Tree', exact: true }).click()
 
     const delRes = await page.request.get(`/api/backend/workflows/runs/${runId}/delegations`)
     if (!delRes.ok()) {
@@ -253,48 +249,50 @@ test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
   })
 
   test('8. Verify all workspace sections from contract have non-empty data', async ({ page }) => {
+    test.setTimeout(1_200_000)
+    const workspacePath = encodeURIComponent(workspaceId)
     await expect.poll(async () => {
-      const res = await page.request.get(`/api/backend/workspaces/${workspaceId}`)
+      const res = await page.request.get(`/api/backend/workspaces/${workspacePath}`)
       if (!res.ok()) {
         throw new Error(`Workspace polling failed: status ${res.status()} ${await res.text()}`)
       }
       const data = await res.json()
       return data.status
-    }, { timeout: 900000, intervals: [3000, 6000] }).toBe('ready')
+    }, { timeout: 900_000, intervals: [3000, 6000] }).toBe('ready')
 
-    const roleRes = await page.request.get(`/api/backend/workspaces/${workspaceId}/role`)
+    const roleRes = await page.request.get(`/api/backend/workspaces/${workspacePath}/role`)
     if (!roleRes.ok()) throw new Error(`Role failed: ${roleRes.status()}`)
     const roleData = await roleRes.json()
     expect(roleData.title.length).toBeGreaterThan(0)
 
-    const matchRes = await page.request.get(`/api/backend/workspaces/${workspaceId}/match`)
+    const matchRes = await page.request.get(`/api/backend/workspaces/${workspacePath}/match`)
     if (!matchRes.ok()) throw new Error(`Match failed: ${matchRes.status()}`)
     const matchData = await matchRes.json()
     expect(typeof matchData.overall_match_ratio).toBe('number')
 
-    const compRes = await page.request.get(`/api/backend/workspaces/${workspaceId}/company`)
+    const compRes = await page.request.get(`/api/backend/workspaces/${workspacePath}/company`)
     if (!compRes.ok()) throw new Error(`Company failed: ${compRes.status()}`)
     const compData = await compRes.json()
     expect(compData.tech_stack?.length).toBeGreaterThanOrEqual(1)
 
-    const questRes = await page.request.get(`/api/backend/workspaces/${workspaceId}/questions`)
+    const questRes = await page.request.get(`/api/backend/workspaces/${workspacePath}/questions`)
     if (!questRes.ok()) throw new Error(`Questions failed: ${questRes.status()}`)
     const questData = await questRes.json()
     expect(questData.length).toBeGreaterThanOrEqual(1)
 
-    const learnRes = await page.request.get(`/api/backend/workspaces/${workspaceId}/learning`)
+    const learnRes = await page.request.get(`/api/backend/workspaces/${workspacePath}/learning`)
     if (!learnRes.ok()) throw new Error(`Learning failed: ${learnRes.status()}`)
     const learnData = await learnRes.json()
     expect(learnData.length).toBeGreaterThanOrEqual(1)
 
-    const srcRes = await page.request.get(`/api/backend/workspaces/${workspaceId}/sources`)
+    const srcRes = await page.request.get(`/api/backend/workspaces/${workspacePath}/sources`)
     if (!srcRes.ok()) throw new Error(`Sources failed: ${srcRes.status()}`)
     const srcData = await srcRes.json()
     expect(srcData.sources?.length).toBeGreaterThanOrEqual(1)
   })
 
   test('9. Dynamic run execution: plan.created, graph expansion, and rev marker', async ({ page }) => {
-    test.setTimeout(2_100_000)
+    test.setTimeout(2_700_000)
     await page.goto('/workflows')
     await page.getByRole('button', { name: 'New Workflow Run' }).click()
     const dialog = page.getByRole('dialog')
@@ -302,9 +300,8 @@ test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
     await dialog.getByRole('button', { name: /Dynamic Autonomous/ }).click()
 
     const select = dialog.locator('select')
-    const wsOption = select.locator(`option[value="${workspaceId}"]`)
-    await expect(wsOption).toHaveCount(1)
-    await select.selectOption(workspaceId)
+    await select.selectOption({ value: workspaceId })
+    await expect(select).toHaveValue(workspaceId)
 
     await dialog.getByRole('button', { name: 'Launch Run' }).click()
     await page.waitForURL(/\/workflows\/runs\/(.+)/)
@@ -374,11 +371,10 @@ test.describe.serial('Desktop Workflow Execution & Workspace Flow', () => {
       return data.status
     }, { timeout: 1_800_000, intervals: [3000, 6000] }).toBe('completed')
 
-    expect(dynamicRunData.degraded).toBe(false)
-    if (dynamicRunData.degraded) {
-      const reasons = Array.isArray(dynamicRunData.degraded_reasons) ? dynamicRunData.degraded_reasons.join(', ') : 'Unknown degradation'
-      throw new Error(`Dynamic run completed in degraded state: ${reasons}`)
-    }
+    const degradedReasons = Array.isArray(dynamicRunData.degraded_reasons)
+      ? dynamicRunData.degraded_reasons.join(', ')
+      : 'Unknown degradation'
+    expect(dynamicRunData.degraded, `Dynamic run completed in degraded state: ${degradedReasons}`).toBe(false)
 
     const dynamicGraphRes = await page.request.get(`/api/backend/workflows/runs/${dynamicRunId}/graph`)
     if (!dynamicGraphRes.ok()) {

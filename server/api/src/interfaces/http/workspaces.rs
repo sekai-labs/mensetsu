@@ -30,16 +30,17 @@ use crate::{
     contexts::{
         identity::domain::UserId,
         workspace::{
-            application::dtos::{CreateWorkspaceRequestDto, PatchWorkspaceObjectiveDto, WorkspaceResponseDto},
+            application::dtos::{
+                CreateWorkspaceRequestDto, PatchWorkspaceObjectiveDto, WorkspaceResponseDto,
+            },
             domain::WorkspaceId,
             infrastructure::db::DatabasePool,
         },
     },
-    interfaces::http::{
-        extractors::authenticated_user::AuthenticatedUser,
-        workflow_dtos::WorkflowRun,
-    },
     interfaces::grpc::{CreateRunPayload, GrpcClient, ResumePlanPayload},
+    interfaces::http::{
+        extractors::authenticated_user::AuthenticatedUser, workflow_dtos::WorkflowRun,
+    },
     shared::{config::AppConfig, error::AppError},
 };
 
@@ -48,29 +49,64 @@ pub struct AppState {
     pub db: DatabasePool,
     pub config: AppConfig,
     pub identity_service: std::sync::Arc<crate::contexts::identity::application::IdentityService>,
-    pub workspace_service: std::sync::Arc<crate::contexts::workspace::application::WorkspaceService>,
+    pub oauth_service:
+        Option<std::sync::Arc<crate::contexts::identity::application::oauth_service::OAuthService>>,
+    pub workspace_service:
+        std::sync::Arc<crate::contexts::workspace::application::WorkspaceService>,
     pub workflow_service: std::sync::Arc<crate::contexts::workflow::application::WorkflowService>,
     pub grpc_client: std::sync::Arc<GrpcClient>,
-    pub storage: std::sync::Arc<crate::contexts::workspace::infrastructure::storage::ResumeObjectStore>,
+    pub storage:
+        std::sync::Arc<crate::contexts::workspace::infrastructure::storage::ResumeObjectStore>,
+    pub metrics: std::sync::Arc<crate::interfaces::http::metrics::MetricsCollector>,
 }
 
 pub fn workspace_routes(state: AppState) -> Router {
     Router::new()
-        .route("/api/v1/workspaces", post(create_workspace).get(list_workspaces))
+        .route(
+            "/api/v1/workspaces",
+            post(create_workspace).get(list_workspaces),
+        )
         .route("/api/v1/workspaces/{id}", get(get_workspace))
-        .route("/api/v1/workspaces/{id}/objective", axum::routing::patch(update_workspace_objective))
+        .route(
+            "/api/v1/workspaces/{id}/objective",
+            axum::routing::patch(update_workspace_objective),
+        )
         .route("/api/v1/workspaces/{id}/events", get(workspace_events))
         .route("/api/v1/workspaces/{id}/match", get(get_workspace_match))
         .route("/api/v1/workspaces/{id}/role", get(get_workspace_role))
-        .route("/api/v1/workspaces/{id}/company", get(get_workspace_company))
-        .route("/api/v1/workspaces/{id}/sources", get(get_workspace_sources))
+        .route(
+            "/api/v1/workspaces/{id}/company",
+            get(get_workspace_company),
+        )
+        .route(
+            "/api/v1/workspaces/{id}/sources",
+            get(get_workspace_sources),
+        )
         .route("/api/v1/workspaces/{id}/claims", get(get_workspace_claims))
-        .route("/api/v1/workspaces/{id}/qa", post(ask_workspace_knowledge_qa))
-        .route("/api/v1/workspaces/{id}/import-jd", post(import_job_description_url))
-        .route("/api/v1/workspaces/{id}/knowledge", get(get_workspace_knowledge))
-        .route("/api/v1/workspaces/{id}/learning", get(get_workspace_learning))
-        .route("/api/v1/workspaces/{id}/learning/{lesson_id}/toggle", axum::routing::put(toggle_learning_unit_completed))
-        .route("/api/v1/workspaces/{id}/questions", get(get_workspace_questions))
+        .route(
+            "/api/v1/workspaces/{id}/qa",
+            post(ask_workspace_knowledge_qa),
+        )
+        .route(
+            "/api/v1/workspaces/{id}/import-jd",
+            post(import_job_description_url),
+        )
+        .route(
+            "/api/v1/workspaces/{id}/knowledge",
+            get(get_workspace_knowledge),
+        )
+        .route(
+            "/api/v1/workspaces/{id}/learning",
+            get(get_workspace_learning),
+        )
+        .route(
+            "/api/v1/workspaces/{id}/learning/{lesson_id}/toggle",
+            axum::routing::put(toggle_learning_unit_completed),
+        )
+        .route(
+            "/api/v1/workspaces/{id}/questions",
+            get(get_workspace_questions),
+        )
         .with_state(state)
 }
 
@@ -91,37 +127,36 @@ pub async fn create_workspace(
     let user_id = auth_user.user_id;
     let clean_uid = user_id.0.replace("user:", "").replace('`', "");
 
-
-
-
-    let mut validated_upload: Option<(String, String)> = None;
+    let mut validated_upload: Option<(String, String, serde_json::Value)> = None;
 
     if let Some(upload_id_raw) = &payload.resume_upload_id {
         let clean_upload_id = upload_id_raw.replace("resume_upload:", "").replace('`', "");
         if Uuid::parse_str(&clean_upload_id).is_err() {
-            return Err(AppError::Validation("Invalid resume_upload_id format".to_string()));
+            return Err(AppError::Validation(
+                "Invalid resume_upload_id format".to_string(),
+            ));
         }
 
         if let Some(text) = &payload.resume_text {
             if !text.trim().is_empty() {
                 return Err(AppError::Validation(
-                    "Cannot provide both resume_upload_id and resume_text simultaneously".to_string(),
+                    "Cannot provide both resume_upload_id and resume_text simultaneously"
+                        .to_string(),
                 ));
             }
         }
 
         let db = &state.db.client;
         let mut upload_res = db
-            .query("SELECT user_id, filename, object_key, status, workspace_id FROM type::record('resume_upload', $upload_id);")
+            .query("SELECT user_id, filename, object_key, status, updated_at FROM type::record('resume_upload', $upload_id);")
             .bind(("upload_id", clean_upload_id.clone()))
             .await
             .map_err(|e| AppError::Database(format!("Failed to lookup upload: {e}")))?;
 
         let rows: Vec<serde_json::Value> = upload_res.take(0).unwrap_or_default();
-        let row = rows
-            .into_iter()
-            .next()
-            .ok_or_else(|| AppError::NotFound(format!("Resume upload {clean_upload_id} not found")))?;
+        let row = rows.into_iter().next().ok_or_else(|| {
+            AppError::NotFound(format!("Resume upload {clean_upload_id} not found"))
+        })?;
 
         let record_uid = match row.get("user_id") {
             Some(serde_json::Value::String(s)) => s.replace("user:", "").replace('`', ""),
@@ -135,7 +170,9 @@ pub async fn create_workspace(
         };
 
         if record_uid != clean_uid {
-            return Err(AppError::Forbidden("You do not own this resume upload".to_string()));
+            return Err(AppError::Forbidden(
+                "You do not own this resume upload".to_string(),
+            ));
         }
 
         let status = row.get("status").and_then(|v| v.as_str()).unwrap_or("");
@@ -145,13 +182,9 @@ pub async fn create_workspace(
             )));
         }
 
-        if let Some(ws_val) = row.get("workspace_id") {
-            if !ws_val.is_null() {
-                return Err(AppError::Conflict(
-                    "Resume upload is already attached to another workspace".to_string(),
-                ));
-            }
-        }
+        let updated_at = row.get("updated_at").cloned().ok_or_else(|| {
+            AppError::Conflict("Resume upload has no update timestamp".to_string())
+        })?;
 
         let filename = row
             .get("filename")
@@ -164,9 +197,8 @@ pub async fn create_workspace(
             .ok_or_else(|| AppError::Validation("Resume upload missing object_key".to_string()))?
             .to_string();
 
-        validated_upload = Some((filename, object_key));
+        validated_upload = Some((filename, object_key, updated_at));
     }
-
 
     let workspace = state
         .workspace_service
@@ -175,27 +207,26 @@ pub async fn create_workspace(
     let db = &state.db.client;
     let ws_id = workspace.id.0.clone();
 
-    let seniority_str = workspace
-        .seniority
-        .as_ref()
-        .map(|s| serde_json::to_value(s).unwrap_or_default().as_str().unwrap_or("").to_string());
-    let target_date_str = workspace.target_date.as_ref().map(|d| d.to_rfc3339());
-
+    let seniority_str = workspace.seniority.as_ref().map(|s| {
+        serde_json::to_value(s)
+            .unwrap_or_default()
+            .as_str()
+            .unwrap_or("")
+            .to_string()
+    });
 
     let mut statements = vec!["BEGIN TRANSACTION;".to_string()];
 
     if payload.resume_upload_id.is_some() {
         statements.push(
             "LET $updated_uploads = (UPDATE type::record('resume_upload', $upload_id) SET
-                status = 'attached',
-                workspace_id = type::record('workspace', $ws_id),
                 updated_at = time::now()
              WHERE user_id = type::record('user', $user_id)
                AND status = 'completed'
-               AND (workspace_id = NONE OR workspace_id = NULL)
-               AND object_key = $source_object_key);
+               AND object_key = $source_object_key
+               AND updated_at = type::datetime($source_updated_at));
              IF array::len($updated_uploads) != 1 THEN
-                 THROW 'Resume upload CAS attachment conflict: upload was not completed or already attached';
+                 THROW 'Resume upload CAS conflict: upload is no longer owned, completed, or unchanged';
              END;".to_string(),
         );
     }
@@ -216,7 +247,8 @@ pub async fn create_workspace(
             workflow_mode = $workflow_mode,
             company_urls = $company_urls,
             created_at = type::datetime($created_at),
-            updated_at = type::datetime($updated_at);".to_string(),
+            updated_at = type::datetime($updated_at);"
+            .to_string(),
     );
 
     if payload.resume_upload_id.is_some() {
@@ -230,7 +262,8 @@ pub async fn create_workspace(
                 parsed_skills = [],
                 experience = [],
                 education = [],
-                created_at = time::now();".to_string(),
+                created_at = time::now();"
+                .to_string(),
         );
     } else if payload.resume_text.is_some() {
         statements.push(
@@ -240,7 +273,8 @@ pub async fn create_workspace(
                 parsed_skills = [],
                 experience = [],
                 education = [],
-                created_at = time::now();".to_string(),
+                created_at = time::now();"
+                .to_string(),
         );
     }
 
@@ -250,7 +284,8 @@ pub async fn create_workspace(
                 workspace_id = type::record('workspace', $ws_id),
                 raw_text = $jd_raw_text,
                 jd_url = $jd_url,
-                requirements = [];".to_string(),
+                requirements = [];"
+                .to_string(),
         );
     }
 
@@ -258,51 +293,85 @@ pub async fn create_workspace(
 
     let tx_sql = statements.join("\n");
 
-    let mut query_builder = db.query(&tx_sql)
-        .bind(("ws_id", ws_id.clone()))
-        .bind(("user_id", clean_uid.clone()))
-        .bind(("company_name", workspace.company_name.clone()))
-        .bind(("role_title", workspace.role_title.clone()))
-        .bind(("status", "pending"))
-        .bind(("current_phase", "preparing_input"))
-        .bind(("progress_percent", 0i64))
-        .bind(("seniority", seniority_str))
-        .bind(("target_date", target_date_str))
-        .bind(("prep_time_weeks", workspace.prep_time_weeks.map(|w| w as i64)))
-        .bind(("user_prompt", workspace.user_prompt.clone()))
-        .bind(("current_objective", workspace.current_objective.clone()))
-        .bind(("workflow_mode", workspace.workflow_mode.clone()))
-        .bind(("company_urls", payload.company_urls.clone()))
-        .bind(("created_at", workspace.created_at.to_rfc3339()))
-        .bind(("updated_at", workspace.updated_at.to_rfc3339()))
-        .bind(("res_id", format!("res_{ws_id}")))
-        .bind(("jd_id", format!("jd_{ws_id}")))
-        .bind(("raw_text", payload.resume_text.clone().unwrap_or_default()))
-        .bind(("jd_raw_text", payload.job_description.clone().unwrap_or_default()))
-        .bind(("jd_url", payload.jd_url.clone()));
+    let mut committed = false;
+    for attempt in 0..=3 {
+        let mut query_builder = db
+            .query(&tx_sql)
+            .bind(("ws_id", ws_id.clone()))
+            .bind(("user_id", clean_uid.clone()))
+            .bind(("company_name", workspace.company_name.clone()))
+            .bind(("role_title", workspace.role_title.clone()))
+            .bind(("status", "pending"))
+            .bind(("current_phase", "preparing_input"))
+            .bind(("progress_percent", 0i64))
+            .bind(("seniority", seniority_str.clone()))
+            .bind(("target_date", workspace.target_date))
+            .bind((
+                "prep_time_weeks",
+                workspace.prep_time_weeks.map(|w| w as i64),
+            ))
+            .bind(("user_prompt", workspace.user_prompt.clone()))
+            .bind(("current_objective", workspace.current_objective.clone()))
+            .bind(("workflow_mode", workspace.workflow_mode.clone()))
+            .bind(("company_urls", payload.company_urls.clone()))
+            .bind(("created_at", workspace.created_at.to_rfc3339()))
+            .bind(("updated_at", workspace.updated_at.to_rfc3339()))
+            .bind(("res_id", format!("res_{ws_id}")))
+            .bind(("jd_id", format!("jd_{ws_id}")))
+            .bind(("raw_text", payload.resume_text.clone().unwrap_or_default()))
+            .bind((
+                "jd_raw_text",
+                payload.job_description.clone().unwrap_or_default(),
+            ))
+            .bind(("jd_url", payload.jd_url.clone()));
 
-    if let Some(upload_id_raw) = &payload.resume_upload_id {
-        let clean_upload_id = upload_id_raw.replace("resume_upload:", "").replace('`', "");
-        let (upload_filename, upload_object_key) = validated_upload.as_ref().unwrap();
-        query_builder = query_builder
-            .bind(("upload_id", clean_upload_id))
-            .bind(("source_filename", upload_filename.clone()))
-            .bind(("source_object_key", upload_object_key.clone()));
+        if let Some(upload_id_raw) = &payload.resume_upload_id {
+            let clean_upload_id = upload_id_raw.replace("resume_upload:", "").replace('`', "");
+            let (upload_filename, upload_object_key, upload_updated_at) =
+                validated_upload.as_ref().unwrap();
+            query_builder = query_builder
+                .bind(("upload_id", clean_upload_id))
+                .bind(("source_filename", upload_filename.clone()))
+                .bind(("source_object_key", upload_object_key.clone()))
+                .bind(("source_updated_at", upload_updated_at.clone()));
+        }
+
+        let mut tx_res = match query_builder.await {
+            Ok(result) => result,
+            Err(error) if attempt < 3 && is_transient_write_conflict(&error.to_string()) => {
+                continue;
+            }
+            Err(error) => {
+                return Err(AppError::Database(format!(
+                    "Transaction execution failed: {error}"
+                )));
+            }
+        };
+
+        let errors = tx_res.take_errors();
+        if !errors.is_empty() {
+            let error_msg = format!("{:?}", errors);
+            if attempt < 3 && is_transient_write_conflict(&error_msg) {
+                continue;
+            }
+            if error_msg.contains("Resume upload CAS conflict") {
+                return Err(AppError::Conflict(
+                    "Failed to use resume upload: upload is no longer owned, completed, or unchanged"
+                        .to_string(),
+                ));
+            }
+            return Err(AppError::Database(format!(
+                "Workspace creation transaction failed: {error_msg}"
+            )));
+        }
+        committed = true;
+        break;
     }
 
-    let mut tx_res = query_builder
-        .await
-        .map_err(|e| AppError::Database(format!("Transaction execution failed: {e}")))?;
-
-    let errors = tx_res.take_errors();
-    if !errors.is_empty() {
-        let error_msg = format!("{:?}", errors);
-        if error_msg.contains("attachment conflict") {
-            return Err(AppError::Conflict("Failed to attach resume upload: upload is no longer in completed state".to_string()));
-        }
-        return Err(AppError::Database(format!(
-            "Workspace creation transaction failed: {error_msg}"
-        )));
+    if !committed {
+        return Err(AppError::Database(
+            "Workspace transaction exhausted transient conflict retries".to_string(),
+        ));
     }
 
     let mut status = workspace.status;
@@ -316,15 +385,7 @@ pub async fn create_workspace(
         "interview-preparation-hybrid".to_string()
     };
 
-    match start_workspace_run(
-        &state,
-        &user_id,
-        &ws_id,
-        workflow_id,
-        Some(&ws_id),
-    )
-    .await
-    {
+    match start_workspace_run(&state, &user_id, &ws_id, workflow_id, Some(&ws_id)).await {
         Ok(run) => {
             tracing::info!(workspace_id = %ws_id, run_id = %run.id, "triggered intelligence workflow run");
         }
@@ -336,7 +397,11 @@ pub async fn create_workspace(
             );
             if let Err(e) = state
                 .workspace_service
-                .update_progress(&workspace.id, crate::contexts::workspace::domain::PipelinePhase::Failed, 0)
+                .update_progress(
+                    &workspace.id,
+                    crate::contexts::workspace::domain::PipelinePhase::Failed,
+                    0,
+                )
                 .await
             {
                 tracing::error!(workspace_id = %ws_id, error = %e, "failed to mark workspace failed");
@@ -353,7 +418,11 @@ pub async fn create_workspace(
         role_title: workspace.role_title,
         status,
         current_phase,
-        progress_percent: if status == crate::contexts::workspace::domain::WorkspaceStatus::Failed { 0 } else { workspace.progress_percent },
+        progress_percent: if status == crate::contexts::workspace::domain::WorkspaceStatus::Failed {
+            0
+        } else {
+            workspace.progress_percent
+        },
         seniority: workspace.seniority,
         user_prompt: workspace.user_prompt,
         current_objective: workspace.current_objective,
@@ -386,9 +455,14 @@ struct StoredJobDescription {
     jd_url: Option<String>,
 }
 
-fn parse_stored<T: DeserializeOwned>(row: Option<serde_json::Value>) -> std::result::Result<Option<T>, AppError> {
-    row.map(|v| serde_json::from_value(v).map_err(|e| AppError::Database(format!("Malformed stored workspace input: {e}"))))
-        .transpose()
+fn parse_stored<T: DeserializeOwned>(
+    row: Option<serde_json::Value>,
+) -> std::result::Result<Option<T>, AppError> {
+    row.map(|v| {
+        serde_json::from_value(v)
+            .map_err(|e| AppError::Database(format!("Malformed stored workspace input: {e}")))
+    })
+    .transpose()
 }
 
 pub(crate) async fn start_workspace_run(
@@ -411,12 +485,15 @@ pub(crate) async fn start_workspace_run(
         .bind(("jd_id", format!("jd_{workspace_id}")))
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
-    let workspace: StoredWorkspace = parse_stored(res.take(0).map_err(|e| AppError::Database(e.to_string()))?)?
-        .ok_or_else(|| AppError::NotFound(format!("Workspace {workspace_id} not found")))?;
+    let workspace: StoredWorkspace =
+        parse_stored(res.take(0).map_err(|e| AppError::Database(e.to_string()))?)?
+            .ok_or_else(|| AppError::NotFound(format!("Workspace {workspace_id} not found")))?;
     let resume: StoredResume =
-        parse_stored(res.take(1).map_err(|e| AppError::Database(e.to_string()))?)?.unwrap_or_default();
+        parse_stored(res.take(1).map_err(|e| AppError::Database(e.to_string()))?)?
+            .unwrap_or_default();
     let jd: StoredJobDescription =
-        parse_stored(res.take(2).map_err(|e| AppError::Database(e.to_string()))?)?.unwrap_or_default();
+        parse_stored(res.take(2).map_err(|e| AppError::Database(e.to_string()))?)?
+            .unwrap_or_default();
 
     let resume_upload_id = resume.source_upload_id.and_then(|val| match val {
         serde_json::Value::String(s) => Some(s.replace("resume_upload:", "").replace('`', "")),
@@ -444,7 +521,10 @@ pub(crate) async fn start_workspace_run(
         workflow_mode: workspace.workflow_mode,
         llm_config: resolve_llm_config(state, user_id).await?,
     };
-    state.grpc_client.create_run(&payload, idempotency_key).await
+    state
+        .grpc_client
+        .create_run(&payload, idempotency_key)
+        .await
 }
 pub(crate) async fn resolve_llm_config(
     state: &AppState,
@@ -472,7 +552,11 @@ pub(crate) async fn resolve_llm_config(
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
     let routing_rows: Vec<serde_json::Value> = routing_res.take(0).unwrap_or_default();
-    let user_slots = routing_rows.into_iter().next().and_then(|r| r.get("slots").cloned()).unwrap_or(serde_json::json!({}));
+    let user_slots = routing_rows
+        .into_iter()
+        .next()
+        .and_then(|r| r.get("slots").cloned())
+        .unwrap_or(serde_json::json!({}));
 
     let mut legacy_res = db
         .query("SELECT * FROM user_llm_config WHERE user_id = type::record('user', $uid);")
@@ -507,32 +591,40 @@ pub(crate) async fn resolve_llm_config(
     let mut decrypted_user_providers = serde_json::Map::new();
     for up in user_providers {
         if let Some(pkey) = up.get("provider_key").and_then(|v| v.as_str()) {
-            let key = up.get("encrypted_api_key")
+            let key = up
+                .get("encrypted_api_key")
                 .and_then(|v| v.as_str())
                 .map(|k| crypto.decrypt(k).unwrap_or_default())
                 .unwrap_or_default();
-            decrypted_user_providers.insert(pkey.to_string(), serde_json::json!({
-                "provider_key": pkey,
-                "api_key": key,
-                "base_url": up.get("base_url").cloned()
-            }));
+            decrypted_user_providers.insert(
+                pkey.to_string(),
+                serde_json::json!({
+                    "provider_key": pkey,
+                    "api_key": key,
+                    "base_url": up.get("base_url").cloned()
+                }),
+            );
         }
     }
 
     let mut decrypted_system_providers = serde_json::Map::new();
     for sp in system_providers {
         if let Some(pkey) = sp.get("provider_key").and_then(|v| v.as_str()) {
-            let key = sp.get("encrypted_api_key")
+            let key = sp
+                .get("encrypted_api_key")
                 .and_then(|v| v.as_str())
                 .map(|k| crypto.decrypt(k).unwrap_or_default())
                 .unwrap_or_default();
-            decrypted_system_providers.insert(pkey.to_string(), serde_json::json!({
-                "provider_key": pkey,
-                "name": sp.get("name").cloned(),
-                "api_key": key,
-                "base_url": sp.get("base_url").cloned(),
-                "allowed_models": sp.get("allowed_models").cloned()
-            }));
+            decrypted_system_providers.insert(
+                pkey.to_string(),
+                serde_json::json!({
+                    "provider_key": pkey,
+                    "name": sp.get("name").cloned(),
+                    "api_key": key,
+                    "base_url": sp.get("base_url").cloned(),
+                    "allowed_models": sp.get("allowed_models").cloned()
+                }),
+            );
         }
     }
 
@@ -701,7 +793,7 @@ impl IntoResponse for AppError {
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "An internal server error occurred".to_owned(),
                 )
-            },
+            }
             AppError::ExternalService(msg) => (StatusCode::BAD_GATEWAY, msg),
             AppError::ServiceUnavailable(msg) => (StatusCode::SERVICE_UNAVAILABLE, msg),
             AppError::Internal(detail) => {
@@ -710,7 +802,7 @@ impl IntoResponse for AppError {
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "An internal server error occurred".to_owned(),
                 )
-            },
+            }
         };
 
         let body = Json(serde_json::json!({
@@ -721,6 +813,26 @@ impl IntoResponse for AppError {
         }));
 
         (status, body).into_response()
+    }
+}
+fn is_transient_write_conflict(message: &str) -> bool {
+    let message = message.to_ascii_lowercase();
+    message.contains("transaction conflict")
+        || message.contains("write conflict")
+        || message.contains("serialization failure")
+}
+
+#[cfg(test)]
+mod retry_tests {
+    use super::*;
+
+    #[test]
+    fn only_transient_write_conflicts_are_retryable() {
+        assert!(is_transient_write_conflict("Transaction conflict detected"));
+        assert!(is_transient_write_conflict("write conflict during commit"));
+        assert!(is_transient_write_conflict("serialization failure"));
+        assert!(!is_transient_write_conflict("Resume upload CAS conflict"));
+        assert!(!is_transient_write_conflict("permission denied"));
     }
 }
 
@@ -743,7 +855,8 @@ mod tests {
             let body = axum::body::to_bytes(response.into_body(), usize::MAX)
                 .await
                 .expect("response body should be readable");
-            let body_text = String::from_utf8(body.to_vec()).expect("response body should be UTF-8");
+            let body_text =
+                String::from_utf8(body.to_vec()).expect("response body should be UTF-8");
             assert!(!body_text.contains(sentinel));
             let body_json: serde_json::Value =
                 serde_json::from_str(&body_text).expect("response body should be JSON");

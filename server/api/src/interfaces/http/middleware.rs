@@ -6,10 +6,7 @@ use axum::{
 use tracing::{info_span, Instrument};
 use uuid::Uuid;
 
-pub async fn correlation_id_middleware(
-    req: Request<Body>,
-    next: Next,
-) -> Response<Body> {
+pub async fn correlation_id_middleware(req: Request<Body>, next: Next) -> Response<Body> {
     let correlation_id = req
         .headers()
         .get("x-correlation-id")

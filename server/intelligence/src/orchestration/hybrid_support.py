@@ -5,6 +5,7 @@ from typing import Annotated, Any
 from pydantic import BaseModel, Field
 
 from src.contracts.v1 import Artifact, TaskFailedPayload, WorkflowTask
+from src.evals import validate_run_outputs
 from src.orchestration.dynamic_workflow import merge_completed, merge_results
 from src.orchestration.ledger import SurrealLedgerRepository
 
@@ -83,16 +84,9 @@ class HybridWorkflowState(BaseModel):
     missing_outputs: Annotated[dict[str, str], merge_results] = Field(default_factory=dict)
 
 
-async def _persist_hybrid_outputs(
-    state: "HybridWorkflowState",
-    ledger: SurrealLedgerRepository,
-    artifacts: list[Artifact],
-) -> None:
-    from urllib.parse import urlparse
-
-    from src.generation.persistence import persist_record
-
-    ws_id = state.workspace_id
+def _resolve_hybrid_outputs(
+    state: "HybridWorkflowState", artifacts: list[Artifact]
+) -> dict[str, Any]:
     prefix = state.run_id[:8]
 
     def deliverable(task_id: str, artifact_type: str) -> dict[str, Any]:
@@ -116,6 +110,54 @@ async def _persist_hybrid_outputs(
     questions = state.questions or deliverable(f"task_questions_{prefix}", "question_set").get(
         "questions", []
     )
+    evidence_artifacts = [artifact for artifact in artifacts if artifact.type == "evidence"]
+    return {
+        "company": company,
+        "job": job,
+        "match": match,
+        "curriculum": curriculum,
+        "questions": questions,
+        "evidence_artifacts": evidence_artifacts,
+    }
+
+
+def _validate_hybrid_run_outputs(
+    state: "HybridWorkflowState",
+    artifacts: list[Artifact],
+    outputs: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    resolved = outputs if outputs is not None else _resolve_hybrid_outputs(state, artifacts)
+    curriculum = resolved["curriculum"]
+    validate_run_outputs(
+        company=resolved["company"],
+        evidence_artifacts=resolved["evidence_artifacts"],
+        questions=resolved["questions"],
+        skills=curriculum.get("skills", []),
+        relations=curriculum.get("relations", []),
+        missing_research=state.missing_research,
+        missing_outputs=state.missing_outputs,
+    ).raise_if_invalid(context=f"hybrid run {state.run_id}")
+    return resolved
+
+
+async def _persist_hybrid_outputs(
+    state: "HybridWorkflowState",
+    ledger: SurrealLedgerRepository,
+    artifacts: list[Artifact],
+    outputs: dict[str, Any] | None = None,
+) -> None:
+    from urllib.parse import urlparse
+
+    from src.generation.persistence import persist_record
+
+    ws_id = state.workspace_id
+    prefix = state.run_id[:8]
+    resolved = _validate_hybrid_run_outputs(state, artifacts, outputs)
+    company = resolved["company"]
+    job = resolved["job"]
+    match = resolved["match"]
+    curriculum = resolved["curriculum"]
+    questions = resolved["questions"]
 
     if state.parsed_resume:
         resume = state.parsed_resume

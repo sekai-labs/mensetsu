@@ -1,8 +1,10 @@
+use crate::shared::error::{AppError, Result};
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher as _, PasswordVerifier as _, SaltString},
+    password_hash::{
+        rand_core::OsRng, PasswordHash, PasswordHasher as _, PasswordVerifier as _, SaltString,
+    },
     Argon2,
 };
-use crate::shared::error::{AppError, Result};
 
 pub trait PasswordHasher: Send + Sync {
     fn hash_password(&self, password: &str) -> Result<String>;
@@ -35,7 +37,9 @@ impl PasswordHasher for Argon2PasswordHasher {
             Err(_) => return Ok(false),
         };
         let argon2 = Argon2::default();
-        Ok(argon2.verify_password(password.as_bytes(), &parsed_hash).is_ok())
+        Ok(argon2
+            .verify_password(password.as_bytes(), &parsed_hash)
+            .is_ok())
     }
 }
 
@@ -47,7 +51,9 @@ mod tests {
     fn test_hash_and_verify_password() {
         let hasher = Argon2PasswordHasher::new();
         let password = "SuperSecretPassword123!";
-        let hash = hasher.hash_password(password).expect("Hashing should succeed");
+        let hash = hasher
+            .hash_password(password)
+            .expect("Hashing should succeed");
         assert!(hasher.verify_password(password, &hash).unwrap());
         assert!(!hasher.verify_password("WrongPassword!", &hash).unwrap());
     }

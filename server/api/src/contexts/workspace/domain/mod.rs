@@ -94,10 +94,14 @@ impl Workspace {
         let trimmed_role = role_title.trim();
 
         if trimmed_company.is_empty() && user_prompt.as_deref().unwrap_or("").trim().is_empty() {
-            return Err(AppError::Validation("Either company name or prompt must be provided".into()));
+            return Err(AppError::Validation(
+                "Either company name or prompt must be provided".into(),
+            ));
         }
         if trimmed_role.is_empty() && user_prompt.as_deref().unwrap_or("").trim().is_empty() {
-            return Err(AppError::Validation("Either role title or prompt must be provided".into()));
+            return Err(AppError::Validation(
+                "Either role title or prompt must be provided".into(),
+            ));
         }
 
         let resolved_company = if trimmed_company.is_empty() {

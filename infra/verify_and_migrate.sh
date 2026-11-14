@@ -31,6 +31,19 @@ curl -s -f "http://${SURREAL_HOST}/health" > /dev/null || {
   exit 1
 }
 echo "SurrealDB is healthy."
+echo "==> Preflighting attached uploads before CV library migration..."
+LEGACY_ATTACHED="$(curl --fail-with-body --silent --show-error -X POST "http://${SURREAL_HOST}/sql" \
+  -u "${SURREAL_USER}:${SURREAL_PASS}" \
+  -H "surreal-ns: ${SURREAL_NS}" -H "surreal-db: ${SURREAL_DB}" \
+  -H "Accept: application/json" \
+  --data "SELECT id FROM resume_upload WHERE status = 'attached' AND id NOT IN (SELECT VALUE source_upload_id FROM resume WHERE source_upload_id != NONE);")"
+UNLINKED_IDS="$(jq -er 'if type == "array" and length == 1 and .[0].status == "OK"
+  then (.[0].result | map(.id | tostring) | join("\n"))
+  else error("CV library preflight SQL failed") end' <<< "$LEGACY_ATTACHED")"
+if [[ -n "$UNLINKED_IDS" ]]; then
+  echo "Error: attached upload(s) without resume.source_upload_id: $UNLINKED_IDS; refusing CV library migration." >&2
+  exit 1
+fi
 
 echo "==> Applying additive resume object migration 010 (without replaying historical migrations)..."
 apply_sql_file infra/migrations/010_resume_objects.surql
@@ -62,6 +75,25 @@ echo "==> Applying migration 012_token_usage_event_index.surql..."
 apply_sql_file infra/migrations/012_token_usage_event_index.surql
 echo "==> Applying migration 013_run_idempotency.surql..."
 apply_sql_file infra/migrations/013_run_idempotency.surql
+echo "==> Applying CV library migration 014..."
+apply_sql_file infra/migrations/014_cv_library.surql
+echo "==> Checking submitted applications for inconsistent workspace references..."
+ORPHANED_SUBMISSIONS="$(curl --fail-with-body --silent --show-error -X POST "http://${SURREAL_HOST}/sql" \
+  -u "${SURREAL_USER}:${SURREAL_PASS}" \
+  -H "surreal-ns: ${SURREAL_NS}" -H "surreal-db: ${SURREAL_DB}" \
+  -H "Accept: application/json" \
+  --data "SELECT id, workspace_id FROM job_application WHERE status = 'submitted' AND (workspace_id = NONE OR workspace_id NOT IN (SELECT VALUE id FROM workspace) OR workspace_id.user_id != user_id);")"
+ORPHAN_LINES="$(jq -er 'if type == "array" and length == 1 and .[0].status == "OK"
+  then (.[0].result // [] | map((.id | tostring) + " (workspace " + (.workspace_id | tostring) + ")") | join("\n"))
+  else error("Submitted application preflight SQL failed") end' <<< "$ORPHANED_SUBMISSIONS")"
+if [[ -n "$ORPHAN_LINES" ]]; then
+  echo "Warning: submitted application(s) without an owned workspace require manual repair; no workspace or dispatch row will be invented:" >&2
+  printf '%s\n' "$ORPHAN_LINES" >&2
+fi
+echo "==> Applying saved jobs and application flow migration 015..."
+apply_sql_file infra/migrations/015_saved_jobs_application_flow.surql
+echo "==> Applying application dispatch and saved job pagination index migration 016..."
+apply_sql_file infra/migrations/016_application_dispatch_and_saved_job_index.surql
 
 echo "==> Applying final schema..."
 apply_sql_file server/api/src/schema.surql

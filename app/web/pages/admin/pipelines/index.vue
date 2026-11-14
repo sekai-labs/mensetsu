@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useAdminService } from '~/features/admin/services/admin.service'
 import StatusBadge from '~/components/ui/StatusBadge.vue'
-import TokenUsagePanel from '~/components/usage/TokenUsagePanel.vue'
 
 definePageMeta({
   layout: 'default',
@@ -23,11 +22,9 @@ const { data: pipelinesData } = await useAsyncData('admin-pipelines', () => list
         Pipeline operations
       </h1>
       <p class="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-        Review research workflow progress and token consumption across all accounts.
+        Review research workflow progress across all accounts.
       </p>
     </div>
-
-    <TokenUsagePanel scope="admin" />
 
     <div v-if="!pipelinesData?.pipelines?.length" class="p-8 text-center border border-dashed border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-400">
       No pipeline execution records found.
@@ -53,7 +50,7 @@ const { data: pipelinesData } = await useAsyncData('admin-pipelines', () => list
         </div>
 
         <NuxtLink
-          :to="`/admin/pipelines/${pipe.workspace_id.replace(/^workspace:/, '').replace(/`/g, '')}`"
+          :to="`/admin/pipelines/${encodeURIComponent(pipe.workspace_id.replace(/^workspace:/, '').replace(/`/g, ''))}`"
           class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium shrink-0"
         >
           Inspect Telemetry →

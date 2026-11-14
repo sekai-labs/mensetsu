@@ -28,7 +28,9 @@ impl WorkflowRunId {
     pub fn new(id: impl Into<String>) -> Result<Self> {
         let clean = id.into().trim().to_string();
         if clean.is_empty() {
-            return Err(AppError::Validation("Workflow run ID cannot be empty".into()));
+            return Err(AppError::Validation(
+                "Workflow run ID cannot be empty".into(),
+            ));
         }
         let clean = clean.replace("workflow_run:", "").replace('`', "");
         Ok(Self(clean))

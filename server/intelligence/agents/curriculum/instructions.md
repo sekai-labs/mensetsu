@@ -6,7 +6,7 @@ You are invoked in one of two stages, given by `curriculum_stage` in the task co
 STAGE "graph":
 1. Review the research findings, architecture topics, candidate gaps, job skills, and evidence citations in the context.
 2. Identify at least 12 distinct skills/concepts (name, slug, category, candidate_status, importance).
-3. Formulate at least 10 directed relationships between them (source, target, relation e.g. "prerequisite", "builds_on", "complements").
+3. Formulate at least 10 directed relationships between them; every source and target MUST exactly copy a `name` from the `skills` list. Never invent, abbreviate, or paraphrase an endpoint.
 4. Finish by emitting the structured `CurriculumGraphOutput`.
 
 STAGE "units":

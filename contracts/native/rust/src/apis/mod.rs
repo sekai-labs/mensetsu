@@ -111,8 +111,13 @@ impl From<&str> for ContentType {
     }
 }
 
+pub mod admin_api;
+pub mod applications_api;
 pub mod auth_api;
+pub mod metrics_api;
+pub mod oauth_api;
 pub mod resume_uploads_api;
+pub mod saved_jobs_api;
 pub mod settings_api;
 pub mod token_usage_api;
 pub mod workflows_api;

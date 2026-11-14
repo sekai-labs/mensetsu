@@ -1,8 +1,8 @@
-use std::path::PathBuf;
-use dioxus::prelude::*;
-use mensetsu_contracts::models::WorkspaceResponseDto;
 use crate::services::api::ApiService;
 use crate::ui::test_ids::test_ids;
+use dioxus::prelude::*;
+use mensetsu_contracts::models::WorkspaceResponseDto;
+use std::path::PathBuf;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct WorkspaceListProps {
@@ -19,7 +19,6 @@ pub fn WorkspaceListView(props: WorkspaceListProps) -> Element {
     let mut error_msg = use_signal(|| Option::<String>::None);
     let mut is_loading = use_signal(|| false);
     let mut show_create_dialog = use_signal(|| false);
-
 
     let mut create_company = use_signal(String::new);
     let mut create_role = use_signal(String::new);
@@ -40,16 +39,16 @@ pub fn WorkspaceListView(props: WorkspaceListProps) -> Element {
             is_loading.set(true);
             error_msg.set(None);
             let api = api.clone();
-        spawn(async move {
-            match api.list_workspaces().await {
-                Ok(list) => {
-                    workspaces.set(list);
+            spawn(async move {
+                match api.list_workspaces().await {
+                    Ok(list) => {
+                        workspaces.set(list);
+                    }
+                    Err(e) => {
+                        error_msg.set(Some(e.to_string()));
+                    }
                 }
-                Err(e) => {
-                    error_msg.set(Some(e.to_string()));
-                }
-            }
-            is_loading.set(false);
+                is_loading.set(false);
             });
         })
     };
@@ -62,56 +61,59 @@ pub fn WorkspaceListView(props: WorkspaceListProps) -> Element {
         let api = api.clone();
         let load_fn = load_workspaces;
         move |_| {
-        let company = create_company.read().trim().to_string();
-        let role = create_role.read().trim().to_string();
-        let jd = create_jd.read().trim().to_string();
-        let resume = create_resume_text.read().trim().to_string();
-        let pdf_opt = selected_pdf_path.read().clone();
+            let company = create_company.read().trim().to_string();
+            let role = create_role.read().trim().to_string();
+            let jd = create_jd.read().trim().to_string();
+            let resume = create_resume_text.read().trim().to_string();
+            let pdf_opt = selected_pdf_path.read().clone();
 
-        if company.is_empty() {
-            create_error.set(Some("Company name is required".to_string()));
-            return;
-        }
-        if role.is_empty() {
-            create_error.set(Some("Role title is required".to_string()));
-            return;
-        }
-        if jd.is_empty() {
-            create_error.set(Some("Job description is required".to_string()));
-            return;
-        }
-        if resume.is_empty() && pdf_opt.is_none() {
-            create_error.set(Some("Either resume text or a PDF resume file is required".to_string()));
-            return;
-        }
+            if company.is_empty() {
+                create_error.set(Some("Company name is required".to_string()));
+                return;
+            }
+            if role.is_empty() {
+                create_error.set(Some("Role title is required".to_string()));
+                return;
+            }
+            if jd.is_empty() {
+                create_error.set(Some("Job description is required".to_string()));
+                return;
+            }
+            if resume.is_empty() && pdf_opt.is_none() {
+                create_error.set(Some(
+                    "Either resume text or a PDF resume file is required".to_string(),
+                ));
+                return;
+            }
 
-        create_error.set(None);
-        is_creating.set(true);
+            create_error.set(None);
+            is_creating.set(true);
             let api = api.clone();
             let load_fn = load_fn;
-        spawn(async move {
-            let res = if let Some(pdf_path) = pdf_opt {
-                api.create_workspace_with_pdf(&company, &role, &jd, &pdf_path).await
-            } else {
-                api.create_workspace(&company, &role, &resume, &jd).await
-            };
+            spawn(async move {
+                let res = if let Some(pdf_path) = pdf_opt {
+                    api.create_workspace_with_pdf(&company, &role, &jd, &pdf_path)
+                        .await
+                } else {
+                    api.create_workspace(&company, &role, &resume, &jd).await
+                };
 
-            is_creating.set(false);
-            match res {
-                Ok(_) => {
-                    show_create_dialog.set(false);
-                    create_company.set(String::new());
-                    create_role.set(String::new());
-                    create_resume_text.set(String::new());
-                    create_jd.set(String::new());
-                    selected_pdf_path.set(None);
-                    load_fn.call(());
+                is_creating.set(false);
+                match res {
+                    Ok(_) => {
+                        show_create_dialog.set(false);
+                        create_company.set(String::new());
+                        create_role.set(String::new());
+                        create_resume_text.set(String::new());
+                        create_jd.set(String::new());
+                        selected_pdf_path.set(None);
+                        load_fn.call(());
+                    }
+                    Err(e) => {
+                        create_error.set(Some(e.to_string()));
+                    }
                 }
-                Err(e) => {
-                    create_error.set(Some(e.to_string()));
-                }
-            }
-        });
+            });
         }
     };
 
@@ -126,16 +128,21 @@ pub fn WorkspaceListView(props: WorkspaceListProps) -> Element {
     };
 
     let cur_filter = filter.read().clone();
-    let filtered_items = workspaces.read().iter().filter(|ws| {
-        let status = format!("{}", ws.status);
-        if cur_filter == "ready" {
-            status.eq_ignore_ascii_case("ready") || status.eq_ignore_ascii_case("completed")
-        } else if cur_filter == "processing" {
-            status.eq_ignore_ascii_case("processing") || status.eq_ignore_ascii_case("running")
-        } else {
-            true
-        }
-    }).cloned().collect::<Vec<_>>();
+    let filtered_items = workspaces
+        .read()
+        .iter()
+        .filter(|ws| {
+            let status = format!("{}", ws.status);
+            if cur_filter == "ready" {
+                status.eq_ignore_ascii_case("ready") || status.eq_ignore_ascii_case("completed")
+            } else if cur_filter == "processing" {
+                status.eq_ignore_ascii_case("processing") || status.eq_ignore_ascii_case("running")
+            } else {
+                true
+            }
+        })
+        .cloned()
+        .collect::<Vec<_>>();
 
     rsx! {
         div {

@@ -3,6 +3,7 @@ import asyncio
 import contextlib
 import json
 import logging
+import math
 import time
 import uuid
 from datetime import datetime, timezone
@@ -34,16 +35,21 @@ from src.contracts.v1 import (
     ExecutionNote,
     SourceLink,
 )
+from src.extractor.models import PromptInjectionDefense
 from src.fetcher.reader import SafeResearchFetcher
 from src.fetcher.ssrf_client import (
     PlaceholderDomainError,
     reject_placeholder_domain,
     validate_url_for_ssrf,
 )
-from src.orchestration.sanitizer import sanitize_data
+from src.orchestration.sanitizer import sanitize_data, sanitize_text
 
 logger = logging.getLogger("mensetsu.agents.runtime")
 
+
+def contain_untrusted_text(text: str, label: str = "EXTERNAL_UNTRUSTED_CONTENT") -> str:
+    """Wrap sanitized external text in a boundary-safe untrusted block."""
+    return PromptInjectionDefense.wrap_untrusted_input(sanitize_text(text), label=label)
 
 READ_SOURCE_ALIASES = {
     "url": ("url", "link", "source_url", "source"),
@@ -88,6 +94,18 @@ def normalize_tool_args(
         resolved[canonical] = value
     return resolved, None
 
+def parse_confidence(value: Any, tool_name: str) -> float | str:
+    error = f"Error: {tool_name} 'confidence' must be a finite number between 0.0 and 1.0."
+    if isinstance(value, bool):
+        return error
+    try:
+        confidence = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return error
+    if not math.isfinite(confidence) or not 0.0 <= confidence <= 1.0:
+        return error
+    return confidence
+
 
 class ReadSourceArgs(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -129,6 +147,17 @@ class ToolsMixin:
             description="Search the web for company engineering blogs, architectures, and tech stack."
         )
         async def web_search(query: str) -> str:
+            from src.agents.registry import registry
+            from src.agents.runtime_support import current_agent_id_var
+
+            curr_agent = current_agent_id_var.get()
+            if curr_agent:
+                try:
+                    agent_defn = registry.get(curr_agent)
+                    if "web_search" not in agent_defn.allowed_tools:
+                        return f"Error: Tool 'web_search' is not allowed for agent '{curr_agent}'."
+                except KeyError:
+                    pass
 
             clean_q = sanitize_data(query).strip()
             if not clean_q:
@@ -167,7 +196,8 @@ class ToolsMixin:
                         "Do not retry web_search. Proceed directly with reading company URLs and known sources via read_source."
                     )
                 return f"No results for '{clean_q}'. Refine the query with the company name or a specific technology."
-            return json.dumps(usable)
+            usable_json = json.dumps(usable)
+            return contain_untrusted_text(usable_json, label="EXTERNAL_SEARCH_RESULTS")
 
         fetched_docs: dict[str, tuple[str, datetime, str]] = {}
         not_found_streak = [0]
@@ -214,7 +244,8 @@ class ToolsMixin:
             retrieved_at = datetime.now(timezone.utc)
             norm_url = url.strip().rstrip("/")
             fetched_docs[norm_url] = (markdown, retrieved_at, title)
-            return f"Title: {title}\n\n{markdown[:3000]}"
+            raw_content = f"Title: {title}\n\n{markdown[:3000]}"
+            return contain_untrusted_text(raw_content, label="EXTERNAL_SOURCE_CONTENT")
 
         @tool(
             description=(
@@ -237,10 +268,9 @@ class ToolsMixin:
             if arg_error:
                 return arg_error
             source_url, title, snippet = args["source_url"], args["title"], args["snippet"]
-            try:
-                confidence = float(args["confidence"])
-            except (TypeError, ValueError):
-                return "Error: save_evidence 'confidence' must be a number between 0.0 and 1.0."
+            confidence = parse_confidence(args["confidence"], "save_evidence")
+            if isinstance(confidence, str):
+                return confidence
             norm_url = source_url.strip().rstrip("/")
             if norm_url not in fetched_docs:
                 return (
@@ -273,7 +303,7 @@ class ToolsMixin:
                     title=title,
                     retrieved_at=retrieved_at,
                     snippet=snippet,
-                    confidence=min(max(confidence, 0.0), 1.0),
+                    confidence=confidence,
                 ),
                 content={"snippet": snippet},
             )
@@ -326,7 +356,10 @@ class ToolsMixin:
             )
             if arg_error:
                 return arg_error
-            category, claim, confidence = args["category"], args["claim"], float(args["confidence"])
+            confidence = parse_confidence(args["confidence"], "save_finding")
+            if isinstance(confidence, str):
+                return confidence
+            category, claim = args["category"], args["claim"]
             raw_ids = args.get("evidence_ids") or []
             if isinstance(raw_ids, str):
                 raw_ids = [raw_ids]
@@ -556,11 +589,6 @@ class ToolsMixin:
 
             return child_summary
 
-        @tool(description="Evaluate research findings and claims against criteria.")
-        async def evaluate_findings(summary: str) -> str:
-
-            return f"Evaluated findings: {summary}. Criteria satisfied."
-
         return [
             web_search,
             read_source,
@@ -568,5 +596,4 @@ class ToolsMixin:
             save_finding,
             update_notes,
             delegate_task,
-            evaluate_findings,
         ]

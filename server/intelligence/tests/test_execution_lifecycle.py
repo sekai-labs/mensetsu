@@ -12,7 +12,7 @@ from src.agents import runtime as runtime_module
 from src.agents import runtime_support as runtime_support_module
 from src.agents.registry import AgentDefinition, registry
 from src.agents.runtime import AgentExecutionError, AutonomousAgentRuntime, current_agent_id_var
-from src.contracts.v1 import Artifact, WorkflowRun
+from src.contracts.v1 import Artifact, WorkflowRun, WorkflowTask
 from src.orchestration import limits as limits_module
 from src.orchestration.ledger import SurrealLedgerRepository
 from src.orchestration.limits import ConcurrencyLimits
@@ -436,6 +436,16 @@ async def test_run_end_sweep_closes_open_records():
     from src.contracts.v1 import AgentExecution, Delegation, ToolInvocation
 
     ledger, run_id = await new_run()
+    await ledger.save_task(
+        WorkflowTask(
+            id="task_sweep",
+            run_id=run_id,
+            task_type="research",
+            name="Research",
+            assigned_agent=PARENT,
+            status="running",
+        )
+    )
     for eid, agent in (("exec_sweep_p", PARENT), ("exec_sweep_c", CHILD)):
         await ledger.save_agent_execution(
             AgentExecution(
@@ -463,10 +473,14 @@ async def test_run_end_sweep_closes_open_records():
         ),
         run_id=run_id,
     )
+    assert await ledger.transition_workflow_run_status(
+        run_id, "failed", from_statuses=("running",), updates={}
+    )
 
     counts = await ledger.sweep_run_to_terminal(run_id, reason="run failed")
-    assert counts == {"executions": 2, "tools": 1, "delegations": 1}
-    assert {e.status for e in await ledger.list_agent_executions_for_run(run_id)} == {"cancelled"}
+    assert counts == {"executions": 2, "tools": 1, "delegations": 1, "tasks": 1}
+    assert {e.status for e in await ledger.list_agent_executions_for_run(run_id)} == {"failed"}
+    assert (await ledger.get_task(run_id, "task_sweep")).status == "failed"
     assert (await ledger.list_delegations_for_run(run_id))[0].status == "failed"
     assert (await ledger.get_tool_invocation(run_id, "tool_sweep_1")).status == "failed"
     types = [e.type for e in await all_events(ledger, run_id)]
@@ -477,6 +491,37 @@ async def test_run_end_sweep_closes_open_records():
         "tools": 0,
         "delegations": 0,
     }
+
+
+@pytest.mark.parametrize(
+    ("run_status", "task_status"),
+    [("completed", "skipped"), ("failed", "failed"), ("cancelled", "cancelled")],
+)
+@pytest.mark.asyncio
+async def test_run_sweep_maps_task_status_to_terminal_outcome(run_status, task_status):
+    ledger, run_id = await new_run()
+    task = WorkflowTask(
+        id="task_terminal_mapping",
+        run_id=run_id,
+        task_type="research",
+        name="Research",
+        assigned_agent=PARENT,
+        status="running",
+    )
+    await ledger.save_task(task)
+    assert await ledger.transition_workflow_run_status(
+        run_id, run_status, from_statuses=("running",), updates={}
+    )
+
+    await ledger.sweep_run_to_terminal(run_id, reason=f"run {run_status}")
+
+    saved = await ledger.get_task(run_id, task.id)
+    assert saved.status == task_status
+    if task_status in ("skipped", "cancelled"):
+        task.status = "running"
+        await ledger.save_task(task)
+        assert (await ledger.get_task(run_id, task.id)).status == task_status
+
 
 
 @pytest.mark.asyncio

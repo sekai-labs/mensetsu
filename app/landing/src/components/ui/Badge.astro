@@ -1,0 +1,39 @@
+---
+interface Props {
+  variant?: 'evidence' | 'status' | 'neutral' | 'success' | 'warning' | 'info';
+  confidence?: number;
+  source?: string;
+  class?: string;
+}
+
+const { variant = 'neutral', confidence, source, class: className = '' } = Astro.props;
+
+let badgeStyle = 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300';
+let dotStyle = 'bg-slate-400';
+
+if (variant === 'evidence') {
+  if (confidence && confidence >= 0.85) {
+    badgeStyle = 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300';
+    dotStyle = 'bg-emerald-500';
+  } else if (confidence && confidence >= 0.6) {
+    badgeStyle = 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300';
+    dotStyle = 'bg-amber-500';
+  }
+} else if (variant === 'success') {
+  badgeStyle = 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300';
+  dotStyle = 'bg-emerald-500';
+} else if (variant === 'warning') {
+  badgeStyle = 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300';
+  dotStyle = 'bg-amber-500';
+} else if (variant === 'info') {
+  badgeStyle = 'border-indigo-200 bg-indigo-50 text-indigo-800 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-300';
+  dotStyle = 'bg-indigo-500';
+}
+---
+
+<span class={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[11px] font-medium transition-colors ${badgeStyle} ${className}`}>
+  <span class={`h-1.5 w-1.5 rounded-full ${dotStyle}`}></span>
+  {source && <span>{source}</span>}
+  {confidence !== undefined && <span class="opacity-75">({Math.round(confidence * 100)}%)</span>}
+  <slot />
+</span>

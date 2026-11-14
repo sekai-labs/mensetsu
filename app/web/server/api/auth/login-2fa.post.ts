@@ -1,9 +1,19 @@
 import { sessionManager } from '~/server/utils/session'
-import { getBackendApiBase, SESSION_COOKIE_NAME } from '~/server/utils/config'
+import { getBackendApiBase, SESSION_COOKIE_NAME, TOTP_TEMP_TOKEN_COOKIE_NAME } from '~/server/utils/config'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const apiBase = getBackendApiBase()
+
+  const cookieTempToken = getCookie(event, TOTP_TEMP_TOKEN_COOKIE_NAME)
+  const effectiveTempToken = body.temp_token || cookieTempToken
+
+  if (!effectiveTempToken) {
+    throw createError({
+      statusCode: 400,
+      message: '2FA session expired. Please sign in again.',
+    })
+  }
 
   try {
     const backendRes = await $fetch<{
@@ -21,7 +31,10 @@ export default defineEventHandler(async (event) => {
       refresh_token: string
     }>(`${apiBase}/api/v1/auth/login-2fa`, {
       method: 'POST',
-      body,
+      body: {
+        temp_token: effectiveTempToken,
+        code: body.code,
+      },
     })
 
     const tokenId = sessionManager.generateTokenId()
@@ -39,6 +52,8 @@ export default defineEventHandler(async (event) => {
       path: '/',
       maxAge: 7 * 24 * 60 * 60,
     })
+
+    deleteCookie(event, TOTP_TEMP_TOKEN_COOKIE_NAME, { path: '/' })
 
     return {
       user: backendRes.user,

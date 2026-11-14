@@ -725,7 +725,7 @@ function createRunStoreInstance(runId: string): WorkflowRunInstance {
     if (isTerminalReached || typeof window === 'undefined') return
     disconnectSse()
 
-    const sseUrl = `/api/backend/workflows/runs/${runId}/events?after_seq=${lastSeq.value}`
+    const sseUrl = `/api/backend/workflows/runs/${encodeURIComponent(runId)}/events?after_seq=${lastSeq.value}`
     eventSource = eventSourceFactory ? eventSourceFactory(sseUrl) : new EventSource(sseUrl)
 
     eventSource.onopen = () => {

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mensetsu Application Assistant</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-kanji">面接</span>
+      <span class="brand-name">Mensetsu</span>
+    </div>
+    <div class="header-actions">
+      <span id="connection-badge" class="badge badge-neutral">Checking...</span>
+      <button id="toggle-settings-btn" class="icon-btn" title="Settings" aria-label="Settings">⚙</button>
+    </div>
+  </header>
+
+  <div id="alert-box" class="alert-box hidden" role="alert"></div>
+
+  <section id="setup-panel" class="panel hidden" aria-labelledby="setup-title">
+    <h3 id="setup-title">Connect to your Mensetsu API</h3>
+    <p class="panel-subtitle">
+      Enter the base URL of your self-hosted Mensetsu API. Use the API origin, not the web app URL.
+    </p>
+    <form id="setup-form">
+      <div class="form-group">
+        <label for="setup-api-origin">API base URL (HTTPS required)</label>
+        <input
+          type="text"
+          id="setup-api-origin"
+          name="api-origin"
+          placeholder="https://api.mensetsu.example"
+          autocomplete="url"
+          spellcheck="false"
+          aria-describedby="setup-origin-hint"
+        />
+        <small id="setup-origin-hint" class="hint">
+          Origin only: no path, query, fragment, or credentials. Plain HTTP is permitted only for loopback development (localhost, *.localhost, or 127.0.0.1).
+        </small>
+      </div>
+      <div class="form-check">
+        <input type="checkbox" id="setup-allow-loopback-check" />
+        <label for="setup-allow-loopback-check">Allow plain HTTP loopback development</label>
+      </div>
+      <div class="button-row">
+        <button id="setup-connect-btn" class="btn btn-primary" type="submit">Test connection &amp; continue</button>
+      </div>
+    </form>
+    <p id="setup-feedback" class="hint" role="status" aria-live="polite"></p>
+  </section>
+
+  <section id="settings-panel" class="panel hidden">
+    <h3>Connection Settings</h3>
+    <div class="form-group">
+      <label for="api-origin-input">API Origin (HTTPS required)</label>
+      <input type="text" id="api-origin-input" placeholder="https://api.mensetsu.example" autocomplete="url" spellcheck="false" aria-describedby="api-origin-hint" />
+      <small id="api-origin-hint" class="hint">Plain HTTP is permitted only for loopback dev (localhost / 127.0.0.1). Changing the API origin signs out this extension.</small>
+    </div>
+    <div class="form-check">
+      <input type="checkbox" id="allow-loopback-check" />
+      <label for="allow-loopback-check">Allow plain HTTP loopback dev</label>
+    </div>
+    <div class="form-check">
+      <input type="checkbox" id="linkedin-optin-check" />
+      <label for="linkedin-optin-check">Opt-in to LinkedIn page detection</label>
+    </div>
+    <p id="settings-origin-state" class="hint"></p>
+    <div class="button-row">
+      <button id="save-settings-btn" class="btn btn-primary">Test connection &amp; save</button>
+      <button id="cancel-settings-btn" class="btn btn-secondary">Cancel</button>
+    </div>
+  </section>
+
+  <section id="auth-panel" class="panel hidden">
+    <h3>Sign in to Mensetsu</h3>
+    <p class="panel-subtitle">Access your candidate profile and verified resume library.</p>
+    <div id="login-fields">
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" placeholder="candidate@example.com" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+    </div>
+    <div id="2fa-fields" class="form-group hidden">
+      <label for="login-2fa-code">Two-Factor Code (TOTP)</label>
+      <input type="text" id="login-2fa-code" placeholder="6-digit code" inputmode="numeric" />
+    </div>
+    <button id="sign-in-btn" class="btn btn-primary btn-block">Sign In</button>
+  </section>
+
+  <main id="main-panel" class="panel hidden">
+    <div class="user-bar">
+      <div class="user-info">
+        <span id="user-name" class="user-name">Candidate</span>
+        <span id="user-email" class="user-email">user@example.com</span>
+      </div>
+      <button id="sign-out-btn" class="btn btn-text">Sign Out</button>
+    </div>
+
+    <nav class="mode-tabs" aria-label="Job workflow mode">
+      <button id="discover-mode-btn" class="btn btn-secondary" type="button" aria-pressed="true">Discover</button>
+      <button id="apply-mode-btn" class="btn btn-secondary" type="button" aria-pressed="false">Apply</button>
+    </nav>
+
+    <section id="discover-mode" class="workflow-mode">
+      <section class="card">
+        <div class="card-header">
+          <h4>Discover jobs on this page</h4>
+        </div>
+        <p class="card-text">Scan visible job cards only. Results stay in this popup until you save a job to Mensetsu; review the match evidence first.</p>
+        <button id="discover-scan-btn" class="btn btn-primary btn-block" type="button">Scan visible jobs</button>
+      </section>
+      <div id="discovery-results" class="stack-list" aria-live="polite"></div>
+    </section>
+
+    <section id="apply-mode" class="workflow-mode hidden">
+
+    <section class="card">
+      <div class="card-header">
+        <h4>Active Tab</h4>
+        <span id="site-badge" class="badge badge-neutral">Unknown</span>
+      </div>
+      <p id="tab-url" class="mono-text truncate">https://...</p>
+      <button id="scan-tab-btn" class="btn btn-secondary btn-block">Inspect Active Tab</button>
+    </section>
+    <section id="saved-jobs-card" class="card">
+      <div class="card-header">
+        <h4>Saved jobs and preparation status</h4>
+        <button id="refresh-saved-jobs-btn" class="btn btn-text" type="button">Refresh</button>
+      </div>
+      <div id="saved-jobs-list" class="stack-list" aria-live="polite"></div>
+      <button id="saved-jobs-more-btn" class="btn btn-secondary btn-block hidden" type="button" aria-controls="saved-jobs-list" aria-busy="false">Load more</button>
+    </section>
+
+    <section id="email-draft-card" class="card hidden">
+      <div class="card-header">
+        <h4>Email application draft</h4>
+        <span class="badge badge-info">Manual send</span>
+      </div>
+      <p class="card-text">Review the recipient and text. Attach your resume in your mail client, send it yourself, then confirm below.</p>
+      <div class="form-group">
+        <label for="email-recipient">Recipient</label>
+        <input id="email-recipient" type="email" readonly>
+      </div>
+      <div class="form-group">
+        <label for="email-subject">Subject</label>
+        <input id="email-subject" type="text" maxlength="240">
+      </div>
+      <div class="form-group">
+        <label for="email-body">Message</label>
+        <textarea id="email-body" rows="8" maxlength="1500"></textarea>
+      </div>
+      <a id="open-email-draft" class="btn btn-secondary btn-block" target="_blank" rel="noopener">Open in mail client</a>
+      <p class="hint">If no mail client opens, copy the recipient, subject, and message into your email app.</p>
+      <button id="email-sent-btn" class="btn btn-success btn-block" type="button">I sent this email</button>
+    </section>
+
+    <section id="web-application-card" class="card hidden">
+      <div class="card-header">
+        <h4>Website application</h4>
+        <span class="badge badge-warning">Manual submit</span>
+      </div>
+      <p class="card-text">Review the employer page and submit there yourself. Mensetsu will record your confirmation and prepare the interview workspace.</p>
+      <a id="open-web-application" class="btn btn-secondary btn-block" target="_blank" rel="noopener">Open employer application</a>
+      <button id="web-submitted-btn" class="btn btn-success btn-block" type="button">I submitted on the website</button>
+    </section>
+
+
+    <section id="blocked-card" class="card card-warning hidden">
+      <div class="card-header">
+        <h4 id="blocked-title">Site Action Blocked</h4>
+        <span id="blocked-reason-badge" class="badge badge-warning">unsupported</span>
+      </div>
+      <p id="blocked-detail" class="card-text">Automated actions are blocked for this site.</p>
+      <button id="report-block-btn" class="btn btn-secondary btn-block">Record in Mensetsu</button>
+    </section>
+
+    <section id="job-card" class="card hidden">
+      <div class="card-header">
+        <h4>Captured Job Details</h4>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Company:</span>
+        <span id="job-company" class="data-value">-</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Role Title:</span>
+        <span id="job-role" class="data-value">-</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Description:</span>
+        <span id="job-description-stats" class="data-value">0 chars</span>
+      </div>
+    </section>
+
+    <section id="resume-card" class="card hidden">
+      <div class="card-header">
+        <h4>Select Resume</h4>
+      </div>
+      <div class="form-group">
+        <label for="resume-select">Available PDF Resumes</label>
+        <select id="resume-select">
+          <option value="">Loading resumes...</option>
+        </select>
+      </div>
+    </section>
+
+    <section id="fields-card" class="card hidden">
+      <div class="card-header">
+        <h4>Prepared Fields Preview</h4>
+      </div>
+      <div id="fields-list" class="fields-grid"></div>
+    </section>
+
+    <section id="actions-card" class="card hidden">
+      <div class="card-header">
+        <h4>Application Actions</h4>
+        <span id="review-phase-badge" class="badge badge-info">Prepared</span>
+      </div>
+
+      <button id="prepare-btn" class="btn btn-primary btn-block">1. Prepare Application</button>
+
+      <button id="approve-btn" class="btn btn-primary btn-block hidden">2. Approve Application</button>
+
+      <button id="fill-btn" class="btn btn-secondary btn-block hidden">3. Fill Safe Fields & Attach PDF</button>
+
+      <button id="submit-btn" class="btn btn-danger btn-block hidden">4. Approve Submit Handoff & Watch</button>
+      <small id="submit-hint" class="hint hidden">Single-use handoff: calls /start and watches for verified confirmation. To prevent PII leakage in GET URLs, submit on the site itself.</small>
+    </section>
+
+    <section id="confirmed-card" class="card card-success hidden">
+      <div class="card-header">
+        <h4>Application Confirmed!</h4>
+        <span class="badge badge-success">Submitted</span>
+      </div>
+      <p class="card-text">Evidence of submission verified at the Greenhouse confirmation route.</p>
+      <p id="confirmation-url-text" class="mono-text truncate"></p>
+    </section>
+
+    <section id="reconcile-card" class="card card-warning hidden">
+      <div class="card-header">
+        <h4>Manual Reconciliation Required</h4>
+        <span class="badge badge-warning">Uncertain</span>
+      </div>
+      <p class="card-text">
+        The extension handed you off to submit on the job page but could not verify a Greenhouse confirmation page.
+        Did you submit successfully on the site?
+      </p>
+      <div class="button-row">
+        <button id="reconcile-yes-btn" class="btn btn-success">Yes, Confirmed</button>
+        <button id="reconcile-no-btn" class="btn btn-secondary">No, Not Submitted</button>
+      </div>
+    </section>
+    </section>
+  </main>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

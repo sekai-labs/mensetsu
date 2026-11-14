@@ -1,0 +1,21 @@
+DEFINE TABLE IF NOT EXISTS saved_job SCHEMAFULL;
+DEFINE FIELD OVERWRITE user_id ON TABLE saved_job TYPE record<user>;
+DEFINE FIELD OVERWRITE source_url ON TABLE saved_job TYPE string;
+DEFINE FIELD OVERWRITE canonical_url ON TABLE saved_job TYPE string;
+DEFINE FIELD OVERWRITE source_site ON TABLE saved_job TYPE string ASSERT $value IN ['linkedin', 'topcv'];
+DEFINE FIELD OVERWRITE status ON TABLE saved_job TYPE string ASSERT $value IN ['awaiting_approval', 'approved', 'dismissed'] DEFAULT 'awaiting_approval';
+DEFINE FIELD OVERWRITE role_title ON TABLE saved_job TYPE option<string>;
+DEFINE FIELD OVERWRITE company_name ON TABLE saved_job TYPE option<string>;
+DEFINE FIELD OVERWRITE job_description ON TABLE saved_job TYPE option<string>;
+DEFINE FIELD OVERWRITE location ON TABLE saved_job TYPE option<string>;
+DEFINE FIELD OVERWRITE application_url ON TABLE saved_job TYPE option<string>;
+DEFINE FIELD OVERWRITE contact_email ON TABLE saved_job TYPE option<string>;
+DEFINE FIELD OVERWRITE job_application_id ON TABLE saved_job TYPE option<record<job_application>>;
+DEFINE FIELD OVERWRITE created_at ON TABLE saved_job TYPE datetime DEFAULT time::now();
+DEFINE FIELD OVERWRITE updated_at ON TABLE saved_job TYPE datetime DEFAULT time::now();
+DEFINE INDEX IF NOT EXISTS idx_saved_job_user ON TABLE saved_job COLUMNS user_id;
+DEFINE INDEX IF NOT EXISTS idx_saved_job_user_url ON TABLE saved_job COLUMNS user_id, canonical_url UNIQUE;
+DEFINE INDEX IF NOT EXISTS idx_saved_job_user_status ON TABLE saved_job COLUMNS user_id, status;
+
+DEFINE FIELD OVERWRITE application_method ON TABLE job_application TYPE option<string> ASSERT $value = NONE OR $value IN ['email', 'web'];
+DEFINE FIELD OVERWRITE contact_email ON TABLE job_application TYPE option<string>;

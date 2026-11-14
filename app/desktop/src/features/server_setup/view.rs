@@ -1,6 +1,9 @@
-use dioxus::prelude::*;
-use crate::services::{api::ApiService, endpoint_config::{set_persisted_server_url, validate_and_normalize_url}};
+use crate::services::{
+    api::ApiService,
+    endpoint_config::{set_persisted_server_url, validate_and_normalize_url},
+};
 use crate::ui::test_ids::test_ids;
+use dioxus::prelude::*;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct ServerSetupProps {

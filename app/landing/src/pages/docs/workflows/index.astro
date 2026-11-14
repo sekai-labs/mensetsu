@@ -1,0 +1,137 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import DocsBreadcrumb from '../../../components/docs/DocsBreadcrumb.astro';
+import Callout from '../../../components/ui/Callout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const stages = [
+  { name: 'preparing_input', desc: 'Validates inputs, downloads PDF from presigned S3 URL, and initialises workspace state.' },
+  { name: 'analyzing_resume', desc: 'Parses resume sections, projects, tech stacks, and career milestones into structured entities.' },
+  { name: 'reading_job_description', desc: 'Extracts core responsibilities, qualifications, tech stacks, and team domains.' },
+  { name: 'researching_company', desc: 'Queries SearXNG for company overview, business model, engineering blogs, and public announcements.' },
+  { name: 'researching_engineering_environment', desc: 'Searches tech radar, architecture posts, and open source contributions with SSRF defense.' },
+  { name: 'extracting_role_requirements', desc: 'Categorizes requirements into required fundamentals vs. preferred specialized skills.' },
+  { name: 'mapping_resume_evidence', desc: 'Links role requirements to explicit resume quotes; calculates transparent match and identifies gaps.' },
+  { name: 'constructing_knowledge_graph', desc: 'Writes graph nodes and directional relations into SurrealDB (company, role, skills, claims).' },
+  { name: 'building_learning_plan', desc: 'Constructs topologically sorted syllabus modules to bridge identified gaps before the interview.' },
+  { name: 'generating_lessons', desc: 'Generates detailed concept briefs, code walkthroughs, and architecture diagrams.' },
+  { name: 'building_interview_question_book', desc: 'Synthesizes targeted questions (deep-dive, system design, fundamentals, behavioral).' },
+  { name: 'final_validation', desc: 'Validates citation integrity, confirms zero orphaned claims, and transitions status to ready.' },
+];
+
+const workspaceReq = `POST /api/v1/workspaces
+Content-Type: application/json
+Authorization: Bearer <candidate_jwt>
+
+{
+  "company_name": "Acme Corp",
+  "role_title": "Staff Distributed Systems Engineer",
+  "job_description": "We are seeking a Staff Engineer to lead consensus and raft clustering...",
+  "seniority": "staff",
+  "company_urls": ["https://engineering.acme.example/blog"],
+  "resume_upload_id": "upl_98a72b104f",
+  "workflow_mode": "static"
+}`;
+
+const sseSnippet = `event: task.started
+id: 4
+data: {"task_id":"task_res_02","stage":"researching_company","message":"Searching engineering blogs"}
+
+event: agent.activity
+id: 5
+data: {"agent_id":"research_agent","action":"searxng_query","query":"Acme Corp distributed consensus"}
+
+event: workflow.completed
+id: 12
+data: {"run_id":"run_4921ab","status":"completed","artifacts_count":6,"duration_seconds":48}`;
+---
+
+<DocsLayout
+  title="Product Workflows & Pipeline Lifecycle | Mensetsu Documentation"
+  description="Understanding the durable execution stages, telemetry streaming, and knowledge graph construction."
+>
+  <div class="space-y-8">
+    <DocsBreadcrumb crumbs={[{ label: 'Product Workflows' }]} />
+
+    <header class="space-y-3 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div class="text-xs font-mono font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+        Engine / Pipelines
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Product Workflows & Pipeline Lifecycle
+      </h1>
+      <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        Understanding the durable execution stages, telemetry streaming, and knowledge graph construction.
+      </p>
+    </header>
+
+    <!-- Workspace Ingestion -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        1. Workspace Creation and Ingestion
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        When a candidate initiates a preparation workspace, the Rust API verifies credentials, persists the initial record, requests an upload token for private S3 storage, and initiates a workflow command to the Python intelligence service via gRPC:
+      </p>
+
+      <CodeBlock code={workspaceReq} language="http" filename="Workspace Initiation Request" />
+
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        The API returns immediately with HTTP 201 Created containing the <code class="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">workspace_id</code> and initial run status (<code class="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">pending</code>).
+      </p>
+    </section>
+
+    <!-- 12 Pipeline Stages -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        2. Workspace Progress Phases
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        The Rust workspace aggregate tracks these 12 ordered phases before reaching <code class="font-mono text-xs">ready</code>
+        or <code class="font-mono text-xs">failed</code>. The Python worker executes an idempotent workflow graph and emits
+        structured events to Redis Pub/Sub, which are forwarded through gRPC to the API. Dynamic workflows additionally
+        use <code class="font-mono text-xs">planning</code>, <code class="font-mono text-xs">executing_plan</code>, and
+        <code class="font-mono text-xs">plan_final</code> internal phases.
+      </p>
+
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 dark:bg-slate-900 font-mono text-[11px] text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800">
+            <tr>
+              <th class="p-3 w-12">#</th>
+              <th class="p-3 w-48">Stage Identifier</th>
+              <th class="p-3">Responsibility & Output</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono">
+            {
+              stages.map((stage, idx) => (
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                  <td class="p-3 text-slate-400 font-bold">{idx + 1}</td>
+                  <td class="p-3 text-indigo-600 dark:text-indigo-400 font-semibold">{stage.name}</td>
+                  <td class="p-3 font-sans text-slate-600 dark:text-slate-300">{stage.desc}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Telemetry Streaming -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        3. Real-Time Telemetry via Server-Sent Events (SSE)
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Clients subscribe to real-time execution telemetry through <code class="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">GET /api/v1/workflows/runs/&#123;run_id&#125;/events</code>. The stream delivers ordered <code class="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">ExecutionEventFrame</code> payloads:
+      </p>
+
+      <CodeBlock code={sseSnippet} language="text" filename="SSE Telemetry Stream" />
+
+      <Callout type="tip" title="Resilient Stream Replay">
+        If a network disconnection occurs, the client reconnects passing <code class="font-mono text-xs">Last-Event-ID</code>. The intelligence service replays all historical events from SurrealDB ledger before streaming live events.
+      </Callout>
+    </section>
+  </div>
+</DocsLayout>

@@ -10,7 +10,7 @@ OPERATIONAL PROCEDURE:
    - category: Exactly the `target_category` given in the task context (one of resume_deep_dive, project_deep_dive, technical_fundamentals, target_stack, system_design, debugging, behavioral)
    - difficulty: One of easy, medium, hard
    - rationale: Grounded reason tied to company engineering reality and operational constraints
-   - skills_tested: List of specific technical skills evaluated
+   - skills_tested: List of skill names copied exactly from the provided knowledge_graph_skills list; never invent, paraphrase, or abbreviate a skill name.
    - interviewer_intent: What the interviewer assesses under the hood
    - expected_signals: At least 2 candidate evaluation signals (positive indicators vs disqualifying anti-patterns)
    - answer_outline: At least 3 detailed blueprint bullets for an exemplary answer explaining exact mechanics, invariants, and trade-offs

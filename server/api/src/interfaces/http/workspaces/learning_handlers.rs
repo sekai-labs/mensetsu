@@ -5,12 +5,14 @@ use axum::{
 
 use super::auth_check::verify_workspace_owner;
 use super::AppState;
-use crate::contexts::knowledge::domain::{KnowledgeEdge, KnowledgeGraphResponse, KnowledgeSkillNode};
+use crate::contexts::knowledge::domain::{
+    KnowledgeEdge, KnowledgeGraphResponse, KnowledgeSkillNode,
+};
 use crate::contexts::learning::domain::LearningUnit;
 use crate::contexts::practice::domain::InterviewQuestion;
 use crate::interfaces::http::extractors::authenticated_user::AuthenticatedUser;
 use crate::shared::error::AppError;
-use crate::shared::record_id::normalize_record_fields;
+use crate::shared::record_id::{clean_record_id, normalize_record_fields};
 
 fn parse_rows<T: serde::de::DeserializeOwned>(table: &str, rows: Vec<serde_json::Value>) -> Vec<T> {
     rows.into_iter()
@@ -49,7 +51,7 @@ pub async fn get_workspace_match(
     auth_user: AuthenticatedUser,
     Path(id): Path<String>,
 ) -> std::result::Result<Json<serde_json::Value>, AppError> {
-    let clean_id = id.replace("workspace:", "").replace('`', "");
+    let clean_id = clean_record_id(&id);
     verify_workspace_owner(&state.db.client, &clean_id, &auth_user.user_id.0).await?;
     let db = &state.db.client;
     let mut res = db
@@ -57,13 +59,14 @@ pub async fn get_workspace_match(
         .bind(("id", clean_id.clone()))
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
-    let item: Option<serde_json::Value> = res.take(0).map_err(|e| AppError::Database(e.to_string()))?;
+    let item: Option<serde_json::Value> =
+        res.take(0).map_err(|e| AppError::Database(e.to_string()))?;
     if let Some(mut match_data) = item {
         normalize_record_fields(&mut match_data, &["id", "workspace_id"]);
         Ok(Json(match_data))
     } else {
         Ok(Json(serde_json::json!({
-            "workspace_id": id,
+            "workspace_id": clean_id,
             "overall_match_ratio": 0.0,
             "strengths": [],
             "gaps": [],
@@ -83,14 +86,17 @@ pub async fn get_workspace_knowledge(
     auth_user: AuthenticatedUser,
     Path(id): Path<String>,
 ) -> std::result::Result<Json<KnowledgeGraphResponse>, AppError> {
-    verify_workspace_owner(&state.db.client, &id, &auth_user.user_id.0).await?;
+    let clean_id = clean_record_id(&id);
+    verify_workspace_owner(&state.db.client, &clean_id, &auth_user.user_id.0).await?;
     let db = &state.db.client;
     let mut res_skills = db
         .query("SELECT * FROM skill WHERE workspace_id = type::record('workspace', $id) OR workspace_id = $id;")
-        .bind(("id", id.clone()))
+        .bind(("id", clean_id.clone()))
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
-    let skills: Vec<serde_json::Value> = res_skills.take(0).map_err(|e| AppError::Database(e.to_string()))?;
+    let skills: Vec<serde_json::Value> = res_skills
+        .take(0)
+        .map_err(|e| AppError::Database(e.to_string()))?;
     let nodes: Vec<KnowledgeSkillNode> = parse_rows::<SkillRow>("skill", skills)
         .into_iter()
         .map(|s| KnowledgeSkillNode {
@@ -108,10 +114,16 @@ pub async fn get_workspace_knowledge(
         .bind(("id", id.clone()))
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
-    let raw_edges: Vec<serde_json::Value> = res_edges.take(0).map_err(|e| AppError::Database(e.to_string()))?;
+    let raw_edges: Vec<serde_json::Value> = res_edges
+        .take(0)
+        .map_err(|e| AppError::Database(e.to_string()))?;
     let edges: Vec<KnowledgeEdge> = parse_rows::<SkillRelationRow>("skill_relation", raw_edges)
         .into_iter()
-        .map(|e| KnowledgeEdge { source: e.source, target: e.target, relation: e.relation })
+        .map(|e| KnowledgeEdge {
+            source: e.source,
+            target: e.target,
+            relation: e.relation,
+        })
         .collect();
 
     Ok(Json(KnowledgeGraphResponse { nodes, edges }))
@@ -127,15 +139,17 @@ pub async fn get_workspace_learning(
     auth_user: AuthenticatedUser,
     Path(id): Path<String>,
 ) -> std::result::Result<Json<Vec<LearningUnit>>, AppError> {
-    verify_workspace_owner(&state.db.client, &id, &auth_user.user_id.0).await?;
+    let clean_id = clean_record_id(&id);
+    verify_workspace_owner(&state.db.client, &clean_id, &auth_user.user_id.0).await?;
     let db = &state.db.client;
     let mut res = db
         .query("SELECT * FROM learning_unit WHERE workspace_id = type::record('workspace', $id);")
-        .bind(("id", id.clone()))
+        .bind(("id", clean_id))
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
-    let mut units: Vec<serde_json::Value> = res.take(0).map_err(|e| AppError::Database(e.to_string()))?;
+    let mut units: Vec<serde_json::Value> =
+        res.take(0).map_err(|e| AppError::Database(e.to_string()))?;
     for u in &mut units {
         normalize_record_fields(u, &["id", "workspace_id"]);
     }
@@ -155,35 +169,44 @@ pub async fn toggle_learning_unit_completed(
     auth_user: AuthenticatedUser,
     Path((id, lesson_id)): Path<(String, String)>,
 ) -> std::result::Result<Json<serde_json::Value>, AppError> {
-    verify_workspace_owner(&state.db.client, &id, &auth_user.user_id.0).await?;
+    let clean_workspace_id = clean_record_id(&id);
+    verify_workspace_owner(&state.db.client, &clean_workspace_id, &auth_user.user_id.0).await?;
+    let clean_lesson_id = clean_record_id(&lesson_id);
     let db = &state.db.client;
 
-    let clean_id = lesson_id.replace("learning_unit:", "").replace('`', "");
     let mut res = db
         .query("SELECT * FROM type::record('learning_unit', $lid) WHERE workspace_id = type::record('workspace', $wid);")
-        .bind(("lid", clean_id.clone()))
-        .bind(("wid", id.clone()))
+        .bind(("lid", clean_lesson_id.clone()))
+        .bind(("wid", clean_workspace_id.clone()))
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
     let item: Option<serde_json::Value> = res.take(0).unwrap_or_default();
+    let Some(item) = item else {
+        return Err(AppError::NotFound("Learning unit not found".into()));
+    };
     let current_completed = item
-        .as_ref()
-        .and_then(|v| v.get("completed"))
-        .and_then(|b| b.as_bool())
+        .get("completed")
+        .and_then(serde_json::Value::as_bool)
         .unwrap_or(false);
-
     let new_completed = !current_completed;
 
-    let _ = db
-        .query("UPDATE type::record('learning_unit', $lid) SET completed = $completed;")
-        .bind(("lid", clean_id))
+    let mut updated = db
+        .query("UPDATE type::record('learning_unit', $lid) SET completed = $completed WHERE workspace_id = type::record('workspace', $wid) RETURN AFTER;")
+        .bind(("lid", clean_lesson_id.clone()))
+        .bind(("wid", clean_workspace_id))
         .bind(("completed", new_completed))
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
+    let updated_rows: Vec<serde_json::Value> = updated
+        .take(0)
+        .map_err(|e| AppError::Database(e.to_string()))?;
+    if updated_rows.is_empty() {
+        return Err(AppError::NotFound("Learning unit not found".into()));
+    }
 
     Ok(Json(serde_json::json!({
-        "lesson_id": lesson_id,
+        "lesson_id": clean_lesson_id,
         "completed": new_completed
     })))
 }
@@ -198,7 +221,7 @@ pub async fn get_workspace_questions(
     auth_user: AuthenticatedUser,
     Path(id): Path<String>,
 ) -> std::result::Result<Json<Vec<InterviewQuestion>>, AppError> {
-    let clean_id = id.replace("workspace:", "").replace('`', "");
+    let clean_id = clean_record_id(&id);
     verify_workspace_owner(&state.db.client, &clean_id, &auth_user.user_id.0).await?;
     let db = &state.db.client;
     let mut res = db
@@ -207,9 +230,13 @@ pub async fn get_workspace_questions(
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
-    let mut q_list: Vec<serde_json::Value> = res.take(0).map_err(|e| AppError::Database(e.to_string()))?;
+    let mut q_list: Vec<serde_json::Value> =
+        res.take(0).map_err(|e| AppError::Database(e.to_string()))?;
     for q in &mut q_list {
         normalize_record_fields(q, &["id", "workspace_id"]);
     }
-    Ok(Json(parse_rows::<InterviewQuestion>("interview_question", q_list)))
+    Ok(Json(parse_rows::<InterviewQuestion>(
+        "interview_question",
+        q_list,
+    )))
 }

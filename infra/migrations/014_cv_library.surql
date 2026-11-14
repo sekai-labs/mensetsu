@@ -1,0 +1,55 @@
+DEFINE FIELD OVERWRITE source_upload_id ON TABLE resume TYPE option<record<resume_upload>>;
+DEFINE INDEX IF NOT EXISTS idx_resume_source_upload ON TABLE resume COLUMNS source_upload_id;
+
+UPDATE resume_upload SET status = 'completed' WHERE status = 'attached';
+UPDATE resume_upload UNSET workspace_id WHERE workspace_id != NONE;
+REMOVE FIELD workspace_id ON TABLE resume_upload;
+DEFINE FIELD OVERWRITE status ON TABLE resume_upload TYPE string ASSERT $value IN ['pending', 'completed', 'deleting'];
+
+DEFINE FIELD OVERWRITE retrieved_at ON TABLE job_description TYPE option<datetime>;
+DEFINE FIELD OVERWRITE extraction_method ON TABLE job_description TYPE option<string>;
+
+DEFINE TABLE OVERWRITE candidate_profile SCHEMAFULL;
+DEFINE FIELD OVERWRITE user_id ON TABLE candidate_profile TYPE record<user>;
+DEFINE FIELD OVERWRITE phone ON TABLE candidate_profile TYPE option<string>;
+DEFINE FIELD OVERWRITE location ON TABLE candidate_profile TYPE option<string>;
+DEFINE FIELD OVERWRITE linkedin_url ON TABLE candidate_profile TYPE option<string>;
+DEFINE FIELD OVERWRITE github_url ON TABLE candidate_profile TYPE option<string>;
+DEFINE FIELD OVERWRITE portfolio_url ON TABLE candidate_profile TYPE option<string>;
+DEFINE FIELD OVERWRITE target_role ON TABLE candidate_profile TYPE option<string>;
+DEFINE FIELD OVERWRITE required_keywords ON TABLE candidate_profile TYPE array<string> DEFAULT [];
+DEFINE FIELD OVERWRITE excluded_keywords ON TABLE candidate_profile TYPE array<string> DEFAULT [];
+DEFINE FIELD OVERWRITE target_locations ON TABLE candidate_profile TYPE array<string> DEFAULT [];
+DEFINE FIELD OVERWRITE created_at ON TABLE candidate_profile TYPE datetime DEFAULT time::now();
+DEFINE FIELD OVERWRITE updated_at ON TABLE candidate_profile TYPE datetime DEFAULT time::now();
+DEFINE INDEX IF NOT EXISTS idx_candidate_profile_user ON TABLE candidate_profile COLUMNS user_id UNIQUE;
+
+DEFINE TABLE OVERWRITE job_application SCHEMAFULL;
+DEFINE FIELD OVERWRITE user_id ON TABLE job_application TYPE record<user>;
+DEFINE FIELD OVERWRITE resume_upload_id ON TABLE job_application TYPE record<resume_upload>;
+DEFINE FIELD OVERWRITE workspace_id ON TABLE job_application TYPE option<record<workspace>>;
+DEFINE FIELD OVERWRITE site ON TABLE job_application TYPE string ASSERT $value IN ['greenhouse', 'topcv', 'linkedin'];
+DEFINE FIELD OVERWRITE canonical_url ON TABLE job_application TYPE string;
+DEFINE FIELD OVERWRITE source_url ON TABLE job_application TYPE string;
+DEFINE FIELD OVERWRITE company_name ON TABLE job_application TYPE string;
+DEFINE FIELD OVERWRITE role_title ON TABLE job_application TYPE string;
+DEFINE FIELD OVERWRITE job_description ON TABLE job_application TYPE string;
+DEFINE FIELD OVERWRITE source_title ON TABLE job_application TYPE string;
+DEFINE FIELD OVERWRITE retrieved_at ON TABLE job_application TYPE datetime;
+DEFINE FIELD OVERWRITE revision ON TABLE job_application TYPE string;
+DEFINE FIELD OVERWRITE status ON TABLE job_application TYPE string ASSERT $value IN ['prepared', 'approved', 'submitting', 'submitted', 'needs_review', 'unknown'];
+DEFINE FIELD OVERWRITE prepared_fields ON TABLE job_application TYPE object;
+DEFINE FIELD OVERWRITE prepared_fields.first_name ON TABLE job_application TYPE string;
+DEFINE FIELD OVERWRITE prepared_fields.last_name ON TABLE job_application TYPE string;
+DEFINE FIELD OVERWRITE prepared_fields.email ON TABLE job_application TYPE string;
+DEFINE FIELD OVERWRITE prepared_fields.phone ON TABLE job_application TYPE option<string>;
+DEFINE FIELD OVERWRITE prepared_fields.location ON TABLE job_application TYPE option<string>;
+DEFINE FIELD OVERWRITE prepared_fields.linkedin_url ON TABLE job_application TYPE option<string>;
+DEFINE FIELD OVERWRITE prepared_fields.github_url ON TABLE job_application TYPE option<string>;
+DEFINE FIELD OVERWRITE prepared_fields.portfolio_url ON TABLE job_application TYPE option<string>;
+DEFINE FIELD OVERWRITE reason_code ON TABLE job_application TYPE option<string>;
+DEFINE FIELD OVERWRITE confirmation_url ON TABLE job_application TYPE option<string>;
+DEFINE FIELD OVERWRITE created_at ON TABLE job_application TYPE datetime DEFAULT time::now();
+DEFINE FIELD OVERWRITE updated_at ON TABLE job_application TYPE datetime DEFAULT time::now();
+DEFINE INDEX IF NOT EXISTS idx_job_application_user_url ON TABLE job_application COLUMNS user_id, canonical_url UNIQUE;
+DEFINE INDEX IF NOT EXISTS idx_job_application_user_status ON TABLE job_application COLUMNS user_id, status;

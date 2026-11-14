@@ -19,6 +19,7 @@ import java.io.IOException
 import okhttp3.Call
 import okhttp3.HttpUrl
 
+import org.mensetsu.contracts.models.DailyTokenUsageResponseDto
 import org.mensetsu.contracts.models.TokenUsageResponseDto
 
 import com.squareup.moshi.Json
@@ -46,11 +47,95 @@ class TokenUsageApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
     }
 
     /**
+     * GET /api/v1/admin/usage/tokens/daily
+     * 
+     * 
+     * @return DailyTokenUsageResponseDto
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun adminDailyTokenUsage() : DailyTokenUsageResponseDto {
+        val localVarResponse = adminDailyTokenUsageWithHttpInfo()
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as DailyTokenUsageResponseDto
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /api/v1/admin/usage/tokens/daily
+     * 
+     * 
+     * @return ApiResponse<DailyTokenUsageResponseDto?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun adminDailyTokenUsageWithHttpInfo() : ApiResponse<DailyTokenUsageResponseDto?> {
+        val localVariableConfig = adminDailyTokenUsageRequestConfig()
+
+        return request<Unit, DailyTokenUsageResponseDto>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation adminDailyTokenUsage
+     *
+     * @return RequestConfig
+     */
+    fun adminDailyTokenUsageRequestConfig() : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/api/v1/admin/usage/tokens/daily",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
      * GET /api/v1/admin/usage/tokens
      * 
      * 
      * @param beforeTimestamp  (optional)
      * @param beforeEventId  (optional)
+     * @param limit  (optional)
+     * @param q  (optional)
+     * @param search  (optional)
+     * @param provider  (optional)
+     * @param modelProvider  (optional)
+     * @param agent  (optional)
+     * @param agentId  (optional)
+     * @param from  (optional)
+     * @param fromDate  (optional)
+     * @param startDate  (optional)
+     * @param to  (optional)
+     * @param toDate  (optional)
+     * @param endDate  (optional)
+     * @param userId  (optional)
      * @return TokenUsageResponseDto
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -60,8 +145,8 @@ class TokenUsageApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun adminTokenUsage(beforeTimestamp: kotlin.String? = null, beforeEventId: kotlin.String? = null) : TokenUsageResponseDto {
-        val localVarResponse = adminTokenUsageWithHttpInfo(beforeTimestamp = beforeTimestamp, beforeEventId = beforeEventId)
+    fun adminTokenUsage(beforeTimestamp: kotlin.String? = null, beforeEventId: kotlin.String? = null, limit: kotlin.Int? = null, q: kotlin.String? = null, search: kotlin.String? = null, provider: kotlin.String? = null, modelProvider: kotlin.String? = null, agent: kotlin.String? = null, agentId: kotlin.String? = null, from: kotlin.String? = null, fromDate: kotlin.String? = null, startDate: kotlin.String? = null, to: kotlin.String? = null, toDate: kotlin.String? = null, endDate: kotlin.String? = null, userId: kotlin.String? = null) : TokenUsageResponseDto {
+        val localVarResponse = adminTokenUsageWithHttpInfo(beforeTimestamp = beforeTimestamp, beforeEventId = beforeEventId, limit = limit, q = q, search = search, provider = provider, modelProvider = modelProvider, agent = agent, agentId = agentId, from = from, fromDate = fromDate, startDate = startDate, to = to, toDate = toDate, endDate = endDate, userId = userId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as TokenUsageResponseDto
@@ -84,14 +169,28 @@ class TokenUsageApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
      * 
      * @param beforeTimestamp  (optional)
      * @param beforeEventId  (optional)
+     * @param limit  (optional)
+     * @param q  (optional)
+     * @param search  (optional)
+     * @param provider  (optional)
+     * @param modelProvider  (optional)
+     * @param agent  (optional)
+     * @param agentId  (optional)
+     * @param from  (optional)
+     * @param fromDate  (optional)
+     * @param startDate  (optional)
+     * @param to  (optional)
+     * @param toDate  (optional)
+     * @param endDate  (optional)
+     * @param userId  (optional)
      * @return ApiResponse<TokenUsageResponseDto?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun adminTokenUsageWithHttpInfo(beforeTimestamp: kotlin.String?, beforeEventId: kotlin.String?) : ApiResponse<TokenUsageResponseDto?> {
-        val localVariableConfig = adminTokenUsageRequestConfig(beforeTimestamp = beforeTimestamp, beforeEventId = beforeEventId)
+    fun adminTokenUsageWithHttpInfo(beforeTimestamp: kotlin.String?, beforeEventId: kotlin.String?, limit: kotlin.Int?, q: kotlin.String?, search: kotlin.String?, provider: kotlin.String?, modelProvider: kotlin.String?, agent: kotlin.String?, agentId: kotlin.String?, from: kotlin.String?, fromDate: kotlin.String?, startDate: kotlin.String?, to: kotlin.String?, toDate: kotlin.String?, endDate: kotlin.String?, userId: kotlin.String?) : ApiResponse<TokenUsageResponseDto?> {
+        val localVariableConfig = adminTokenUsageRequestConfig(beforeTimestamp = beforeTimestamp, beforeEventId = beforeEventId, limit = limit, q = q, search = search, provider = provider, modelProvider = modelProvider, agent = agent, agentId = agentId, from = from, fromDate = fromDate, startDate = startDate, to = to, toDate = toDate, endDate = endDate, userId = userId)
 
         return request<Unit, TokenUsageResponseDto>(
             localVariableConfig
@@ -103,9 +202,23 @@ class TokenUsageApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
      *
      * @param beforeTimestamp  (optional)
      * @param beforeEventId  (optional)
+     * @param limit  (optional)
+     * @param q  (optional)
+     * @param search  (optional)
+     * @param provider  (optional)
+     * @param modelProvider  (optional)
+     * @param agent  (optional)
+     * @param agentId  (optional)
+     * @param from  (optional)
+     * @param fromDate  (optional)
+     * @param startDate  (optional)
+     * @param to  (optional)
+     * @param toDate  (optional)
+     * @param endDate  (optional)
+     * @param userId  (optional)
      * @return RequestConfig
      */
-    fun adminTokenUsageRequestConfig(beforeTimestamp: kotlin.String?, beforeEventId: kotlin.String?) : RequestConfig<Unit> {
+    fun adminTokenUsageRequestConfig(beforeTimestamp: kotlin.String?, beforeEventId: kotlin.String?, limit: kotlin.Int?, q: kotlin.String?, search: kotlin.String?, provider: kotlin.String?, modelProvider: kotlin.String?, agent: kotlin.String?, agentId: kotlin.String?, from: kotlin.String?, fromDate: kotlin.String?, startDate: kotlin.String?, to: kotlin.String?, toDate: kotlin.String?, endDate: kotlin.String?, userId: kotlin.String?) : RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
             .apply {
@@ -114,6 +227,48 @@ class TokenUsageApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
                 }
                 if (beforeEventId != null) {
                     put("before_event_id", listOf(beforeEventId.toString()))
+                }
+                if (limit != null) {
+                    put("limit", listOf(limit.toString()))
+                }
+                if (q != null) {
+                    put("q", listOf(q.toString()))
+                }
+                if (search != null) {
+                    put("search", listOf(search.toString()))
+                }
+                if (provider != null) {
+                    put("provider", listOf(provider.toString()))
+                }
+                if (modelProvider != null) {
+                    put("model_provider", listOf(modelProvider.toString()))
+                }
+                if (agent != null) {
+                    put("agent", listOf(agent.toString()))
+                }
+                if (agentId != null) {
+                    put("agent_id", listOf(agentId.toString()))
+                }
+                if (from != null) {
+                    put("from", listOf(from.toString()))
+                }
+                if (fromDate != null) {
+                    put("from_date", listOf(fromDate.toString()))
+                }
+                if (startDate != null) {
+                    put("start_date", listOf(startDate.toString()))
+                }
+                if (to != null) {
+                    put("to", listOf(to.toString()))
+                }
+                if (toDate != null) {
+                    put("to_date", listOf(toDate.toString()))
+                }
+                if (endDate != null) {
+                    put("end_date", listOf(endDate.toString()))
+                }
+                if (userId != null) {
+                    put("user_id", listOf(userId.toString()))
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
@@ -130,11 +285,95 @@ class TokenUsageApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
     }
 
     /**
+     * GET /api/v1/usage/tokens/daily
+     * 
+     * 
+     * @return DailyTokenUsageResponseDto
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun userDailyTokenUsage() : DailyTokenUsageResponseDto {
+        val localVarResponse = userDailyTokenUsageWithHttpInfo()
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as DailyTokenUsageResponseDto
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /api/v1/usage/tokens/daily
+     * 
+     * 
+     * @return ApiResponse<DailyTokenUsageResponseDto?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun userDailyTokenUsageWithHttpInfo() : ApiResponse<DailyTokenUsageResponseDto?> {
+        val localVariableConfig = userDailyTokenUsageRequestConfig()
+
+        return request<Unit, DailyTokenUsageResponseDto>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation userDailyTokenUsage
+     *
+     * @return RequestConfig
+     */
+    fun userDailyTokenUsageRequestConfig() : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/api/v1/usage/tokens/daily",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
      * GET /api/v1/usage/tokens
      * 
      * 
      * @param beforeTimestamp  (optional)
      * @param beforeEventId  (optional)
+     * @param limit  (optional)
+     * @param q  (optional)
+     * @param search  (optional)
+     * @param provider  (optional)
+     * @param modelProvider  (optional)
+     * @param agent  (optional)
+     * @param agentId  (optional)
+     * @param from  (optional)
+     * @param fromDate  (optional)
+     * @param startDate  (optional)
+     * @param to  (optional)
+     * @param toDate  (optional)
+     * @param endDate  (optional)
+     * @param userId  (optional)
      * @return TokenUsageResponseDto
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
@@ -144,8 +383,8 @@ class TokenUsageApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun userTokenUsage(beforeTimestamp: kotlin.String? = null, beforeEventId: kotlin.String? = null) : TokenUsageResponseDto {
-        val localVarResponse = userTokenUsageWithHttpInfo(beforeTimestamp = beforeTimestamp, beforeEventId = beforeEventId)
+    fun userTokenUsage(beforeTimestamp: kotlin.String? = null, beforeEventId: kotlin.String? = null, limit: kotlin.Int? = null, q: kotlin.String? = null, search: kotlin.String? = null, provider: kotlin.String? = null, modelProvider: kotlin.String? = null, agent: kotlin.String? = null, agentId: kotlin.String? = null, from: kotlin.String? = null, fromDate: kotlin.String? = null, startDate: kotlin.String? = null, to: kotlin.String? = null, toDate: kotlin.String? = null, endDate: kotlin.String? = null, userId: kotlin.String? = null) : TokenUsageResponseDto {
+        val localVarResponse = userTokenUsageWithHttpInfo(beforeTimestamp = beforeTimestamp, beforeEventId = beforeEventId, limit = limit, q = q, search = search, provider = provider, modelProvider = modelProvider, agent = agent, agentId = agentId, from = from, fromDate = fromDate, startDate = startDate, to = to, toDate = toDate, endDate = endDate, userId = userId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as TokenUsageResponseDto
@@ -168,14 +407,28 @@ class TokenUsageApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
      * 
      * @param beforeTimestamp  (optional)
      * @param beforeEventId  (optional)
+     * @param limit  (optional)
+     * @param q  (optional)
+     * @param search  (optional)
+     * @param provider  (optional)
+     * @param modelProvider  (optional)
+     * @param agent  (optional)
+     * @param agentId  (optional)
+     * @param from  (optional)
+     * @param fromDate  (optional)
+     * @param startDate  (optional)
+     * @param to  (optional)
+     * @param toDate  (optional)
+     * @param endDate  (optional)
+     * @param userId  (optional)
      * @return ApiResponse<TokenUsageResponseDto?>
      * @throws IllegalStateException If the request is not correctly configured
      * @throws IOException Rethrows the OkHttp execute method exception
      */
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun userTokenUsageWithHttpInfo(beforeTimestamp: kotlin.String?, beforeEventId: kotlin.String?) : ApiResponse<TokenUsageResponseDto?> {
-        val localVariableConfig = userTokenUsageRequestConfig(beforeTimestamp = beforeTimestamp, beforeEventId = beforeEventId)
+    fun userTokenUsageWithHttpInfo(beforeTimestamp: kotlin.String?, beforeEventId: kotlin.String?, limit: kotlin.Int?, q: kotlin.String?, search: kotlin.String?, provider: kotlin.String?, modelProvider: kotlin.String?, agent: kotlin.String?, agentId: kotlin.String?, from: kotlin.String?, fromDate: kotlin.String?, startDate: kotlin.String?, to: kotlin.String?, toDate: kotlin.String?, endDate: kotlin.String?, userId: kotlin.String?) : ApiResponse<TokenUsageResponseDto?> {
+        val localVariableConfig = userTokenUsageRequestConfig(beforeTimestamp = beforeTimestamp, beforeEventId = beforeEventId, limit = limit, q = q, search = search, provider = provider, modelProvider = modelProvider, agent = agent, agentId = agentId, from = from, fromDate = fromDate, startDate = startDate, to = to, toDate = toDate, endDate = endDate, userId = userId)
 
         return request<Unit, TokenUsageResponseDto>(
             localVariableConfig
@@ -187,9 +440,23 @@ class TokenUsageApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
      *
      * @param beforeTimestamp  (optional)
      * @param beforeEventId  (optional)
+     * @param limit  (optional)
+     * @param q  (optional)
+     * @param search  (optional)
+     * @param provider  (optional)
+     * @param modelProvider  (optional)
+     * @param agent  (optional)
+     * @param agentId  (optional)
+     * @param from  (optional)
+     * @param fromDate  (optional)
+     * @param startDate  (optional)
+     * @param to  (optional)
+     * @param toDate  (optional)
+     * @param endDate  (optional)
+     * @param userId  (optional)
      * @return RequestConfig
      */
-    fun userTokenUsageRequestConfig(beforeTimestamp: kotlin.String?, beforeEventId: kotlin.String?) : RequestConfig<Unit> {
+    fun userTokenUsageRequestConfig(beforeTimestamp: kotlin.String?, beforeEventId: kotlin.String?, limit: kotlin.Int?, q: kotlin.String?, search: kotlin.String?, provider: kotlin.String?, modelProvider: kotlin.String?, agent: kotlin.String?, agentId: kotlin.String?, from: kotlin.String?, fromDate: kotlin.String?, startDate: kotlin.String?, to: kotlin.String?, toDate: kotlin.String?, endDate: kotlin.String?, userId: kotlin.String?) : RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
             .apply {
@@ -198,6 +465,48 @@ class TokenUsageApi(basePath: kotlin.String = defaultBasePath, client: Call.Fact
                 }
                 if (beforeEventId != null) {
                     put("before_event_id", listOf(beforeEventId.toString()))
+                }
+                if (limit != null) {
+                    put("limit", listOf(limit.toString()))
+                }
+                if (q != null) {
+                    put("q", listOf(q.toString()))
+                }
+                if (search != null) {
+                    put("search", listOf(search.toString()))
+                }
+                if (provider != null) {
+                    put("provider", listOf(provider.toString()))
+                }
+                if (modelProvider != null) {
+                    put("model_provider", listOf(modelProvider.toString()))
+                }
+                if (agent != null) {
+                    put("agent", listOf(agent.toString()))
+                }
+                if (agentId != null) {
+                    put("agent_id", listOf(agentId.toString()))
+                }
+                if (from != null) {
+                    put("from", listOf(from.toString()))
+                }
+                if (fromDate != null) {
+                    put("from_date", listOf(fromDate.toString()))
+                }
+                if (startDate != null) {
+                    put("start_date", listOf(startDate.toString()))
+                }
+                if (to != null) {
+                    put("to", listOf(to.toString()))
+                }
+                if (toDate != null) {
+                    put("to_date", listOf(toDate.toString()))
+                }
+                if (endDate != null) {
+                    put("end_date", listOf(endDate.toString()))
+                }
+                if (userId != null) {
+                    put("user_id", listOf(userId.toString()))
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()

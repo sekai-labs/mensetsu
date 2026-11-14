@@ -56,21 +56,21 @@ export const useWorkflowService = () => {
   }
 
   const getWorkflowRun = async (runId: string): Promise<WorkflowRun> => {
-    const raw = await request<unknown>(`/api/v1/workflows/runs/${runId}`, {
+    const raw = await request<unknown>(`/api/v1/workflows/runs/${encodeURIComponent(runId)}`, {
       method: 'GET',
     })
     return parseWorkflowRunResponse(raw)
   }
 
   const getWorkflowTaskGraph = async (runId: string): Promise<TaskGraphResponse> => {
-    const raw = await request<unknown>(`/api/v1/workflows/runs/${runId}/graph`, {
+    const raw = await request<unknown>(`/api/v1/workflows/runs/${encodeURIComponent(runId)}/graph`, {
       method: 'GET',
     })
     return parseTaskGraphResponse(raw)
   }
 
   const getWorkflowDelegationGraph = async (runId: string): Promise<DelegationGraphResponse> => {
-    const raw = await request<unknown>(`/api/v1/workflows/runs/${runId}/delegations/graph`, {
+    const raw = await request<unknown>(`/api/v1/workflows/runs/${encodeURIComponent(runId)}/delegations/graph`, {
       method: 'GET',
     })
     return parseDelegationGraphResponse(raw)
@@ -86,7 +86,7 @@ export const useWorkflowService = () => {
       execution_id?: string
     }
   ): Promise<LogsPageResponse> => {
-    const raw = await request<unknown>(`/api/v1/workflows/runs/${runId}/logs`, {
+    const raw = await request<unknown>(`/api/v1/workflows/runs/${encodeURIComponent(runId)}/logs`, {
       method: 'GET',
       query: params,
     })
@@ -100,7 +100,7 @@ export const useWorkflowService = () => {
       limit?: number
     }
   ): Promise<EventsHistoryPageResponse> => {
-    const raw = await request<unknown>(`/api/v1/workflows/runs/${runId}/events/history`, {
+    const raw = await request<unknown>(`/api/v1/workflows/runs/${encodeURIComponent(runId)}/events/history`, {
       method: 'GET',
       query: params,
     })
@@ -115,7 +115,7 @@ export const useWorkflowService = () => {
       limit?: number
     }
   ): Promise<ToolInvocationsPageResponse> => {
-    const raw = await request<unknown>(`/api/v1/workflows/runs/${runId}/agents/${executionId}/tools`, {
+    const raw = await request<unknown>(`/api/v1/workflows/runs/${encodeURIComponent(runId)}/agents/${encodeURIComponent(executionId)}/tools`, {
       method: 'GET',
       query: params,
     })
@@ -130,7 +130,7 @@ export const useWorkflowService = () => {
       limit?: number
     }
   ): Promise<ToolOutputResponse> => {
-    const raw = await request<unknown>(`/api/v1/workflows/runs/${runId}/tools/${toolInvocationId}/output`, {
+    const raw = await request<unknown>(`/api/v1/workflows/runs/${encodeURIComponent(runId)}/tools/${encodeURIComponent(toolInvocationId)}/output`, {
       method: 'GET',
       query: params,
     })
@@ -138,25 +138,25 @@ export const useWorkflowService = () => {
   }
 
   const getWorkflowDelegations = async (runId: string): Promise<Delegation[]> => {
-    return await request<Delegation[]>(`/api/v1/workflows/runs/${runId}/delegations`, {
+    return await request<Delegation[]>(`/api/v1/workflows/runs/${encodeURIComponent(runId)}/delegations`, {
       method: 'GET',
     })
   }
 
   const getWorkflowAgents = async (runId: string): Promise<AgentExecution[]> => {
-    return await request<AgentExecution[]>(`/api/v1/workflows/runs/${runId}/agents`, {
+    return await request<AgentExecution[]>(`/api/v1/workflows/runs/${encodeURIComponent(runId)}/agents`, {
       method: 'GET',
     })
   }
 
   const getAgentExecution = async (runId: string, executionId: string): Promise<AgentExecution> => {
-    return await request<AgentExecution>(`/api/v1/workflows/runs/${runId}/agents/${executionId}`, {
+    return await request<AgentExecution>(`/api/v1/workflows/runs/${encodeURIComponent(runId)}/agents/${encodeURIComponent(executionId)}`, {
       method: 'GET',
     })
   }
 
   const getWorkflowArtifacts = async (runId: string): Promise<Artifact[]> => {
-    return await request<Artifact[]>(`/api/v1/workflows/runs/${runId}/artifacts`, {
+    return await request<Artifact[]>(`/api/v1/workflows/runs/${encodeURIComponent(runId)}/artifacts`, {
       method: 'GET',
     })
   }
@@ -165,7 +165,7 @@ export const useWorkflowService = () => {
     runId: string
   ): Promise<WorkflowRun> => {
     const raw = await request<unknown>(
-      `/api/v1/workflows/runs/${runId}/cancel`,
+      `/api/v1/workflows/runs/${encodeURIComponent(runId)}/cancel`,
       {
         method: 'POST',
       }

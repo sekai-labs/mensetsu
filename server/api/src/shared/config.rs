@@ -21,6 +21,11 @@ pub struct AppConfig {
     pub s3_endpoint_internal: Option<String>,
     pub s3_endpoint_public: Option<String>,
     pub api_grpc_bind: String,
+    pub prometheus_metrics_token: Option<String>,
+    pub allowed_private_hosts: Vec<String>,
+    pub oauth_web_callback_url: Option<String>,
+    pub oauth_state_ttl_seconds: i64,
+    pub oauth_handoff_ttl_seconds: i64,
 }
 
 impl AppConfig {
@@ -31,7 +36,8 @@ impl AppConfig {
                 .ok()
                 .and_then(|p| p.parse().ok())
                 .unwrap_or(3000),
-            surreal_url: env::var("SURREAL_URL").unwrap_or_else(|_| "ws://127.0.0.1:8000".to_string()),
+            surreal_url: env::var("SURREAL_URL")
+                .unwrap_or_else(|_| "ws://127.0.0.1:8000".to_string()),
             surreal_user: env::var("SURREAL_USER").unwrap_or_else(|_| "root".to_string()),
             surreal_pass: env::var("SURREAL_PASS").unwrap_or_else(|_| "root".to_string()),
             surreal_ns: env::var("SURREAL_NS").unwrap_or_else(|_| "mensetsu".to_string()),
@@ -47,20 +53,47 @@ impl AppConfig {
             access_token_ttl_seconds: env::var("ACCESS_TOKEN_TTL_SECONDS")
                 .ok()
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(900), 
+                .unwrap_or(900),
             refresh_token_ttl_seconds: env::var("REFRESH_TOKEN_TTL_SECONDS")
                 .ok()
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(2_592_000), 
+                .unwrap_or(2_592_000),
             encryption_key: env::var("ENCRYPTION_KEY").unwrap_or_default(),
             internal_service_token: env::var("INTERNAL_SERVICE_TOKEN")
                 .map(|t| t.trim().to_string())
                 .unwrap_or_default(),
             s3_bucket: env::var("S3_BUCKET").unwrap_or_else(|_| "mensetsu-resumes".to_string()),
             aws_region: env::var("AWS_REGION").unwrap_or_else(|_| "us-east-1".to_string()),
-            s3_endpoint_internal: env::var("S3_ENDPOINT_INTERNAL").ok().filter(|s| !s.is_empty()),
-            s3_endpoint_public: env::var("S3_ENDPOINT_PUBLIC").ok().filter(|s| !s.is_empty()),
-            api_grpc_bind: env::var("API_GRPC_BIND").unwrap_or_else(|_| "127.0.0.1:50052".to_string()),
+            s3_endpoint_internal: env::var("S3_ENDPOINT_INTERNAL")
+                .ok()
+                .filter(|s| !s.is_empty()),
+            s3_endpoint_public: env::var("S3_ENDPOINT_PUBLIC")
+                .ok()
+                .filter(|s| !s.is_empty()),
+            api_grpc_bind: env::var("API_GRPC_BIND")
+                .unwrap_or_else(|_| "127.0.0.1:50052".to_string()),
+            prometheus_metrics_token: env::var("PROMETHEUS_METRICS_TOKEN")
+                .ok()
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty()),
+            allowed_private_hosts: env::var("ALLOWED_PRIVATE_HOSTS")
+                .unwrap_or_default()
+                .split(',')
+                .map(|s| s.trim().to_lowercase())
+                .filter(|s| !s.is_empty())
+                .collect(),
+            oauth_web_callback_url: env::var("OAUTH_WEB_CALLBACK_URL")
+                .ok()
+                .map(|value| value.trim().to_string())
+                .filter(|value| !value.is_empty()),
+            oauth_state_ttl_seconds: env::var("OAUTH_STATE_TTL_SECONDS")
+                .ok()
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(600),
+            oauth_handoff_ttl_seconds: env::var("OAUTH_HANDOFF_TTL_SECONDS")
+                .ok()
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(60),
         }
     }
 
@@ -73,7 +106,9 @@ impl AppConfig {
                 return Err(format!("{name} is unset or blank; refusing to start"));
             }
             if value.as_bytes().len() < 32 {
-                return Err(format!("{name} must be at least 32 bytes; refusing to start"));
+                return Err(format!(
+                    "{name} must be at least 32 bytes; refusing to start"
+                ));
             }
         }
 
@@ -88,11 +123,30 @@ impl AppConfig {
             return Err("A known insecure fallback secret is configured; refusing to start".into());
         }
         if self.jwt_secret == self.encryption_key {
-            return Err("JWT_SECRET and ENCRYPTION_KEY must be different; refusing to start".into());
+            return Err(
+                "JWT_SECRET and ENCRYPTION_KEY must be different; refusing to start".into(),
+            );
         }
 
         if self.internal_service_token.trim().is_empty() {
             return Err("INTERNAL_SERVICE_TOKEN is unset or empty; refusing to start".into());
+        }
+        if self.oauth_state_ttl_seconds <= 0 || self.oauth_handoff_ttl_seconds <= 0 {
+            return Err("OAuth state and handoff TTLs must be positive".into());
+        }
+        if let Some(callback) = self.oauth_web_callback_url.as_deref() {
+            let url = reqwest::Url::parse(callback)
+                .map_err(|_| "OAUTH_WEB_CALLBACK_URL must be a valid absolute URL".to_string())?;
+            if !matches!(url.scheme(), "http" | "https")
+                || url.host_str().is_none()
+                || !url.username().is_empty()
+                || url.password().is_some()
+            {
+                return Err(
+                    "OAUTH_WEB_CALLBACK_URL must be an HTTP(S) URL without embedded credentials"
+                        .into(),
+                );
+            }
         }
         Ok(())
     }
@@ -112,14 +166,22 @@ mod tests {
 
     #[test]
     fn validate_rejects_missing_or_blank_secrets() {
-        assert!(config("", "distinct-encryption-key-123456789").validate().is_err());
-        assert!(config("jwt-secret-value-123456789012345", " \t ").validate().is_err());
+        assert!(config("", "distinct-encryption-key-123456789")
+            .validate()
+            .is_err());
+        assert!(config("jwt-secret-value-123456789012345", " \t ")
+            .validate()
+            .is_err());
     }
 
     #[test]
     fn validate_rejects_secrets_shorter_than_32_bytes() {
-        assert!(config("short", "distinct-encryption-key-123456789").validate().is_err());
-        assert!(config("jwt-secret-value-123456789012345", "short").validate().is_err());
+        assert!(config("short", "distinct-encryption-key-123456789")
+            .validate()
+            .is_err());
+        assert!(config("jwt-secret-value-123456789012345", "short")
+            .validate()
+            .is_err());
     }
 
     #[test]

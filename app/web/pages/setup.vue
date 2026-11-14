@@ -42,7 +42,7 @@ const handleInitialize = async () => {
         admin_email: adminEmail.value.trim(),
         admin_password: adminPassword.value,
         platform_llm_provider: platformProvider.value,
-        platform_llm_api_key: platformApiKey.value.trim() || undefined,
+        platform_llm_api_key: platformApiKey.value.trim() ? platformApiKey.value : undefined,
         platform_llm_base_url: platformBaseUrl.value.trim() || undefined,
       },
     })

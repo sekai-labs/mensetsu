@@ -21,6 +21,7 @@ use mensetsu_api::interfaces::grpc::proto::streaming::{
 #[derive(Default, Clone)]
 pub struct RecordedGrpcState {
     pub received_commands: Arc<parking_lot::Mutex<Vec<String>>>,
+    pub create_run_failures: Arc<parking_lot::Mutex<usize>>,
 }
 
 pub struct DynamicMockControlService {
@@ -30,7 +31,8 @@ pub struct DynamicMockControlService {
 
 #[tonic::async_trait]
 impl DataControlService for DynamicMockControlService {
-    type StreamControlStream = Pin<Box<dyn Stream<Item = Result<ControlDataEnvelope, Status>> + Send + 'static>>;
+    type StreamControlStream =
+        Pin<Box<dyn Stream<Item = Result<ControlDataEnvelope, Status>> + Send + 'static>>;
 
     async fn stream_control(
         &self,
@@ -40,6 +42,7 @@ impl DataControlService for DynamicMockControlService {
         let (tx, rx) = mpsc::channel(128);
         let ws_id = self.workspace_id.clone();
         let rec = self.state.received_commands.clone();
+        let fail = self.state.create_run_failures.clone();
 
         tokio::spawn(async move {
             while let Some(Ok(cmd)) = in_stream.next().await {
@@ -61,7 +64,11 @@ impl DataControlService for DynamicMockControlService {
                             .into_iter()
                             .map(|id| run_json_helper(&id, &ws_id, "running"))
                             .collect();
-                        items.push(run_json_helper("run_decoy_not_requested", "someone_else", "running"));
+                        items.push(run_json_helper(
+                            "run_decoy_not_requested",
+                            "someone_else",
+                            "running",
+                        ));
                         (
                             200,
                             serde_json::to_string(&serde_json::json!({
@@ -74,15 +81,47 @@ impl DataControlService for DynamicMockControlService {
                     }
                     control_command::Command::GetRun(req) => {
                         rec.lock().push(format!("get_run:{}", req.run_id));
-                        (200, serde_json::to_string(&run_json_helper(&req.run_id, &ws_id, "running")).unwrap(), String::new())
+                        (
+                            200,
+                            serde_json::to_string(&run_json_helper(&req.run_id, &ws_id, "running"))
+                                .unwrap(),
+                            String::new(),
+                        )
                     }
                     control_command::Command::CreateRun(req) => {
                         rec.lock().push("create_run".into());
-                        (201, serde_json::to_string(&run_json_helper("run_created_by_trigger", &req.workspace_id, "pending")).unwrap(), String::new())
+                        let should_fail = {
+                            let mut remaining = fail.lock();
+                            if *remaining > 0 {
+                                *remaining -= 1;
+                                true
+                            } else {
+                                false
+                            }
+                        };
+                        if should_fail {
+                            (503, "{}".into(), "Injected create_run failure".into())
+                        } else {
+                            (
+                                201,
+                                serde_json::to_string(&run_json_helper(
+                                    "run_created_by_trigger",
+                                    &req.workspace_id,
+                                    "pending",
+                                ))
+                                .unwrap(),
+                                String::new(),
+                            )
+                        }
                     }
                     control_command::Command::CancelRun(req) => {
                         rec.lock().push(format!("cancel_run:{}", req.run_id));
-                        (200, serde_json::to_string(&run_json_helper(&req.run_id, "x", "cancelled")).unwrap(), String::new())
+                        (
+                            200,
+                            serde_json::to_string(&run_json_helper(&req.run_id, "x", "cancelled"))
+                                .unwrap(),
+                            String::new(),
+                        )
                     }
                     control_command::Command::GetTaskGraph(_) => {
                         rec.lock().push("get_task_graph".into());
@@ -94,7 +133,11 @@ impl DataControlService for DynamicMockControlService {
                     }
                     control_command::Command::GetLogs(_) => {
                         rec.lock().push("get_logs".into());
-                        (200, "{\"items\":[],\"next_cursor\":null}".into(), String::new())
+                        (
+                            200,
+                            "{\"items\":[],\"next_cursor\":null}".into(),
+                            String::new(),
+                        )
                     }
                     control_command::Command::ListDelegations(_) => {
                         rec.lock().push("list_delegations".into());
@@ -110,7 +153,11 @@ impl DataControlService for DynamicMockControlService {
                     }
                     control_command::Command::GetEventsHistory(_) => {
                         rec.lock().push("get_events_history".into());
-                        (200, "{\"events\":[],\"next_after_seq\":null,\"last_seq\":0}".into(), String::new())
+                        (
+                            200,
+                            "{\"events\":[],\"next_after_seq\":null,\"last_seq\":0}".into(),
+                            String::new(),
+                        )
                     }
                     control_command::Command::GetTask(_) => {
                         rec.lock().push("get_task".into());
@@ -239,9 +286,7 @@ pub fn run_json_helper(id: &str, workspace_id: &str, status: &str) -> serde_json
     })
 }
 #[allow(dead_code)]
-pub async fn start_mock_grpc_server(
-    _run_json: String,
-) -> (String, tokio::task::JoinHandle<()>) {
+pub async fn start_mock_grpc_server(_run_json: String) -> (String, tokio::task::JoinHandle<()>) {
     let (url, _state, handle) = start_dynamic_mock_grpc_server("ws_test".into()).await;
     (url, handle)
 }

@@ -10,6 +10,50 @@ current_execution_saved_evidence_ids_var: contextvars.ContextVar[set[str] | None
     contextvars.ContextVar("current_execution_saved_evidence_ids", default=None)
 )
 
+current_knowledge_graph_skill_names_var: contextvars.ContextVar[frozenset[str] | None] = (
+    contextvars.ContextVar("current_knowledge_graph_skill_names", default=None)
+)
+
+
+def _validate_skill_relation_names(
+    skills: list["SkillNodeItem"], relations: list["SkillEdgeItem"]
+) -> None:
+    known_names = {skill.name for skill in skills}
+    invalid = sorted(
+        {
+            reference
+            for relation in relations
+            for reference in (relation.source, relation.target)
+            if reference not in known_names
+        }
+    )
+    if invalid:
+        raise ValueError(
+            "Skill relation endpoints must exactly match a name in skills; "
+            f"unknown references: {invalid}"
+        )
+
+
+def _validate_question_skill_names(
+    skills_tested: list[str], known_names: frozenset[str] | None = None
+) -> None:
+    if known_names is None:
+        known_names = current_knowledge_graph_skill_names_var.get()
+    if known_names is None:
+        return
+    invalid = sorted({reference for reference in skills_tested if reference not in known_names})
+    if invalid:
+        raise ValueError(
+            "skills_tested must exactly match names in knowledge_graph_skills; "
+            f"unknown references: {invalid}"
+        )
+
+
+def validate_question_skill_names(
+    skills_tested: list[str], known_names: frozenset[str]
+) -> None:
+    _validate_question_skill_names(skills_tested, known_names)
+
 
 def _validate_evidence_id_list(evidence_ids: list[str], field_name: str) -> None:
     valid_ids = current_saved_evidence_ids_var.get()
@@ -277,7 +321,7 @@ class InterviewQuestionItem(BaseModel):
     )
     skills_tested: list[str] = Field(
         min_length=1,
-        description="Specific technical skills or architectural concepts evaluated by this question.",
+        description="Exact skill names copied from the provided knowledge_graph_skills list.",
     )
     interviewer_intent: str = Field(
         description="What the interviewer intends to evaluate with this question."
@@ -302,6 +346,11 @@ class InterviewQuestionItem(BaseModel):
         min_length=1,
         description="At least 1 evidence ID from input cited as provenance for this question.",
     )
+
+    @model_validator(mode="after")
+    def validate_skill_references(self) -> "InterviewQuestionItem":
+        _validate_question_skill_names(self.skills_tested)
+        return self
 
 
 class CategoryQuestionBatchOutput(BaseModel):
@@ -391,8 +440,8 @@ class SkillNodeItem(BaseModel):
 
 
 class SkillEdgeItem(BaseModel):
-    source: str = Field(description="Source skill name.")
-    target: str = Field(description="Target skill name.")
+    source: str = Field(description="Exact skill name from the skills list.")
+    target: str = Field(description="Exact skill name from the skills list.")
     relation: str = Field(
         default="prerequisite", description="prerequisite | builds_on | complements"
     )
@@ -437,13 +486,18 @@ class CurriculumOutput(BaseModel):
     )
     relations: list[SkillEdgeItem] = Field(
         min_length=10,
-        description="At least 10 directed relationships between skills.",
+        description="At least 10 relationships whose endpoints exactly match skills[].name.",
     )
     learning_units: list[LearningUnitItem] = Field(
         min_length=6,
         description="At least 6 prerequisite-ordered learning units with deep dive content.",
     )
     summary: str = Field(description="Summary of knowledge graph and curriculum path.")
+
+    @model_validator(mode="after")
+    def validate_skill_relations(self) -> "CurriculumOutput":
+        _validate_skill_relation_names(self.skills, self.relations)
+        return self
 
 
 class CurriculumGraphOutput(BaseModel):
@@ -453,9 +507,14 @@ class CurriculumGraphOutput(BaseModel):
     )
     relations: list[SkillEdgeItem] = Field(
         min_length=10,
-        description="At least 10 directed relationships between skills.",
+        description="At least 10 relationships whose endpoints exactly match skills[].name.",
     )
     summary: str = Field(description="Summary of the knowledge graph.")
+
+    @model_validator(mode="after")
+    def validate_skill_relations(self) -> "CurriculumGraphOutput":
+        _validate_skill_relation_names(self.skills, self.relations)
+        return self
 
 
 class LearningUnitBatchOutput(BaseModel):

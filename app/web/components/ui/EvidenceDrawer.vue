@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SourceCitation } from '~/features/interviews/models/interview.model'
+import { safeExternalHttpUrl } from '~/utils/safe-external-url'
 import { formatDisplayDate } from '~/utils/date'
 
 interface Props {
@@ -92,7 +93,8 @@ onUnmounted(() => {
             <div>
               <span class="text-[11px] font-mono text-slate-400 block mb-1.5">Original Source Document</span>
               <a
-                :href="citation.source_url"
+                v-if="safeExternalHttpUrl(citation.source_url)"
+                :href="safeExternalHttpUrl(citation.source_url)"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="inline-flex items-center gap-1.5 text-xs font-mono text-indigo-600 dark:text-indigo-400 hover:underline break-all"

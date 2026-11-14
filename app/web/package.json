@@ -15,6 +15,7 @@
     "@vue-flow/core": "^1.48.2",
     "@vueuse/core": "^12.8.2",
     "ioredis": "^6.0.0",
+    "isomorphic-dompurify": "^4.7.0",
     "lucide-vue-next": "^0.479.0",
     "nuxt": "^4.5.2",
     "vue": "^3.5.13",
@@ -28,6 +29,7 @@
     "ajv": "^8.20.0",
     "jsdom": "^26.0.0",
     "marked": "^18.1.1",
+    "postcss-nested": "^6.2.0",
     "typescript": "^5.7.3",
     "vitest": "^4.1.12"
   }

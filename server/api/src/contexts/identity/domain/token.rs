@@ -40,7 +40,11 @@ impl TokenService {
         }
     }
 
-    pub fn generate_access_token(&self, user_id: &UserId, session_id: &SessionId) -> Result<String> {
+    pub fn generate_access_token(
+        &self,
+        user_id: &UserId,
+        session_id: &SessionId,
+    ) -> Result<String> {
         let now = Utc::now();
         let exp = now + Duration::seconds(self.access_ttl);
         let claims = Claims {
@@ -84,7 +88,6 @@ impl TokenService {
         Ok(UserId(token_data.claims.sub))
     }
 
-    
     pub fn generate_refresh_token() -> String {
         rand::thread_rng()
             .sample_iter(&Alphanumeric)
@@ -93,7 +96,6 @@ impl TokenService {
             .collect()
     }
 
-    
     pub fn hash_refresh_token(token: &str) -> String {
         use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
@@ -116,8 +118,12 @@ mod tests {
         let uid = UserId("u1".into());
         let sid = SessionId("s1".into());
 
-        let token = service.generate_access_token(&uid, &sid).expect("Token generation");
-        let claims = service.verify_access_token(&token).expect("Token verification");
+        let token = service
+            .generate_access_token(&uid, &sid)
+            .expect("Token generation");
+        let claims = service
+            .verify_access_token(&token)
+            .expect("Token verification");
 
         assert_eq!(claims.sub, "u1");
         assert_eq!(claims.sid, "s1");

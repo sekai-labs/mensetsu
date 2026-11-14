@@ -3,6 +3,7 @@ import logging
 
 from src.contracts.v1 import WorkflowTask
 from src.orchestration.id_validator import validate_id
+from src.orchestration.ledger.base import TERMINAL_TASK_STATUSES, extract_rows
 from src.orchestration.sanitizer import sanitize_data
 
 logger = logging.getLogger("mensetsu.orchestration.ledger")
@@ -14,23 +15,22 @@ class TaskMixin:
         clean_run_id = validate_id(task.run_id, "run_id")
         scoped_id = f"{clean_run_id}__{clean_id}"
 
-        query = """
-        UPSERT type::record('workflow_task', $scoped_id) SET
-            run_id = type::record('workflow_run', $run_id),
-            task_type = $task_type,
-            name = $name,
-            assigned_agent = $assigned_agent,
-            dependencies = $dependencies,
-            status = $status,
-            attempt = $attempt,
-            required = $required,
-            added_in_revision = $added_in_revision,
-            execution_ids = $execution_ids,
-            input_data = $input_data,
-            output_data = $output_data,
-            created_at = created_at ?? time::now(),
-            updated_at = time::now();
-        """
+        assignments = [
+            "run_id = type::record('workflow_run', $run_id)",
+            "task_type = $task_type",
+            "name = $name",
+            "assigned_agent = $assigned_agent",
+            "dependencies = $dependencies",
+            "status = $status",
+            "attempt = $attempt",
+            "required = $required",
+            "added_in_revision = $added_in_revision",
+            "execution_ids = $execution_ids",
+            "input_data = $input_data",
+            "output_data = $output_data",
+            "created_at = created_at ?? time::now()",
+            "updated_at = time::now()",
+        ]
         vars_payload = {
             "scoped_id": scoped_id,
             "run_id": clean_run_id,
@@ -47,11 +47,34 @@ class TaskMixin:
             "output_data": task.output_data,
         }
         if task.error is not None:
-            query = query.replace(
-                "updated_at = time::now();", "error = $error, updated_at = time::now();"
-            )
+            assignments.insert(-2, "error = $error")
             vars_payload["error"] = sanitize_data(task.error)
-        await self.db.execute_query(query, vars=vars_payload)
+        set_str = ", ".join(assignments)
+
+        vars_payload["terminal_statuses"] = sorted(TERMINAL_TASK_STATUSES)
+        update_query = (
+            "UPDATE type::record('workflow_task', $scoped_id) SET "
+            + set_str
+            + " WHERE status NOT IN $terminal_statuses OR status = $status;"
+        )
+        updated = extract_rows(await self.db.execute_query(update_query, vars=vars_payload))
+        if not updated:
+            existing = await self.get_task(clean_run_id, clean_id)
+            if existing is not None:
+                logger.info(
+                    f"Skipping task update for {clean_run_id}/{clean_id}: "
+                    f"task is already terminal ({existing.status})."
+                )
+                return
+            create_query = (
+                "CREATE type::record('workflow_task', $scoped_id) SET " + set_str + ";"
+            )
+            try:
+                await self.db.execute_query(create_query, vars=vars_payload)
+            except Exception:
+                retried = extract_rows(await self.db.execute_query(update_query, vars=vars_payload))
+                if not retried:
+                    raise
         try:
             await self.refresh_run_progress(clean_run_id)
         except Exception as pe:

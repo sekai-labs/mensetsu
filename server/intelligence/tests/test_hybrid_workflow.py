@@ -235,6 +235,7 @@ async def test_hybrid_curriculum_generates_one_lesson_per_prioritized_skill():
     mock_ledger.append_event_transactional = AsyncMock()
     mock_ledger.save_task = AsyncMock()
     mock_ledger.list_artifacts_for_run = AsyncMock(return_value=[])
+    mock_ledger.next_task_attempt = AsyncMock(return_value=1)
     from src.orchestration.hybrid_curriculum import execute_curriculum_node
 
     state = HybridWorkflowState(
@@ -473,3 +474,486 @@ async def test_hybrid_persists_completed_outputs_from_run_artifacts():
         "How do you recover replicas?",
         "What consistency is acceptable?",
     ]
+
+
+def test_curriculum_graph_rejects_relations_to_unknown_skill_names():
+    from pydantic import ValidationError
+
+    from src.agents.schemas import CurriculumGraphOutput
+
+    skills = [
+        {
+            "name": f"Skill {index}",
+            "slug": f"skill-{index}",
+            "category": "Systems",
+        }
+        for index in range(12)
+    ]
+    relations = [
+        {"source": f"Skill {index}", "target": f"Skill {index + 1}"}
+        for index in range(10)
+    ]
+    relations[-1]["target"] = "Model Provider Abstration and Routing"
+
+    with pytest.raises(ValidationError, match="unknown references"):
+        CurriculumGraphOutput(
+            skills=skills,
+            relations=relations,
+            summary="Test graph",
+        )
+
+
+def test_question_skill_references_must_match_curriculum_names():
+    from pydantic import ValidationError
+
+    from src.agents.schemas import (
+        InterviewQuestionItem,
+        current_knowledge_graph_skill_names_var,
+    )
+
+    skill_name = "Model Provider Abstraction and Routing"
+    token = current_knowledge_graph_skill_names_var.set(frozenset({skill_name}))
+    question = {
+        "question": "How would you route model requests?",
+        "category": "system_design",
+        "difficulty": "medium",
+        "rationale": "Test model routing.",
+        "skills_tested": ["Model Provider Abstration and Routing"],
+        "interviewer_intent": "Assess routing design.",
+        "expected_signals": ["Explains routing", "Handles provider failures"],
+        "answer_outline": ["Define provider policy", "Route requests", "Measure failures"],
+        "pitfalls": ["Hard-code providers", "Ignore retries"],
+        "follow_ups": ["How would you fail over?", "How would you add a provider?"],
+        "evidence_ids": ["evidence-1"],
+    }
+
+    try:
+        with pytest.raises(ValidationError, match="must exactly match"):
+            InterviewQuestionItem(**question)
+
+        question["skills_tested"] = [skill_name]
+        parsed = InterviewQuestionItem(**question)
+        assert parsed.skills_tested == [skill_name]
+    finally:
+        current_knowledge_graph_skill_names_var.reset(token)
+
+
+def _replan_ledger(next_attempt: int = 1) -> MagicMock:
+    ledger = MagicMock()
+    ledger.next_task_attempt = AsyncMock(return_value=next_attempt)
+    ledger.save_task = AsyncMock()
+    ledger.append_event_transactional = AsyncMock()
+    ledger.update_workflow_run = AsyncMock()
+    ledger.list_tasks_for_run = AsyncMock(return_value=[])
+    ledger.list_artifacts_for_run = AsyncMock(return_value=[])
+    ledger.get_workflow_run = AsyncMock(return_value=None)
+    return ledger
+
+
+def _execution(execution_id: str, summary: str = "Recovered output") -> MagicMock:
+    execution = MagicMock()
+    execution.id = execution_id
+    execution.public_summary = summary
+    return execution
+
+
+def _dynamic_task_inputs() -> dict:
+    return {
+        "task_info": {
+            "id": "task_company_run_hybr",
+            "assigned_agent": "company-research",
+            "objective": "Research Acme engineering culture",
+            "dependencies": [],
+        },
+        "run_id": "run_hybr",
+        "workspace_id": "ws_hybr",
+        "company_name": "Acme",
+        "role_title": "Staff Engineer",
+        "company_urls": [],
+        "parsed_resume": {},
+        "job_description": "Build reliable distributed services.",
+        "user_prompt": "",
+    }
+
+
+def _graph_output() -> dict:
+    return {
+        "skills": [
+            {
+                "name": f"Skill {index}",
+                "slug": f"skill-{index}",
+                "category": "Architecture",
+                "candidate_status": "gap",
+                "importance": "mandatory",
+            }
+            for index in range(6)
+        ],
+        "relations": [],
+        "summary": "Graph rebuilt with a different decomposition.",
+    }
+
+
+@pytest.mark.asyncio
+async def test_dynamic_task_replans_with_prior_error_on_second_attempt():
+    from src.orchestration.hybrid_nodes import build_hybrid_nodes
+
+    ledger = _replan_ledger(next_attempt=2)
+    node = build_hybrid_nodes(checkpointer=None, ledger=ledger)["execute_dynamic_task_node"]
+    calls: list[dict] = []
+
+    async def execute_agent_loop(**kwargs):
+        calls.append(kwargs)
+        if len(calls) == 1:
+            raise RuntimeError("agent loop exhausted its tool budget")
+        return _execution("exec_recovered", "Recovered research"), {
+            "summary": "Recovered research"
+        }
+
+    with patch(
+        "src.agents.runtime.agent_runtime.execute_agent_loop",
+        side_effect=execute_agent_loop,
+    ), patch("asyncio.sleep", new_callable=AsyncMock):
+        result = await node(_dynamic_task_inputs())
+
+    assert result == {
+        "completed_task_ids": ["task_company_run_hybr"],
+        "research_results": {"company": {"summary": "Recovered research"}},
+    }
+    assert len(calls) == 2
+    assert calls[0]["recovery_context"] is None
+    assert calls[0]["objective"] == calls[1]["objective"]
+    assert calls[1]["input_data"] == calls[0]["input_data"]
+    recovery = calls[1]["recovery_context"]
+    assert recovery is not None
+    assert recovery.attempt == 1
+    assert "tool budget" in recovery.previous_error
+    saved_tasks = [call.args[0] for call in ledger.save_task.call_args_list]
+    assert saved_tasks[-1].attempt == 3
+    assert saved_tasks[-1].status == "completed"
+    started_events = [
+        call.kwargs["payload"]
+        for call in ledger.append_event_transactional.call_args_list
+        if call.kwargs.get("event_type") == "task.started"
+    ]
+    assert started_events == [
+        {
+            "task_id": "task_company_run_hybr",
+            "attempt": 2,
+            "assigned_agent": "company-research",
+        }
+    ]
+    retry_events = [
+        call.kwargs
+        for call in ledger.append_event_transactional.call_args_list
+        if call.kwargs.get("event_type") == "task.retrying"
+    ]
+    assert len(retry_events) == 1
+    assert retry_events[0]["payload"] == {
+        "task_id": "task_company_run_hybr",
+        "next_attempt": 3,
+        "delay_ms": 1000,
+    }
+
+
+@pytest.mark.asyncio
+async def test_dynamic_task_keeps_missing_research_fallback_after_replans_exhaust():
+    from src.orchestration.hybrid_nodes import build_hybrid_nodes
+
+    ledger = _replan_ledger()
+    node = build_hybrid_nodes(checkpointer=None, ledger=ledger)["execute_dynamic_task_node"]
+    calls: list[dict] = []
+
+    async def execute_agent_loop(**kwargs):
+        calls.append(kwargs)
+        raise RuntimeError("provider repeatedly unavailable")
+
+    with patch(
+        "src.agents.runtime.agent_runtime.execute_agent_loop",
+        side_effect=execute_agent_loop,
+    ), patch("asyncio.sleep", new_callable=AsyncMock):
+        result = await node(_dynamic_task_inputs())
+
+    assert result == {
+        "failed_task_ids": ["task_company_run_hybr"],
+        "missing_research": {"company": "provider repeatedly unavailable"},
+    }
+    assert len(calls) == 2
+    assert calls[0]["recovery_context"] is None
+    assert calls[1]["recovery_context"] is not None
+    saved_tasks = [call.args[0] for call in ledger.save_task.call_args_list]
+    assert saved_tasks[-1].attempt == 2
+    assert saved_tasks[-1].status == "failed"
+    failed_events = [
+        call.kwargs["payload"]
+        for call in ledger.append_event_transactional.call_args_list
+        if call.kwargs.get("event_type") == "task.failed"
+    ]
+    assert failed_events[-1]["attempt"] == 2
+    assert failed_events[-1]["can_retry"] is False
+
+
+@pytest.mark.asyncio
+async def test_synthesis_replans_with_prior_error_on_second_attempt():
+    from src.orchestration.hybrid_nodes import build_hybrid_nodes
+
+    ledger = _replan_ledger()
+    node = build_hybrid_nodes(checkpointer=None, ledger=ledger)["synthesize_node"]
+    state = HybridWorkflowState(
+        run_id="run_hybr_synthesis",
+        workspace_id="ws_hybr_synthesis",
+        company_name="Acme",
+        role_title="Staff Engineer",
+        tasks=[{"id": "task_company_run_hybr"}],
+    )
+    calls: list[dict] = []
+
+    async def execute_agent_loop(**kwargs):
+        calls.append(kwargs)
+        if len(calls) == 1:
+            raise RuntimeError("match schema validation failed")
+        return _execution("exec_eval_recovered"), {
+            "overall_match_ratio": 0.74,
+            "gaps": [],
+        }
+
+    with patch(
+        "src.agents.runtime.agent_runtime.execute_agent_loop",
+        side_effect=execute_agent_loop,
+    ), patch("asyncio.sleep", new_callable=AsyncMock):
+        result = await node(state)
+
+    assert result == {
+        "match_analysis": {"overall_match_ratio": 0.74, "gaps": []},
+        "completed_task_ids": ["task_synthesize_run_hybr"],
+    }
+    assert [call["agent_id"] for call in calls] == ["evidence-evaluator", "evidence-evaluator"]
+    assert calls[0]["recovery_context"] is None
+    recovery = calls[1]["recovery_context"]
+    assert recovery is not None
+    assert recovery.attempt == 1
+    assert "schema validation" in recovery.previous_error
+    saved_tasks = [call.args[0] for call in ledger.save_task.call_args_list]
+    assert saved_tasks[-1].attempt == 2
+    assert saved_tasks[-1].status == "completed"
+
+
+@pytest.mark.asyncio
+async def test_curriculum_graph_generation_replans_before_units():
+    from src.orchestration.hybrid_curriculum import execute_curriculum_node
+
+    ledger = _replan_ledger()
+    state = HybridWorkflowState(
+        run_id="run_hybr_curriculum",
+        workspace_id="ws_hybr_curriculum",
+        company_name="Acme",
+        role_title="Staff Engineer",
+    )
+    graph_calls: list[dict] = []
+    all_calls: list[dict] = []
+
+    async def execute_agent_loop(**kwargs):
+        all_calls.append(kwargs)
+        input_data = kwargs["input_data"]
+        if input_data["curriculum_stage"] == "graph":
+            graph_calls.append(kwargs)
+            if len(graph_calls) == 1:
+                raise RuntimeError("graph schema rejected unknown relations")
+            return _execution("exec_graph_recovered"), _graph_output()
+        skill = input_data["target_skills"][0]["name"]
+        return _execution(f"exec_{skill}"), {
+            "learning_units": [
+                {
+                    "title": f"{skill} fundamentals",
+                    "skill": skill,
+                    "summary": f"Study {skill} internals and failure modes.",
+                    "deep_dive_markdown": f"Detailed mechanisms for {skill}.",
+                    "prerequisites": [],
+                    "estimated_minutes": 60,
+                }
+            ]
+        }
+
+    with patch(
+        "src.agents.runtime.agent_runtime.execute_agent_loop",
+        side_effect=execute_agent_loop,
+    ), patch("asyncio.sleep", new_callable=AsyncMock):
+        result = await execute_curriculum_node(state, ledger)
+
+    assert len(graph_calls) == 2
+    assert graph_calls[0]["recovery_context"] is None
+    recovery = graph_calls[1]["recovery_context"]
+    assert recovery is not None
+    assert recovery.attempt == 1
+    assert "unknown relations" in recovery.previous_error
+    unit_calls = [
+        call for call in all_calls if call["input_data"]["curriculum_stage"] != "graph"
+    ]
+    assert unit_calls
+    assert all(call["recovery_context"] is None for call in unit_calls)
+    assert len(result["curriculum"]["learning_units"]) == 6
+    assert result["completed_task_ids"] == ["task_curriculum_run_hybr"]
+    saved_tasks = [call.args[0] for call in ledger.save_task.call_args_list]
+    assert saved_tasks[-1].attempt == 2
+    retry_events = [
+        call.kwargs
+        for call in ledger.append_event_transactional.call_args_list
+        if call.kwargs.get("event_type") == "task.retrying"
+    ]
+    assert len(retry_events) == 1
+    assert retry_events[0]["payload"]["next_attempt"] == 2
+
+
+@pytest.mark.asyncio
+async def test_learning_unit_generation_replans_with_prior_error():
+    from src.orchestration.hybrid_curriculum import execute_curriculum_node
+
+    ledger = _replan_ledger()
+    state = HybridWorkflowState(
+        run_id="run_hybr_units",
+        workspace_id="ws_hybr_units",
+        company_name="Acme",
+        role_title="Staff Engineer",
+    )
+    unit_calls: list[dict] = []
+
+    async def execute_agent_loop(**kwargs):
+        input_data = kwargs["input_data"]
+        if input_data["curriculum_stage"] == "graph":
+            return _execution("exec_graph"), _graph_output()
+        skill = input_data["target_skills"][0]["name"]
+        unit_calls.append(kwargs)
+        if skill == "Skill 0" and len(
+            [call for call in unit_calls if call["input_data"]["target_skills"][0]["name"] == skill]
+        ) == 1:
+            raise RuntimeError("learning unit omitted the target skill")
+        return _execution(f"exec_{skill}"), {
+            "learning_units": [
+                {
+                    "title": f"{skill} fundamentals",
+                    "skill": skill,
+                    "summary": f"Study {skill} internals and failure modes.",
+                    "deep_dive_markdown": f"Detailed mechanisms for {skill}.",
+                    "prerequisites": [],
+                    "estimated_minutes": 60,
+                }
+            ]
+        }
+
+    with patch(
+        "src.agents.runtime.agent_runtime.execute_agent_loop",
+        side_effect=execute_agent_loop,
+    ):
+        result = await execute_curriculum_node(state, ledger)
+
+    skill_zero_calls = [
+        call for call in unit_calls if call["input_data"]["target_skills"][0]["name"] == "Skill 0"
+    ]
+    assert len(skill_zero_calls) == 2
+    assert skill_zero_calls[0]["recovery_context"] is None
+    recovery = skill_zero_calls[1]["recovery_context"]
+    assert recovery is not None
+    assert recovery.attempt == 1
+    assert "target skill" in recovery.previous_error
+    assert len(result["curriculum"]["learning_units"]) == 6
+
+
+@pytest.mark.asyncio
+async def test_interview_batches_use_second_attempt_as_replan():
+    from src.orchestration.hybrid_outputs import build_hybrid_output_nodes
+
+    ledger = _replan_ledger()
+    node = build_hybrid_output_nodes(ledger, AsyncMock())["interview_node"]
+    state = HybridWorkflowState(
+        run_id="run_hybr_questions",
+        workspace_id="ws_hybr_questions",
+        company_name="Acme",
+        role_title="Staff Engineer",
+        curriculum={"skills": [{"name": "Distributed systems"}]},
+    )
+    calls: list[dict] = []
+    attempts: dict[tuple[str, int], int] = {}
+
+    async def execute_agent_loop(**kwargs):
+        calls.append(kwargs)
+        input_data = kwargs["input_data"]
+        key = (input_data["target_category"], input_data["batch_part"])
+        attempts[key] = attempts.get(key, 0) + 1
+        if attempts[key] == 1:
+            raise RuntimeError(f"forced batch failure {key[0]} {key[1]}")
+        questions = [
+            {
+                "question": f"{key[0]} batch {key[1]} question {index}",
+                "category": key[0],
+                "difficulty": "medium",
+                "skills_tested": ["Distributed systems"],
+                "interviewer_intent": "Assess distributed systems reasoning.",
+                "answer_outline": ["Define constraints", "Explain tradeoffs", "Describe recovery"],
+                "expected_signals": ["Mentions quorum", "Covers failure isolation"],
+                "pitfalls": ["Ignores partitions", "Assumes no data loss"],
+                "follow_ups": ["How do you recover?", "What consistency is required?"],
+            }
+            for index in range(input_data["count"])
+        ]
+        return _execution(f"exec_{key[0]}_{key[1]}"), {"questions": questions}
+
+    with patch(
+        "src.agents.runtime.agent_runtime.execute_agent_loop",
+        side_effect=execute_agent_loop,
+    ):
+        result = await node(state)
+
+    assert len(calls) == 2 * len(_question_batch_plan())
+    assert len(result["questions"]) == 105
+    grouped: dict[tuple[str, int], list[dict]] = {}
+    for call in calls:
+        input_data = call["input_data"]
+        grouped.setdefault(
+            (input_data["target_category"], input_data["batch_part"]), []
+        ).append(call)
+    assert all(len(group) == 2 for group in grouped.values())
+    for group in grouped.values():
+        assert group[0]["recovery_context"] is None
+        recovery = group[1]["recovery_context"]
+        assert recovery is not None
+        assert recovery.attempt == 1
+        assert "forced batch failure" in recovery.previous_error
+    saved_tasks = [call.args[0] for call in ledger.save_task.call_args_list]
+    assert saved_tasks[-1].status == "completed"
+    assert saved_tasks[-1].attempt == 1
+
+
+@pytest.mark.asyncio
+async def test_hybrid_finalize_enforces_output_contract_invariants():
+    from src.evals import OutputQualityError
+    from src.orchestration.hybrid_outputs import build_hybrid_output_nodes
+
+    ledger = _replan_ledger()
+    nodes = build_hybrid_output_nodes(ledger, AsyncMock())
+    state = HybridWorkflowState(
+        run_id="run_hybr_contract_check",
+        workspace_id="ws_hybr_contract_check",
+        company_name="Acme",
+        role_title="Staff Engineer",
+        research_results={
+            "company": {
+                "overview": "Overview",
+                "claims": [
+                    {
+                        "statement": "Claim citing missing evidence",
+                        "evidence_ids": ["ev_missing_from_run"],
+                    }
+                ],
+            }
+        },
+    )
+
+    with patch(
+        "src.orchestration.hybrid_outputs._persist_hybrid_outputs",
+        new_callable=AsyncMock,
+    ) as persist:
+        with pytest.raises(OutputQualityError) as exc_info:
+            await nodes["finalize_node"](state)
+
+    persist.assert_not_awaited()
+    assert "citation_provenance" in str(exc_info.value)
+    assert "ev_missing_from_run" in str(exc_info.value)

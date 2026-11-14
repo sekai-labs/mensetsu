@@ -57,7 +57,7 @@ const inputId = computed(() => props.id || `input-${Math.random().toString(36).s
       </div>
     </div>
 
-    <p v-if="error" class="text-[11px] text-rose-600 dark:text-rose-400">
+    <p v-if="error" role="alert" class="text-[11px] text-rose-600 dark:text-rose-400">
       {{ error }}
     </p>
     <p v-else-if="hint" class="text-[11px] text-slate-500 dark:text-slate-400">

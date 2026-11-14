@@ -42,11 +42,9 @@ namespace Mensetsu.Contracts.Api
         /// 
         /// </remarks>
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
-        /// <param name="beforeTimestamp"> (optional)</param>
-        /// <param name="beforeEventId"> (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
-        /// <returns><see cref="Task"/>&lt;<see cref="IAdminTokenUsageApiResponse"/>&gt;</returns>
-        Task<IAdminTokenUsageApiResponse> AdminTokenUsageAsync(Option<string?> beforeTimestamp = default, Option<string?> beforeEventId = default, System.Threading.CancellationToken cancellationToken = default);
+        /// <returns><see cref="Task"/>&lt;<see cref="IAdminDailyTokenUsageApiResponse"/>&gt;</returns>
+        Task<IAdminDailyTokenUsageApiResponse> AdminDailyTokenUsageAsync(System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 
@@ -54,11 +52,9 @@ namespace Mensetsu.Contracts.Api
         /// <remarks>
         /// 
         /// </remarks>
-        /// <param name="beforeTimestamp"> (optional)</param>
-        /// <param name="beforeEventId"> (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
-        /// <returns><see cref="Task"/>&lt;<see cref="IAdminTokenUsageApiResponse"/>?&gt;</returns>
-        Task<IAdminTokenUsageApiResponse?> AdminTokenUsageOrDefaultAsync(Option<string?> beforeTimestamp = default, Option<string?> beforeEventId = default, System.Threading.CancellationToken cancellationToken = default);
+        /// <returns><see cref="Task"/>&lt;<see cref="IAdminDailyTokenUsageApiResponse"/>?&gt;</returns>
+        Task<IAdminDailyTokenUsageApiResponse?> AdminDailyTokenUsageOrDefaultAsync(System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 
@@ -69,9 +65,23 @@ namespace Mensetsu.Contracts.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="beforeTimestamp"> (optional)</param>
         /// <param name="beforeEventId"> (optional)</param>
+        /// <param name="limit"> (optional)</param>
+        /// <param name="q"> (optional)</param>
+        /// <param name="search"> (optional)</param>
+        /// <param name="provider"> (optional)</param>
+        /// <param name="modelProvider"> (optional)</param>
+        /// <param name="agent"> (optional)</param>
+        /// <param name="agentId"> (optional)</param>
+        /// <param name="from"> (optional)</param>
+        /// <param name="fromDate"> (optional)</param>
+        /// <param name="startDate"> (optional)</param>
+        /// <param name="to"> (optional)</param>
+        /// <param name="toDate"> (optional)</param>
+        /// <param name="endDate"> (optional)</param>
+        /// <param name="userId"> (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
-        /// <returns><see cref="Task"/>&lt;<see cref="IUserTokenUsageApiResponse"/>&gt;</returns>
-        Task<IUserTokenUsageApiResponse> UserTokenUsageAsync(Option<string?> beforeTimestamp = default, Option<string?> beforeEventId = default, System.Threading.CancellationToken cancellationToken = default);
+        /// <returns><see cref="Task"/>&lt;<see cref="IAdminTokenUsageApiResponse"/>&gt;</returns>
+        Task<IAdminTokenUsageApiResponse> AdminTokenUsageAsync(Option<string> beforeTimestamp = default, Option<string> beforeEventId = default, Option<int> limit = default, Option<string> q = default, Option<string> search = default, Option<string> provider = default, Option<string> modelProvider = default, Option<string> agent = default, Option<string> agentId = default, Option<string> from = default, Option<string> fromDate = default, Option<string> startDate = default, Option<string> to = default, Option<string> toDate = default, Option<string> endDate = default, Option<string> userId = default, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 
@@ -81,9 +91,115 @@ namespace Mensetsu.Contracts.Api
         /// </remarks>
         /// <param name="beforeTimestamp"> (optional)</param>
         /// <param name="beforeEventId"> (optional)</param>
+        /// <param name="limit"> (optional)</param>
+        /// <param name="q"> (optional)</param>
+        /// <param name="search"> (optional)</param>
+        /// <param name="provider"> (optional)</param>
+        /// <param name="modelProvider"> (optional)</param>
+        /// <param name="agent"> (optional)</param>
+        /// <param name="agentId"> (optional)</param>
+        /// <param name="from"> (optional)</param>
+        /// <param name="fromDate"> (optional)</param>
+        /// <param name="startDate"> (optional)</param>
+        /// <param name="to"> (optional)</param>
+        /// <param name="toDate"> (optional)</param>
+        /// <param name="endDate"> (optional)</param>
+        /// <param name="userId"> (optional)</param>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IAdminTokenUsageApiResponse"/>?&gt;</returns>
+        Task<IAdminTokenUsageApiResponse?> AdminTokenUsageOrDefaultAsync(Option<string> beforeTimestamp = default, Option<string> beforeEventId = default, Option<int> limit = default, Option<string> q = default, Option<string> search = default, Option<string> provider = default, Option<string> modelProvider = default, Option<string> agent = default, Option<string> agentId = default, Option<string> from = default, Option<string> fromDate = default, Option<string> startDate = default, Option<string> to = default, Option<string> toDate = default, Option<string> endDate = default, Option<string> userId = default, System.Threading.CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <remarks>
+        /// 
+        /// </remarks>
+        /// <exception cref="ApiException">Thrown when fails to make API call</exception>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IUserDailyTokenUsageApiResponse"/>&gt;</returns>
+        Task<IUserDailyTokenUsageApiResponse> UserDailyTokenUsageAsync(System.Threading.CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <remarks>
+        /// 
+        /// </remarks>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IUserDailyTokenUsageApiResponse"/>?&gt;</returns>
+        Task<IUserDailyTokenUsageApiResponse?> UserDailyTokenUsageOrDefaultAsync(System.Threading.CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <remarks>
+        /// 
+        /// </remarks>
+        /// <exception cref="ApiException">Thrown when fails to make API call</exception>
+        /// <param name="beforeTimestamp"> (optional)</param>
+        /// <param name="beforeEventId"> (optional)</param>
+        /// <param name="limit"> (optional)</param>
+        /// <param name="q"> (optional)</param>
+        /// <param name="search"> (optional)</param>
+        /// <param name="provider"> (optional)</param>
+        /// <param name="modelProvider"> (optional)</param>
+        /// <param name="agent"> (optional)</param>
+        /// <param name="agentId"> (optional)</param>
+        /// <param name="from"> (optional)</param>
+        /// <param name="fromDate"> (optional)</param>
+        /// <param name="startDate"> (optional)</param>
+        /// <param name="to"> (optional)</param>
+        /// <param name="toDate"> (optional)</param>
+        /// <param name="endDate"> (optional)</param>
+        /// <param name="userId"> (optional)</param>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IUserTokenUsageApiResponse"/>&gt;</returns>
+        Task<IUserTokenUsageApiResponse> UserTokenUsageAsync(Option<string> beforeTimestamp = default, Option<string> beforeEventId = default, Option<int> limit = default, Option<string> q = default, Option<string> search = default, Option<string> provider = default, Option<string> modelProvider = default, Option<string> agent = default, Option<string> agentId = default, Option<string> from = default, Option<string> fromDate = default, Option<string> startDate = default, Option<string> to = default, Option<string> toDate = default, Option<string> endDate = default, Option<string> userId = default, System.Threading.CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <remarks>
+        /// 
+        /// </remarks>
+        /// <param name="beforeTimestamp"> (optional)</param>
+        /// <param name="beforeEventId"> (optional)</param>
+        /// <param name="limit"> (optional)</param>
+        /// <param name="q"> (optional)</param>
+        /// <param name="search"> (optional)</param>
+        /// <param name="provider"> (optional)</param>
+        /// <param name="modelProvider"> (optional)</param>
+        /// <param name="agent"> (optional)</param>
+        /// <param name="agentId"> (optional)</param>
+        /// <param name="from"> (optional)</param>
+        /// <param name="fromDate"> (optional)</param>
+        /// <param name="startDate"> (optional)</param>
+        /// <param name="to"> (optional)</param>
+        /// <param name="toDate"> (optional)</param>
+        /// <param name="endDate"> (optional)</param>
+        /// <param name="userId"> (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IUserTokenUsageApiResponse"/>?&gt;</returns>
-        Task<IUserTokenUsageApiResponse?> UserTokenUsageOrDefaultAsync(Option<string?> beforeTimestamp = default, Option<string?> beforeEventId = default, System.Threading.CancellationToken cancellationToken = default);
+        Task<IUserTokenUsageApiResponse?> UserTokenUsageOrDefaultAsync(Option<string> beforeTimestamp = default, Option<string> beforeEventId = default, Option<int> limit = default, Option<string> q = default, Option<string> search = default, Option<string> provider = default, Option<string> modelProvider = default, Option<string> agent = default, Option<string> agentId = default, Option<string> from = default, Option<string> fromDate = default, Option<string> startDate = default, Option<string> to = default, Option<string> toDate = default, Option<string> endDate = default, Option<string> userId = default, System.Threading.CancellationToken cancellationToken = default);
+    }
+
+    /// <summary>
+    /// The <see cref="IAdminDailyTokenUsageApiResponse"/>
+    /// </summary>
+    public interface IAdminDailyTokenUsageApiResponse : Mensetsu.Contracts.Client.IApiResponse, IOk<Mensetsu.Contracts.Model.DailyTokenUsageResponseDto?>
+    {
+        /// <summary>
+        /// Returns true if the response is 200 Ok
+        /// </summary>
+        /// <returns></returns>
+        bool IsOk { get; }
+
+        /// <summary>
+        /// Returns true if the response is 403 Forbidden
+        /// </summary>
+        /// <returns></returns>
+        bool IsForbidden { get; }
     }
 
     /// <summary>
@@ -102,6 +218,24 @@ namespace Mensetsu.Contracts.Api
         /// </summary>
         /// <returns></returns>
         bool IsForbidden { get; }
+    }
+
+    /// <summary>
+    /// The <see cref="IUserDailyTokenUsageApiResponse"/>
+    /// </summary>
+    public interface IUserDailyTokenUsageApiResponse : Mensetsu.Contracts.Client.IApiResponse, IOk<Mensetsu.Contracts.Model.DailyTokenUsageResponseDto?>
+    {
+        /// <summary>
+        /// Returns true if the response is 200 Ok
+        /// </summary>
+        /// <returns></returns>
+        bool IsOk { get; }
+
+        /// <summary>
+        /// Returns true if the response is 401 Unauthorized
+        /// </summary>
+        /// <returns></returns>
+        bool IsUnauthorized { get; }
     }
 
     /// <summary>
@@ -130,6 +264,26 @@ namespace Mensetsu.Contracts.Api
         /// <summary>
         /// The event raised after the server response
         /// </summary>
+        public event EventHandler<ApiResponseEventArgs>? OnAdminDailyTokenUsage;
+
+        /// <summary>
+        /// The event raised after an error querying the server
+        /// </summary>
+        public event EventHandler<ExceptionEventArgs>? OnErrorAdminDailyTokenUsage;
+
+        internal void ExecuteOnAdminDailyTokenUsage(TokenUsageApi.AdminDailyTokenUsageApiResponse apiResponse)
+        {
+            OnAdminDailyTokenUsage?.Invoke(this, new ApiResponseEventArgs(apiResponse));
+        }
+
+        internal void ExecuteOnErrorAdminDailyTokenUsage(Exception exception)
+        {
+            OnErrorAdminDailyTokenUsage?.Invoke(this, new ExceptionEventArgs(exception));
+        }
+
+        /// <summary>
+        /// The event raised after the server response
+        /// </summary>
         public event EventHandler<ApiResponseEventArgs>? OnAdminTokenUsage;
 
         /// <summary>
@@ -145,6 +299,26 @@ namespace Mensetsu.Contracts.Api
         internal void ExecuteOnErrorAdminTokenUsage(Exception exception)
         {
             OnErrorAdminTokenUsage?.Invoke(this, new ExceptionEventArgs(exception));
+        }
+
+        /// <summary>
+        /// The event raised after the server response
+        /// </summary>
+        public event EventHandler<ApiResponseEventArgs>? OnUserDailyTokenUsage;
+
+        /// <summary>
+        /// The event raised after an error querying the server
+        /// </summary>
+        public event EventHandler<ExceptionEventArgs>? OnErrorUserDailyTokenUsage;
+
+        internal void ExecuteOnUserDailyTokenUsage(TokenUsageApi.UserDailyTokenUsageApiResponse apiResponse)
+        {
+            OnUserDailyTokenUsage?.Invoke(this, new ApiResponseEventArgs(apiResponse));
+        }
+
+        internal void ExecuteOnErrorUserDailyTokenUsage(Exception exception)
+        {
+            OnErrorUserDailyTokenUsage?.Invoke(this, new ExceptionEventArgs(exception));
         }
 
         /// <summary>
@@ -215,7 +389,309 @@ namespace Mensetsu.Contracts.Api
             BearerTokenProvider = bearerTokenProvider;
         }
 
-        partial void FormatAdminTokenUsage(ref Option<string?> beforeTimestamp, ref Option<string?> beforeEventId);
+        /// <summary>
+        /// Processes the server response
+        /// </summary>
+        /// <param name="apiResponseLocalVar"></param>
+        private void AfterAdminDailyTokenUsageDefaultImplementation(IAdminDailyTokenUsageApiResponse apiResponseLocalVar)
+        {
+            bool suppressDefaultLog = false;
+            AfterAdminDailyTokenUsage(ref suppressDefaultLog, apiResponseLocalVar);
+            if (!suppressDefaultLog)
+                Logger.LogInformation("{0,-9} | {1} | {3}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
+        }
+
+        /// <summary>
+        /// Processes the server response
+        /// </summary>
+        /// <param name="suppressDefaultLog"></param>
+        /// <param name="apiResponseLocalVar"></param>
+        partial void AfterAdminDailyTokenUsage(ref bool suppressDefaultLog, IAdminDailyTokenUsageApiResponse apiResponseLocalVar);
+
+        /// <summary>
+        /// Logs exceptions that occur while retrieving the server response
+        /// </summary>
+        /// <param name="exceptionLocalVar"></param>
+        /// <param name="pathFormatLocalVar"></param>
+        /// <param name="pathLocalVar"></param>
+        private void OnErrorAdminDailyTokenUsageDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar)
+        {
+            bool suppressDefaultLogLocalVar = false;
+            OnErrorAdminDailyTokenUsage(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar);
+            if (!suppressDefaultLogLocalVar)
+                Logger.LogError(exceptionLocalVar, "An error occurred while sending the request to the server.");
+        }
+
+        /// <summary>
+        /// A partial method that gives developers a way to provide customized exception handling
+        /// </summary>
+        /// <param name="suppressDefaultLogLocalVar"></param>
+        /// <param name="exceptionLocalVar"></param>
+        /// <param name="pathFormatLocalVar"></param>
+        /// <param name="pathLocalVar"></param>
+        partial void OnErrorAdminDailyTokenUsage(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar);
+
+        /// <summary>
+        ///  
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IAdminDailyTokenUsageApiResponse"/>&gt;</returns>
+        public async Task<IAdminDailyTokenUsageApiResponse?> AdminDailyTokenUsageOrDefaultAsync(System.Threading.CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await AdminDailyTokenUsageAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        ///  
+        /// </summary>
+        /// <exception cref="ApiException">Thrown when fails to make API call</exception>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IAdminDailyTokenUsageApiResponse"/>&gt;</returns>
+        public async Task<IAdminDailyTokenUsageApiResponse> AdminDailyTokenUsageAsync(System.Threading.CancellationToken cancellationToken = default)
+        {
+            UriBuilder uriBuilderLocalVar = new UriBuilder();
+
+            try
+            {
+                using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
+                {
+                    uriBuilderLocalVar.Host = HttpClient.BaseAddress!.Host;
+                    uriBuilderLocalVar.Port = HttpClient.BaseAddress.Port;
+                    uriBuilderLocalVar.Scheme = HttpClient.BaseAddress.Scheme;
+                    uriBuilderLocalVar.Path = HttpClient.BaseAddress.AbsolutePath == "/"
+                        ? "/api/v1/admin/usage/tokens/daily"
+                        : string.Concat(HttpClient.BaseAddress.AbsolutePath, "/api/v1/admin/usage/tokens/daily");
+
+                    List<TokenBase> tokenBaseLocalVars = new List<TokenBase>();
+                    httpRequestMessageLocalVar.RequestUri = uriBuilderLocalVar.Uri;
+
+                    BearerToken bearerTokenLocalVar1 = (BearerToken) await BearerTokenProvider.GetAsync(cancellation: cancellationToken).ConfigureAwait(false);
+
+                    tokenBaseLocalVars.Add(bearerTokenLocalVar1);
+
+                    bearerTokenLocalVar1.UseInHeader(httpRequestMessageLocalVar, "");
+
+                    string[] acceptLocalVars = new string[] {
+                        "application/json"
+                    };
+
+                    string? acceptLocalVar = ClientUtils.SelectHeaderAccept(acceptLocalVars);
+
+                    if (acceptLocalVar != null)
+                        httpRequestMessageLocalVar.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(acceptLocalVar));
+
+                    httpRequestMessageLocalVar.Method = HttpMethod.Get;
+
+                    DateTime requestedAtLocalVar = DateTime.UtcNow;
+
+                    using (HttpResponseMessage httpResponseMessageLocalVar = await HttpClient.SendAsync(httpRequestMessageLocalVar, cancellationToken).ConfigureAwait(false))
+                    {
+                        ILogger<AdminDailyTokenUsageApiResponse> apiResponseLoggerLocalVar = LoggerFactory.CreateLogger<AdminDailyTokenUsageApiResponse>();
+                        AdminDailyTokenUsageApiResponse apiResponseLocalVar;
+
+                        switch ((int)httpResponseMessageLocalVar.StatusCode) {
+                            default: {
+                                string responseContentLocalVar = await httpResponseMessageLocalVar.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                                apiResponseLocalVar = new(apiResponseLoggerLocalVar, httpRequestMessageLocalVar, httpResponseMessageLocalVar, responseContentLocalVar, "/api/v1/admin/usage/tokens/daily", requestedAtLocalVar, _jsonSerializerOptions);
+
+                                break;
+                            }
+                        }
+
+                        AfterAdminDailyTokenUsageDefaultImplementation(apiResponseLocalVar);
+
+                        Events.ExecuteOnAdminDailyTokenUsage(apiResponseLocalVar);
+
+                        if (apiResponseLocalVar.StatusCode == (HttpStatusCode) 429)
+                            foreach(TokenBase tokenBaseLocalVar in tokenBaseLocalVars)
+                                tokenBaseLocalVar.BeginRateLimit();
+
+                        return apiResponseLocalVar;
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                OnErrorAdminDailyTokenUsageDefaultImplementation(e, "/api/v1/admin/usage/tokens/daily", uriBuilderLocalVar.Path);
+                Events.ExecuteOnErrorAdminDailyTokenUsage(e);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// The <see cref="AdminDailyTokenUsageApiResponse"/>
+        /// </summary>
+        public partial class AdminDailyTokenUsageApiResponse : Mensetsu.Contracts.Client.ApiResponse, IAdminDailyTokenUsageApiResponse
+        {
+            /// <summary>
+            /// The logger
+            /// </summary>
+            public ILogger<AdminDailyTokenUsageApiResponse> Logger { get; }
+
+            /// <summary>
+            /// The <see cref="AdminDailyTokenUsageApiResponse"/>
+            /// </summary>
+            /// <param name="logger"></param>
+            /// <param name="httpRequestMessage"></param>
+            /// <param name="httpResponseMessage"></param>
+            /// <param name="rawContent"></param>
+            /// <param name="path"></param>
+            /// <param name="requestedAt"></param>
+            /// <param name="jsonSerializerOptions"></param>
+            public AdminDailyTokenUsageApiResponse(ILogger<AdminDailyTokenUsageApiResponse> logger, System.Net.Http.HttpRequestMessage httpRequestMessage, System.Net.Http.HttpResponseMessage httpResponseMessage, string rawContent, string path, DateTime requestedAt, System.Text.Json.JsonSerializerOptions jsonSerializerOptions) : base(httpRequestMessage, httpResponseMessage, rawContent, path, requestedAt, jsonSerializerOptions)
+            {
+                Logger = logger;
+                OnCreated(httpRequestMessage, httpResponseMessage);
+            }
+
+            /// <summary>
+            /// The <see cref="AdminDailyTokenUsageApiResponse"/>
+            /// </summary>
+            /// <param name="logger"></param>
+            /// <param name="httpRequestMessage"></param>
+            /// <param name="httpResponseMessage"></param>
+            /// <param name="contentStream"></param>
+            /// <param name="path"></param>
+            /// <param name="requestedAt"></param>
+            /// <param name="jsonSerializerOptions"></param>
+            public AdminDailyTokenUsageApiResponse(ILogger<AdminDailyTokenUsageApiResponse> logger, System.Net.Http.HttpRequestMessage httpRequestMessage, System.Net.Http.HttpResponseMessage httpResponseMessage, System.IO.Stream contentStream, string path, DateTime requestedAt, System.Text.Json.JsonSerializerOptions jsonSerializerOptions) : base(httpRequestMessage, httpResponseMessage, contentStream, path, requestedAt, jsonSerializerOptions)
+            {
+                Logger = logger;
+                OnCreated(httpRequestMessage, httpResponseMessage);
+            }
+
+            partial void OnCreated(global::System.Net.Http.HttpRequestMessage httpRequestMessage, System.Net.Http.HttpResponseMessage httpResponseMessage);
+
+            /// <summary>
+            /// Returns true if the response is 200 Ok
+            /// </summary>
+            /// <returns></returns>
+            public bool IsOk => 200 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 200 Ok
+            /// </summary>
+            /// <returns></returns>
+            public Mensetsu.Contracts.Model.DailyTokenUsageResponseDto? Ok()
+            {
+                // This logic may be modified with the AsModel.mustache template
+                return IsOk
+                    ? System.Text.Json.JsonSerializer.Deserialize<Mensetsu.Contracts.Model.DailyTokenUsageResponseDto>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 200 Ok and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryOk([NotNullWhen(true)]out Mensetsu.Contracts.Model.DailyTokenUsageResponseDto? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = Ok();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)200);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 403 Forbidden
+            /// </summary>
+            /// <returns></returns>
+            public bool IsForbidden => 403 == (int)StatusCode;
+
+            private void OnDeserializationErrorDefaultImplementation(Exception exception, HttpStatusCode httpStatusCode)
+            {
+                bool suppressDefaultLog = false;
+                OnDeserializationError(ref suppressDefaultLog, exception, httpStatusCode);
+                if (!suppressDefaultLog)
+                    Logger.LogError(exception, "An error occurred while deserializing the {code} response.", httpStatusCode);
+            }
+
+            partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
+        }
+
+        partial void FormatAdminTokenUsage(ref Option<string> beforeTimestamp, ref Option<string> beforeEventId, ref Option<int> limit, ref Option<string> q, ref Option<string> search, ref Option<string> provider, ref Option<string> modelProvider, ref Option<string> agent, ref Option<string> agentId, ref Option<string> from, ref Option<string> fromDate, ref Option<string> startDate, ref Option<string> to, ref Option<string> toDate, ref Option<string> endDate, ref Option<string> userId);
+
+        /// <summary>
+        /// Validates the request parameters
+        /// </summary>
+        /// <param name="beforeTimestamp"></param>
+        /// <param name="beforeEventId"></param>
+        /// <param name="q"></param>
+        /// <param name="search"></param>
+        /// <param name="provider"></param>
+        /// <param name="modelProvider"></param>
+        /// <param name="agent"></param>
+        /// <param name="agentId"></param>
+        /// <param name="from"></param>
+        /// <param name="fromDate"></param>
+        /// <param name="startDate"></param>
+        /// <param name="to"></param>
+        /// <param name="toDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        private void ValidateAdminTokenUsage(Option<string> beforeTimestamp, Option<string> beforeEventId, Option<string> q, Option<string> search, Option<string> provider, Option<string> modelProvider, Option<string> agent, Option<string> agentId, Option<string> from, Option<string> fromDate, Option<string> startDate, Option<string> to, Option<string> toDate, Option<string> endDate, Option<string> userId)
+        {
+            if (beforeTimestamp.IsSet && beforeTimestamp.Value == null)
+                throw new ArgumentNullException(nameof(beforeTimestamp));
+
+            if (beforeEventId.IsSet && beforeEventId.Value == null)
+                throw new ArgumentNullException(nameof(beforeEventId));
+
+            if (q.IsSet && q.Value == null)
+                throw new ArgumentNullException(nameof(q));
+
+            if (search.IsSet && search.Value == null)
+                throw new ArgumentNullException(nameof(search));
+
+            if (provider.IsSet && provider.Value == null)
+                throw new ArgumentNullException(nameof(provider));
+
+            if (modelProvider.IsSet && modelProvider.Value == null)
+                throw new ArgumentNullException(nameof(modelProvider));
+
+            if (agent.IsSet && agent.Value == null)
+                throw new ArgumentNullException(nameof(agent));
+
+            if (agentId.IsSet && agentId.Value == null)
+                throw new ArgumentNullException(nameof(agentId));
+
+            if (from.IsSet && from.Value == null)
+                throw new ArgumentNullException(nameof(from));
+
+            if (fromDate.IsSet && fromDate.Value == null)
+                throw new ArgumentNullException(nameof(fromDate));
+
+            if (startDate.IsSet && startDate.Value == null)
+                throw new ArgumentNullException(nameof(startDate));
+
+            if (to.IsSet && to.Value == null)
+                throw new ArgumentNullException(nameof(to));
+
+            if (toDate.IsSet && toDate.Value == null)
+                throw new ArgumentNullException(nameof(toDate));
+
+            if (endDate.IsSet && endDate.Value == null)
+                throw new ArgumentNullException(nameof(endDate));
+
+            if (userId.IsSet && userId.Value == null)
+                throw new ArgumentNullException(nameof(userId));
+        }
 
         /// <summary>
         /// Processes the server response
@@ -223,10 +699,24 @@ namespace Mensetsu.Contracts.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="beforeTimestamp"></param>
         /// <param name="beforeEventId"></param>
-        private void AfterAdminTokenUsageDefaultImplementation(IAdminTokenUsageApiResponse apiResponseLocalVar, Option<string?> beforeTimestamp, Option<string?> beforeEventId)
+        /// <param name="limit"></param>
+        /// <param name="q"></param>
+        /// <param name="search"></param>
+        /// <param name="provider"></param>
+        /// <param name="modelProvider"></param>
+        /// <param name="agent"></param>
+        /// <param name="agentId"></param>
+        /// <param name="from"></param>
+        /// <param name="fromDate"></param>
+        /// <param name="startDate"></param>
+        /// <param name="to"></param>
+        /// <param name="toDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="userId"></param>
+        private void AfterAdminTokenUsageDefaultImplementation(IAdminTokenUsageApiResponse apiResponseLocalVar, Option<string> beforeTimestamp, Option<string> beforeEventId, Option<int> limit, Option<string> q, Option<string> search, Option<string> provider, Option<string> modelProvider, Option<string> agent, Option<string> agentId, Option<string> from, Option<string> fromDate, Option<string> startDate, Option<string> to, Option<string> toDate, Option<string> endDate, Option<string> userId)
         {
             bool suppressDefaultLog = false;
-            AfterAdminTokenUsage(ref suppressDefaultLog, apiResponseLocalVar, beforeTimestamp, beforeEventId);
+            AfterAdminTokenUsage(ref suppressDefaultLog, apiResponseLocalVar, beforeTimestamp, beforeEventId, limit, q, search, provider, modelProvider, agent, agentId, from, fromDate, startDate, to, toDate, endDate, userId);
             if (!suppressDefaultLog)
                 Logger.LogInformation("{0,-9} | {1} | {3}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -238,7 +728,21 @@ namespace Mensetsu.Contracts.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="beforeTimestamp"></param>
         /// <param name="beforeEventId"></param>
-        partial void AfterAdminTokenUsage(ref bool suppressDefaultLog, IAdminTokenUsageApiResponse apiResponseLocalVar, Option<string?> beforeTimestamp, Option<string?> beforeEventId);
+        /// <param name="limit"></param>
+        /// <param name="q"></param>
+        /// <param name="search"></param>
+        /// <param name="provider"></param>
+        /// <param name="modelProvider"></param>
+        /// <param name="agent"></param>
+        /// <param name="agentId"></param>
+        /// <param name="from"></param>
+        /// <param name="fromDate"></param>
+        /// <param name="startDate"></param>
+        /// <param name="to"></param>
+        /// <param name="toDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="userId"></param>
+        partial void AfterAdminTokenUsage(ref bool suppressDefaultLog, IAdminTokenUsageApiResponse apiResponseLocalVar, Option<string> beforeTimestamp, Option<string> beforeEventId, Option<int> limit, Option<string> q, Option<string> search, Option<string> provider, Option<string> modelProvider, Option<string> agent, Option<string> agentId, Option<string> from, Option<string> fromDate, Option<string> startDate, Option<string> to, Option<string> toDate, Option<string> endDate, Option<string> userId);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -248,10 +752,24 @@ namespace Mensetsu.Contracts.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="beforeTimestamp"></param>
         /// <param name="beforeEventId"></param>
-        private void OnErrorAdminTokenUsageDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string?> beforeTimestamp, Option<string?> beforeEventId)
+        /// <param name="limit"></param>
+        /// <param name="q"></param>
+        /// <param name="search"></param>
+        /// <param name="provider"></param>
+        /// <param name="modelProvider"></param>
+        /// <param name="agent"></param>
+        /// <param name="agentId"></param>
+        /// <param name="from"></param>
+        /// <param name="fromDate"></param>
+        /// <param name="startDate"></param>
+        /// <param name="to"></param>
+        /// <param name="toDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="userId"></param>
+        private void OnErrorAdminTokenUsageDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> beforeTimestamp, Option<string> beforeEventId, Option<int> limit, Option<string> q, Option<string> search, Option<string> provider, Option<string> modelProvider, Option<string> agent, Option<string> agentId, Option<string> from, Option<string> fromDate, Option<string> startDate, Option<string> to, Option<string> toDate, Option<string> endDate, Option<string> userId)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorAdminTokenUsage(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, beforeTimestamp, beforeEventId);
+            OnErrorAdminTokenUsage(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, beforeTimestamp, beforeEventId, limit, q, search, provider, modelProvider, agent, agentId, from, fromDate, startDate, to, toDate, endDate, userId);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -265,20 +783,48 @@ namespace Mensetsu.Contracts.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="beforeTimestamp"></param>
         /// <param name="beforeEventId"></param>
-        partial void OnErrorAdminTokenUsage(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string?> beforeTimestamp, Option<string?> beforeEventId);
+        /// <param name="limit"></param>
+        /// <param name="q"></param>
+        /// <param name="search"></param>
+        /// <param name="provider"></param>
+        /// <param name="modelProvider"></param>
+        /// <param name="agent"></param>
+        /// <param name="agentId"></param>
+        /// <param name="from"></param>
+        /// <param name="fromDate"></param>
+        /// <param name="startDate"></param>
+        /// <param name="to"></param>
+        /// <param name="toDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="userId"></param>
+        partial void OnErrorAdminTokenUsage(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> beforeTimestamp, Option<string> beforeEventId, Option<int> limit, Option<string> q, Option<string> search, Option<string> provider, Option<string> modelProvider, Option<string> agent, Option<string> agentId, Option<string> from, Option<string> fromDate, Option<string> startDate, Option<string> to, Option<string> toDate, Option<string> endDate, Option<string> userId);
 
         /// <summary>
         ///  
         /// </summary>
         /// <param name="beforeTimestamp"> (optional)</param>
         /// <param name="beforeEventId"> (optional)</param>
+        /// <param name="limit"> (optional)</param>
+        /// <param name="q"> (optional)</param>
+        /// <param name="search"> (optional)</param>
+        /// <param name="provider"> (optional)</param>
+        /// <param name="modelProvider"> (optional)</param>
+        /// <param name="agent"> (optional)</param>
+        /// <param name="agentId"> (optional)</param>
+        /// <param name="from"> (optional)</param>
+        /// <param name="fromDate"> (optional)</param>
+        /// <param name="startDate"> (optional)</param>
+        /// <param name="to"> (optional)</param>
+        /// <param name="toDate"> (optional)</param>
+        /// <param name="endDate"> (optional)</param>
+        /// <param name="userId"> (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAdminTokenUsageApiResponse"/>&gt;</returns>
-        public async Task<IAdminTokenUsageApiResponse?> AdminTokenUsageOrDefaultAsync(Option<string?> beforeTimestamp = default, Option<string?> beforeEventId = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IAdminTokenUsageApiResponse?> AdminTokenUsageOrDefaultAsync(Option<string> beforeTimestamp = default, Option<string> beforeEventId = default, Option<int> limit = default, Option<string> q = default, Option<string> search = default, Option<string> provider = default, Option<string> modelProvider = default, Option<string> agent = default, Option<string> agentId = default, Option<string> from = default, Option<string> fromDate = default, Option<string> startDate = default, Option<string> to = default, Option<string> toDate = default, Option<string> endDate = default, Option<string> userId = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await AdminTokenUsageAsync(beforeTimestamp, beforeEventId, cancellationToken).ConfigureAwait(false);
+                return await AdminTokenUsageAsync(beforeTimestamp, beforeEventId, limit, q, search, provider, modelProvider, agent, agentId, from, fromDate, startDate, to, toDate, endDate, userId, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -292,15 +838,31 @@ namespace Mensetsu.Contracts.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="beforeTimestamp"> (optional)</param>
         /// <param name="beforeEventId"> (optional)</param>
+        /// <param name="limit"> (optional)</param>
+        /// <param name="q"> (optional)</param>
+        /// <param name="search"> (optional)</param>
+        /// <param name="provider"> (optional)</param>
+        /// <param name="modelProvider"> (optional)</param>
+        /// <param name="agent"> (optional)</param>
+        /// <param name="agentId"> (optional)</param>
+        /// <param name="from"> (optional)</param>
+        /// <param name="fromDate"> (optional)</param>
+        /// <param name="startDate"> (optional)</param>
+        /// <param name="to"> (optional)</param>
+        /// <param name="toDate"> (optional)</param>
+        /// <param name="endDate"> (optional)</param>
+        /// <param name="userId"> (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IAdminTokenUsageApiResponse"/>&gt;</returns>
-        public async Task<IAdminTokenUsageApiResponse> AdminTokenUsageAsync(Option<string?> beforeTimestamp = default, Option<string?> beforeEventId = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IAdminTokenUsageApiResponse> AdminTokenUsageAsync(Option<string> beforeTimestamp = default, Option<string> beforeEventId = default, Option<int> limit = default, Option<string> q = default, Option<string> search = default, Option<string> provider = default, Option<string> modelProvider = default, Option<string> agent = default, Option<string> agentId = default, Option<string> from = default, Option<string> fromDate = default, Option<string> startDate = default, Option<string> to = default, Option<string> toDate = default, Option<string> endDate = default, Option<string> userId = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
             try
             {
-                FormatAdminTokenUsage(ref beforeTimestamp, ref beforeEventId);
+                ValidateAdminTokenUsage(beforeTimestamp, beforeEventId, q, search, provider, modelProvider, agent, agentId, from, fromDate, startDate, to, toDate, endDate, userId);
+
+                FormatAdminTokenUsage(ref beforeTimestamp, ref beforeEventId, ref limit, ref q, ref search, ref provider, ref modelProvider, ref agent, ref agentId, ref from, ref fromDate, ref startDate, ref to, ref toDate, ref endDate, ref userId);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -318,6 +880,48 @@ namespace Mensetsu.Contracts.Api
 
                     if (beforeEventId.IsSet)
                         parseQueryStringLocalVar["before_event_id"] = ClientUtils.ParameterToString(beforeEventId.Value);
+
+                    if (limit.IsSet)
+                        parseQueryStringLocalVar["limit"] = ClientUtils.ParameterToString(limit.Value);
+
+                    if (q.IsSet)
+                        parseQueryStringLocalVar["q"] = ClientUtils.ParameterToString(q.Value);
+
+                    if (search.IsSet)
+                        parseQueryStringLocalVar["search"] = ClientUtils.ParameterToString(search.Value);
+
+                    if (provider.IsSet)
+                        parseQueryStringLocalVar["provider"] = ClientUtils.ParameterToString(provider.Value);
+
+                    if (modelProvider.IsSet)
+                        parseQueryStringLocalVar["model_provider"] = ClientUtils.ParameterToString(modelProvider.Value);
+
+                    if (agent.IsSet)
+                        parseQueryStringLocalVar["agent"] = ClientUtils.ParameterToString(agent.Value);
+
+                    if (agentId.IsSet)
+                        parseQueryStringLocalVar["agent_id"] = ClientUtils.ParameterToString(agentId.Value);
+
+                    if (from.IsSet)
+                        parseQueryStringLocalVar["from"] = ClientUtils.ParameterToString(from.Value);
+
+                    if (fromDate.IsSet)
+                        parseQueryStringLocalVar["from_date"] = ClientUtils.ParameterToString(fromDate.Value);
+
+                    if (startDate.IsSet)
+                        parseQueryStringLocalVar["start_date"] = ClientUtils.ParameterToString(startDate.Value);
+
+                    if (to.IsSet)
+                        parseQueryStringLocalVar["to"] = ClientUtils.ParameterToString(to.Value);
+
+                    if (toDate.IsSet)
+                        parseQueryStringLocalVar["to_date"] = ClientUtils.ParameterToString(toDate.Value);
+
+                    if (endDate.IsSet)
+                        parseQueryStringLocalVar["end_date"] = ClientUtils.ParameterToString(endDate.Value);
+
+                    if (userId.IsSet)
+                        parseQueryStringLocalVar["user_id"] = ClientUtils.ParameterToString(userId.Value);
 
                     uriBuilderLocalVar.Query = parseQueryStringLocalVar.ToString();
 
@@ -357,7 +961,7 @@ namespace Mensetsu.Contracts.Api
                             }
                         }
 
-                        AfterAdminTokenUsageDefaultImplementation(apiResponseLocalVar, beforeTimestamp, beforeEventId);
+                        AfterAdminTokenUsageDefaultImplementation(apiResponseLocalVar, beforeTimestamp, beforeEventId, limit, q, search, provider, modelProvider, agent, agentId, from, fromDate, startDate, to, toDate, endDate, userId);
 
                         Events.ExecuteOnAdminTokenUsage(apiResponseLocalVar);
 
@@ -371,7 +975,7 @@ namespace Mensetsu.Contracts.Api
             }
             catch(Exception e)
             {
-                OnErrorAdminTokenUsageDefaultImplementation(e, "/api/v1/admin/usage/tokens", uriBuilderLocalVar.Path, beforeTimestamp, beforeEventId);
+                OnErrorAdminTokenUsageDefaultImplementation(e, "/api/v1/admin/usage/tokens", uriBuilderLocalVar.Path, beforeTimestamp, beforeEventId, limit, q, search, provider, modelProvider, agent, agentId, from, fromDate, startDate, to, toDate, endDate, userId);
                 Events.ExecuteOnErrorAdminTokenUsage(e);
                 throw;
             }
@@ -476,7 +1080,309 @@ namespace Mensetsu.Contracts.Api
             partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
         }
 
-        partial void FormatUserTokenUsage(ref Option<string?> beforeTimestamp, ref Option<string?> beforeEventId);
+        /// <summary>
+        /// Processes the server response
+        /// </summary>
+        /// <param name="apiResponseLocalVar"></param>
+        private void AfterUserDailyTokenUsageDefaultImplementation(IUserDailyTokenUsageApiResponse apiResponseLocalVar)
+        {
+            bool suppressDefaultLog = false;
+            AfterUserDailyTokenUsage(ref suppressDefaultLog, apiResponseLocalVar);
+            if (!suppressDefaultLog)
+                Logger.LogInformation("{0,-9} | {1} | {3}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
+        }
+
+        /// <summary>
+        /// Processes the server response
+        /// </summary>
+        /// <param name="suppressDefaultLog"></param>
+        /// <param name="apiResponseLocalVar"></param>
+        partial void AfterUserDailyTokenUsage(ref bool suppressDefaultLog, IUserDailyTokenUsageApiResponse apiResponseLocalVar);
+
+        /// <summary>
+        /// Logs exceptions that occur while retrieving the server response
+        /// </summary>
+        /// <param name="exceptionLocalVar"></param>
+        /// <param name="pathFormatLocalVar"></param>
+        /// <param name="pathLocalVar"></param>
+        private void OnErrorUserDailyTokenUsageDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar)
+        {
+            bool suppressDefaultLogLocalVar = false;
+            OnErrorUserDailyTokenUsage(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar);
+            if (!suppressDefaultLogLocalVar)
+                Logger.LogError(exceptionLocalVar, "An error occurred while sending the request to the server.");
+        }
+
+        /// <summary>
+        /// A partial method that gives developers a way to provide customized exception handling
+        /// </summary>
+        /// <param name="suppressDefaultLogLocalVar"></param>
+        /// <param name="exceptionLocalVar"></param>
+        /// <param name="pathFormatLocalVar"></param>
+        /// <param name="pathLocalVar"></param>
+        partial void OnErrorUserDailyTokenUsage(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar);
+
+        /// <summary>
+        ///  
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IUserDailyTokenUsageApiResponse"/>&gt;</returns>
+        public async Task<IUserDailyTokenUsageApiResponse?> UserDailyTokenUsageOrDefaultAsync(System.Threading.CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await UserDailyTokenUsageAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        ///  
+        /// </summary>
+        /// <exception cref="ApiException">Thrown when fails to make API call</exception>
+        /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
+        /// <returns><see cref="Task"/>&lt;<see cref="IUserDailyTokenUsageApiResponse"/>&gt;</returns>
+        public async Task<IUserDailyTokenUsageApiResponse> UserDailyTokenUsageAsync(System.Threading.CancellationToken cancellationToken = default)
+        {
+            UriBuilder uriBuilderLocalVar = new UriBuilder();
+
+            try
+            {
+                using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
+                {
+                    uriBuilderLocalVar.Host = HttpClient.BaseAddress!.Host;
+                    uriBuilderLocalVar.Port = HttpClient.BaseAddress.Port;
+                    uriBuilderLocalVar.Scheme = HttpClient.BaseAddress.Scheme;
+                    uriBuilderLocalVar.Path = HttpClient.BaseAddress.AbsolutePath == "/"
+                        ? "/api/v1/usage/tokens/daily"
+                        : string.Concat(HttpClient.BaseAddress.AbsolutePath, "/api/v1/usage/tokens/daily");
+
+                    List<TokenBase> tokenBaseLocalVars = new List<TokenBase>();
+                    httpRequestMessageLocalVar.RequestUri = uriBuilderLocalVar.Uri;
+
+                    BearerToken bearerTokenLocalVar1 = (BearerToken) await BearerTokenProvider.GetAsync(cancellation: cancellationToken).ConfigureAwait(false);
+
+                    tokenBaseLocalVars.Add(bearerTokenLocalVar1);
+
+                    bearerTokenLocalVar1.UseInHeader(httpRequestMessageLocalVar, "");
+
+                    string[] acceptLocalVars = new string[] {
+                        "application/json"
+                    };
+
+                    string? acceptLocalVar = ClientUtils.SelectHeaderAccept(acceptLocalVars);
+
+                    if (acceptLocalVar != null)
+                        httpRequestMessageLocalVar.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(acceptLocalVar));
+
+                    httpRequestMessageLocalVar.Method = HttpMethod.Get;
+
+                    DateTime requestedAtLocalVar = DateTime.UtcNow;
+
+                    using (HttpResponseMessage httpResponseMessageLocalVar = await HttpClient.SendAsync(httpRequestMessageLocalVar, cancellationToken).ConfigureAwait(false))
+                    {
+                        ILogger<UserDailyTokenUsageApiResponse> apiResponseLoggerLocalVar = LoggerFactory.CreateLogger<UserDailyTokenUsageApiResponse>();
+                        UserDailyTokenUsageApiResponse apiResponseLocalVar;
+
+                        switch ((int)httpResponseMessageLocalVar.StatusCode) {
+                            default: {
+                                string responseContentLocalVar = await httpResponseMessageLocalVar.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                                apiResponseLocalVar = new(apiResponseLoggerLocalVar, httpRequestMessageLocalVar, httpResponseMessageLocalVar, responseContentLocalVar, "/api/v1/usage/tokens/daily", requestedAtLocalVar, _jsonSerializerOptions);
+
+                                break;
+                            }
+                        }
+
+                        AfterUserDailyTokenUsageDefaultImplementation(apiResponseLocalVar);
+
+                        Events.ExecuteOnUserDailyTokenUsage(apiResponseLocalVar);
+
+                        if (apiResponseLocalVar.StatusCode == (HttpStatusCode) 429)
+                            foreach(TokenBase tokenBaseLocalVar in tokenBaseLocalVars)
+                                tokenBaseLocalVar.BeginRateLimit();
+
+                        return apiResponseLocalVar;
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                OnErrorUserDailyTokenUsageDefaultImplementation(e, "/api/v1/usage/tokens/daily", uriBuilderLocalVar.Path);
+                Events.ExecuteOnErrorUserDailyTokenUsage(e);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// The <see cref="UserDailyTokenUsageApiResponse"/>
+        /// </summary>
+        public partial class UserDailyTokenUsageApiResponse : Mensetsu.Contracts.Client.ApiResponse, IUserDailyTokenUsageApiResponse
+        {
+            /// <summary>
+            /// The logger
+            /// </summary>
+            public ILogger<UserDailyTokenUsageApiResponse> Logger { get; }
+
+            /// <summary>
+            /// The <see cref="UserDailyTokenUsageApiResponse"/>
+            /// </summary>
+            /// <param name="logger"></param>
+            /// <param name="httpRequestMessage"></param>
+            /// <param name="httpResponseMessage"></param>
+            /// <param name="rawContent"></param>
+            /// <param name="path"></param>
+            /// <param name="requestedAt"></param>
+            /// <param name="jsonSerializerOptions"></param>
+            public UserDailyTokenUsageApiResponse(ILogger<UserDailyTokenUsageApiResponse> logger, System.Net.Http.HttpRequestMessage httpRequestMessage, System.Net.Http.HttpResponseMessage httpResponseMessage, string rawContent, string path, DateTime requestedAt, System.Text.Json.JsonSerializerOptions jsonSerializerOptions) : base(httpRequestMessage, httpResponseMessage, rawContent, path, requestedAt, jsonSerializerOptions)
+            {
+                Logger = logger;
+                OnCreated(httpRequestMessage, httpResponseMessage);
+            }
+
+            /// <summary>
+            /// The <see cref="UserDailyTokenUsageApiResponse"/>
+            /// </summary>
+            /// <param name="logger"></param>
+            /// <param name="httpRequestMessage"></param>
+            /// <param name="httpResponseMessage"></param>
+            /// <param name="contentStream"></param>
+            /// <param name="path"></param>
+            /// <param name="requestedAt"></param>
+            /// <param name="jsonSerializerOptions"></param>
+            public UserDailyTokenUsageApiResponse(ILogger<UserDailyTokenUsageApiResponse> logger, System.Net.Http.HttpRequestMessage httpRequestMessage, System.Net.Http.HttpResponseMessage httpResponseMessage, System.IO.Stream contentStream, string path, DateTime requestedAt, System.Text.Json.JsonSerializerOptions jsonSerializerOptions) : base(httpRequestMessage, httpResponseMessage, contentStream, path, requestedAt, jsonSerializerOptions)
+            {
+                Logger = logger;
+                OnCreated(httpRequestMessage, httpResponseMessage);
+            }
+
+            partial void OnCreated(global::System.Net.Http.HttpRequestMessage httpRequestMessage, System.Net.Http.HttpResponseMessage httpResponseMessage);
+
+            /// <summary>
+            /// Returns true if the response is 200 Ok
+            /// </summary>
+            /// <returns></returns>
+            public bool IsOk => 200 == (int)StatusCode;
+
+            /// <summary>
+            /// Deserializes the response if the response is 200 Ok
+            /// </summary>
+            /// <returns></returns>
+            public Mensetsu.Contracts.Model.DailyTokenUsageResponseDto? Ok()
+            {
+                // This logic may be modified with the AsModel.mustache template
+                return IsOk
+                    ? System.Text.Json.JsonSerializer.Deserialize<Mensetsu.Contracts.Model.DailyTokenUsageResponseDto>(RawContent, _jsonSerializerOptions)
+                    : null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 200 Ok and the deserialized response is not null
+            /// </summary>
+            /// <param name="result"></param>
+            /// <returns></returns>
+            public bool TryOk([NotNullWhen(true)]out Mensetsu.Contracts.Model.DailyTokenUsageResponseDto? result)
+            {
+                result = null;
+
+                try
+                {
+                    result = Ok();
+                } catch (Exception e)
+                {
+                    OnDeserializationErrorDefaultImplementation(e, (HttpStatusCode)200);
+                }
+
+                return result != null;
+            }
+
+            /// <summary>
+            /// Returns true if the response is 401 Unauthorized
+            /// </summary>
+            /// <returns></returns>
+            public bool IsUnauthorized => 401 == (int)StatusCode;
+
+            private void OnDeserializationErrorDefaultImplementation(Exception exception, HttpStatusCode httpStatusCode)
+            {
+                bool suppressDefaultLog = false;
+                OnDeserializationError(ref suppressDefaultLog, exception, httpStatusCode);
+                if (!suppressDefaultLog)
+                    Logger.LogError(exception, "An error occurred while deserializing the {code} response.", httpStatusCode);
+            }
+
+            partial void OnDeserializationError(ref bool suppressDefaultLog, Exception exception, HttpStatusCode httpStatusCode);
+        }
+
+        partial void FormatUserTokenUsage(ref Option<string> beforeTimestamp, ref Option<string> beforeEventId, ref Option<int> limit, ref Option<string> q, ref Option<string> search, ref Option<string> provider, ref Option<string> modelProvider, ref Option<string> agent, ref Option<string> agentId, ref Option<string> from, ref Option<string> fromDate, ref Option<string> startDate, ref Option<string> to, ref Option<string> toDate, ref Option<string> endDate, ref Option<string> userId);
+
+        /// <summary>
+        /// Validates the request parameters
+        /// </summary>
+        /// <param name="beforeTimestamp"></param>
+        /// <param name="beforeEventId"></param>
+        /// <param name="q"></param>
+        /// <param name="search"></param>
+        /// <param name="provider"></param>
+        /// <param name="modelProvider"></param>
+        /// <param name="agent"></param>
+        /// <param name="agentId"></param>
+        /// <param name="from"></param>
+        /// <param name="fromDate"></param>
+        /// <param name="startDate"></param>
+        /// <param name="to"></param>
+        /// <param name="toDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        private void ValidateUserTokenUsage(Option<string> beforeTimestamp, Option<string> beforeEventId, Option<string> q, Option<string> search, Option<string> provider, Option<string> modelProvider, Option<string> agent, Option<string> agentId, Option<string> from, Option<string> fromDate, Option<string> startDate, Option<string> to, Option<string> toDate, Option<string> endDate, Option<string> userId)
+        {
+            if (beforeTimestamp.IsSet && beforeTimestamp.Value == null)
+                throw new ArgumentNullException(nameof(beforeTimestamp));
+
+            if (beforeEventId.IsSet && beforeEventId.Value == null)
+                throw new ArgumentNullException(nameof(beforeEventId));
+
+            if (q.IsSet && q.Value == null)
+                throw new ArgumentNullException(nameof(q));
+
+            if (search.IsSet && search.Value == null)
+                throw new ArgumentNullException(nameof(search));
+
+            if (provider.IsSet && provider.Value == null)
+                throw new ArgumentNullException(nameof(provider));
+
+            if (modelProvider.IsSet && modelProvider.Value == null)
+                throw new ArgumentNullException(nameof(modelProvider));
+
+            if (agent.IsSet && agent.Value == null)
+                throw new ArgumentNullException(nameof(agent));
+
+            if (agentId.IsSet && agentId.Value == null)
+                throw new ArgumentNullException(nameof(agentId));
+
+            if (from.IsSet && from.Value == null)
+                throw new ArgumentNullException(nameof(from));
+
+            if (fromDate.IsSet && fromDate.Value == null)
+                throw new ArgumentNullException(nameof(fromDate));
+
+            if (startDate.IsSet && startDate.Value == null)
+                throw new ArgumentNullException(nameof(startDate));
+
+            if (to.IsSet && to.Value == null)
+                throw new ArgumentNullException(nameof(to));
+
+            if (toDate.IsSet && toDate.Value == null)
+                throw new ArgumentNullException(nameof(toDate));
+
+            if (endDate.IsSet && endDate.Value == null)
+                throw new ArgumentNullException(nameof(endDate));
+
+            if (userId.IsSet && userId.Value == null)
+                throw new ArgumentNullException(nameof(userId));
+        }
 
         /// <summary>
         /// Processes the server response
@@ -484,10 +1390,24 @@ namespace Mensetsu.Contracts.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="beforeTimestamp"></param>
         /// <param name="beforeEventId"></param>
-        private void AfterUserTokenUsageDefaultImplementation(IUserTokenUsageApiResponse apiResponseLocalVar, Option<string?> beforeTimestamp, Option<string?> beforeEventId)
+        /// <param name="limit"></param>
+        /// <param name="q"></param>
+        /// <param name="search"></param>
+        /// <param name="provider"></param>
+        /// <param name="modelProvider"></param>
+        /// <param name="agent"></param>
+        /// <param name="agentId"></param>
+        /// <param name="from"></param>
+        /// <param name="fromDate"></param>
+        /// <param name="startDate"></param>
+        /// <param name="to"></param>
+        /// <param name="toDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="userId"></param>
+        private void AfterUserTokenUsageDefaultImplementation(IUserTokenUsageApiResponse apiResponseLocalVar, Option<string> beforeTimestamp, Option<string> beforeEventId, Option<int> limit, Option<string> q, Option<string> search, Option<string> provider, Option<string> modelProvider, Option<string> agent, Option<string> agentId, Option<string> from, Option<string> fromDate, Option<string> startDate, Option<string> to, Option<string> toDate, Option<string> endDate, Option<string> userId)
         {
             bool suppressDefaultLog = false;
-            AfterUserTokenUsage(ref suppressDefaultLog, apiResponseLocalVar, beforeTimestamp, beforeEventId);
+            AfterUserTokenUsage(ref suppressDefaultLog, apiResponseLocalVar, beforeTimestamp, beforeEventId, limit, q, search, provider, modelProvider, agent, agentId, from, fromDate, startDate, to, toDate, endDate, userId);
             if (!suppressDefaultLog)
                 Logger.LogInformation("{0,-9} | {1} | {3}", (apiResponseLocalVar.DownloadedAt - apiResponseLocalVar.RequestedAt).TotalSeconds, apiResponseLocalVar.StatusCode, apiResponseLocalVar.Path);
         }
@@ -499,7 +1419,21 @@ namespace Mensetsu.Contracts.Api
         /// <param name="apiResponseLocalVar"></param>
         /// <param name="beforeTimestamp"></param>
         /// <param name="beforeEventId"></param>
-        partial void AfterUserTokenUsage(ref bool suppressDefaultLog, IUserTokenUsageApiResponse apiResponseLocalVar, Option<string?> beforeTimestamp, Option<string?> beforeEventId);
+        /// <param name="limit"></param>
+        /// <param name="q"></param>
+        /// <param name="search"></param>
+        /// <param name="provider"></param>
+        /// <param name="modelProvider"></param>
+        /// <param name="agent"></param>
+        /// <param name="agentId"></param>
+        /// <param name="from"></param>
+        /// <param name="fromDate"></param>
+        /// <param name="startDate"></param>
+        /// <param name="to"></param>
+        /// <param name="toDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="userId"></param>
+        partial void AfterUserTokenUsage(ref bool suppressDefaultLog, IUserTokenUsageApiResponse apiResponseLocalVar, Option<string> beforeTimestamp, Option<string> beforeEventId, Option<int> limit, Option<string> q, Option<string> search, Option<string> provider, Option<string> modelProvider, Option<string> agent, Option<string> agentId, Option<string> from, Option<string> fromDate, Option<string> startDate, Option<string> to, Option<string> toDate, Option<string> endDate, Option<string> userId);
 
         /// <summary>
         /// Logs exceptions that occur while retrieving the server response
@@ -509,10 +1443,24 @@ namespace Mensetsu.Contracts.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="beforeTimestamp"></param>
         /// <param name="beforeEventId"></param>
-        private void OnErrorUserTokenUsageDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string?> beforeTimestamp, Option<string?> beforeEventId)
+        /// <param name="limit"></param>
+        /// <param name="q"></param>
+        /// <param name="search"></param>
+        /// <param name="provider"></param>
+        /// <param name="modelProvider"></param>
+        /// <param name="agent"></param>
+        /// <param name="agentId"></param>
+        /// <param name="from"></param>
+        /// <param name="fromDate"></param>
+        /// <param name="startDate"></param>
+        /// <param name="to"></param>
+        /// <param name="toDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="userId"></param>
+        private void OnErrorUserTokenUsageDefaultImplementation(Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> beforeTimestamp, Option<string> beforeEventId, Option<int> limit, Option<string> q, Option<string> search, Option<string> provider, Option<string> modelProvider, Option<string> agent, Option<string> agentId, Option<string> from, Option<string> fromDate, Option<string> startDate, Option<string> to, Option<string> toDate, Option<string> endDate, Option<string> userId)
         {
             bool suppressDefaultLogLocalVar = false;
-            OnErrorUserTokenUsage(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, beforeTimestamp, beforeEventId);
+            OnErrorUserTokenUsage(ref suppressDefaultLogLocalVar, exceptionLocalVar, pathFormatLocalVar, pathLocalVar, beforeTimestamp, beforeEventId, limit, q, search, provider, modelProvider, agent, agentId, from, fromDate, startDate, to, toDate, endDate, userId);
             if (!suppressDefaultLogLocalVar)
                 Logger.LogError(exceptionLocalVar, "An error occurred while sending the request to the server.");
         }
@@ -526,20 +1474,48 @@ namespace Mensetsu.Contracts.Api
         /// <param name="pathLocalVar"></param>
         /// <param name="beforeTimestamp"></param>
         /// <param name="beforeEventId"></param>
-        partial void OnErrorUserTokenUsage(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string?> beforeTimestamp, Option<string?> beforeEventId);
+        /// <param name="limit"></param>
+        /// <param name="q"></param>
+        /// <param name="search"></param>
+        /// <param name="provider"></param>
+        /// <param name="modelProvider"></param>
+        /// <param name="agent"></param>
+        /// <param name="agentId"></param>
+        /// <param name="from"></param>
+        /// <param name="fromDate"></param>
+        /// <param name="startDate"></param>
+        /// <param name="to"></param>
+        /// <param name="toDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="userId"></param>
+        partial void OnErrorUserTokenUsage(ref bool suppressDefaultLogLocalVar, Exception exceptionLocalVar, string pathFormatLocalVar, string pathLocalVar, Option<string> beforeTimestamp, Option<string> beforeEventId, Option<int> limit, Option<string> q, Option<string> search, Option<string> provider, Option<string> modelProvider, Option<string> agent, Option<string> agentId, Option<string> from, Option<string> fromDate, Option<string> startDate, Option<string> to, Option<string> toDate, Option<string> endDate, Option<string> userId);
 
         /// <summary>
         ///  
         /// </summary>
         /// <param name="beforeTimestamp"> (optional)</param>
         /// <param name="beforeEventId"> (optional)</param>
+        /// <param name="limit"> (optional)</param>
+        /// <param name="q"> (optional)</param>
+        /// <param name="search"> (optional)</param>
+        /// <param name="provider"> (optional)</param>
+        /// <param name="modelProvider"> (optional)</param>
+        /// <param name="agent"> (optional)</param>
+        /// <param name="agentId"> (optional)</param>
+        /// <param name="from"> (optional)</param>
+        /// <param name="fromDate"> (optional)</param>
+        /// <param name="startDate"> (optional)</param>
+        /// <param name="to"> (optional)</param>
+        /// <param name="toDate"> (optional)</param>
+        /// <param name="endDate"> (optional)</param>
+        /// <param name="userId"> (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IUserTokenUsageApiResponse"/>&gt;</returns>
-        public async Task<IUserTokenUsageApiResponse?> UserTokenUsageOrDefaultAsync(Option<string?> beforeTimestamp = default, Option<string?> beforeEventId = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IUserTokenUsageApiResponse?> UserTokenUsageOrDefaultAsync(Option<string> beforeTimestamp = default, Option<string> beforeEventId = default, Option<int> limit = default, Option<string> q = default, Option<string> search = default, Option<string> provider = default, Option<string> modelProvider = default, Option<string> agent = default, Option<string> agentId = default, Option<string> from = default, Option<string> fromDate = default, Option<string> startDate = default, Option<string> to = default, Option<string> toDate = default, Option<string> endDate = default, Option<string> userId = default, System.Threading.CancellationToken cancellationToken = default)
         {
             try
             {
-                return await UserTokenUsageAsync(beforeTimestamp, beforeEventId, cancellationToken).ConfigureAwait(false);
+                return await UserTokenUsageAsync(beforeTimestamp, beforeEventId, limit, q, search, provider, modelProvider, agent, agentId, from, fromDate, startDate, to, toDate, endDate, userId, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -553,15 +1529,31 @@ namespace Mensetsu.Contracts.Api
         /// <exception cref="ApiException">Thrown when fails to make API call</exception>
         /// <param name="beforeTimestamp"> (optional)</param>
         /// <param name="beforeEventId"> (optional)</param>
+        /// <param name="limit"> (optional)</param>
+        /// <param name="q"> (optional)</param>
+        /// <param name="search"> (optional)</param>
+        /// <param name="provider"> (optional)</param>
+        /// <param name="modelProvider"> (optional)</param>
+        /// <param name="agent"> (optional)</param>
+        /// <param name="agentId"> (optional)</param>
+        /// <param name="from"> (optional)</param>
+        /// <param name="fromDate"> (optional)</param>
+        /// <param name="startDate"> (optional)</param>
+        /// <param name="to"> (optional)</param>
+        /// <param name="toDate"> (optional)</param>
+        /// <param name="endDate"> (optional)</param>
+        /// <param name="userId"> (optional)</param>
         /// <param name="cancellationToken">Cancellation Token to cancel the request.</param>
         /// <returns><see cref="Task"/>&lt;<see cref="IUserTokenUsageApiResponse"/>&gt;</returns>
-        public async Task<IUserTokenUsageApiResponse> UserTokenUsageAsync(Option<string?> beforeTimestamp = default, Option<string?> beforeEventId = default, System.Threading.CancellationToken cancellationToken = default)
+        public async Task<IUserTokenUsageApiResponse> UserTokenUsageAsync(Option<string> beforeTimestamp = default, Option<string> beforeEventId = default, Option<int> limit = default, Option<string> q = default, Option<string> search = default, Option<string> provider = default, Option<string> modelProvider = default, Option<string> agent = default, Option<string> agentId = default, Option<string> from = default, Option<string> fromDate = default, Option<string> startDate = default, Option<string> to = default, Option<string> toDate = default, Option<string> endDate = default, Option<string> userId = default, System.Threading.CancellationToken cancellationToken = default)
         {
             UriBuilder uriBuilderLocalVar = new UriBuilder();
 
             try
             {
-                FormatUserTokenUsage(ref beforeTimestamp, ref beforeEventId);
+                ValidateUserTokenUsage(beforeTimestamp, beforeEventId, q, search, provider, modelProvider, agent, agentId, from, fromDate, startDate, to, toDate, endDate, userId);
+
+                FormatUserTokenUsage(ref beforeTimestamp, ref beforeEventId, ref limit, ref q, ref search, ref provider, ref modelProvider, ref agent, ref agentId, ref from, ref fromDate, ref startDate, ref to, ref toDate, ref endDate, ref userId);
 
                 using (HttpRequestMessage httpRequestMessageLocalVar = new HttpRequestMessage())
                 {
@@ -579,6 +1571,48 @@ namespace Mensetsu.Contracts.Api
 
                     if (beforeEventId.IsSet)
                         parseQueryStringLocalVar["before_event_id"] = ClientUtils.ParameterToString(beforeEventId.Value);
+
+                    if (limit.IsSet)
+                        parseQueryStringLocalVar["limit"] = ClientUtils.ParameterToString(limit.Value);
+
+                    if (q.IsSet)
+                        parseQueryStringLocalVar["q"] = ClientUtils.ParameterToString(q.Value);
+
+                    if (search.IsSet)
+                        parseQueryStringLocalVar["search"] = ClientUtils.ParameterToString(search.Value);
+
+                    if (provider.IsSet)
+                        parseQueryStringLocalVar["provider"] = ClientUtils.ParameterToString(provider.Value);
+
+                    if (modelProvider.IsSet)
+                        parseQueryStringLocalVar["model_provider"] = ClientUtils.ParameterToString(modelProvider.Value);
+
+                    if (agent.IsSet)
+                        parseQueryStringLocalVar["agent"] = ClientUtils.ParameterToString(agent.Value);
+
+                    if (agentId.IsSet)
+                        parseQueryStringLocalVar["agent_id"] = ClientUtils.ParameterToString(agentId.Value);
+
+                    if (from.IsSet)
+                        parseQueryStringLocalVar["from"] = ClientUtils.ParameterToString(from.Value);
+
+                    if (fromDate.IsSet)
+                        parseQueryStringLocalVar["from_date"] = ClientUtils.ParameterToString(fromDate.Value);
+
+                    if (startDate.IsSet)
+                        parseQueryStringLocalVar["start_date"] = ClientUtils.ParameterToString(startDate.Value);
+
+                    if (to.IsSet)
+                        parseQueryStringLocalVar["to"] = ClientUtils.ParameterToString(to.Value);
+
+                    if (toDate.IsSet)
+                        parseQueryStringLocalVar["to_date"] = ClientUtils.ParameterToString(toDate.Value);
+
+                    if (endDate.IsSet)
+                        parseQueryStringLocalVar["end_date"] = ClientUtils.ParameterToString(endDate.Value);
+
+                    if (userId.IsSet)
+                        parseQueryStringLocalVar["user_id"] = ClientUtils.ParameterToString(userId.Value);
 
                     uriBuilderLocalVar.Query = parseQueryStringLocalVar.ToString();
 
@@ -618,7 +1652,7 @@ namespace Mensetsu.Contracts.Api
                             }
                         }
 
-                        AfterUserTokenUsageDefaultImplementation(apiResponseLocalVar, beforeTimestamp, beforeEventId);
+                        AfterUserTokenUsageDefaultImplementation(apiResponseLocalVar, beforeTimestamp, beforeEventId, limit, q, search, provider, modelProvider, agent, agentId, from, fromDate, startDate, to, toDate, endDate, userId);
 
                         Events.ExecuteOnUserTokenUsage(apiResponseLocalVar);
 
@@ -632,7 +1666,7 @@ namespace Mensetsu.Contracts.Api
             }
             catch(Exception e)
             {
-                OnErrorUserTokenUsageDefaultImplementation(e, "/api/v1/usage/tokens", uriBuilderLocalVar.Path, beforeTimestamp, beforeEventId);
+                OnErrorUserTokenUsageDefaultImplementation(e, "/api/v1/usage/tokens", uriBuilderLocalVar.Path, beforeTimestamp, beforeEventId, limit, q, search, provider, modelProvider, agent, agentId, from, fromDate, startDate, to, toDate, endDate, userId);
                 Events.ExecuteOnErrorUserTokenUsage(e);
                 throw;
             }

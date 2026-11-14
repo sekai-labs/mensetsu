@@ -1,7 +1,49 @@
-use dioxus::prelude::*;
-use mensetsu_contracts::models::{InterviewQuestion, LearningUnit, MatchAnalysis};
 use crate::services::api::ApiService;
 use crate::ui::test_ids::test_ids;
+use dioxus::prelude::*;
+use mensetsu_contracts::models::{
+    InterviewQuestion, LearningUnit, MatchAnalysis, QuestionDifficulty,
+};
+
+fn matches_question_difficulty(difficulty: QuestionDifficulty, filter: &str) -> bool {
+    match filter {
+        "all" => true,
+        "beginner" => difficulty == QuestionDifficulty::Easy,
+        "intermediate" => difficulty == QuestionDifficulty::Medium,
+        "advanced" => difficulty == QuestionDifficulty::Hard,
+        _ => false,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::matches_question_difficulty;
+    use mensetsu_contracts::models::QuestionDifficulty;
+
+    #[test]
+    fn maps_difficulty_filters_to_contract_values() {
+        assert!(matches_question_difficulty(
+            QuestionDifficulty::Easy,
+            "beginner"
+        ));
+        assert!(matches_question_difficulty(
+            QuestionDifficulty::Medium,
+            "intermediate"
+        ));
+        assert!(matches_question_difficulty(
+            QuestionDifficulty::Hard,
+            "advanced"
+        ));
+        assert!(!matches_question_difficulty(
+            QuestionDifficulty::Hard,
+            "beginner"
+        ));
+        assert!(!matches_question_difficulty(
+            QuestionDifficulty::Easy,
+            "unknown"
+        ));
+    }
+}
 
 #[derive(Props, Clone, PartialEq)]
 pub struct WorkspaceDetailProps {
@@ -16,13 +58,11 @@ pub fn WorkspaceDetailView(props: WorkspaceDetailProps) -> Element {
     let mut active_tab = use_signal(|| "overview".to_string());
     let mut error_msg = use_signal(|| Option::<String>::None);
 
-
     let mut match_data = use_signal(|| Option::<MatchAnalysis>::None);
     let mut company_data = use_signal(|| Option::<serde_json::Value>::None);
     let mut learning_data = use_signal(|| Option::<Vec<LearningUnit>>::None);
     let mut questions_data = use_signal(|| Option::<Vec<InterviewQuestion>>::None);
     let mut questions_difficulty = use_signal(|| "all".to_string());
-
 
     let load_details = {
         let api = props.api.clone();
@@ -96,14 +136,7 @@ pub fn WorkspaceDetailView(props: WorkspaceDetailProps) -> Element {
         .map(|questions| {
             questions
                 .iter()
-                .filter(|q| {
-                    if current_diff == "all" {
-                        true
-                    } else {
-                        let q_diff = format!("{:?}", q.difficulty).to_lowercase();
-                        q_diff.contains(&current_diff)
-                    }
-                })
+                .filter(|q| matches_question_difficulty(q.difficulty, &current_diff))
                 .cloned()
                 .collect()
         })
@@ -353,11 +386,11 @@ pub fn WorkspaceDetailView(props: WorkspaceDetailProps) -> Element {
                                         key: "{q.id}",
                                         div {
                                             strong { style: "display: block; font-size: 15px; margin-bottom: 4px;", "{q.question}" }
-                                            p { class: "dim-label", "[{q.category:?}] Intent: {q.interviewer_intent}" }
+                                            p { class: "dim-label", "[{q.category}] Intent: {q.interviewer_intent}" }
                                         }
                                         span {
                                             style: "font-size: 12px; padding: 4px 8px; border-radius: 4px; background-color: var(--surface-border);",
-                                            "{q.difficulty:?}"
+                                            "{q.difficulty}"
                                         }
                                     }
                                 }

@@ -26,7 +26,7 @@ import com.squareup.moshi.JsonClass
  * 
  *
  * @param items 
- * @param totals 
+ * @param totals Scope-wide token totals across all requests in the user or platform scope (independent of page cursor or filters)
  * @param nextCursor 
  */
 
@@ -36,6 +36,7 @@ data class TokenUsageResponseDto (
     @Json(name = "items")
     val items: kotlin.collections.List<TokenUsageRowDto>,
 
+    /* Scope-wide token totals across all requests in the user or platform scope (independent of page cursor or filters) */
     @Json(name = "totals")
     val totals: TokenUsageTotalsDto,
 

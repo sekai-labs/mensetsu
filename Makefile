@@ -1,10 +1,10 @@
-.PHONY: help infra-up infra-down up down build dev-api dev-ai dev-worker dev-web test-api test-ai test-web build-web test check contracts contracts-check schema-parity api-target-owner
+.PHONY: help infra-up infra-down up down build dev-api dev-ai dev-worker dev-web dev-landing test-api test-ai test-web test-landing test-extension build-web build-landing build-extension test check contracts contracts-check schema-parity api-target-owner
 
 CONTRACTS_DIR := contracts/rest
 
 help:
 	@echo "Mensetsu Commands:"
-	@echo "  make up              - Start all services (surrealdb, redis, api, intelligence, worker, web) via Docker Compose"
+	@echo "  make up              - Start all services (surrealdb, redis, api, intelligence, worker, web, landing) via Docker Compose"
 	@echo "  make down            - Stop all containers"
 	@echo "  make infra-up        - Start only infrastructure (SurrealDB, Redis) in background"
 	@echo "  make infra-down      - Stop infrastructure containers"
@@ -12,6 +12,9 @@ help:
 	@echo "  make dev-ai          - Run Python intelligence HTTP API locally"
 	@echo "  make dev-worker      - Run Python intelligence durable worker locally"
 	@echo "  make dev-web         - Run Nuxt web client locally"
+	@echo "  make dev-landing     - Run Astro landing and docs client locally"
+	@echo "  make build-landing   - Build Astro landing and docs client for production"
+	@echo "  make test-landing    - Run Astro landing and docs tests"
 	@echo "  make contracts       - Export Rust OpenAPI and regenerate TypeScript and native contracts"
 	@echo "  make contracts-check - Fail if committed contracts differ from fresh regeneration"
 	@echo "  make schema-parity   - Fail if schema.surql and infra/migrations produce different schemas (needs SurrealDB)"
@@ -53,8 +56,17 @@ dev-worker:
 dev-web:
 	cd app/web && bun run dev
 
+dev-landing:
+	cd app/landing && bun run dev
+
 build-web:
 	cd app/web && bun run build
+
+build-landing:
+	cd app/landing && bun run build
+
+build-extension:
+	cd app/extension && bun run build
 
 test-api: api-target-owner
 	cd server/api && cargo test
@@ -65,12 +77,19 @@ test-ai:
 test-web:
 	cd app/web && bun x vitest run
 
-test: test-api test-ai test-web
+test-landing:
+	cd app/landing && bun x vitest run
+
+test-extension:
+	cd app/extension && bun run check && bun run test
+
+test: test-api test-ai test-web test-extension
 
 contracts: api-target-owner
 	./contracts/grpc/scripts/gen-proto.sh
 	cd server/api && cargo run --quiet --bin export-openapi
 	cd $(CONTRACTS_DIR) && bun install --frozen-lockfile && bun run generate
+	cd $(CONTRACTS_DIR) && bun run build
 	./contracts/rest/scripts/generate-native.sh
 	cd server/intelligence && PYTHONPATH=. uv run python src/contracts/export_schema.py
 	cp $(CONTRACTS_DIR)/src/generated/workflows.v1.ts app/web/models/generated/workflows.v1.ts
@@ -78,10 +97,11 @@ contracts: api-target-owner
 
 contracts-check:
 	@set -e; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
-	cp -R $(CONTRACTS_DIR)/openapi.json $(CONTRACTS_DIR)/src server/intelligence/src/grpc/v1 contracts/native "$$tmp/"; \
+	cp -R $(CONTRACTS_DIR)/openapi.json $(CONTRACTS_DIR)/src $(CONTRACTS_DIR)/dist server/intelligence/src/grpc/v1 contracts/native "$$tmp/"; \
 	$(MAKE) --no-print-directory contracts; \
 	diff -u "$$tmp/openapi.json" $(CONTRACTS_DIR)/openapi.json; \
 	diff -ru "$$tmp/src" $(CONTRACTS_DIR)/src; \
+	diff -ru "$$tmp/dist" $(CONTRACTS_DIR)/dist; \
 	diff -ru --exclude=__pycache__ --exclude='*.pyc' "$$tmp/v1" server/intelligence/src/grpc/v1; \
 	diff -ru --exclude=bin --exclude=obj --exclude=target --exclude=Cargo.lock "$$tmp/native" contracts/native; \
 	echo "contracts up to date"
@@ -102,3 +122,4 @@ e2e: e2e-reset
 check: api-target-owner contracts-check schema-parity
 	cd server/api && cargo check
 	cd server/intelligence && uv run ruff check .
+	cd app/extension && bun run check

@@ -277,7 +277,7 @@ const filteredRisks = computed(() => {
                 </span>
               </div>
               <NuxtLink
-                :to="`/interviews/${workspaceId}/learning`"
+                :to="`/interviews/${encodeURIComponent(workspaceId)}/learning`"
                 class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium shrink-0"
               >
                 Study Plan Module →

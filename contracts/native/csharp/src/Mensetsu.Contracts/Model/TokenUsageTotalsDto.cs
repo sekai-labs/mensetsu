@@ -33,10 +33,10 @@ namespace Mensetsu.Contracts.Model
         /// <summary>
         /// Initializes a new instance of the <see cref="TokenUsageTotalsDto" /> class.
         /// </summary>
-        /// <param name="inputTokens">inputTokens</param>
-        /// <param name="outputTokens">outputTokens</param>
-        /// <param name="requestCount">requestCount</param>
-        /// <param name="totalTokens">totalTokens</param>
+        /// <param name="inputTokens">Scope-wide total input tokens</param>
+        /// <param name="outputTokens">Scope-wide total output tokens</param>
+        /// <param name="requestCount">Scope-wide total count of model usage requests</param>
+        /// <param name="totalTokens">Scope-wide total tokens (input + output)</param>
         [JsonConstructor]
         public TokenUsageTotalsDto(long inputTokens, long outputTokens, long requestCount, long totalTokens)
         {
@@ -50,26 +50,30 @@ namespace Mensetsu.Contracts.Model
         partial void OnCreated();
 
         /// <summary>
-        /// Gets or Sets InputTokens
+        /// Scope-wide total input tokens
         /// </summary>
+        /// <value>Scope-wide total input tokens</value>
         [JsonPropertyName("input_tokens")]
         public long InputTokens { get; set; }
 
         /// <summary>
-        /// Gets or Sets OutputTokens
+        /// Scope-wide total output tokens
         /// </summary>
+        /// <value>Scope-wide total output tokens</value>
         [JsonPropertyName("output_tokens")]
         public long OutputTokens { get; set; }
 
         /// <summary>
-        /// Gets or Sets RequestCount
+        /// Scope-wide total count of model usage requests
         /// </summary>
+        /// <value>Scope-wide total count of model usage requests</value>
         [JsonPropertyName("request_count")]
         public long RequestCount { get; set; }
 
         /// <summary>
-        /// Gets or Sets TotalTokens
+        /// Scope-wide total tokens (input + output)
         /// </summary>
+        /// <value>Scope-wide total tokens (input + output)</value>
         [JsonPropertyName("total_tokens")]
         public long TotalTokens { get; set; }
 

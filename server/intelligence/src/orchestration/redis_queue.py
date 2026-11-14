@@ -98,6 +98,74 @@ return message_id
         )
         return msg_id
 
+    ATOMIC_RESCHEDULE_LUA = """
+local dedupe_key = KEYS[1]
+local stream_key = KEYS[2]
+local delay_key = KEYS[3]
+local group_name = ARGV[1]
+local msg_id = ARGV[2]
+local run_id = ARGV[3]
+local payload = ARGV[4]
+local enqueued_at = ARGV[5]
+local due_ts = tonumber(ARGV[6])
+local now_ms = tonumber(ARGV[7])
+
+local previous = redis.call('GET', dedupe_key)
+if not previous then
+    if due_ts > now_ms then
+        local member = cjson.encode({
+            run_id = run_id,
+            payload = payload,
+            enqueued_at = enqueued_at,
+            due_ts = tostring(due_ts)
+        })
+        redis.call('ZADD', delay_key, due_ts, member)
+        previous = 'delayed:' .. tostring(due_ts)
+    else
+        previous = redis.call(
+            'XADD', stream_key, 'MAXLEN', '~', '10000', '*',
+            'run_id', run_id, 'payload', payload,
+            'enqueued_at', enqueued_at, 'due_ts', tostring(due_ts)
+        )
+    end
+    redis.call('SET', dedupe_key, previous)
+end
+redis.call('XACK', stream_key, group_name, msg_id)
+return previous
+"""
+
+    async def reschedule_job(
+        self,
+        run_id: str,
+        payload: dict[str, Any],
+        msg_id: str,
+        delay_ms: int = 0,
+        dedupe_key: str | None = None,
+    ) -> str:
+        if isinstance(delay_ms, bool) or not isinstance(delay_ms, int) or delay_ms < 0:
+            raise ValueError("delay_ms must be a non-negative integer.")
+        if not msg_id:
+            raise ValueError("msg_id is required to acknowledge the failed attempt.")
+
+        client = await self.get_client()
+        now_ms = time.time() * 1000
+        due_ts = now_ms + delay_ms
+        key = dedupe_key or f"{self.stream_key}:retry:{run_id}:{msg_id}"
+        return await client.eval(
+            self.ATOMIC_RESCHEDULE_LUA,
+            3,
+            key,
+            self.stream_key,
+            f"{self.stream_key}:delayed",
+            self.group_name,
+            msg_id,
+            run_id,
+            json.dumps(payload),
+            str(time.time()),
+            str(due_ts),
+            str(now_ms),
+        )
+
     PROMOTION_LUA = """
 local delay_key = KEYS[1]
 local stream_key = KEYS[2]
@@ -128,6 +196,11 @@ return promoted
         block_ms: int = CLAIM_BLOCK_MS,
         min_idle_time: int = 30000,
     ) -> dict[str, Any] | None:
+
+        if isinstance(min_idle_time, bool) or not isinstance(min_idle_time, int):
+            raise ValueError("min_idle_time must be an integer number of milliseconds.")
+        if min_idle_time < 0:
+            raise ValueError("min_idle_time must be greater than or equal to zero.")
 
         client = await self.get_client()
 
@@ -252,6 +325,14 @@ end
         client = await self.get_client()
         key = f"mensetsu:cancel:{run_id}"
         await client.set(key, "1", ex=86400)
+
+    async def is_cancel_requested(self, run_id: str) -> bool:
+        client = await self.get_client()
+        return await client.get(f"mensetsu:cancel:{run_id}") is not None
+
+    async def clear_cancel_request(self, run_id: str) -> None:
+        client = await self.get_client()
+        await client.delete(f"mensetsu:cancel:{run_id}")
 
     async def publish_event(self, run_id: str, event_json: str) -> None:
         client = await self.get_client()

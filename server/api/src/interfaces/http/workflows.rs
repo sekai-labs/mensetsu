@@ -22,8 +22,8 @@ use crate::{
         extractors::authenticated_user::AuthenticatedUser,
         workflow_dtos::{
             bare_run_id, AgentExecution, Artifact, Delegation, DelegationGraphResponse,
-            LogsPageResponse, RunsPageResponse, TaskGraphResponse, WorkflowDefinition,
-            WorkflowRun, WorkflowTask, WorkflowType,
+            LogsPageResponse, RunsPageResponse, TaskGraphResponse, WorkflowDefinition, WorkflowRun,
+            WorkflowTask, WorkflowType,
         },
         workspaces::{auth_check::verify_workspace_owner, start_workspace_run, AppState},
     },
@@ -85,33 +85,83 @@ pub struct AgentToolsQuery {
 #[derive(Debug, Deserialize, IntoParams)]
 #[into_params(parameter_in = Query)]
 pub struct ToolOutputQuery {
-    pub offset: Option<i64>,
-    pub limit: Option<i64>,
+    pub offset: Option<u32>,
+    pub limit: Option<u32>,
 }
 pub fn workflow_routes(state: AppState) -> Router {
     Router::new()
         .route("/api/v1/workflows", get(list_workflows))
-        .route("/api/v1/workflows/runs", get(list_workflow_runs).post(trigger_workflow_run))
+        .route(
+            "/api/v1/workflows/runs",
+            get(list_workflow_runs).post(trigger_workflow_run),
+        )
         .route("/api/v1/workflows/runs/{run_id}", get(get_workflow_run))
-        .route("/api/v1/workflows/runs/{run_id}/graph", get(get_workflow_run_graph))
-        .route("/api/v1/workflows/runs/{run_id}/delegations/graph", get(get_workflow_run_delegation_graph))
-        .route("/api/v1/workflows/runs/{run_id}/events", get(workflow_run_events))
-        .route("/api/v1/workflows/runs/{run_id}/events/history", get(get_workflow_run_events_history))
-        .route("/api/v1/workflows/runs/{run_id}/logs", get(get_workflow_run_logs))
-        .route("/api/v1/workflows/runs/{run_id}/tasks/{task_id}", get(get_workflow_run_task))
-        .route("/api/v1/workflows/runs/{run_id}/agents", get(list_workflow_run_agents))
-        .route("/api/v1/workflows/runs/{run_id}/agents/{execution_id}", get(get_workflow_run_agent))
-        .route("/api/v1/workflows/runs/{run_id}/agents/{execution_id}/tools", get(list_workflow_run_agent_tools))
-        .route("/api/v1/workflows/runs/{run_id}/tools/{tool_invocation_id}/output", get(get_workflow_run_tool_output))
-        .route("/api/v1/workflows/runs/{run_id}/delegations", get(get_workflow_run_delegations))
-        .route("/api/v1/workflows/runs/{run_id}/artifacts", get(get_workflow_run_artifacts))
-        .route("/api/v1/workflows/runs/{run_id}/cancel", post(cancel_workflow_run))
+        .route(
+            "/api/v1/workflows/runs/{run_id}/graph",
+            get(get_workflow_run_graph),
+        )
+        .route(
+            "/api/v1/workflows/runs/{run_id}/delegations/graph",
+            get(get_workflow_run_delegation_graph),
+        )
+        .route(
+            "/api/v1/workflows/runs/{run_id}/events",
+            get(workflow_run_events),
+        )
+        .route(
+            "/api/v1/workflows/runs/{run_id}/events/history",
+            get(get_workflow_run_events_history),
+        )
+        .route(
+            "/api/v1/workflows/runs/{run_id}/logs",
+            get(get_workflow_run_logs),
+        )
+        .route(
+            "/api/v1/workflows/runs/{run_id}/tasks/{task_id}",
+            get(get_workflow_run_task),
+        )
+        .route(
+            "/api/v1/workflows/runs/{run_id}/agents",
+            get(list_workflow_run_agents),
+        )
+        .route(
+            "/api/v1/workflows/runs/{run_id}/agents/{execution_id}",
+            get(get_workflow_run_agent),
+        )
+        .route(
+            "/api/v1/workflows/runs/{run_id}/agents/{execution_id}/tools",
+            get(list_workflow_run_agent_tools),
+        )
+        .route(
+            "/api/v1/workflows/runs/{run_id}/tools/{tool_invocation_id}/output",
+            get(get_workflow_run_tool_output),
+        )
+        .route(
+            "/api/v1/workflows/runs/{run_id}/delegations",
+            get(get_workflow_run_delegations),
+        )
+        .route(
+            "/api/v1/workflows/runs/{run_id}/artifacts",
+            get(get_workflow_run_artifacts),
+        )
+        .route(
+            "/api/v1/workflows/runs/{run_id}/cancel",
+            post(cancel_workflow_run),
+        )
         .with_state(state)
 }
 
-async fn authorize(state: &AppState, user: &AuthenticatedUser, run_id: &str) -> Result<RunOwnership, AppError> {
-    let run_id = WorkflowRunId::new(run_id).map_err(|_| AppError::NotFound("Workflow run not found".into()))?;
-    state.workflow_service.authorize_run(&run_id, &user.user_id).await
+async fn authorize(
+    state: &AppState,
+    user: &AuthenticatedUser,
+    run_id: &str,
+) -> Result<RunOwnership, AppError> {
+    let run_id = WorkflowRunId::new(run_id)
+        .map_err(|_| AppError::NotFound("Workflow run not found".into()))?;
+    state
+        .workflow_service
+        .authorize_run(&run_id, &user.user_id)
+        .await
 }
 
 fn ensure_same_run(expected: &RunOwnership, actual_run_id: &str) -> Result<(), AppError> {
@@ -119,7 +169,9 @@ fn ensure_same_run(expected: &RunOwnership, actual_run_id: &str) -> Result<(), A
         Ok(())
     } else {
         tracing::error!(expected = %expected.run_id, actual = %actual_run_id, "intelligence returned an object for a different run");
-        Err(AppError::ExternalService("Intelligence response referenced a different run".into()))
+        Err(AppError::ExternalService(
+            "Intelligence response referenced a different run".into(),
+        ))
     }
 }
 
@@ -161,9 +213,14 @@ pub async fn list_workflow_runs(
 ) -> Result<Json<RunsPageResponse>, AppError> {
     let limit = query.limit.unwrap_or(DEFAULT_PAGE_SIZE);
     if !(1..=MAX_PAGE_SIZE).contains(&limit) {
-        return Err(AppError::Validation(format!("limit must be between 1 and {MAX_PAGE_SIZE}")));
+        return Err(AppError::Validation(format!(
+            "limit must be between 1 and {MAX_PAGE_SIZE}"
+        )));
     }
-    let workspace_id = query.workspace_id.as_deref().map(|id| WorkspaceId(id.to_string()));
+    let workspace_id = query
+        .workspace_id
+        .as_deref()
+        .map(|id| WorkspaceId(id.to_string()));
     let run_type = query.run_type.map(|t| match t {
         WorkflowType::Static => "static",
         WorkflowType::Dynamic => "dynamic",
@@ -183,7 +240,10 @@ pub async fn list_workflow_runs(
         .await?;
 
     if run_ids.is_empty() {
-        return Ok(Json(RunsPageResponse { items: Vec::new(), next_cursor: None }));
+        return Ok(Json(RunsPageResponse {
+            items: Vec::new(),
+            next_cursor: None,
+        }));
     }
 
     let ids_vec: Vec<String> = run_ids.iter().map(|r| r.0.clone()).collect();
@@ -200,7 +260,10 @@ pub async fn list_workflow_runs(
             (r.bare_id().to_string(), r)
         })
         .collect();
-    let items = run_ids.iter().filter_map(|id| by_id.remove(&id.0)).collect();
+    let items = run_ids
+        .iter()
+        .filter_map(|id| by_id.remove(&id.0))
+        .collect();
     if !by_id.is_empty() {
         tracing::warn!(extra = ?by_id.keys().collect::<Vec<_>>(), "intelligence returned runs outside the requested run_ids; dropped");
     }
@@ -232,12 +295,21 @@ pub async fn trigger_workflow_run(
     headers: HeaderMap,
     Json(payload): Json<TriggerWorkflowRunRequestDto>,
 ) -> Result<(StatusCode, Json<WorkflowRun>), AppError> {
-    let workspace_id = payload.workspace_id.replace("workspace:", "").replace('`', "");
+    let workspace_id = payload
+        .workspace_id
+        .replace("workspace:", "")
+        .replace('`', "");
     verify_workspace_owner(&state.db.client, &workspace_id, &auth_user.user_id.0).await?;
 
     let idempotency_key = headers.get("idempotency-key").and_then(|v| v.to_str().ok());
-    let mut run =
-        start_workspace_run(&state, &auth_user.user_id, &workspace_id, payload.workflow_id, idempotency_key).await?;
+    let mut run = start_workspace_run(
+        &state,
+        &auth_user.user_id,
+        &workspace_id,
+        payload.workflow_id,
+        idempotency_key,
+    )
+    .await?;
     run.normalize_record_ids();
     Ok((StatusCode::CREATED, Json(run)))
 }
@@ -282,7 +354,9 @@ pub async fn get_workflow_run_graph(
     Path(run_id): Path<String>,
 ) -> Result<Json<TaskGraphResponse>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
-    Ok(Json(state.grpc_client.get_task_graph(&owned.run_id.0).await?))
+    Ok(Json(
+        state.grpc_client.get_task_graph(&owned.run_id.0).await?,
+    ))
 }
 
 #[utoipa::path(
@@ -341,7 +415,10 @@ pub async fn workflow_run_events(
             .unwrap_or(0)
     });
 
-    let stream = state.grpc_client.stream_run_events(owned.run_id.0.clone(), after_seq).await?;
+    let stream = state
+        .grpc_client
+        .stream_run_events(owned.run_id.0.clone(), after_seq)
+        .await?;
     Ok(Sse::new(stream).keep_alive(KeepAlive::new().interval(Duration::from_secs(15))))
 }
 
@@ -397,7 +474,10 @@ pub async fn get_workflow_run_task(
     Path((run_id, task_id)): Path<(String, String)>,
 ) -> Result<Json<WorkflowTask>, AppError> {
     let owned = authorize(&state, &auth_user, &run_id).await?;
-    let task: WorkflowTask = state.grpc_client.get_task(&owned.run_id.0, &task_id).await?;
+    let task: WorkflowTask = state
+        .grpc_client
+        .get_task(&owned.run_id.0, &task_id)
+        .await?;
     ensure_same_run(&owned, &task.run_id)?;
     Ok(Json(task))
 }
@@ -519,7 +599,9 @@ pub async fn list_workflow_run_agent_tools(
     for item in &page.items {
         if item.execution_id != execution_id {
             tracing::error!(expected = %execution_id, actual = %item.execution_id, "tool invocation belongs to a different execution");
-            return Err(AppError::ExternalService("Intelligence response referenced a different execution".into()));
+            return Err(AppError::ExternalService(
+                "Intelligence response referenced a different execution".into(),
+            ));
         }
     }
     Ok(Json(page))
@@ -548,13 +630,15 @@ pub async fn get_workflow_run_tool_output(
         .get_tool_output(
             &owned.run_id.0,
             &tool_invocation_id,
-            query.offset.unwrap_or(0) as u32,
-            query.limit.unwrap_or(1000) as u32,
+            query.offset.unwrap_or(0),
+            query.limit.unwrap_or(1000),
         )
         .await?;
     if output.tool_invocation_id != tool_invocation_id {
         tracing::error!(expected = %tool_invocation_id, actual = %output.tool_invocation_id, "tool output response referenced a different tool");
-        return Err(AppError::ExternalService("Intelligence response referenced a different tool".into()));
+        return Err(AppError::ExternalService(
+            "Intelligence response referenced a different tool".into(),
+        ));
     }
     Ok(Json(output))
 }

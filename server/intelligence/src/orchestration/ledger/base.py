@@ -42,6 +42,14 @@ async def retry_on_write_conflict(operation, description: str, attempts: int):
     raise RuntimeError(f"{description}: retry loop exited without result")
 
 
+RUN_STATUSES = ("pending", "running", "completed", "failed", "cancelled")
+TERMINAL_RUN_STATUSES = frozenset({"completed", "failed", "cancelled"})
+NON_TERMINAL_RUN_STATUSES = tuple(
+    status for status in RUN_STATUSES if status not in TERMINAL_RUN_STATUSES
+)
+TERMINAL_TASK_STATUSES = frozenset({"completed", "cancelled", "skipped"})
+
+
 WORKFLOW_RUN_ALLOWED_FIELDS = {
     "workflow_id",
     "workflow_name",

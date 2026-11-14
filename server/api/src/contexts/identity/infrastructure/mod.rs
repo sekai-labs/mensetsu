@@ -1,9 +1,12 @@
 use async_trait::async_trait;
+pub mod oauth_http;
+pub mod oauth_repository;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use surrealdb::Surreal;
 use surrealdb::engine::remote::ws::Client;
+use surrealdb::Surreal;
 
 use crate::contexts::identity::domain::{
     repository::{AuthSessionRepository, UserRepository},
@@ -178,11 +181,19 @@ impl AuthSessionDbRecord {
     fn into_domain(self) -> AuthSession {
         let raw_id = match &self.id {
             serde_json::Value::String(s) => s.replace("auth_session:", "").replace('`', ""),
-            _ => self.id.to_string().replace("auth_session:", "").replace('`', ""),
+            _ => self
+                .id
+                .to_string()
+                .replace("auth_session:", "")
+                .replace('`', ""),
         };
         let raw_user_id = match &self.user_id {
             serde_json::Value::String(s) => s.replace("user:", "").replace('`', ""),
-            _ => self.user_id.to_string().replace("user:", "").replace('`', ""),
+            _ => self
+                .user_id
+                .to_string()
+                .replace("user:", "")
+                .replace('`', ""),
         };
 
         AuthSession {
@@ -213,7 +224,8 @@ impl AuthSessionRepository for SurrealAuthSessionRepository {
             .take(0)
             .map_err(|e| AppError::Database(format!("Failed to parse session: {e}")))?;
 
-        let parsed: Option<AuthSessionDbRecord> = record.and_then(|v| serde_json::from_value(v).ok());
+        let parsed: Option<AuthSessionDbRecord> =
+            record.and_then(|v| serde_json::from_value(v).ok());
         Ok(parsed.map(AuthSessionDbRecord::into_domain))
     }
 

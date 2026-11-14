@@ -1,10 +1,10 @@
 pub mod dtos;
 pub use dtos::*;
 
-use std::sync::Arc;
 use crate::contexts::identity::domain::UserId;
 use crate::contexts::workspace::domain::{Workspace, WorkspaceId, WorkspaceRepository};
 use crate::shared::error::{AppError, Result};
+use std::sync::Arc;
 
 pub struct WorkspaceService {
     repository: Arc<dyn WorkspaceRepository>,
@@ -42,11 +42,7 @@ impl WorkspaceService {
         Ok(workspace)
     }
 
-    pub async fn get_workspace(
-        &self,
-        id: &WorkspaceId,
-        user_id: &UserId,
-    ) -> Result<Workspace> {
+    pub async fn get_workspace(&self, id: &WorkspaceId, user_id: &UserId) -> Result<Workspace> {
         let workspace = self
             .repository
             .find_by_id(id)

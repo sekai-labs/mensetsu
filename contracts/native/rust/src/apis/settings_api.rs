@@ -23,6 +23,35 @@ pub enum DeleteLlmSettingError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`delete_user_provider`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DeleteUserProviderError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`discover_models`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DiscoverModelsError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_candidate_profile`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetCandidateProfileError {
+    Status401(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_combined_providers`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetCombinedProvidersError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_llm_settings`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -39,12 +68,42 @@ pub enum GetProfileError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_user_routing`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetUserRoutingError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`update_candidate_profile`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum UpdateCandidateProfileError {
+    Status400(),
+    Status401(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`update_user_routing`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum UpdateUserRoutingError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`upsert_llm_setting`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum UpsertLlmSettingError {
     Status400(),
     Status403(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`upsert_user_provider`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum UpsertUserProviderError {
     UnknownValue(serde_json::Value),
 }
 
@@ -73,6 +132,148 @@ pub async fn delete_llm_setting(configuration: &configuration::Configuration, pr
     } else {
         let content = resp.text().await?;
         let entity: Option<DeleteLlmSettingError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn delete_user_provider(configuration: &configuration::Configuration, provider_key: &str) -> Result<(), Error<DeleteUserProviderError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_provider_key = provider_key;
+
+    let uri_str = format!("{}/api/v1/settings/llm/providers/{provider_key}", configuration.base_path, provider_key=crate::apis::urlencode(p_path_provider_key));
+    let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<DeleteUserProviderError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn discover_models(configuration: &configuration::Configuration, discover_models_request_dto: models::DiscoverModelsRequestDto) -> Result<serde_json::Value, Error<DiscoverModelsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_discover_models_request_dto = discover_models_request_dto;
+
+    let uri_str = format!("{}/api/v1/settings/llm/models", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_discover_models_request_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `serde_json::Value`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `serde_json::Value`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<DiscoverModelsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn get_candidate_profile(configuration: &configuration::Configuration, ) -> Result<models::CandidateProfileDto, Error<GetCandidateProfileError>> {
+
+    let uri_str = format!("{}/api/v1/candidate-profile", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::CandidateProfileDto`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::CandidateProfileDto`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetCandidateProfileError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn get_combined_providers(configuration: &configuration::Configuration, ) -> Result<Vec<models::ProviderStatusItemDto>, Error<GetCombinedProvidersError>> {
+
+    let uri_str = format!("{}/api/v1/settings/llm/providers", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `Vec&lt;models::ProviderStatusItemDto&gt;`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `Vec&lt;models::ProviderStatusItemDto&gt;`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetCombinedProvidersError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -151,6 +352,112 @@ pub async fn get_profile(configuration: &configuration::Configuration, ) -> Resu
     }
 }
 
+pub async fn get_user_routing(configuration: &configuration::Configuration, ) -> Result<models::UserRoutingResponseDto, Error<GetUserRoutingError>> {
+
+    let uri_str = format!("{}/api/v1/settings/llm/routing", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::UserRoutingResponseDto`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::UserRoutingResponseDto`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetUserRoutingError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn update_candidate_profile(configuration: &configuration::Configuration, update_candidate_profile_request_dto: models::UpdateCandidateProfileRequestDto) -> Result<models::CandidateProfileDto, Error<UpdateCandidateProfileError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_update_candidate_profile_request_dto = update_candidate_profile_request_dto;
+
+    let uri_str = format!("{}/api/v1/candidate-profile", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_update_candidate_profile_request_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::CandidateProfileDto`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::CandidateProfileDto`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<UpdateCandidateProfileError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn update_user_routing(configuration: &configuration::Configuration, update_user_routing_request_dto: models::UpdateUserRoutingRequestDto) -> Result<(), Error<UpdateUserRoutingError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_update_user_routing_request_dto = update_user_routing_request_dto;
+
+    let uri_str = format!("{}/api/v1/settings/llm/routing", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_update_user_routing_request_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<UpdateUserRoutingError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn upsert_llm_setting(configuration: &configuration::Configuration, upsert_llm_config_request_dto: models::UpsertLlmConfigRequestDto) -> Result<models::LlmConfigItemDto, Error<UpsertLlmSettingError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_upsert_llm_config_request_dto = upsert_llm_config_request_dto;
@@ -187,6 +494,35 @@ pub async fn upsert_llm_setting(configuration: &configuration::Configuration, up
     } else {
         let content = resp.text().await?;
         let entity: Option<UpsertLlmSettingError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn upsert_user_provider(configuration: &configuration::Configuration, upsert_user_provider_request_dto: models::UpsertUserProviderRequestDto) -> Result<(), Error<UpsertUserProviderError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_upsert_user_provider_request_dto = upsert_user_provider_request_dto;
+
+    let uri_str = format!("{}/api/v1/settings/llm/providers", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_upsert_user_provider_request_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<UpsertUserProviderError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

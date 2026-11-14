@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useInterviewService } from '~/features/interviews/services/interview.service'
 import type { SeniorityLevel } from '~/models/common.model'
-import type { CreateWorkspaceRequest } from '~/features/interviews/models/interview.model'
+import type { CreateWorkspaceRequest, ResumeUploadItemDto } from '~/features/interviews/models/interview.model'
 import AppButton from '~/components/ui/AppButton.vue'
 import AppInput from '~/components/ui/AppInput.vue'
 import { Building2, Briefcase, FileText, Link2, UploadCloud, ChevronRight, Check } from 'lucide-vue-next'
@@ -15,7 +15,13 @@ definePageMeta({
 
 const { t } = useI18n()
 const router = useRouter()
-const { createWorkspace, createResumeUpload, completeResumeUpload, uploadResumeFileToSignedUrl } = useInterviewService()
+const {
+  createWorkspace,
+  createResumeUpload,
+  completeResumeUpload,
+  uploadResumeFileToSignedUrl,
+  listResumeUploads,
+} = useInterviewService()
 
 const isSubmitting = ref<boolean>(false)
 const errorMessage = ref<string>('')
@@ -25,13 +31,70 @@ const companyName = ref<string>('')
 const roleTitle = ref<string>('')
 const seniority = ref<SeniorityLevel>('senior')
 const urlsInput = ref<string>('')
-const resumeMode = ref<'paste' | 'upload'>('paste')
+const resumeMode = ref<'paste' | 'upload' | 'library'>('paste')
 const resumeText = ref<string>('')
 const jdText = ref<string>('')
 const resumeFile = ref<File | null>(null)
 const resumeFileName = computed(() => resumeFile.value?.name ?? null)
 const isDragging = ref<boolean>(false)
 const notes = ref<string>('')
+
+const libraryCvs = ref<ResumeUploadItemDto[]>([])
+const isLoadingLibrary = ref<boolean>(false)
+const libraryError = ref<string>('')
+const selectedLibraryUploadId = ref<string>('')
+
+const fetchLibraryCvs = async () => {
+  isLoadingLibrary.value = true
+  libraryError.value = ''
+  try {
+    const list = await listResumeUploads()
+    libraryCvs.value = list
+    if (list.length > 0 && !selectedLibraryUploadId.value) {
+      selectedLibraryUploadId.value = list[0].upload_id
+    }
+  } catch (err: unknown) {
+    if (err && typeof err === 'object') {
+      const apiErr = err as { statusCode?: number; data?: { error?: { message?: string } }; message?: string }
+      if (apiErr.statusCode === 401) {
+        libraryError.value = 'Session expired. Please sign in to view your CV library.'
+      } else if (apiErr.statusCode === 409) {
+        libraryError.value = 'Conflict loading CV library. Please refresh.'
+      } else {
+        libraryError.value = apiErr.data?.error?.message || apiErr.message || 'Failed to load CV library.'
+      }
+    } else {
+      libraryError.value = 'Failed to load CV library.'
+    }
+  } finally {
+    isLoadingLibrary.value = false
+  }
+}
+
+const setResumeMode = (mode: 'paste' | 'upload' | 'library') => {
+  resumeMode.value = mode
+  if (mode === 'library') {
+    fetchLibraryCvs()
+  }
+}
+
+const formatBytes = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+}
+
+const formatDate = (dateStr: string): string => {
+  try {
+    return new Date(dateStr).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+  } catch {
+    return dateStr
+  }
+}
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 
@@ -48,7 +111,13 @@ const isCurrentResumeValid = computed(() => {
   if (resumeMode.value === 'paste') {
     return resumeText.value.trim().length > 0
   }
-  return resumeFile.value !== null
+  if (resumeMode.value === 'upload') {
+    return resumeFile.value !== null
+  }
+  if (resumeMode.value === 'library') {
+    return selectedLibraryUploadId.value.trim().length > 0
+  }
+  return false
 })
 
 const hasResume = computed(() => isCurrentResumeValid.value)
@@ -121,8 +190,10 @@ const goToNextStep = () => {
   if (currentStep.value === 3 && !isCurrentResumeValid.value) {
     if (resumeMode.value === 'paste') {
       errorMessage.value = 'Please provide candidate resume text.'
-    } else {
+    } else if (resumeMode.value === 'upload') {
       errorMessage.value = 'Please upload a PDF document (up to 5 MiB).'
+    } else {
+      errorMessage.value = 'Please select a CV from your library.'
     }
     return
   }
@@ -143,8 +214,10 @@ const handleSubmit = async () => {
   if (!isCurrentResumeValid.value) {
     if (resumeMode.value === 'paste') {
       errorMessage.value = 'Please provide candidate resume text.'
-    } else {
+    } else if (resumeMode.value === 'upload') {
       errorMessage.value = 'Please upload a resume PDF (up to 5 MiB).'
+    } else {
+      errorMessage.value = 'Please select a CV from your library.'
     }
     currentStep.value = 3
     return
@@ -178,6 +251,11 @@ const handleSubmit = async () => {
         throw new Error('Résumé upload was not confirmed by storage.')
       }
       resumeUploadId = completeRes.upload_id
+    } else if (resumeMode.value === 'library') {
+      if (!selectedLibraryUploadId.value) {
+        throw new Error('Please select a CV from your library.')
+      }
+      resumeUploadId = selectedLibraryUploadId.value
     }
 
     const payload: CreateWorkspaceRequest = {
@@ -187,14 +265,14 @@ const handleSubmit = async () => {
       company_urls: urls,
       seniority: seniority.value,
       resume_text: resumeMode.value === 'paste' ? resumeText.value.trim() : undefined,
-      resume_upload_id: resumeMode.value === 'upload' ? resumeUploadId : undefined,
+      resume_upload_id: (resumeMode.value === 'upload' || resumeMode.value === 'library') ? resumeUploadId : undefined,
       job_description: jdText.value.trim() || undefined,
       prompt: notes.value.trim() || undefined,
     }
 
     const ws = await createWorkspace(payload)
     const cleanId = ws.id.replace(/^workspace:/, '').replace(/`/g, '')
-    router.push(`/interviews/${cleanId}/overview`)
+    router.push(`/interviews/${encodeURIComponent(cleanId)}/overview`)
   } catch (err: unknown) {
     if (err && typeof err === 'object') {
       const apiErr = err as { data?: { error?: { message?: string } }; message?: string }
@@ -225,7 +303,7 @@ const handleSubmit = async () => {
         {{ $t('wizard.description') }}
       </p>
 
-      <div class="mt-6 flex items-center gap-2 sm:gap-4 overflow-x-auto pb-2 text-xs font-medium">
+      <div class="mt-6 flex items-center gap-2 sm:gap-4 overflow-x-auto pb-2 text-xs font-medium text-slate-700 dark:text-slate-300">
         <button
           type="button"
           @click="currentStep = 1"
@@ -233,7 +311,7 @@ const handleSubmit = async () => {
           :class="[
             currentStep === 1
               ? 'bg-indigo-600 text-white font-semibold shadow-xs'
-              : (step1Valid ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800')
+              : (step1Valid ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40' : 'hover:bg-slate-100 dark:hover:bg-slate-800')
           ]"
         >
           <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono border"
@@ -271,7 +349,7 @@ const handleSubmit = async () => {
           :class="[
             currentStep === 3
               ? 'bg-indigo-600 text-white font-semibold shadow-xs'
-              : (step3Valid ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800')
+              : (step3Valid ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40' : 'hover:bg-slate-100 dark:hover:bg-slate-800')
           ]"
         >
           <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono border"
@@ -462,7 +540,7 @@ const handleSubmit = async () => {
           <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-xs">
             <button
               type="button"
-              @click="resumeMode = 'paste'"
+              @click="setResumeMode('paste')"
               class="px-2.5 py-1 rounded-md transition-colors"
               :class="resumeMode === 'paste' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-medium shadow-2xs' : 'text-slate-600 dark:text-slate-400'"
             >
@@ -470,11 +548,20 @@ const handleSubmit = async () => {
             </button>
             <button
               type="button"
-              @click="resumeMode = 'upload'"
+              @click="setResumeMode('upload')"
               class="px-2.5 py-1 rounded-md transition-colors"
               :class="resumeMode === 'upload' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-medium shadow-2xs' : 'text-slate-600 dark:text-slate-400'"
             >
               {{ $t('wizard.pdfUpload') }}
+            </button>
+            <button
+              type="button"
+              data-testid="wizard-resume-mode-library"
+              @click="setResumeMode('library')"
+              class="px-2.5 py-1 rounded-md transition-colors"
+              :class="resumeMode === 'library' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-medium shadow-2xs' : 'text-slate-600 dark:text-slate-400'"
+            >
+              {{ $t('wizard.fromLibrary') }}
             </button>
           </div>
         </div>
@@ -489,7 +576,7 @@ const handleSubmit = async () => {
           ></textarea>
         </div>
 
-        <div v-else class="space-y-2">
+        <div v-else-if="resumeMode === 'upload'" class="space-y-2">
           <div
             class="border-2 border-dashed transition rounded-lg p-8 flex flex-col items-center justify-center text-center cursor-pointer"
             :class="[
@@ -522,6 +609,93 @@ const handleSubmit = async () => {
               </span>
               <span class="text-[11px] text-slate-400 mt-1">{{ $t('wizard.dropzoneLimit') }}</span>
             </label>
+          </div>
+        </div>
+
+        <div v-else class="space-y-4">
+          <div v-if="isLoadingLibrary" class="p-8 border border-slate-200 dark:border-slate-800 rounded-lg flex flex-col items-center justify-center text-slate-500 gap-2">
+            <div class="animate-spin rounded-full h-5 w-5 border-2 border-indigo-600 border-t-transparent" />
+            <span class="text-xs">{{ $t('wizard.loadingLibrary') }}</span>
+          </div>
+
+          <div v-else-if="libraryError" role="alert" class="p-4 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center justify-between">
+            <span>{{ libraryError }}</span>
+            <button
+              type="button"
+              @click="fetchLibraryCvs"
+              class="ml-3 px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-medium transition"
+            >
+              {{ $t('common.retry') }}
+            </button>
+          </div>
+
+          <div v-else-if="libraryCvs.length === 0" class="p-8 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg text-center space-y-2">
+            <FileText class="w-8 h-8 mx-auto text-slate-400" />
+            <p class="text-xs text-slate-600 dark:text-slate-300 font-medium">
+              {{ $t('wizard.noLibraryCvs') }}
+            </p>
+            <p class="text-[11px] text-slate-400">
+              {{ $t('wizard.uploadCvFirst') }}
+            </p>
+            <div class="pt-2 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                @click="setResumeMode('upload')"
+                class="px-3 py-1.5 rounded-md bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-500 transition"
+              >
+                {{ $t('wizard.pdfUpload') }}
+              </button>
+              <NuxtLink
+                to="/cvs"
+                class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                {{ $t('navigation.items.cvLibrary') }} →
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div v-else class="space-y-3">
+            <p class="text-xs text-slate-600 dark:text-slate-400">
+              {{ $t('wizard.selectCvFromLibrary') }}
+            </p>
+            <fieldset class="space-y-2">
+              <legend class="sr-only">{{ $t('wizard.selectCvFromLibrary') }}</legend>
+              <div
+                v-for="cv in libraryCvs"
+                :key="cv.upload_id"
+                class="flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer select-none"
+                :class="selectedLibraryUploadId === cv.upload_id
+                  ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30 ring-1 ring-indigo-500'
+                  : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 bg-white dark:bg-slate-850'"
+                @click="selectedLibraryUploadId = cv.upload_id"
+              >
+                <label :for="`cv-${cv.upload_id}`" class="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                  <input
+                    type="radio"
+                    :id="`cv-${cv.upload_id}`"
+                    name="library-cv"
+                    :value="cv.upload_id"
+                    v-model="selectedLibraryUploadId"
+                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-700"
+                  />
+                  <FileText class="w-4 h-4 text-slate-400 shrink-0" />
+                  <div class="truncate">
+                    <div class="text-xs font-medium text-slate-900 dark:text-white truncate">
+                      {{ cv.filename }}
+                    </div>
+                    <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                      {{ formatBytes(cv.size_bytes) }} • {{ formatDate(cv.created_at) }}
+                    </div>
+                  </div>
+                </label>
+                <span
+                  v-if="selectedLibraryUploadId === cv.upload_id"
+                  class="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 shrink-0"
+                >
+                  {{ $t('wizard.selectedCv') }}
+                </span>
+              </div>
+            </fieldset>
           </div>
         </div>
 

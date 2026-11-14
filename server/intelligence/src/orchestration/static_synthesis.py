@@ -5,6 +5,7 @@ import time
 from typing import Any
 
 from src.agents.runtime import agent_runtime
+from src.agents.runtime_support import AgentRecoveryContext, build_agent_recovery_context
 from src.contracts.v1 import WorkflowTask
 from src.orchestration.static_support import StaticNodeSupport, StaticWorkflowState
 
@@ -81,6 +82,8 @@ def build_synthesis_nodes(support: StaticNodeSupport):
             ],
         }
 
+        recovery_context: AgentRecoveryContext | None = None
+        replan_count = 0
         for attempt in range(first_attempt, first_attempt + 2):
             task.attempt = attempt
             await ledger.save_task(task)
@@ -91,6 +94,7 @@ def build_synthesis_nodes(support: StaticNodeSupport):
                     task_id=task.id,
                     run_id=state.run_id,
                     input_data=synthesis_input,
+                    recovery_context=recovery_context,
                 )
 
                 dur = (time.perf_counter() - start_t) * 1000
@@ -115,6 +119,10 @@ def build_synthesis_nodes(support: StaticNodeSupport):
             except Exception as e:
                 logger.warning(f"Synthesize match analysis attempt {attempt} failed: {e}")
                 if attempt < first_attempt - 1 + 2:
+                    replan_count += 1
+                    recovery_context = build_agent_recovery_context(
+                        "evidence-evaluator", e, replan_count
+                    )
                     delay_ms = 1000 * (attempt - first_attempt + 1)
                     await ledger.append_event_transactional(
                         run_id=state.run_id,

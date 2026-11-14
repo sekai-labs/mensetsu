@@ -1,0 +1,166 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import DocsBreadcrumb from '../../components/docs/DocsBreadcrumb.astro';
+import Callout from '../../components/ui/Callout.astro';
+
+const guides = [
+  {
+    title: 'Product Workflows',
+    desc: 'Deep dive into asynchronous workspace execution, from PDF CV parsing to interview question assembly.',
+    path: '/docs/workflows',
+    tag: 'Pipeline',
+  },
+  {
+    title: 'Local Setup & Deployment',
+    desc: 'Step-by-step instructions to configure, run, and verify the full Docker Compose stack.',
+    path: '/docs/setup',
+    tag: 'DevOps',
+  },
+  {
+    title: 'API & Service Architecture',
+    desc: 'Topologies, bi-directional gRPC protocol specifications, token monitoring, and SurrealDB schema patterns.',
+    path: '/docs/architecture',
+    tag: 'Topology',
+  },
+  {
+    title: 'Module Tree & Ownership',
+    desc: 'Repository layout, Rust bounded contexts, Python packages, clients, contracts, and infrastructure ownership.',
+    path: '/docs/modules',
+    tag: 'Code map',
+  },
+  {
+    title: 'Authentication & OAuth Setup',
+    desc: 'Password and TOTP sign-in, web BFF sessions, Google, GitHub, Facebook, and custom OIDC setup.',
+    path: '/docs/auth',
+    tag: 'OAuth / SSO',
+  },
+  {
+    title: 'Metrics & Usage',
+    desc: 'Role-scoped token history, 30-day analytics, dashboard summaries, and Prometheus scraping.',
+    path: '/docs/metrics',
+    tag: 'Observability',
+  },
+  {
+    title: 'Security & Privacy Boundaries',
+    desc: 'SSRF guardrails on public URLs, prompt injection containment, and private S3 object security.',
+    path: '/docs/security',
+    tag: 'Security',
+  },
+  {
+    title: 'Operations & Maintenance',
+    desc: 'Migrations, backups, health probes, logs, resource limits, upgrades, and troubleshooting.',
+    path: '/docs/operations',
+    tag: 'Runbook',
+  },
+  {
+    title: 'Contributing Guide',
+    desc: 'Development environment requirements, contract generation workflows, and testing criteria.',
+    path: '/docs/contributing',
+    tag: 'Community',
+  },
+];
+---
+
+<DocsLayout
+  title="System Overview | Mensetsu Documentation"
+  description="Introduction to Mensetsu, evidence-backed philosophy, and core capabilities."
+>
+  <div class="space-y-8">
+    <DocsBreadcrumb crumbs={[{ label: 'System Overview' }]} />
+
+    <header class="space-y-3 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div class="text-xs font-mono font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+        Documentation / Overview
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Mensetsu System Overview
+      </h1>
+      <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        An AI-driven, evidence-backed workspace tailored to senior engineers, architects, and technical professionals.
+      </p>
+    </header>
+
+    <!-- Core Philosophy -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        1. Purpose and Philosophy
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Generic conversational AI chatbots fail at serious interview preparation: they hallucinate company policies, invent fictional tech stacks, and produce generic non-actionable feedback.
+      </p>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        <strong>Mensetsu (面接)</strong> solves this by replacing the chat paradigm with an information-dense, evidence-backed workspace. When you submit your résumé and a target role, Mensetsu executes an asynchronous durable pipeline that connects claims directly to verifiable sources, identifies transparent experience gaps, and synthesizes a prerequisite-ordered syllabus.
+      </p>
+
+      <Callout type="important" title="Grounded Evidence Invariant">
+        Every claim regarding target company engineering culture, requirements, or architecture MUST have source provenance (source URL, retrieval timestamp, text snippet, and confidence rating). Fictional or ungrounded claims are rejected.
+      </Callout>
+    </section>
+
+    <!-- Core Capabilities -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        2. Core System Capabilities
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 space-y-1.5">
+          <div class="font-bold text-slate-900 dark:text-white">Structured Parsing</div>
+          <p class="text-slate-600 dark:text-slate-400">
+            Parses PDF résumés and job descriptions into structured schema entities with line-level quotes.
+          </p>
+        </div>
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 space-y-1.5">
+          <div class="font-bold text-slate-900 dark:text-white">SSRF-Guarded Research</div>
+          <p class="text-slate-600 dark:text-slate-400">
+            SearXNG-backed web intelligence with IP blocking (RFC1918, link-local, loopback, cloud metadata).
+          </p>
+        </div>
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 space-y-1.5">
+          <div class="font-bold text-slate-900 dark:text-white">SurrealDB Knowledge Graph</div>
+          <p class="text-slate-600 dark:text-slate-400">
+            Models companies, skills, requirements, and candidate claims with bi-directional graph relations.
+          </p>
+        </div>
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 space-y-1.5">
+          <div class="font-bold text-slate-900 dark:text-white">Question Book & Syllabus</div>
+          <p class="text-slate-600 dark:text-slate-400">
+            Tailored technical interview question book with evaluation rubrics, pitfalls, and follow-ups.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Documentation Sitemap Grid -->
+    <section class="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        3. Documentation Sections
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300">
+        Explore the in-depth technical documentation across the system:
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        {
+          guides.map((guide) => (
+            <a
+              href={guide.path}
+              class="group p-4 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all space-y-2"
+            >
+              <div class="flex items-center justify-between">
+                <div class="font-semibold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                  {guide.title}
+                </div>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 text-slate-400">
+                  {guide.tag}
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                {guide.desc}
+              </p>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</DocsLayout>

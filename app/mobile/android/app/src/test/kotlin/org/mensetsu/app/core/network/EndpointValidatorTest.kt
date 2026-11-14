@@ -14,6 +14,40 @@ class EndpointValidatorTest {
     }
 
     @Test
+    fun testAcceptInternationalizedHostNames() {
+        val result = EndpointValidator.validate("https://bücher.example:8443")
+        assertTrue(result is EndpointValidator.ValidationResult.Valid)
+    }
+
+    @Test
+    fun testRejectOutOfRangeAndMalformedPorts() {
+        assertTrue(
+            EndpointValidator.validate("https://api.example.com:0") is
+                EndpointValidator.ValidationResult.Invalid
+        )
+        assertTrue(
+            EndpointValidator.validate("https://api.example.com:65536") is
+                EndpointValidator.ValidationResult.Invalid
+        )
+        assertTrue(
+            EndpointValidator.validate("https://api.example.com:99999") is
+                EndpointValidator.ValidationResult.Invalid
+        )
+        assertTrue(
+            EndpointValidator.validate("https://api.example.com:abc") is
+                EndpointValidator.ValidationResult.Invalid
+        )
+        assertTrue(
+            EndpointValidator.validate("https://bücher.example:0") is
+                EndpointValidator.ValidationResult.Invalid
+        )
+        assertTrue(
+            EndpointValidator.validate("https://bücher.example:99999") is
+                EndpointValidator.ValidationResult.Invalid
+        )
+    }
+
+    @Test
     fun testStripTrailingSlash() {
         val res = EndpointValidator.validate("https://api.mensetsu.example.com///")
         assertTrue(res is EndpointValidator.ValidationResult.Valid)

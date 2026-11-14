@@ -3,16 +3,15 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 test.describe('Mobile Viewport Adaptations', () => {
-  const stateDir = path.resolve(process.cwd(), 'tests/e2e/.state')
+  const stateDir = path.resolve(__dirname, '.state')
   const runStateFile = path.join(stateDir, 'active_run.json')
 
   let runId = ''
 
   test.beforeAll(() => {
-    if (fs.existsSync(runStateFile)) {
-      const state = JSON.parse(fs.readFileSync(runStateFile, 'utf8'))
-      runId = state.runId
-    }
+    expect(fs.existsSync(runStateFile), 'desktop workflow state file must exist before mobile coverage').toBe(true)
+    const state: { runId?: unknown } = JSON.parse(fs.readFileSync(runStateFile, 'utf8'))
+    runId = typeof state.runId === 'string' ? state.runId : ''
   })
 
   test('1. Mobile overview first, full-screen inspector sheet, separate logs tab', async ({ page }) => {

@@ -44,7 +44,9 @@ impl WorkspaceDbRow {
             "analyzing_resume" => PipelinePhase::AnalyzingResume,
             "reading_job_description" => PipelinePhase::ReadingJobDescription,
             "researching_company" => PipelinePhase::ResearchingCompany,
-            "researching_engineering_environment" => PipelinePhase::ResearchingEngineeringEnvironment,
+            "researching_engineering_environment" => {
+                PipelinePhase::ResearchingEngineeringEnvironment
+            }
             "extracting_role_requirements" => PipelinePhase::ExtractingRoleRequirements,
             "mapping_resume_evidence" => PipelinePhase::MappingResumeEvidence,
             "constructing_knowledge_graph" => PipelinePhase::ConstructingKnowledgeGraph,
@@ -125,7 +127,8 @@ impl WorkspaceRepository for SurrealWorkspaceRepository {
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
-        let item: Option<serde_json::Value> = res.take(0).map_err(|e| AppError::Database(e.to_string()))?;
+        let item: Option<serde_json::Value> =
+            res.take(0).map_err(|e| AppError::Database(e.to_string()))?;
 
         if let Some(val) = item {
             let row: WorkspaceDbRow = serde_json::from_value(val)
@@ -145,13 +148,17 @@ impl WorkspaceRepository for SurrealWorkspaceRepository {
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
-        let values: Vec<serde_json::Value> = res.take(0).map_err(|e| AppError::Database(e.to_string()))?;
+        let values: Vec<serde_json::Value> =
+            res.take(0).map_err(|e| AppError::Database(e.to_string()))?;
 
         let rows: Vec<Workspace> = values
             .into_iter()
-            .filter_map(|val| serde_json::from_value::<WorkspaceDbRow>(val).ok())
-            .map(|r| r.into_domain())
-            .collect();
+            .map(|value| {
+                let row: WorkspaceDbRow = serde_json::from_value(value)
+                    .map_err(|e| AppError::Database(format!("Deserialization error: {e}")))?;
+                Ok(row.into_domain())
+            })
+            .collect::<Result<_>>()?;
 
         Ok(rows)
     }
@@ -186,7 +193,9 @@ impl WorkspaceRepository for SurrealWorkspaceRepository {
             PipelinePhase::AnalyzingResume => "analyzing_resume",
             PipelinePhase::ReadingJobDescription => "reading_job_description",
             PipelinePhase::ResearchingCompany => "researching_company",
-            PipelinePhase::ResearchingEngineeringEnvironment => "researching_engineering_environment",
+            PipelinePhase::ResearchingEngineeringEnvironment => {
+                "researching_engineering_environment"
+            }
             PipelinePhase::ExtractingRoleRequirements => "extracting_role_requirements",
             PipelinePhase::MappingResumeEvidence => "mapping_resume_evidence",
             PipelinePhase::ConstructingKnowledgeGraph => "constructing_knowledge_graph",
@@ -199,12 +208,13 @@ impl WorkspaceRepository for SurrealWorkspaceRepository {
             PipelinePhase::PreparingInput => "preparing_input",
         };
 
-        let seniority_str = workspace
-            .seniority
-            .as_ref()
-            .map(|s| serde_json::to_value(s).unwrap_or_default().as_str().unwrap_or("").to_string());
-
-        let target_date_str = workspace.target_date.as_ref().map(|d| d.to_rfc3339());
+        let seniority_str = workspace.seniority.as_ref().map(|s| {
+            serde_json::to_value(s)
+                .unwrap_or_default()
+                .as_str()
+                .unwrap_or("")
+                .to_string()
+        });
 
         self.client
             .query(query)
@@ -216,8 +226,11 @@ impl WorkspaceRepository for SurrealWorkspaceRepository {
             .bind(("current_phase", phase_str))
             .bind(("progress_percent", workspace.progress_percent as i64))
             .bind(("seniority", seniority_str))
-            .bind(("target_date", target_date_str))
-            .bind(("prep_time_weeks", workspace.prep_time_weeks.map(|w| w as i64)))
+            .bind(("target_date", workspace.target_date))
+            .bind((
+                "prep_time_weeks",
+                workspace.prep_time_weeks.map(|w| w as i64),
+            ))
             .bind(("user_prompt", workspace.user_prompt.clone()))
             .bind(("current_objective", workspace.current_objective.clone()))
             .bind(("workflow_mode", workspace.workflow_mode.clone()))
@@ -238,7 +251,9 @@ impl WorkspaceRepository for SurrealWorkspaceRepository {
             PipelinePhase::AnalyzingResume => "analyzing_resume",
             PipelinePhase::ReadingJobDescription => "reading_job_description",
             PipelinePhase::ResearchingCompany => "researching_company",
-            PipelinePhase::ResearchingEngineeringEnvironment => "researching_engineering_environment",
+            PipelinePhase::ResearchingEngineeringEnvironment => {
+                "researching_engineering_environment"
+            }
             PipelinePhase::ExtractingRoleRequirements => "extracting_role_requirements",
             PipelinePhase::MappingResumeEvidence => "mapping_resume_evidence",
             PipelinePhase::ConstructingKnowledgeGraph => "constructing_knowledge_graph",

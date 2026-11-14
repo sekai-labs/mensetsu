@@ -1,7 +1,0 @@
-{
-  "name": "mensetsu-root",
-  "private": true,
-  "devDependencies": {
-    "@playwright/test": "^1.64.0"
-  }
-}

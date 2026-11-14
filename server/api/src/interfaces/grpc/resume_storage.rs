@@ -8,9 +8,7 @@ use super::client::proto::resume::{
     resume_storage_service_server::ResumeStorageService, GetResumeDownloadUrlRequest,
     GetResumeDownloadUrlResponse,
 };
-use crate::contexts::workspace::infrastructure::{
-    db::DatabasePool, storage::ResumeObjectStore,
-};
+use crate::contexts::workspace::infrastructure::{db::DatabasePool, storage::ResumeObjectStore};
 
 #[derive(Clone)]
 pub struct ResumeStorageGrpcService {
@@ -51,7 +49,10 @@ fn parse_record_uuid(raw: &str, table: &str) -> Result<String, Status> {
 
 fn parse_user_record_id(raw: &str) -> Result<String, Status> {
     let id = unqualified_record_id(raw, "user")?;
-    if !id.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'-') {
+    if !id
+        .bytes()
+        .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'-')
+    {
         return Err(Status::invalid_argument("Invalid record ID"));
     }
     Ok(id.to_owned())
@@ -66,15 +67,27 @@ mod tests {
     #[test]
     fn accepts_bare_and_table_qualified_record_ids() {
         assert_eq!(parse_record_uuid(ID, "workspace").unwrap(), ID);
-        assert_eq!(parse_record_uuid(&format!("workspace:{ID}"), "workspace").unwrap(), ID);
-        assert_eq!(parse_record_uuid(&format!("resume_upload:`{ID}`"), "resume_upload").unwrap(), ID);
+        assert_eq!(
+            parse_record_uuid(&format!("workspace:{ID}"), "workspace").unwrap(),
+            ID
+        );
+        assert_eq!(
+            parse_record_uuid(&format!("resume_upload:`{ID}`"), "resume_upload").unwrap(),
+            ID
+        );
     }
 
     #[test]
     fn accepts_uuid_and_named_user_record_ids() {
         assert_eq!(parse_user_record_id(ID).unwrap(), ID);
-        assert_eq!(parse_user_record_id("admin_mensetsu").unwrap(), "admin_mensetsu");
-        assert_eq!(parse_user_record_id("user:`admin_mensetsu`").unwrap(), "admin_mensetsu");
+        assert_eq!(
+            parse_user_record_id("admin_mensetsu").unwrap(),
+            "admin_mensetsu"
+        );
+        assert_eq!(
+            parse_user_record_id("user:`admin_mensetsu`").unwrap(),
+            "admin_mensetsu"
+        );
     }
 
     #[test]
@@ -112,28 +125,34 @@ impl ResumeStorageService for ResumeStorageGrpcService {
             .bind(("user_id", user_id.clone()))
             .await
             .map_err(|_| Status::internal("Workspace lookup failed"))?;
-        let owned: Vec<serde_json::Value> = owned.take(0)
+        let owned: Vec<serde_json::Value> = owned
+            .take(0)
             .map_err(|_| Status::internal("Workspace lookup failed"))?;
         if owned.is_empty() {
-            return Err(Status::not_found("Attached resume not found"));
+            return Err(Status::not_found("Resume not found"));
         }
 
         let mut upload = self.db.client
-            .query("SELECT filename, size_bytes, object_key FROM type::record('resume_upload', $upload_id) WHERE user_id = type::record('user', $user_id) AND workspace_id = type::record('workspace', $workspace_id) AND status = 'attached';")
+            .query("SELECT filename, size_bytes, object_key FROM type::record('resume_upload', $upload_id) WHERE user_id = type::record('user', $user_id) AND status = 'completed';")
             .bind(("upload_id", upload_id.clone()))
-            .bind(("user_id", user_id))
-            .bind(("workspace_id", workspace_id.clone()))
+            .bind(("user_id", user_id.clone()))
             .await
             .map_err(|_| Status::internal("Upload lookup failed"))?;
-        let rows: Vec<serde_json::Value> = upload.take(0)
+        let rows: Vec<serde_json::Value> = upload
+            .take(0)
             .map_err(|_| Status::internal("Upload lookup failed"))?;
-        let row = rows.first().ok_or_else(|| Status::not_found("Attached resume not found"))?;
-        let key = row["object_key"].as_str()
+        let row = rows
+            .first()
+            .ok_or_else(|| Status::not_found("Resume not found"))?;
+        let key = row["object_key"]
+            .as_str()
             .filter(|key| key.starts_with("resumes/final/"))
             .ok_or_else(|| Status::failed_precondition("Resume object unavailable"))?;
-        let filename = row["filename"].as_str()
+        let filename = row["filename"]
+            .as_str()
             .ok_or_else(|| Status::failed_precondition("Resume filename unavailable"))?;
-        let size_bytes = row["size_bytes"].as_u64()
+        let size_bytes = row["size_bytes"]
+            .as_u64()
             .filter(|size| (1..=5 * 1024 * 1024).contains(size))
             .ok_or_else(|| Status::failed_precondition("Invalid resume size"))?;
 
@@ -146,17 +165,17 @@ impl ResumeStorageService for ResumeStorageGrpcService {
             .bind(("key", key.to_owned()))
             .await
             .map_err(|_| Status::internal("Resume lookup failed"))?;
-        let linked: Vec<serde_json::Value> = resume.take(0)
+        let linked: Vec<serde_json::Value> = resume
+            .take(0)
             .map_err(|_| Status::internal("Resume lookup failed"))?;
         if linked.is_empty() {
-            return Err(Status::not_found("Attached resume not found"));
+            return Err(Status::not_found("Resume not found"));
         }
 
-        let url = self.storage.presign_get(key).await
-            .map_err(|error| {
-                tracing::error!(error = %error, "Unable to sign private resume download");
-                Status::unavailable("Resume download unavailable")
-            })?;
+        let url = self.storage.presign_get(key).await.map_err(|error| {
+            tracing::error!(error = %error, "Unable to sign private resume download");
+            Status::unavailable("Resume download unavailable")
+        })?;
         Ok(Response::new(GetResumeDownloadUrlResponse {
             url,
             filename: filename.to_owned(),

@@ -1,32 +1,50 @@
 export const isPublicAuthRoute = (path: string): boolean => {
-  return path === '/' || path === '/login' || path === '/register'
+  return path === '/login' || path === '/register'
 }
 
-export const isValidEmail = (email: string): boolean => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
 
-export const isValidPassword = (password: string, minLength = 8): boolean => {
-  return password.length >= minLength
-}
+/**
+ * Sanitizes post-auth redirect paths to ensure same-origin relative navigation only.
+ * Strictly rejects absolute URLs, protocol-relative targets (e.g. //evil.com, ///evil.com),
+ * backslashes (including URL-encoded variants), and invalid URI constructs.
+ */
+export const sanitizeRedirectPath = (targetRedirect?: string | null): string => {
+  if (!targetRedirect || typeof targetRedirect !== 'string') {
+    return '/dashboard'
+  }
+  const trimmed = targetRedirect.trim()
+  if (!trimmed) {
+    return '/dashboard'
+  }
 
-export const validatePasswordStrength = (
-  password: string,
-  minLength = 8
-): {
-  valid: boolean
-  hasMinLength: boolean
-  hasLetter: boolean
-  hasNumberOrSpecial: boolean
-} => {
-  const hasMinLength = password.length >= minLength
-  const hasLetter = /[A-Za-z]/.test(password)
-  const hasNumberOrSpecial = /[^A-Za-z]/.test(password)
-  return {
-    valid: hasMinLength && hasLetter && hasNumberOrSpecial,
-    hasMinLength,
-    hasLetter,
-    hasNumberOrSpecial,
+  // Reject anything that doesn't start with a single forward slash or has backslashes
+  if (!trimmed.startsWith('/') || trimmed.startsWith('//') || trimmed.includes('\\')) {
+    return '/dashboard'
+  }
+
+  // Check URL-decoded representation against obfuscated slashes/backslashes
+  try {
+    const decoded = decodeURIComponent(trimmed)
+    if (!decoded.startsWith('/') || decoded.startsWith('//') || decoded.includes('\\')) {
+      return '/dashboard'
+    }
+  } catch {
+    return '/dashboard'
+  }
+
+  // Parse against a fixed synthetic origin to verify no protocol or host escapes occur
+  try {
+    const dummyBase = 'https://mensetsu.local'
+    const parsed = new URL(trimmed, dummyBase)
+    if (parsed.origin !== dummyBase || parsed.username || parsed.password) {
+      return '/dashboard'
+    }
+    if (!parsed.pathname.startsWith('/') || parsed.pathname.startsWith('//')) {
+      return '/dashboard'
+    }
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`
+  } catch {
+    return '/dashboard'
   }
 }
 
@@ -36,8 +54,11 @@ export const resolvePostAuthRedirect = (
   targetRedirect?: string | null
 ): string | null => {
   if (isAuthenticated) {
+    if (currentPath === '/') {
+      return '/dashboard'
+    }
     if (currentPath === '/login' || currentPath === '/register') {
-      return targetRedirect || '/dashboard'
+      return sanitizeRedirectPath(targetRedirect)
     }
     return null
   }

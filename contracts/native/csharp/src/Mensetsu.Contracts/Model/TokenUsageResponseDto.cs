@@ -34,7 +34,7 @@ namespace Mensetsu.Contracts.Model
         /// Initializes a new instance of the <see cref="TokenUsageResponseDto" /> class.
         /// </summary>
         /// <param name="items">items</param>
-        /// <param name="totals">totals</param>
+        /// <param name="totals">Scope-wide token totals across all requests in the user or platform scope (independent of page cursor or filters)</param>
         /// <param name="nextCursor">nextCursor</param>
         [JsonConstructor]
         public TokenUsageResponseDto(List<TokenUsageRowDto> items, TokenUsageTotalsDto totals, Option<TokenUsageCursorDto?> nextCursor = default)
@@ -54,8 +54,9 @@ namespace Mensetsu.Contracts.Model
         public List<TokenUsageRowDto> Items { get; set; }
 
         /// <summary>
-        /// Gets or Sets Totals
+        /// Scope-wide token totals across all requests in the user or platform scope (independent of page cursor or filters)
         /// </summary>
+        /// <value>Scope-wide token totals across all requests in the user or platform scope (independent of page cursor or filters)</value>
         [JsonPropertyName("totals")]
         public TokenUsageTotalsDto Totals { get; set; }
 

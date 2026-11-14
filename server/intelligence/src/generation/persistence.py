@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import Any
 
@@ -7,17 +6,6 @@ from src.db.client import SurrealDirectClient
 logger = logging.getLogger("mensetsu.activities.persistence")
 
 
-def sanitize_surreal_value(val: Any) -> str:
-    if isinstance(val, (dict, list)):
-        dumped = json.dumps(val)
-        return dumped.replace("\\", "\\\\").replace("'", "\\'")
-    elif isinstance(val, str):
-        return val.replace("\\", "\\\\").replace("'", "\\'")
-    elif val is None:
-        return "NONE"
-    elif isinstance(val, bool):
-        return "true" if val else "false"
-    return str(val)
 
 
 async def persist_record(

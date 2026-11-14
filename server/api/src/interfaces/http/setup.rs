@@ -31,7 +31,10 @@ pub struct InitializeSetupRequestDto {
 pub fn setup_routes(state: AppState) -> Router {
     Router::new()
         .route("/api/v1/setup/status", get(get_setup_status))
-        .route("/api/v1/setup/initialize", axum::routing::post(initialize_setup))
+        .route(
+            "/api/v1/setup/initialize",
+            axum::routing::post(initialize_setup),
+        )
         .with_state(state)
 }
 
@@ -105,7 +108,9 @@ pub async fn initialize_setup(
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
     if already_initialized {
-        return Err(AppError::Conflict("Platform has already been initialized".into()));
+        return Err(AppError::Conflict(
+            "Platform has already been initialized".into(),
+        ));
     }
 
     use crate::contexts::identity::domain::hasher::{Argon2PasswordHasher, PasswordHasher};
@@ -139,10 +144,16 @@ pub async fn initialize_setup(
         .and_then(|r| r.check())
         .map_err(|e| AppError::Database(format!("Failed to save admin user: {e}")))?;
 
-    if let (Some(provider), Some(api_key)) = (&payload.platform_llm_provider, &payload.platform_llm_api_key) {
+    if let (Some(provider), Some(api_key)) = (
+        &payload.platform_llm_provider,
+        &payload.platform_llm_api_key,
+    ) {
         if !provider.trim().is_empty() && !api_key.trim().is_empty() {
-            let crypto = crate::shared::encryption::CryptoService::new(&state.config.encryption_key);
-            let encrypted = crypto.encrypt(api_key.trim()).map_err(|e| AppError::Internal(e.to_string()))?;
+            let crypto =
+                crate::shared::encryption::CryptoService::new(&state.config.encryption_key);
+            let encrypted = crypto
+                .encrypt(api_key.trim())
+                .map_err(|e| AppError::Internal(e.to_string()))?;
             let prov_query = "
                 UPSERT type::record('system_llm_provider', $provider) SET
                     provider_key = $provider,
@@ -160,7 +171,9 @@ pub async fn initialize_setup(
                 .bind(("encrypted", encrypted))
                 .await
                 .and_then(|r| r.check())
-                .map_err(|e| AppError::Database(format!("Failed to save platform provider: {e}")))?;
+                .map_err(|e| {
+                    AppError::Database(format!("Failed to save platform provider: {e}"))
+                })?;
         }
     }
 
@@ -169,9 +182,12 @@ pub async fn initialize_setup(
         .and_then(|r| r.check())
         .map_err(|e| AppError::Database(format!("Failed to mark system initialized: {e}")))?;
 
-    Ok((StatusCode::CREATED, Json(serde_json::json!({
-        "status": "initialized",
-        "admin_user_id": user_id,
-        "admin_email": payload.admin_email
-    }))))
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({
+            "status": "initialized",
+            "admin_user_id": user_id,
+            "admin_email": payload.admin_email
+        })),
+    ))
 }

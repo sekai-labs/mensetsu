@@ -8,6 +8,7 @@ use super::auth_check::verify_workspace_owner;
 use super::AppState;
 use crate::interfaces::http::extractors::authenticated_user::AuthenticatedUser;
 use crate::shared::error::AppError;
+use crate::shared::record_id::clean_record_id;
 
 #[utoipa::path(
     get,
@@ -19,7 +20,7 @@ pub async fn get_workspace_role(
     auth_user: AuthenticatedUser,
     Path(id): Path<String>,
 ) -> std::result::Result<Json<serde_json::Value>, AppError> {
-    let clean_id = id.replace("workspace:", "").replace('`', "");
+    let clean_id = clean_record_id(&id);
     verify_workspace_owner(&state.db.client, &clean_id, &auth_user.user_id.0).await?;
     let db = &state.db.client;
 
@@ -56,7 +57,7 @@ pub async fn get_workspace_role(
 
     if let Some(jd) = jd_opt {
         return Ok(Json(serde_json::json!({
-            "workspace_id": id,
+            "workspace_id": clean_id,
             "title": jd.get("title").and_then(|t| t.as_str()).unwrap_or(role_title),
             "company_name": company_name,
             "role_summary": jd.get("role_summary").and_then(|s| s.as_str()).unwrap_or(""),
@@ -67,7 +68,7 @@ pub async fn get_workspace_role(
     }
 
     Ok(Json(serde_json::json!({
-        "workspace_id": id,
+        "workspace_id": clean_id,
         "title": role_title,
         "company_name": company_name,
         "role_summary": "",
@@ -96,7 +97,7 @@ pub async fn import_job_description_url(
     Path(id): Path<String>,
     Json(payload): Json<ImportJdUrlRequestDto>,
 ) -> std::result::Result<Json<serde_json::Value>, AppError> {
-    let clean_id = id.replace("workspace:", "").replace('`', "");
+    let clean_id = clean_record_id(&id);
     verify_workspace_owner(&state.db.client, &clean_id, &auth_user.user_id.0).await?;
     let db = &state.db.client;
 
@@ -111,7 +112,9 @@ pub async fn import_job_description_url(
             extraction_method = 'url_import',
             requirements = [];
     ";
-    let title = payload.custom_title.unwrap_or_else(|| "Imported Role".into());
+    let title = payload
+        .custom_title
+        .unwrap_or_else(|| "Imported Role".into());
     let _ = db
         .query(query)
         .bind(("id", jd_id))

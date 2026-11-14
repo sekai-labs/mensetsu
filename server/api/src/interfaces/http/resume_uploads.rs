@@ -1,18 +1,18 @@
 use axum::{
+    body::{Body, Bytes},
     extract::{Path, State},
-    http::StatusCode,
+    http::{header, HeaderValue, StatusCode},
+    response::Response,
     Json,
 };
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
+use tokio::io::AsyncReadExt;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::{
-    interfaces::http::{
-        extractors::authenticated_user::AuthenticatedUser,
-        workspaces::AppState,
-    },
+    interfaces::http::{extractors::authenticated_user::AuthenticatedUser, workspaces::AppState},
     shared::error::AppError,
 };
 
@@ -37,11 +37,29 @@ pub struct CompleteResumeUploadResponseDto {
     pub status: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ResumeUploadItemDto {
+    pub upload_id: String,
+    pub filename: String,
+    pub size_bytes: u64,
+    pub created_at: DateTime<Utc>,
+}
+
 fn sanitize_filename(basename: &str) -> String {
     let sanitized: String = basename
         .chars()
         .map(|c| {
-            if c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_' {
+            if c.is_alphanumeric()
+                || matches!(
+                    c as u32,
+                    0x0300..=0x036F
+                        | 0x1AB0..=0x1AFF
+                        | 0x1DC0..=0x1DFF
+                        | 0x20D0..=0x20FF
+                        | 0xFE20..=0xFE2F
+                )
+                || matches!(c, '.' | '-' | '_')
+            {
                 c
             } else {
                 '_'
@@ -59,16 +77,42 @@ fn sanitize_filename(basename: &str) -> String {
     }
 }
 
+fn content_disposition_filename(filename: &str) -> String {
+    let fallback: String = filename
+        .chars()
+        .map(|character| {
+            if character.is_ascii_alphanumeric() || matches!(character, '.' | '-' | '_') {
+                character
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    let mut encoded = String::with_capacity(filename.len());
+    for byte in filename.bytes() {
+        if byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'-' | b'_') {
+            encoded.push(char::from(byte));
+        } else {
+            const HEX: &[u8; 16] = b"0123456789ABCDEF";
+            encoded.push('%');
+            encoded.push(HEX[(byte >> 4) as usize] as char);
+            encoded.push(HEX[(byte & 0x0F) as usize] as char);
+        }
+    }
+    format!("attachment; filename=\"{fallback}\"; filename*=UTF-8''{encoded}")
+}
+
 fn validate_and_sanitize_filename(raw: &str) -> Result<String, AppError> {
     let path = std::path::Path::new(raw);
-    let basename = path
-        .file_name()
-        .and_then(|f| f.to_str())
-        .ok_or_else(|| AppError::Validation("Filename must not be empty or path-only".to_string()))?;
+    let basename = path.file_name().and_then(|f| f.to_str()).ok_or_else(|| {
+        AppError::Validation("Filename must not be empty or path-only".to_string())
+    })?;
 
     let trimmed_basename = basename.trim();
     if trimmed_basename.is_empty() {
-        return Err(AppError::Validation("Filename must not be empty".to_string()));
+        return Err(AppError::Validation(
+            "Filename must not be empty".to_string(),
+        ));
     }
 
     if !trimmed_basename.to_lowercase().ends_with(".pdf") {
@@ -77,14 +121,19 @@ fn validate_and_sanitize_filename(raw: &str) -> Result<String, AppError> {
         ));
     }
 
-    let stem = trimmed_basename[..trimmed_basename.len() - 4].trim_matches(|c| c == '.' || c == '_' || c == '-');
+    let stem = trimmed_basename[..trimmed_basename.len() - 4]
+        .trim_matches(|c| c == '.' || c == '_' || c == '-');
     if stem.is_empty() {
-        return Err(AppError::Validation("Filename must contain a valid name before .pdf".to_string()));
+        return Err(AppError::Validation(
+            "Filename must contain a valid name before .pdf".to_string(),
+        ));
     }
 
     let sanitized = sanitize_filename(trimmed_basename);
     if !sanitized.to_lowercase().ends_with(".pdf") {
-        return Err(AppError::Validation("Sanitized filename must end with .pdf".to_string()));
+        return Err(AppError::Validation(
+            "Sanitized filename must end with .pdf".to_string(),
+        ));
     }
     Ok(sanitized)
 }
@@ -232,22 +281,22 @@ pub async fn complete_resume_upload(
 
     let record_user_id = match record.user_id {
         serde_json::Value::String(s) => s.replace("user:", "").replace('`', ""),
-        serde_json::Value::Object(map) => {
-            map.get("id")
-                .and_then(|v| v.as_str())
-                .unwrap_or_default()
-                .replace("user:", "")
-                .replace('`', "")
-        }
+        serde_json::Value::Object(map) => map
+            .get("id")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .replace("user:", "")
+            .replace('`', ""),
         _ => String::new(),
     };
 
     if record_user_id != caller_user_id {
-        return Err(AppError::Forbidden("You do not own this upload".to_string()));
+        return Err(AppError::Forbidden(
+            "You do not own this upload".to_string(),
+        ));
     }
 
-
-    if record.status == "completed" || record.status == "attached" {
+    if record.status == "completed" {
         return Ok(Json(CompleteResumeUploadResponseDto {
             upload_id,
             status: "completed".to_string(),
@@ -263,20 +312,22 @@ pub async fn complete_resume_upload(
     let staging_key = record
         .staging_key
         .filter(|k| !k.trim().is_empty())
-        .ok_or_else(|| AppError::Conflict("Staging object key not recorded for upload".to_string()))?;
-
-
-    let (staging_size, staging_content_type) = state
-        .storage
-        .head(&staging_key)
-        .await
-        .map_err(|e| match e {
-            AppError::NotFound(_) => {
-                AppError::Conflict("Staging object not found in storage".to_string())
-            }
-            AppError::ExternalService(msg) => AppError::ExternalService(msg),
-            other => AppError::ExternalService(other.to_string()),
+        .ok_or_else(|| {
+            AppError::Conflict("Staging object key not recorded for upload".to_string())
         })?;
+
+    let (staging_size, staging_content_type) =
+        state
+            .storage
+            .head(&staging_key)
+            .await
+            .map_err(|e| match e {
+                AppError::NotFound(_) => {
+                    AppError::Conflict("Staging object not found in storage".to_string())
+                }
+                AppError::ExternalService(msg) => AppError::ExternalService(msg),
+                other => AppError::ExternalService(other.to_string()),
+            })?;
 
     if staging_size != record.size_bytes {
         return Err(AppError::Validation(format!(
@@ -300,10 +351,8 @@ pub async fn complete_resume_upload(
         )));
     }
 
-
     let final_uuid = Uuid::new_v4().to_string();
     let final_key = format!("resumes/final/{final_uuid}.pdf");
-
 
     state
         .storage
@@ -313,7 +362,6 @@ pub async fn complete_resume_upload(
             tracing::error!(error = %e, "Failed to copy staging object to final key");
             AppError::ExternalService("Failed to copy staged object to final location".to_string())
         })?;
-
 
     let head_and_prefix_result = async {
         let (final_size, final_ct) = state.storage.head(&final_key).await?;
@@ -342,7 +390,6 @@ pub async fn complete_resume_upload(
     .await;
 
     if let Err(err) = head_and_prefix_result {
-
         let _ = state.storage.delete(&final_key).await;
         return Err(match err {
             AppError::Validation(msg) => AppError::Validation(msg),
@@ -351,7 +398,6 @@ pub async fn complete_resume_upload(
             other => AppError::ExternalService(other.to_string()),
         });
     }
-
 
     let cas_query = "
         UPDATE type::record('resume_upload', $upload_id) SET
@@ -370,7 +416,9 @@ pub async fn complete_resume_upload(
         Ok(res) => res,
         Err(e) => {
             let _ = state.storage.delete(&final_key).await;
-            return Err(AppError::Database(format!("Failed to execute CAS update on upload: {e}")));
+            return Err(AppError::Database(format!(
+                "Failed to execute CAS update on upload: {e}"
+            )));
         }
     };
 
@@ -378,26 +426,28 @@ pub async fn complete_resume_upload(
         Ok(rows) => rows,
         Err(e) => {
             let _ = state.storage.delete(&final_key).await;
-            return Err(AppError::Database(format!("Failed to take CAS update result: {e}")));
+            return Err(AppError::Database(format!(
+                "Failed to take CAS update result: {e}"
+            )));
         }
     };
 
     if updated_rows.is_empty() {
-
         let _ = state.storage.delete(&final_key).await;
-
 
         let mut check_res = db
             .query("SELECT status FROM type::record('resume_upload', $upload_id);")
             .bind(("upload_id", upload_id.clone()))
             .await
-            .map_err(|e| AppError::Database(format!("Failed to query upload status on race: {e}")))?;
-        let check_rows: Vec<serde_json::Value> = check_res
-            .take(0)
-            .map_err(|e| AppError::Database(format!("Failed to read upload status on race: {e}")))?;
+            .map_err(|e| {
+                AppError::Database(format!("Failed to query upload status on race: {e}"))
+            })?;
+        let check_rows: Vec<serde_json::Value> = check_res.take(0).map_err(|e| {
+            AppError::Database(format!("Failed to read upload status on race: {e}"))
+        })?;
         if let Some(r) = check_rows.into_iter().next() {
             if let Some(s) = r.get("status").and_then(|v| v.as_str()) {
-                if s == "completed" || s == "attached" {
+                if s == "completed" {
                     return Ok(Json(CompleteResumeUploadResponseDto {
                         upload_id,
                         status: "completed".to_string(),
@@ -413,4 +463,258 @@ pub async fn complete_resume_upload(
         upload_id,
         status: "completed".to_string(),
     }))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/resume-uploads",
+    operation_id = "list_resume_uploads",
+    tag = "resume_uploads",
+    responses(
+        (status = 200, description = "List completed CV uploads", body = [ResumeUploadItemDto]),
+        (status = 401, description = "Unauthorized")
+    ),
+    security(("bearerAuth" = []))
+)]
+pub async fn list_resume_uploads(
+    State(state): State<AppState>,
+    auth_user: AuthenticatedUser,
+) -> Result<Json<Vec<ResumeUploadItemDto>>, AppError> {
+    let user_id = auth_user.user_id.0.replace("user:", "").replace('`', "");
+    let mut result = state.db.client
+        .query("SELECT id, filename, size_bytes, created_at FROM resume_upload WHERE user_id = type::record('user', $user_id) AND status = 'completed' ORDER BY created_at DESC;")
+        .bind(("user_id", user_id))
+        .await
+        .map_err(|e| AppError::Database(format!("Failed to list resume uploads: {e}")))?;
+    let rows: Vec<serde_json::Value> = result
+        .take(0)
+        .map_err(|e| AppError::Database(format!("Failed to read resume uploads: {e}")))?;
+    rows.into_iter()
+        .map(|row| {
+            let record_id = row
+                .get("id")
+                .ok_or_else(|| AppError::Database("Resume upload is missing its ID".into()))?;
+            let raw_id = match record_id {
+                serde_json::Value::String(value) => value.clone(),
+                serde_json::Value::Object(value) => value
+                    .get("id")
+                    .and_then(|id| id.as_str())
+                    .map(str::to_owned)
+                    .ok_or_else(|| {
+                        AppError::Database("Resume upload ID has an unexpected shape".into())
+                    })?,
+                _ => {
+                    return Err(AppError::Database(
+                        "Resume upload ID has an unexpected shape".into(),
+                    ))
+                }
+            };
+            let upload_id = raw_id
+                .strip_prefix("resume_upload:")
+                .unwrap_or(&raw_id)
+                .trim_matches('`')
+                .to_owned();
+            serde_json::from_value(serde_json::json!({
+                "upload_id": upload_id,
+                "filename": row.get("filename").cloned().unwrap_or_default(),
+                "size_bytes": row.get("size_bytes").cloned().unwrap_or_default(),
+                "created_at": row.get("created_at").cloned().unwrap_or_default()
+            }))
+            .map_err(|e| AppError::Database(format!("Invalid resume upload row: {e}")))
+        })
+        .collect::<Result<Vec<_>, _>>()
+        .map(Json)
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/resume-uploads/{upload_id}/download",
+    operation_id = "download_resume_upload",
+    tag = "resume_uploads",
+    params(("upload_id" = String, Path)),
+    responses(
+        (status = 200, description = "Download PDF", content_type = "application/pdf"),
+        (status = 404, description = "Upload not found"),
+        (status = 401, description = "Unauthorized")
+    ),
+    security(("bearerAuth" = []))
+)]
+pub async fn download_resume_upload(
+    State(state): State<AppState>,
+    auth_user: AuthenticatedUser,
+    Path(raw_upload_id): Path<String>,
+) -> Result<Response<Body>, AppError> {
+    let upload_id = raw_upload_id.replace("resume_upload:", "").replace('`', "");
+    if Uuid::parse_str(&upload_id).is_err() {
+        return Err(AppError::NotFound(format!("Upload {upload_id} not found")));
+    }
+    let user_id = auth_user.user_id.0.replace("user:", "").replace('`', "");
+    let mut result = state.db.client
+        .query("SELECT filename, object_key FROM type::record('resume_upload', $upload_id) WHERE user_id = type::record('user', $user_id) AND status = 'completed';")
+        .bind(("upload_id", upload_id.clone()))
+        .bind(("user_id", user_id))
+        .await
+        .map_err(|e| AppError::Database(format!("Failed to load resume upload: {e}")))?;
+    let rows: Vec<serde_json::Value> = result
+        .take(0)
+        .map_err(|e| AppError::Database(format!("Failed to read resume upload: {e}")))?;
+    let row = rows
+        .first()
+        .ok_or_else(|| AppError::NotFound(format!("Upload {upload_id} not found")))?;
+    let key = row
+        .get("object_key")
+        .and_then(|v| v.as_str())
+        .filter(|key| key.starts_with("resumes/final/"))
+        .ok_or_else(|| AppError::Conflict("Resume object unavailable".into()))?;
+    let filename = row
+        .get("filename")
+        .and_then(|v| v.as_str())
+        .unwrap_or("resume.pdf");
+    let safe_filename = sanitize_filename(filename);
+    let stream = state.storage.get_pdf_stream(key).await?;
+    let mut reader = stream.into_async_read();
+    let body_stream = async_stream::stream! {
+        let mut chunk = vec![0u8; 64 * 1024];
+        loop {
+            match reader.read(&mut chunk).await {
+                Ok(0) => break,
+                Ok(read) => yield Ok::<Bytes, std::io::Error>(Bytes::copy_from_slice(&chunk[..read])),
+                Err(error) => {
+                    yield Err(error);
+                    break;
+                }
+            }
+        }
+    };
+    let disposition = HeaderValue::from_str(&content_disposition_filename(&safe_filename))
+        .map_err(|e| AppError::Internal(format!("Invalid resume filename header: {e}")))?;
+    Response::builder()
+        .header(header::CONTENT_TYPE, "application/pdf")
+        .header(header::CONTENT_DISPOSITION, disposition)
+        .header(header::CACHE_CONTROL, "no-store")
+        .body(Body::from_stream(body_stream))
+        .map_err(|e| AppError::Internal(format!("Failed to build resume response: {e}")))
+}
+
+#[utoipa::path(
+    delete,
+    path = "/api/v1/resume-uploads/{upload_id}",
+    operation_id = "delete_resume_upload",
+    tag = "resume_uploads",
+    params(("upload_id" = String, Path)),
+    responses(
+        (status = 204, description = "CV deleted"),
+        (status = 404, description = "Upload not found"),
+        (status = 409, description = "CV is referenced by a workspace or application"),
+        (status = 401, description = "Unauthorized")
+    ),
+    security(("bearerAuth" = []))
+)]
+pub async fn delete_resume_upload(
+    State(state): State<AppState>,
+    auth_user: AuthenticatedUser,
+    Path(raw_upload_id): Path<String>,
+) -> Result<StatusCode, AppError> {
+    let upload_id = raw_upload_id.replace("resume_upload:", "").replace('`', "");
+    if Uuid::parse_str(&upload_id).is_err() {
+        return Err(AppError::NotFound(format!("Upload {upload_id} not found")));
+    }
+    let user_id = auth_user.user_id.0.replace("user:", "").replace('`', "");
+    let result = state.db.client.query(
+        "BEGIN TRANSACTION;\
+         LET $upload = type::record('resume_upload', $upload_id);\
+         LET $owned = SELECT VALUE id FROM resume_upload:$upload_id WHERE user_id = type::record('user', $user_id) AND status IN ['completed', 'deleting'];\
+         IF array::len($owned) = 0 { THROW 'resume_upload_not_found'; };\
+         LET $resume_refs = SELECT VALUE id FROM resume WHERE source_upload_id = $upload;\
+         LET $application_refs = SELECT VALUE id FROM job_application WHERE resume_upload_id = $upload;\
+         IF array::len($resume_refs) + array::len($application_refs) > 0 { THROW 'resume_upload_referenced'; };\
+         UPDATE resume_upload:$upload_id SET status = 'deleting';\
+         COMMIT TRANSACTION;\
+         RETURN 'deleting';"
+    ).bind(("upload_id", upload_id.clone()))
+        .bind(("user_id", user_id.clone()))
+        .await
+        .map_err(|e| {
+            let message = e.to_string();
+            if message.contains("resume_upload_referenced") {
+                AppError::Conflict("Resume upload is referenced by a resume or job application".into())
+            } else if message.contains("resume_upload_not_found") {
+                AppError::NotFound(format!("Upload {upload_id} not found"))
+            } else {
+                AppError::Database(format!("Failed to begin resume deletion: {e}"))
+            }
+        })?;
+    result
+        .check()
+        .map_err(|e| AppError::Database(format!("Failed to guard resume deletion: {e}")))?;
+    let mut lookup = state.db.client
+        .query("SELECT object_key FROM type::record('resume_upload', $upload_id) WHERE user_id = type::record('user', $user_id) AND status = 'deleting';")
+        .bind(("upload_id", upload_id.clone()))
+        .bind(("user_id", user_id))
+        .await
+        .map_err(|e| AppError::Database(format!("Failed to load deleting resume: {e}")))?;
+    let rows: Vec<serde_json::Value> = lookup
+        .take(0)
+        .map_err(|e| AppError::Database(format!("Failed to read deleting resume: {e}")))?;
+    let key = rows
+        .first()
+        .and_then(|row| row.get("object_key"))
+        .and_then(|v| v.as_str())
+        .filter(|key| key.starts_with("resumes/final/"))
+        .ok_or_else(|| AppError::Conflict("Resume object unavailable".into()))?;
+    if let Err(error) = state.storage.delete(key).await {
+        let _ = state.db.client.query("UPDATE type::record('resume_upload', $upload_id) SET status = 'completed' WHERE status = 'deleting';")
+            .bind(("upload_id", upload_id))
+            .await;
+        return Err(error);
+    }
+    state
+        .db
+        .client
+        .query("DELETE type::record('resume_upload', $upload_id) WHERE status = 'deleting';")
+        .bind(("upload_id", upload_id))
+        .await
+        .and_then(|result| result.check())
+        .map_err(|e| AppError::Database(format!("Failed to remove resume upload metadata: {e}")))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+#[cfg(test)]
+mod filename_sanitization_tests {
+    use super::validate_and_sanitize_filename;
+
+    #[test]
+    fn preserves_safe_unicode_resume_names() {
+        assert_eq!(
+            validate_and_sanitize_filename("履歴書.pdf").unwrap(),
+            "履歴書.pdf"
+        );
+        assert_eq!(
+            validate_and_sanitize_filename("résumé.pdf").unwrap(),
+            "résumé.pdf"
+        );
+        assert_eq!(
+            validate_and_sanitize_filename("sơ yếu lý lịch.pdf").unwrap(),
+            "sơ_yếu_lý_lịch.pdf"
+        );
+    }
+
+    #[test]
+    fn preserves_decomposed_combining_marks() {
+        assert_eq!(
+            validate_and_sanitize_filename("e\u{301}.pdf").unwrap(),
+            "e\u{301}.pdf"
+        );
+    }
+}
+#[cfg(test)]
+mod filename_content_disposition_tests {
+    use super::content_disposition_filename;
+
+    #[test]
+    fn emits_ascii_fallback_and_utf8_extended_filename() {
+        assert_eq!(
+            content_disposition_filename("résumé.pdf"),
+            "attachment; filename=\"r_sum_.pdf\"; filename*=UTF-8''r%C3%A9sum%C3%A9.pdf"
+        );
+    }
 }

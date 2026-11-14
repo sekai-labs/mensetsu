@@ -3,3 +3,5 @@ export const getBackendApiBase = (): string => {
 }
 
 export const SESSION_COOKIE_NAME = 'mensetsu_session_id'
+export const OAUTH_REDIRECT_COOKIE_NAME = 'mensetsu_oauth_redirect'
+export const TOTP_TEMP_TOKEN_COOKIE_NAME = 'mensetsu_2fa_temp_token'

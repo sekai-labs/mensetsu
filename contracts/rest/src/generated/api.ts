@@ -1,4 +1,68 @@
 export interface paths {
+    "/api/v1/admin/oauth/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_list_providers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/oauth/providers/{provider_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["admin_upsert_provider"];
+        post?: never;
+        delete: operations["admin_delete_provider"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_admin_providers"];
+        put?: never;
+        post: operations["upsert_admin_provider"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_admin_settings"];
+        put: operations["update_admin_settings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/usage/tokens": {
         parameters: {
             query?: never;
@@ -9,6 +73,150 @@ export interface paths {
         get: operations["admin_token_usage"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/usage/tokens/daily": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_daily_token_usage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_applications"];
+        put?: never;
+        post: operations["prepare_application"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_application"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["approve_application"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}/block": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["block_application"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}/prepare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["reprepare_application"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reconcile_application"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}/result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["record_result"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["start_application"];
         delete?: never;
         options?: never;
         head?: never;
@@ -143,6 +351,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/oauth/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_accounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oauth/accounts/{identity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["unlink_account"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oauth/authorize/{provider_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["authorize_login"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oauth/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["oauth_callback"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oauth/exchange": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["exchange_handoff"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oauth/link/{provider_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["authorize_link"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oauth/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_providers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/refresh": {
         parameters: {
             query?: never;
@@ -175,7 +495,55 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/candidate-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_candidate_profile"];
+        put: operations["update_candidate_profile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/metrics/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["metrics_summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/resume-uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_resume_uploads"];
+        put?: never;
+        post: operations["create_resume_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resume-uploads/{upload_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -184,8 +552,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_resume_upload"];
-        delete?: never;
+        post?: never;
+        delete: operations["delete_resume_upload"];
         options?: never;
         head?: never;
         patch?: never;
@@ -207,6 +575,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/resume-uploads/{upload_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["download_resume_upload"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/saved-jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_saved_jobs"];
+        put?: never;
+        post: operations["create_saved_job"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/saved-jobs/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["approve_saved_job"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/saved-jobs/{id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["dismiss_saved_job"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/saved-jobs/{id}/prepare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["prepare_saved_job"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/settings/llm": {
         parameters: {
             query?: never;
@@ -216,6 +664,70 @@ export interface paths {
         };
         get: operations["get_llm_settings"];
         put: operations["upsert_llm_setting"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/llm/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["discover_models"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/llm/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_combined_providers"];
+        put: operations["upsert_user_provider"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/llm/providers/{provider_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_user_provider"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/llm/routing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_user_routing"];
+        put: operations["update_user_routing"];
         post?: never;
         delete?: never;
         options?: never;
@@ -263,6 +775,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["user_token_usage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/usage/tokens/daily": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["user_daily_token_usage"];
         put?: never;
         post?: never;
         delete?: never;
@@ -751,10 +1279,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["prometheus_metrics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AdminProviderDto: {
+            allowed_models: string[];
+            base_url?: string | null;
+            encrypted_api_key?: string | null;
+            has_key: boolean;
+            is_enabled: boolean;
+            name: string;
+            provider_key: string;
+        };
         AgentExecution: {
             agent_id: string;
             artifact_ids?: string[];
@@ -782,6 +1335,17 @@ export interface components {
             /** Format: int64 */
             tool_call_count?: number;
         };
+        /** @enum {string} */
+        ApplicationMethod: "email" | "web";
+        /** @enum {string} */
+        ApplicationOutcome: "confirmed" | "uncertain" | "not_submitted";
+        /** @enum {string} */
+        ApplicationSite: "greenhouse" | "topcv" | "linkedin";
+        /** @enum {string} */
+        ApplicationStatus: "prepared" | "approved" | "submitting" | "submitted" | "needs_review" | "unknown";
+        ApproveApplicationRequestDto: {
+            revision: string;
+        };
         Artifact: {
             agent_execution_id?: string | null;
             content?: components["schemas"]["ArtifactContent"];
@@ -805,6 +1369,22 @@ export interface components {
             access_token: string;
             refresh_token: string;
             user: components["schemas"]["UserResponseDto"];
+        };
+        BlockApplicationRequestDto: {
+            reason_code: components["schemas"]["BlockReasonCode"];
+        };
+        /** @enum {string} */
+        BlockReasonCode: "missing_required_field" | "unsupported_form" | "login_required" | "captcha" | "form_changed";
+        CandidateProfileDto: {
+            excluded_keywords: string[];
+            github_url?: string | null;
+            linkedin_url?: string | null;
+            location?: string | null;
+            phone?: string | null;
+            portfolio_url?: string | null;
+            required_keywords: string[];
+            target_locations: string[];
+            target_role?: string | null;
         };
         CompanyClaim: {
             claim_type: string;
@@ -842,6 +1422,15 @@ export interface components {
             upload_id: string;
             upload_url: string;
         };
+        CreateSavedJobRequestDto: {
+            application_url?: string | null;
+            company_name?: string | null;
+            contact_email?: string | null;
+            job_description?: string | null;
+            location?: string | null;
+            role_title?: string | null;
+            source_url: string;
+        };
         CreateWorkspaceRequestDto: {
             company_name?: string | null;
             company_urls?: string[];
@@ -857,6 +1446,24 @@ export interface components {
             /** Format: date-time */
             target_date?: string | null;
             workflow_mode?: string | null;
+        };
+        DailyTokenUsageDto: {
+            /** @description Date of recorded usage in YYYY-MM-DD format */
+            date: string;
+            /** Format: int64 */
+            input_tokens: number;
+            /** Format: int64 */
+            output_tokens: number;
+            /** Format: int64 */
+            request_count: number;
+            /** Format: int64 */
+            total_tokens: number;
+        };
+        DailyTokenUsageResponseDto: {
+            /** @description Daily token usage items sorted in ascending chronological order */
+            items: components["schemas"]["DailyTokenUsageDto"][];
+            /** @description Aggregate totals over the 30-day analytics period */
+            totals: components["schemas"]["TokenUsageTotalsDto"];
         };
         Delegation: {
             child_agent_id: string;
@@ -913,6 +1520,11 @@ export interface components {
         DelegationStatus: "requested" | "accepted" | "running" | "completed" | "failed" | "rejected";
         /** @enum {string} */
         DependencyEdgeKind: "dependency";
+        DiscoverModelsRequestDto: {
+            api_key?: string | null;
+            base_url?: string | null;
+            provider_key: string;
+        };
         /** @enum {string} */
         ErrorCategory: "network" | "rate_limit" | "budget_exceeded" | "llm_error" | "validation_error" | "internal_error";
         EventsHistoryPageResponse: {
@@ -1043,6 +1655,28 @@ export interface components {
             strong_answer_rubric: string[];
             workspace_id: components["schemas"]["WorkspaceId"];
         };
+        JobApplicationResponseDto: {
+            application_method?: null | components["schemas"]["ApplicationMethod"];
+            canonical_url: string;
+            company_name: string;
+            confirmation_url?: string | null;
+            contact_email?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            id: string;
+            job_description: string;
+            prepared_fields: components["schemas"]["PreparedFieldsDto"];
+            resume_filename: string;
+            resume_upload_id: string;
+            revision: string;
+            role_title: string;
+            site: components["schemas"]["ApplicationSite"];
+            source_url: string;
+            status: components["schemas"]["ApplicationStatus"];
+            /** Format: date-time */
+            updated_at: string;
+            workspace_id?: string | null;
+        };
         KnowledgeEdge: {
             relation: string;
             source: string;
@@ -1151,12 +1785,146 @@ export interface components {
         MessageResponseDto: {
             message: string;
         };
+        MetricsSummaryResponseDto: {
+            platform_token_totals?: null | components["schemas"]["TokenUsageTotalsDto"];
+            service_metrics?: null | components["schemas"]["ServiceMetricsDto"];
+            /** @description Token usage totals for the authenticated user */
+            token_totals: components["schemas"]["TokenUsageTotalsDto"];
+        };
+        ModelRoutingConfigDto: {
+            fallback?: null | components["schemas"]["ModelRoutingSlotDto"];
+            primary: components["schemas"]["ModelRoutingSlotDto"];
+        };
+        ModelRoutingSlotDto: {
+            model: string;
+            provider_key: string;
+            /** Format: float */
+            temperature?: number | null;
+        };
+        OAuthExchangeRequestDto: {
+            code: string;
+        };
+        OAuthExchangeResponseDto: {
+            access_token?: string | null;
+            linked_identity?: null | components["schemas"]["OAuthIdentityDto"];
+            refresh_token?: string | null;
+            requires_2fa?: boolean;
+            temp_token?: string | null;
+            user?: null | components["schemas"]["UserResponseDto"];
+        };
+        OAuthIdentityDto: {
+            display_name?: string | null;
+            email?: string | null;
+            email_verified: boolean;
+            id: string;
+            /** Format: date-time */
+            last_login_at: string;
+            /** Format: date-time */
+            linked_at: string;
+            provider_key: string;
+            subject: string;
+        };
+        OAuthLinkStartResponseDto: {
+            authorization_url: string;
+        };
+        OAuthProviderAdminDto: {
+            authorization_endpoint?: string | null;
+            client_id: string;
+            /** Format: date-time */
+            created_at: string;
+            email_claim?: string | null;
+            email_endpoint?: string | null;
+            email_verified_claim?: string | null;
+            /** @description Never contains the client secret; only whether one is configured. */
+            has_client_secret: boolean;
+            is_enabled: boolean;
+            issuer?: string | null;
+            jwks_uri?: string | null;
+            name: string;
+            name_claim?: string | null;
+            provider_key: string;
+            provider_type: components["schemas"]["OAuthProviderType"];
+            redirect_uri: string;
+            scopes: string[];
+            subject_claim?: string | null;
+            token_endpoint?: string | null;
+            /** Format: date-time */
+            updated_at: string;
+            userinfo_endpoint?: string | null;
+        };
+        OAuthProviderSummaryDto: {
+            name: string;
+            provider_key: string;
+            provider_type: components["schemas"]["OAuthProviderType"];
+        };
+        /** @enum {string} */
+        OAuthProviderType: "google" | "github" | "facebook" | "oidc" | "oauth2";
+        /**
+         * @description Admin provider update. Every field is optional: omitted fields preserve the
+         *     stored value, while an explicit empty string clears an optional field.
+         */
+        OAuthProviderUpsertRequestDto: {
+            authorization_endpoint?: string | null;
+            client_id?: string | null;
+            client_secret?: string | null;
+            email_claim?: string | null;
+            email_endpoint?: string | null;
+            email_verified_claim?: string | null;
+            is_enabled?: boolean | null;
+            issuer?: string | null;
+            jwks_uri?: string | null;
+            name?: string | null;
+            name_claim?: string | null;
+            provider_type?: null | components["schemas"]["OAuthProviderType"];
+            redirect_uri?: string | null;
+            scopes?: string[] | null;
+            subject_claim?: string | null;
+            token_endpoint?: string | null;
+            userinfo_endpoint?: string | null;
+        };
         /** @enum {string} */
         PipelinePhase: "preparing_input" | "analyzing_resume" | "reading_job_description" | "researching_company" | "researching_engineering_environment" | "extracting_role_requirements" | "mapping_resume_evidence" | "constructing_knowledge_graph" | "building_learning_plan" | "generating_lessons" | "building_interview_question_book" | "final_validation" | "ready" | "failed";
+        PrepareApplicationRequestDto: {
+            application_method?: null | components["schemas"]["ApplicationMethod"];
+            company_name: string;
+            contact_email?: string | null;
+            job_description: string;
+            resume_upload_id: string;
+            role_title: string;
+            site: components["schemas"]["ApplicationSite"];
+            source_url: string;
+        };
+        PrepareSavedJobRequestDto: {
+            application_method: components["schemas"]["ApplicationMethod"];
+            contact_email?: string | null;
+            resume_upload_id: string;
+        };
+        PreparedFieldsDto: {
+            email: string;
+            first_name: string;
+            github_url?: string | null;
+            last_name: string;
+            linkedin_url?: string | null;
+            location?: string | null;
+            phone?: string | null;
+            portfolio_url?: string | null;
+        };
+        ProviderStatusItemDto: {
+            active_key_source: string;
+            allowed_models: string[];
+            base_url?: string | null;
+            is_enabled: boolean;
+            is_user_override: boolean;
+            name: string;
+            provider_key: string;
+        };
         /** @enum {string} */
         QuestionCategory: "resume_deep_dive" | "project_deep_dive" | "technical_fundamentals" | "target_stack" | "system_design" | "debugging" | "behavioral";
         /** @enum {string} */
         QuestionDifficulty: "easy" | "medium" | "hard";
+        ReconcileApplicationRequestDto: {
+            submitted: boolean;
+        };
         RefreshTokenRequestDto: {
             refresh_token?: string | null;
         };
@@ -1165,14 +1933,64 @@ export interface components {
             name: string;
             password: string;
         };
+        ResultApplicationRequestDto: {
+            confirmation_url?: string | null;
+            outcome: components["schemas"]["ApplicationOutcome"];
+        };
+        ResumeUploadItemDto: {
+            /** Format: date-time */
+            created_at: string;
+            filename: string;
+            /** Format: int64 */
+            size_bytes: number;
+            upload_id: string;
+        };
         /** @enum {string} */
         RunStatus: "pending" | "running" | "completed" | "failed" | "cancelled";
         RunsPageResponse: {
             items: components["schemas"]["WorkflowRun"][];
             next_cursor?: string | null;
         };
+        SavedJobResponseDto: {
+            application_status?: null | components["schemas"]["ApplicationStatus"];
+            application_url?: string | null;
+            canonical_url: string;
+            company_name?: string | null;
+            contact_email?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            id: string;
+            job_application_id?: string | null;
+            job_description?: string | null;
+            location?: string | null;
+            role_title?: string | null;
+            source_site: string;
+            source_url: string;
+            status: components["schemas"]["SavedJobStatus"];
+            /** Format: date-time */
+            updated_at: string;
+            workspace_status?: null | components["schemas"]["WorkspaceStatus"];
+        };
+        /** @enum {string} */
+        SavedJobStatus: "awaiting_approval" | "approved" | "dismissed";
+        SavedJobsPageResponseDto: {
+            items: components["schemas"]["SavedJobResponseDto"][];
+            next_cursor?: string | null;
+        };
         /** @enum {string} */
         SeniorityLevel: "junior" | "mid" | "senior" | "staff" | "principal" | "lead";
+        ServiceMetricsDto: {
+            /**
+             * Format: double
+             * @description Average HTTP requests per second over the last 60 seconds
+             */
+            requests_per_second: number;
+            /**
+             * Format: double
+             * @description Percentage of successful HTTP requests (status < 500) over the last 5 minutes (0.0 to 100.0)
+             */
+            success_rate_percent: number;
+        };
         SessionId: string;
         SourceCitation: {
             /** Format: float */
@@ -1237,6 +2055,7 @@ export interface components {
         TokenUsageResponseDto: {
             items: components["schemas"]["TokenUsageRowDto"][];
             next_cursor?: null | components["schemas"]["TokenUsageCursorDto"];
+            /** @description Scope-wide token totals across all requests in the user or platform scope (independent of page cursor or filters) */
             totals: components["schemas"]["TokenUsageTotalsDto"];
         };
         TokenUsageRowDto: {
@@ -1256,13 +2075,25 @@ export interface components {
             user_id?: string | null;
         };
         TokenUsageTotalsDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Scope-wide total input tokens
+             */
             input_tokens: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Scope-wide total output tokens
+             */
             output_tokens: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Scope-wide total count of model usage requests
+             */
             request_count: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Scope-wide total tokens (input + output)
+             */
             total_tokens: number;
         };
         ToolInvocation: {
@@ -1305,6 +2136,30 @@ export interface components {
             workflow_id: string;
             workspace_id: string;
         };
+        UpdateCandidateProfileRequestDto: {
+            excluded_keywords: string[];
+            github_url?: string | null;
+            linkedin_url?: string | null;
+            location?: string | null;
+            phone?: string | null;
+            portfolio_url?: string | null;
+            required_keywords: string[];
+            target_locations: string[];
+            target_role?: string | null;
+        };
+        UpdateUserRoutingRequestDto: {
+            slots: {
+                [key: string]: components["schemas"]["ModelRoutingConfigDto"];
+            };
+        };
+        UpsertAdminProviderRequestDto: {
+            allowed_models?: string[] | null;
+            api_key?: string | null;
+            base_url?: string | null;
+            is_enabled?: boolean | null;
+            name?: string | null;
+            provider_key: string;
+        };
         UpsertLlmConfigRequestDto: {
             api_key?: string | null;
             base_url?: string | null;
@@ -1313,6 +2168,11 @@ export interface components {
             model_embed?: string | null;
             model_search?: string | null;
             provider: string;
+        };
+        UpsertUserProviderRequestDto: {
+            api_key?: string | null;
+            base_url?: string | null;
+            provider_key: string;
         };
         User: {
             /** Format: date-time */
@@ -1347,6 +2207,11 @@ export interface components {
         };
         /** @enum {string} */
         UserRole: "admin" | "member";
+        UserRoutingResponseDto: {
+            slots: {
+                [key: string]: components["schemas"]["ModelRoutingConfigDto"];
+            };
+        };
         /** @enum {string} */
         UserStatus: "active" | "suspended";
         VerifyTotpRequestDto: {
@@ -1557,11 +2422,240 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    admin_list_providers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Configured OAuth providers (secrets redacted) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthProviderAdminDto"][];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_upsert_provider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description OAuth provider key */
+                provider_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OAuthProviderUpsertRequestDto"];
+            };
+        };
+        responses: {
+            /** @description OAuth provider saved; omitted fields preserved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthProviderAdminDto"];
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_delete_provider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description OAuth provider key */
+                provider_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OAuth provider deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Provider not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_admin_providers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Admin platform providers list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProviderDto"][];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    upsert_admin_provider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpsertAdminProviderRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Admin platform provider updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_admin_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Admin dynamic system settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_admin_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
+        responses: {
+            /** @description Admin settings updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     admin_token_usage: {
         parameters: {
             query?: {
-                before_timestamp?: string | null;
-                before_event_id?: string | null;
+                before_timestamp?: string;
+                before_event_id?: string;
+                limit?: number;
+                q?: string;
+                search?: string;
+                provider?: string;
+                model_provider?: string;
+                agent?: string;
+                agent_id?: string;
+                from?: string;
+                from_date?: string;
+                start_date?: string;
+                to?: string;
+                to_date?: string;
+                end_date?: string;
+                user_id?: string;
             };
             header?: never;
             path?: never;
@@ -1580,6 +2674,290 @@ export interface operations {
             };
             /** @description Administrator privileges required */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_daily_token_usage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daily token usage analytics for the last 30 days across all users */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyTokenUsageResponseDto"];
+                };
+            };
+            /** @description Administrator privileges required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_applications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobApplicationResponseDto"][];
+                };
+            };
+        };
+    };
+    prepare_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrepareApplicationRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobApplicationResponseDto"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobApplicationResponseDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    approve_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveApplicationRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobApplicationResponseDto"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    block_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlockApplicationRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobApplicationResponseDto"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reprepare_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrepareApplicationRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobApplicationResponseDto"];
+                };
+            };
+        };
+    };
+    reconcile_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReconcileApplicationRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobApplicationResponseDto"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    record_result: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResultApplicationRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobApplicationResponseDto"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    start_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobApplicationResponseDto"];
+                };
+            };
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1805,6 +3183,213 @@ export interface operations {
             };
         };
     };
+    list_accounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Linked external identities */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthIdentityDto"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unlink_account: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Linked identity id */
+                identity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Identity unlinked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Identity not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cannot remove the last usable sign-in method */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    authorize_login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description OAuth provider key */
+                provider_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to the identity provider */
+            303: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unknown or disabled provider */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    oauth_callback: {
+        parameters: {
+            query?: {
+                code?: string;
+                state?: string;
+                error?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to the web BFF with a one-use exchange code or stable error code */
+            303: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid callback state */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    exchange_handoff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OAuthExchangeRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Exchanged one-use OAuth handoff */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthExchangeResponseDto"];
+                };
+            };
+            /** @description Invalid, expired, or reused exchange code */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    authorize_link: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description OAuth provider key */
+                provider_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Provider authorization URL for explicit linking */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthLinkStartResponseDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_providers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Enabled OAuth providers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthProviderSummaryDto"][];
+                };
+            };
+        };
+    };
     refresh: {
         parameters: {
             query?: never;
@@ -1874,6 +3459,123 @@ export interface operations {
             };
         };
     };
+    get_candidate_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CandidateProfileDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_candidate_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCandidateProfileRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CandidateProfileDto"];
+                };
+            };
+            /** @description Invalid profile */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    metrics_summary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Aggregated token and service metrics summary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetricsSummaryResponseDto"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_resume_uploads: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List completed CV uploads */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumeUploadItemDto"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     create_resume_upload: {
         parameters: {
             query?: never;
@@ -1912,6 +3614,47 @@ export interface operations {
             };
             /** @description Storage failure */
             502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_resume_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                upload_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CV deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Upload not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CV is referenced by a workspace or application */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1970,6 +3713,222 @@ export interface operations {
             };
             /** @description Storage failure */
             502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    download_resume_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                upload_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Download PDF */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": unknown;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Upload not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_saved_jobs: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedJobsPageResponseDto"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_saved_job: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSavedJobRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedJobResponseDto"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedJobResponseDto"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    approve_saved_job: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedJobResponseDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    dismiss_saved_job: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedJobResponseDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    prepare_saved_job: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrepareSavedJobRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobApplicationResponseDto"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2042,6 +4001,134 @@ export interface operations {
             };
         };
     };
+    discover_models: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DiscoverModelsRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Discovered models list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    get_combined_providers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Combined LLM provider list with active key source */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderStatusItemDto"][];
+                };
+            };
+        };
+    };
+    upsert_user_provider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpsertUserProviderRequestDto"];
+            };
+        };
+        responses: {
+            /** @description User BYOK provider credentials updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_user_provider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User provider override reverted to admin */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_user_routing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User model routing matrix */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserRoutingResponseDto"];
+                };
+            };
+        };
+    };
+    update_user_routing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateUserRoutingRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Model routing matrix updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     delete_llm_setting: {
         parameters: {
             query?: never;
@@ -2099,8 +4186,22 @@ export interface operations {
     user_token_usage: {
         parameters: {
             query?: {
-                before_timestamp?: string | null;
-                before_event_id?: string | null;
+                before_timestamp?: string;
+                before_event_id?: string;
+                limit?: number;
+                q?: string;
+                search?: string;
+                provider?: string;
+                model_provider?: string;
+                agent?: string;
+                agent_id?: string;
+                from?: string;
+                from_date?: string;
+                start_date?: string;
+                to?: string;
+                to_date?: string;
+                end_date?: string;
+                user_id?: string;
             };
             header?: never;
             path?: never;
@@ -2115,6 +4216,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TokenUsageResponseDto"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    user_daily_token_usage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daily token usage analytics for the last 30 days for authenticated user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyTokenUsageResponseDto"];
                 };
             };
             /** @description Unauthenticated */
@@ -3232,6 +5360,33 @@ export interface operations {
                 };
             };
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    prometheus_metrics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Prometheus exposition metrics */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": unknown;
+                };
+            };
+            /** @description Unauthorized or Prometheus metrics disabled */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -15,7 +15,8 @@ export default defineConfig({
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:3001',
     storageState: authFile,
-    trace: 'on-first-retry',
+    actionTimeout: 30_000,
+    trace: 'retain-on-failure',
   },
   projects: [
     {

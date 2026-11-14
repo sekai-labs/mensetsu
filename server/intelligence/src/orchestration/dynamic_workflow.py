@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 from src.agents.registry import registry
 from src.agents.runtime import agent_runtime
+from src.agents.runtime_support import build_agent_recovery_context
 from src.contracts.v1 import WorkflowTask
 from src.orchestration.id_validator import ID_PATTERN
 from src.orchestration.ledger import SurrealLedgerRepository
@@ -236,22 +237,27 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
             plan_task.attempt = attempt
             await ledger.save_task(plan_task)
             try:
+                recovery_context = None
                 if last_error is not None:
                     planner_input["previous_plan_rejected"] = str(last_error)
+                    recovery_context = build_agent_recovery_context(
+                        "planner", last_error, attempt - first_attempt
+                    )
                 exec_rec, plan_data = await agent_runtime.execute_agent_loop(
                     agent_id="planner",
                     objective=f"Plan the research DAG for {state.role_title} at {state.company_name}",
                     task_id=plan_task.id,
                     run_id=state.run_id,
                     input_data=planner_input,
+                    recovery_context=recovery_context,
                 )
                 raw_tasks = plan_data["tasks"] if isinstance(plan_data, dict) else plan_data.tasks
                 planned = [t if isinstance(t, dict) else t.model_dump() for t in raw_tasks]
                 validate_plan_dag(planned)
                 break
-            except ValueError as ve:
+            except Exception as ve:
                 last_error = ve
-                logger.warning(f"Plan attempt {attempt} rejected for {state.run_id}: {ve}")
+                logger.warning(f"Plan attempt {attempt} failed for {state.run_id}: {ve}")
                 if attempt == first_attempt - 1 + TASK_ATTEMPTS:
                     plan_task.status = "failed"
                     plan_task.error = str(ve)
@@ -268,7 +274,17 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
                         },
                     )
                     raise
-
+                await ledger.append_event_transactional(
+                    run_id=state.run_id,
+                    event_type="task.retrying",
+                    task_id=plan_task.id,
+                    payload={
+                        "task_id": plan_task.id,
+                        "next_attempt": attempt + 1,
+                        "delay_ms": 1000,
+                    },
+                )
+                await asyncio.sleep(1.0)
         plan_task.status = "completed"
         plan_task.execution_ids.append(exec_rec.id)
         plan_task.output_data = {"task_ids": [t["id"] for t in planned], "planned_tasks": planned}
@@ -386,6 +402,7 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
             },
         )
 
+        last_error: Exception | None = None
         for attempt in range(first_attempt, first_attempt - 1 + TASK_ATTEMPTS + 1):
             task.attempt = attempt
             await ledger.save_task(task)
@@ -396,9 +413,17 @@ def build_dynamic_workflow(checkpointer: Any, ledger: SurrealLedgerRepository | 
                     task_id=task.id,
                     run_id=run_id,
                     input_data=agent_input(arg, task_info),
+                    recovery_context=(
+                        build_agent_recovery_context(
+                            task.assigned_agent, last_error, attempt - first_attempt
+                        )
+                        if last_error is not None
+                        else None
+                    ),
                 )
                 break
             except Exception as e:
+                last_error = e
                 logger.warning(f"Dynamic task {task.id} attempt {attempt} failed: {e}")
                 if attempt < first_attempt - 1 + TASK_ATTEMPTS:
                     delay_ms = 1000 * (attempt - first_attempt + 1)

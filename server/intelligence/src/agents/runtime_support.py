@@ -3,6 +3,7 @@ import asyncio
 import contextlib
 import contextvars
 import logging
+from dataclasses import dataclass
 from typing import Any, Callable, Iterator
 
 import openai
@@ -85,6 +86,66 @@ EVIDENCE_FLOOR_BY_AGENT = {
     "job-analysis": 1,
     "systems-deep-dive": 2,
 }
+
+
+@dataclass(frozen=True, slots=True)
+class AgentRecoveryContext:
+    attempt: int
+    previous_error: str
+    alternative_strategy: str
+
+
+RECOVERY_STRATEGIES = {
+    "company-research": (
+        "Change source-finding method: pivot between targeted search and supplied official URLs, "
+        "reuse saved evidence, and stop repeating inaccessible sources. Preserve provenance and "
+        "state evidence gaps instead of inventing company facts."
+    ),
+    "technical-research": (
+        "Change the research path: narrow the question, pivot source types or search terms, and "
+        "reuse saved evidence. Separate sourced facts from clearly labeled inference."
+    ),
+    "job-analysis": (
+        "Re-parse the supplied job description by section and extract only requirements supported "
+        "by its text; do not use external assumptions."
+    ),
+    "planner": (
+        "Rebuild the plan with a materially different task decomposition while retaining required "
+        "deliverable coverage, allowed agents, and DAG limits."
+    ),
+    "evidence-evaluator": (
+        "Re-evaluate using a claim-to-evidence matrix, omit unsupported claims, and retain the same "
+        "match-analysis sections."
+    ),
+    "curriculum": (
+        "Rebuild the graph or lesson in smaller steps, preserve canonical skill names and evidence "
+        "links, and keep the same structured curriculum contract."
+    ),
+    "interview-generation": (
+        "Use a different question angle, select skills only from the supplied canonical list, and "
+        "preserve the requested category, count, and structured rubric."
+    ),
+}
+
+
+def build_agent_recovery_context(
+    agent_id: str, previous_error: BaseException | str, attempt: int
+) -> AgentRecoveryContext:
+    if attempt < 1:
+        raise ValueError("Recovery attempt must be positive.")
+    diagnostic = " ".join(str(previous_error).split())[:1200]
+    strategy = RECOVERY_STRATEGIES.get(
+        agent_id,
+        "Choose a materially different allowed method or narrower decomposition while preserving "
+        "the same objective and structured output contract.",
+    )
+    return AgentRecoveryContext(
+        attempt=attempt,
+        previous_error=diagnostic or "The previous execution did not complete.",
+        alternative_strategy=strategy,
+    )
+
+
 LLM_REQUEST_TIMEOUT_S = 90.0
 LLM_RETRY_DELAYS_S = (5.0, 15.0)
 LLM_MAX_SERVER_RETRY_AFTER_S = 20.0
@@ -148,13 +209,6 @@ def build_llm_retry_middleware(label: str):
                     f"{label}: model call attempt {attempt} failed "
                     f"({llm_err.__class__.__name__}: {str(llm_err)[:200]}); retrying in {wait_s:.0f}s"
                 )
-                ctx_ledger = current_ledger_var.get()
-                if ctx_ledger:
-                    with contextlib.suppress(Exception):
-                        parts = label.split(" ")
-                        _exec_id = parts[1] if len(parts) > 1 else None
-                        _agent_id = parts[2].strip("()") if len(parts) > 2 else None
-                        _run_id = getattr(request, "run_id", None)
                 with budget_pause("llm retry backoff"):
                     await asyncio.sleep(wait_s)
         raise RuntimeError("Unreachable model retry loop")

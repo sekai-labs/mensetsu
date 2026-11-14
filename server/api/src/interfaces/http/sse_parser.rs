@@ -1,5 +1,5 @@
-use std::time::Duration;
 use axum::response::sse::Event;
+use std::time::Duration;
 
 #[derive(Debug, Default)]
 pub struct SseParser {
@@ -130,8 +130,7 @@ impl SseParser {
                     self.has_event_fields = true;
                 }
             }
-            _ => {
-            }
+            _ => {}
         }
     }
 }

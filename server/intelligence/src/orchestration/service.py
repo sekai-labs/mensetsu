@@ -2,6 +2,7 @@ import hashlib
 import json
 import logging
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from src.contracts.v1 import (
@@ -86,7 +87,6 @@ class WorkflowService:
                 "seniority": seniority,
                 "user_prompt": user_prompt,
                 "workflow_mode": workflow_mode,
-                "llm_config": llm_config,
             }
             canonical = json.dumps(request, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
             request_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
@@ -208,19 +208,38 @@ class WorkflowService:
         run = await active_ledger.get_workflow_run(run_id)
         if not run:
             raise KeyError("Run not found")
-        if run.status != "cancelled":
-            run.status = "cancelled"
-            await active_ledger.update_workflow_run(run_id, {"status": "cancelled"})
-            try:
-                await active_ledger.sweep_run_to_terminal(run_id, reason="run cancelled")
-            except Exception as se:
-                logger.error(f"Run-end sweep failed for cancelled run {run_id}: {se}")
-            await active_ledger.append_event_transactional(
-                run_id=run_id,
-                event_type="workflow.cancelled",
-                payload={"reason": "User cancellation requested", "cancelled_by": "api"},
-            )
-        return run
+        if run.status in ("completed", "failed", "cancelled"):
+            return run
+
+        try:
+            await job_queue.cancel_run(run_id)
+        except Exception as ce:
+            logger.warning(f"Could not publish cancellation signal for run {run_id}: {ce}")
+
+        transitioned = await active_ledger.transition_workflow_run_status(
+            run_id,
+            "cancelled",
+            from_statuses=("pending", "running"),
+            updates={
+                "current_phase": "cancelled",
+                "completed_at": datetime.now(timezone.utc),
+            },
+        )
+        if not transitioned:
+            current = await active_ledger.get_workflow_run(run_id)
+            return current or run
+
+        try:
+            await active_ledger.sweep_run_to_terminal(run_id, reason="run cancelled")
+        except Exception as se:
+            logger.error(f"Run-end sweep failed for cancelled run {run_id}: {se}")
+        await active_ledger.append_event_transactional(
+            run_id=run_id,
+            event_type="workflow.cancelled",
+            payload={"reason": "User cancellation requested", "cancelled_by": "api"},
+        )
+        cancelled = await active_ledger.get_workflow_run(run_id)
+        return cancelled or run
 
     @staticmethod
     async def get_task(run_id: str, task_id: str) -> WorkflowTask | None:
@@ -261,13 +280,24 @@ class WorkflowService:
         if not tool:
             return None
         summary = tool.output_summary or ""
-        chunk = summary[offset : offset + limit]
+        encoded_summary = summary.encode("utf-8")
+        total_bytes = len(encoded_summary)
+        start = min(max(offset, 0), total_bytes)
+        while start < total_bytes and encoded_summary[start] & 0xC0 == 0x80:
+            start += 1
+
+        effective_limit = max(limit, 1)
+        end = min(start + effective_limit, total_bytes)
+        while end < total_bytes and encoded_summary[end] & 0xC0 == 0x80:
+            end += 1
+
+        chunk = encoded_summary[start:end].decode("utf-8")
         return ToolOutputResponse(
             tool_invocation_id=tool_invocation_id,
-            offset=offset,
-            limit=limit,
-            total_bytes=len(summary),
-            has_more=(offset + limit) < len(summary),
+            offset=start,
+            limit=effective_limit,
+            total_bytes=total_bytes,
+            has_more=end < total_bytes,
             content=chunk,
         )
 

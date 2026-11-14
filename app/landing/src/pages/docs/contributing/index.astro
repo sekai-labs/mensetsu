@@ -1,0 +1,107 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import DocsBreadcrumb from '../../../components/docs/DocsBreadcrumb.astro';
+import Callout from '../../../components/ui/Callout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const devCommands = `# Start infrastructure containers:
+make infra-up
+
+# In separate terminals, run the development services:
+make dev-api        # Rust Axum API on :3000
+make dev-ai         # Python Intelligence gRPC on :50051
+make dev-worker     # Python Durable Job Worker
+make dev-web        # Nuxt Web Client on :3001
+make dev-landing    # Astro Landing & Docs on :3002`;
+
+const contractCommands = `# Regenerate REST and gRPC client contracts across all languages:
+make contracts
+
+# Verify that committed contracts match current code:
+make contracts-check`;
+---
+
+<DocsLayout
+  title="Contributing Guide | Mensetsu Documentation"
+  description="Engineering guidelines, contract synchronization procedures, and verification standards."
+>
+  <div class="space-y-8">
+    <DocsBreadcrumb crumbs={[{ label: 'Contributing Guide' }]} />
+
+    <header class="space-y-3 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div class="text-xs font-mono font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+        Community / Contribution
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Contributing to Mensetsu
+      </h1>
+      <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        Engineering guidelines, contract synchronization procedures, and verification standards.
+      </p>
+    </header>
+
+    <!-- Development Environment -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        1. Local Development Tooling
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        To develop across the Mensetsu repository, install the following toolchains:
+      </p>
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <li><strong>Rust</strong> (latest stable) for <code class="font-bold">server/api</code></li>
+        <li><strong>Python 3.12+</strong> and <code class="font-bold">uv</code> for <code class="font-bold">server/intelligence</code></li>
+        <li><strong>Bun</strong> for <code class="font-bold">app/web</code>, <code class="font-bold">app/landing</code>, and contracts</li>
+        <li><strong>Docker Compose</strong> for local persistence services</li>
+      </ul>
+
+      <CodeBlock code={devCommands} language="bash" filename="Terminal: Local Service Execution" />
+    </section>
+
+    <!-- Contract Generation -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        2. Contract-Driven Development
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Mensetsu uses contract-driven architecture. Never write duplicate client types by hand. The Rust API exports canonical OpenAPI specifications, and protobuf files define internal gRPC contracts.
+      </p>
+
+      <CodeBlock code={contractCommands} language="bash" filename="Contract Synchronization" />
+
+      <Callout type="important" title="Contract Parity Invariant">
+        Pull requests that modify API routes or DTOs must include the regenerated contracts in the same commit. CI will fail if <code class="font-mono text-xs">make contracts-check</code> detects differences.
+      </Callout>
+    </section>
+
+    <!-- Pull Request Checklist -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        3. Pull Request Standards & Checklist
+      </h2>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-5 bg-slate-50 dark:bg-slate-900 space-y-3 text-xs">
+        <div class="font-mono font-semibold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
+          Pre-Submission Verification Checklist
+        </div>
+        <ul class="space-y-2 text-slate-600 dark:text-slate-400">
+          <li class="flex items-start gap-2">
+            <span class="text-emerald-500 font-bold">✓</span>
+            <span>All API DTO changes reflected in <code class="font-mono">contracts/rest/openapi.json</code> and regenerated clients.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-emerald-500 font-bold">✓</span>
+            <span>Zero hardcoded duplicate types between frontend and backend.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-emerald-500 font-bold">✓</span>
+            <span>Synthetic test fixtures only; never commit real resumes, credentials, or PII.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-emerald-500 font-bold">✓</span>
+            <span>Agent knowledge directories (<code class="font-mono">.agent/</code>, <code class="font-mono">AGENTS.md</code>) remain git-excluded.</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</DocsLayout>

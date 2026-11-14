@@ -504,16 +504,16 @@ Intelligence behavior (`WorkflowService.create_run` in `server/intelligence/src/
 
 - The key is scoped to `[user_id, workspace_id, "create_run", idempotency_key]`.
 - The SurrealDB record ID is `idem_<sha256(scope_key)>`; the raw key is not persisted.
-- A canonical request includes workspace, user, operation, workflow ID, company, role, URLs, resume, upload, JD, seniority, prompt, workflow mode, and LLM config. Its SHA-256 is the request hash.
+- The request hash includes workspace, user, operation, workflow ID, company, role, URLs, resume, upload, JD, seniority, prompt, and workflow mode. It excludes `llm_config`, which remains in the queued payload.
 - `create_idempotent_workflow_run` (`server/intelligence/src/orchestration/ledger/runs.py`) performs one transaction:
   1. create `run_idempotency`;
   2. create `workflow_run`;
   3. append `workflow.created` at `seq = 1`.
-- Replaying the same key and payload returns the existing run.
-- Reusing the key with a different payload raises `IdempotencyConflict`, which the gRPC servicer maps to status `409` (`Idempotency-Key was already used with a different request.`).
+- Replaying the same key with the same hashed/material request returns the existing run, even if `llm_config` differs.
+- Reusing the key with a different hashed request (including company, role, or job-description changes) raises `IdempotencyConflict`, which the gRPC servicer maps to status `409` (`Idempotency-Key was already used with a different request.`).
 - The raw key is neither stored nor logged.
 
-Queue publication follows the ledger transaction. When a key is present, `RedisStreamJobQueue.enqueue_job` runs `IDEMPOTENT_ENQUEUE_LUA`, which uses `mensetsu:jobs:stream:run:<run_id>` as a guard and `SET`s the message ID. Retrying after an enqueue failure or an ambiguous enqueue response reuses the existing run and cannot add a second queue entry for that run.
+- Queue publication follows the ledger transaction. When a key is present, `RedisStreamJobQueue.enqueue_job` runs `IDEMPOTENT_ENQUEUE_LUA`, which uses `mensetsu:jobs:stream:run:<run_id>` as a guard and `SET`s the message ID. Retrying after an enqueue failure or an ambiguous enqueue response reuses the existing run and cannot add a second queue entry for that run. The first successfully published queue payload supplies `llm_config`: a retry before any publish may supply updated settings, while retries after publication cannot replace the queued config.
 
 ### 9.2 Workspace-create path
 

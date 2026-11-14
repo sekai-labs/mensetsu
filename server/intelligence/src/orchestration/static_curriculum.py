@@ -5,6 +5,7 @@ import time
 from typing import Any
 
 from src.agents.runtime import agent_runtime
+from src.agents.runtime_support import AgentRecoveryContext, build_agent_recovery_context
 from src.contracts.v1 import WorkflowTask
 from src.orchestration.static_support import (
     CURRICULUM_MIN_UNITS,
@@ -113,7 +114,9 @@ def build_curriculum_nodes(support: StaticNodeSupport):
         }
 
         async def generate_unit_batch(
-            skill_batch: list[dict[str, Any]], all_skill_names: list[str]
+            skill_batch: list[dict[str, Any]],
+            all_skill_names: list[str],
+            recovery_context: AgentRecoveryContext | None = None,
         ) -> tuple[Any, list[dict[str, Any]]]:
             target_names = [s["name"] for s in skill_batch]
             rec, data = await agent_runtime.execute_agent_loop(
@@ -127,6 +130,7 @@ def build_curriculum_nodes(support: StaticNodeSupport):
                     "target_skills": skill_batch,
                     "knowledge_graph_skills": all_skill_names,
                 },
+                recovery_context=recovery_context,
             )
             batch_dict = (
                 data
@@ -135,6 +139,8 @@ def build_curriculum_nodes(support: StaticNodeSupport):
             )
             return rec, batch_dict.get("learning_units", [])
 
+        recovery_context: AgentRecoveryContext | None = None
+        replan_count = 0
         for attempt in range(first_attempt, first_attempt + 2):
             task.attempt = attempt
             await ledger.save_task(task)
@@ -145,6 +151,7 @@ def build_curriculum_nodes(support: StaticNodeSupport):
                     task_id=task.id,
                     run_id=state.run_id,
                     input_data={**curriculum_input, "curriculum_stage": "graph"},
+                    recovery_context=recovery_context,
                 )
                 graph_dict = graph_data if isinstance(graph_data, dict) else graph_data.model_dump()
                 skills = graph_dict.get("skills", [])
@@ -164,7 +171,7 @@ def build_curriculum_nodes(support: StaticNodeSupport):
                     for i in range(0, len(unit_targets), CURRICULUM_UNIT_BATCH_SIZE)
                 ]
                 unit_results = await asyncio.gather(
-                    *(generate_unit_batch(b, skill_names) for b in batches)
+                    *(generate_unit_batch(b, skill_names, recovery_context) for b in batches)
                 )
 
                 learning_units: list[dict[str, Any]] = []
@@ -197,6 +204,10 @@ def build_curriculum_nodes(support: StaticNodeSupport):
             except Exception as e:
                 logger.warning(f"Curriculum generation task attempt {attempt} failed: {e}")
                 if attempt < first_attempt - 1 + 2:
+                    replan_count += 1
+                    recovery_context = build_agent_recovery_context(
+                        "curriculum", e, replan_count
+                    )
                     delay_ms = 1000 * (attempt - first_attempt + 1)
                     await ledger.append_event_transactional(
                         run_id=state.run_id,

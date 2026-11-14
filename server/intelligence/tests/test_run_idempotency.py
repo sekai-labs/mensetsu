@@ -48,13 +48,41 @@ async def test_same_key_and_request_replays_original_run_without_duplicate_job(i
     assert [event.type for event in history.events] == ["workflow.created"]
 
 
+
 @pytest.mark.asyncio
-async def test_same_key_with_different_payload_returns_conflict(idempotent_queue):
+async def test_same_key_with_changed_llm_config_replays_run(idempotent_queue):
+    args = request_args(f"usr_{uuid.uuid4().hex}", f"ws_{uuid.uuid4().hex}")
+    first_config = {"provider": "openai", "model": "gpt-4o"}
+    retry_config = {"provider": "anthropic", "model": "claude-sonnet"}
+    first = await WorkflowService.create_run(
+        **args, llm_config=first_config, idempotency_key="retry-key"
+    )
+    replay = await WorkflowService.create_run(
+        **args, llm_config=retry_config, idempotency_key="retry-key"
+    )
+    assert replay.id == first.id
+    client = await idempotent_queue.get_client()
+    entries = await client.xrange(idempotent_queue.stream_key)
+    assert len(entries) == 1
+    assert json.loads(entries[0][1]["payload"])["llm_config"] == first_config
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("company_name", "Different Company"),
+        ("role_title", "Principal Engineer"),
+        ("job_description", "Different job description"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_same_key_with_different_material_payload_returns_conflict(
+    idempotent_queue, field, value
+):
     args = request_args(f"usr_{uuid.uuid4().hex}", f"ws_{uuid.uuid4().hex}")
     await WorkflowService.create_run(**args, idempotency_key="retry-key")
     with pytest.raises(IdempotencyConflict):
         await WorkflowService.create_run(
-            **{**args, "company_name": "Different Company"}, idempotency_key="retry-key"
+            **{**args, field: value}, idempotency_key="retry-key"
         )
     client = await idempotent_queue.get_client()
     assert await client.xlen(idempotent_queue.stream_key) == 1
@@ -95,6 +123,43 @@ async def test_retry_after_enqueue_failure_reuses_reservation_and_enqueues_once(
     assert replay.id == run.id
     client = await idempotent_queue.get_client()
     assert await client.xlen(idempotent_queue.stream_key) == 1
+
+
+@pytest.mark.asyncio
+async def test_enqueue_retry_uses_first_successfully_published_config(
+    idempotent_queue, monkeypatch
+):
+    args = request_args(f"usr_{uuid.uuid4().hex}", f"ws_{uuid.uuid4().hex}")
+    first_config = {"provider": "openai", "model": "gpt-4o"}
+    retry_config = {"provider": "anthropic", "model": "claude-sonnet"}
+    enqueue = idempotent_queue.enqueue_job
+    calls = 0
+
+    async def fail_before_first_enqueue(*enqueue_args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise RuntimeError("simulated failure before enqueue")
+        return await enqueue(*enqueue_args, **kwargs)
+
+    monkeypatch.setattr(idempotent_queue, "enqueue_job", fail_before_first_enqueue)
+    with pytest.raises(RuntimeError, match="failure before enqueue"):
+        await WorkflowService.create_run(
+            **args, llm_config=first_config, idempotency_key="pre-enqueue-failure-key"
+        )
+    run = await WorkflowService.create_run(
+        **args, llm_config=retry_config, idempotency_key="pre-enqueue-failure-key"
+    )
+    replay = await WorkflowService.create_run(
+        **args,
+        llm_config={"provider": "google", "model": "gemini"},
+        idempotency_key="pre-enqueue-failure-key",
+    )
+    assert replay.id == run.id
+    client = await idempotent_queue.get_client()
+    entries = await client.xrange(idempotent_queue.stream_key)
+    assert len(entries) == 1
+    assert json.loads(entries[0][1]["payload"])["llm_config"] == retry_config
 
 
 @pytest.mark.asyncio

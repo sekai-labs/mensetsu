@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::contexts::identity::domain::UserId;
-use crate::contexts::workspace::domain::{WorkspaceId, WorkspaceRepository};
 use crate::contexts::workflow::domain::{RunOwnership, WorkflowRunId, WorkflowRunRepository};
+use crate::contexts::workspace::domain::{WorkspaceId, WorkspaceRepository};
 use crate::shared::error::{AppError, Result};
 
 pub struct WorkflowService {

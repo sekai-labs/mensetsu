@@ -42,7 +42,9 @@ pub fn split_statements(sql: &str) -> Vec<&str> {
                 continue;
             }
             b'/' if bytes.get(i + 1) == Some(&b'*') => {
-                i = sql[i + 2..].find("*/").map_or(bytes.len(), |p| i + 2 + p + 2);
+                i = sql[i + 2..]
+                    .find("*/")
+                    .map_or(bytes.len(), |p| i + 2 + p + 2);
                 continue;
             }
             b';' => {
@@ -64,7 +66,10 @@ pub fn split_statements(sql: &str) -> Vec<&str> {
 }
 
 fn skip_line(bytes: &[u8], i: usize) -> usize {
-    bytes[i..].iter().position(|&c| c == b'\n').map_or(bytes.len(), |p| i + p + 1)
+    bytes[i..]
+        .iter()
+        .position(|&c| c == b'\n')
+        .map_or(bytes.len(), |p| i + p + 1)
 }
 
 fn strip_comments(stmt: &str) -> &str {
@@ -81,8 +86,11 @@ fn strip_comments(stmt: &str) -> &str {
 }
 
 pub fn check_target(statements: &[&str], ns: &str, db: &str) -> Result<()> {
-    let uses: Vec<Vec<&str>> =
-        statements.iter().filter(|s| s.starts_with("USE ")).map(|s| s.split_whitespace().collect()).collect();
+    let uses: Vec<Vec<&str>> = statements
+        .iter()
+        .filter(|s| s.starts_with("USE "))
+        .map(|s| s.split_whitespace().collect())
+        .collect();
     let targets: Vec<(&str, &str)> = uses
         .iter()
         .filter_map(|w| match w.as_slice() {
@@ -96,8 +104,14 @@ pub fn check_target(statements: &[&str], ns: &str, db: &str) -> Result<()> {
             targets.len()
         )));
     };
-    if let Some(bad) = uses.iter().find(|w| !matches!(w.as_slice(), ["USE", "NS", x] | ["USE", "NS", x, "DB", _] if *x == *n)) {
-        return Err(AppError::Database(format!("schema.surql switches to another target: {}", bad.join(" "))));
+    if let Some(bad) = uses
+        .iter()
+        .find(|w| !matches!(w.as_slice(), ["USE", "NS", x] | ["USE", "NS", x, "DB", _] if *x == *n))
+    {
+        return Err(AppError::Database(format!(
+            "schema.surql switches to another target: {}",
+            bad.join(" ")
+        )));
     }
     if *n == ns && *d == db {
         Ok(())
@@ -134,9 +148,15 @@ pub async fn apply(client: &Db, sql: &str, ns: &str, db: &str) -> Result<()> {
             return Ok(());
         }
         if only_conflicts(&errors) && attempt < MAX_ATTEMPTS {
-            tracing::warn!(attempt, "schema.surql transaction lost a commit race with a concurrent applier; retrying");
+            tracing::warn!(
+                attempt,
+                "schema.surql transaction lost a commit race with a concurrent applier; retrying"
+            );
             let jitter_ms = 50 + (rand::random::<u64>() % 200);
-            tokio::time::sleep(std::time::Duration::from_millis(jitter_ms * u64::from(attempt))).await;
+            tokio::time::sleep(std::time::Duration::from_millis(
+                jitter_ms * u64::from(attempt),
+            ))
+            .await;
             continue;
         }
         return Err(describe(&statements, errors, attempt));
@@ -146,24 +166,44 @@ pub async fn apply(client: &Db, sql: &str, ns: &str, db: &str) -> Result<()> {
 
 fn is_cascade(e: &surrealdb::Error) -> bool {
     use surrealdb::types::QueryError;
-    matches!(e.query_details(), Some(QueryError::NotExecuted | QueryError::Cancelled))
+    matches!(
+        e.query_details(),
+        Some(QueryError::NotExecuted | QueryError::Cancelled)
+    )
 }
 
 fn only_conflicts(errors: &std::collections::HashMap<usize, surrealdb::Error>) -> bool {
     let mut roots = errors.values().filter(|e| !is_cascade(e)).peekable();
     roots.peek().is_some()
-        && roots.all(|e| matches!(e.query_details(), Some(surrealdb::types::QueryError::TransactionConflict)))
+        && roots.all(|e| {
+            matches!(
+                e.query_details(),
+                Some(surrealdb::types::QueryError::TransactionConflict)
+            )
+        })
 }
 
-fn describe(statements: &[&str], errors: std::collections::HashMap<usize, surrealdb::Error>, attempts: u32) -> AppError {
-    let mut roots: Vec<(usize, String)> =
-        errors.iter().filter(|(_, e)| !is_cascade(e)).map(|(i, e)| (*i, e.to_string())).collect();
+fn describe(
+    statements: &[&str],
+    errors: std::collections::HashMap<usize, surrealdb::Error>,
+    attempts: u32,
+) -> AppError {
+    let mut roots: Vec<(usize, String)> = errors
+        .iter()
+        .filter(|(_, e)| !is_cascade(e))
+        .map(|(i, e)| (*i, e.to_string()))
+        .collect();
     roots.sort_by_key(|(i, _)| *i);
     let detail = roots
         .iter()
-        .map(|(i, msg)| match i.checked_sub(1).and_then(|f| statements.get(f).map(|s| (f, s))) {
-            Some((f, stmt)) => format!("  statement #{f}: {msg}\n    {stmt}"),
-            None => format!("  transaction control: {msg}"),
+        .map(|(i, msg)| {
+            match i
+                .checked_sub(1)
+                .and_then(|f| statements.get(f).map(|s| (f, s)))
+            {
+                Some((f, stmt)) => format!("  statement #{f}: {msg}\n    {stmt}"),
+                None => format!("  transaction control: {msg}"),
+            }
         })
         .collect::<Vec<_>>()
         .join("\n");
@@ -203,31 +243,51 @@ mod tests {
     fn real_schema_is_entirely_idempotent() {
         let statements = split_statements(SCHEMA);
         check_target(&statements, "mensetsu", "production").unwrap();
-        assert!(statements.len() > 300, "suspiciously few statements: {}", statements.len());
+        assert!(
+            statements.len() > 300,
+            "suspiciously few statements: {}",
+            statements.len()
+        );
         let offenders: Vec<&&str> = statements
             .iter()
             .filter(|s| s.starts_with("DEFINE "))
             .filter(|s| !s.contains(" OVERWRITE ") && !s.contains(" IF NOT EXISTS "))
             .collect();
-        assert!(offenders.is_empty(), "non-idempotent DEFINEs make re-apply fail: {offenders:#?}");
-        let others: Vec<&&str> =
-            statements.iter().filter(|s| !s.starts_with("DEFINE ") && !s.starts_with("USE ")).collect();
-        assert!(others.is_empty(), "schema.surql must contain only DEFINE/USE statements: {others:#?}");
+        assert!(
+            offenders.is_empty(),
+            "non-idempotent DEFINEs make re-apply fail: {offenders:#?}"
+        );
+        let others: Vec<&&str> = statements
+            .iter()
+            .filter(|s| !s.starts_with("DEFINE ") && !s.starts_with("USE "))
+            .collect();
+        assert!(
+            others.is_empty(),
+            "schema.surql must contain only DEFINE/USE statements: {others:#?}"
+        );
     }
 
     #[test]
     fn target_mismatch_fails_closed() {
         let stmts = split_statements(SCHEMA);
-        let err = check_target(&stmts, "staging", "production").unwrap_err().to_string();
-        assert!(err.contains("mensetsu/production") && err.contains("staging/production"), "{err}");
+        let err = check_target(&stmts, "staging", "production")
+            .unwrap_err()
+            .to_string();
+        assert!(
+            err.contains("mensetsu/production") && err.contains("staging/production"),
+            "{err}"
+        );
         assert!(check_target(&["DEFINE TABLE a"], "mensetsu", "production").is_err());
         assert!(check_target(&["USE NS a DB b", "USE NS a DB b"], "a", "b").is_err());
         assert!(check_target(&["USE NS a", "USE NS a DB b"], "a", "b").is_ok());
-        assert!(check_target(&["USE NS other", "USE NS a DB b"], "a", "b").is_err(), "must not switch ns mid-file");
+        assert!(
+            check_target(&["USE NS other", "USE NS a DB b"], "a", "b").is_err(),
+            "must not switch ns mid-file"
+        );
     }
 
-    use surrealdb::types::QueryError;
     use std::collections::HashMap;
+    use surrealdb::types::QueryError;
 
     fn q(kind: QueryError) -> surrealdb::Error {
         surrealdb::Error::query("x".into(), Some(kind))
@@ -235,34 +295,76 @@ mod tests {
 
     #[test]
     fn retries_a_pure_commit_race_only() {
-        let race: HashMap<usize, surrealdb::Error> =
-            [(1, q(QueryError::NotExecuted)), (2, q(QueryError::NotExecuted)), (3, q(QueryError::TransactionConflict))].into();
+        let race: HashMap<usize, surrealdb::Error> = [
+            (1, q(QueryError::NotExecuted)),
+            (2, q(QueryError::NotExecuted)),
+            (3, q(QueryError::TransactionConflict)),
+        ]
+        .into();
         assert!(only_conflicts(&race));
 
-        let real = [(1, q(QueryError::NotExecuted)), (2, surrealdb::Error::thrown("boom".into())), (3, q(QueryError::Cancelled))].into();
+        let real = [
+            (1, q(QueryError::NotExecuted)),
+            (2, surrealdb::Error::thrown("boom".into())),
+            (3, q(QueryError::Cancelled)),
+        ]
+        .into();
         assert!(!only_conflicts(&real), "a real error must fail closed");
 
-        let mixed = [(2, surrealdb::Error::thrown("boom".into())), (3, q(QueryError::TransactionConflict))].into();
-        assert!(!only_conflicts(&mixed), "a conflict must not mask a real error");
+        let mixed = [
+            (2, surrealdb::Error::thrown("boom".into())),
+            (3, q(QueryError::TransactionConflict)),
+        ]
+        .into();
+        assert!(
+            !only_conflicts(&mixed),
+            "a conflict must not mask a real error"
+        );
 
-        let cascade_only = [(1, q(QueryError::NotExecuted)), (2, q(QueryError::Cancelled))].into();
-        assert!(!only_conflicts(&cascade_only), "no root cause is not a retryable race");
+        let cascade_only = [
+            (1, q(QueryError::NotExecuted)),
+            (2, q(QueryError::Cancelled)),
+        ]
+        .into();
+        assert!(
+            !only_conflicts(&cascade_only),
+            "no root cause is not a retryable race"
+        );
     }
 
     #[test]
     fn error_names_only_root_causes_by_file_index() {
-        let stmts = ["USE NS a DB b", "DEFINE TABLE OVERWRITE t SCHEMAFULL", "DEFINE INDEX IF NOT EXISTS i ON TABLE t COLUMNS x UNIQUE"];
+        let stmts = [
+            "USE NS a DB b",
+            "DEFINE TABLE OVERWRITE t SCHEMAFULL",
+            "DEFINE INDEX IF NOT EXISTS i ON TABLE t COLUMNS x UNIQUE",
+        ];
         let errors = [
             (1, q(QueryError::NotExecuted)),
             (2, q(QueryError::NotExecuted)),
-            (3, surrealdb::Error::thrown("index already contains 'dup'".into())),
+            (
+                3,
+                surrealdb::Error::thrown("index already contains 'dup'".into()),
+            ),
             (4, q(QueryError::NotExecuted)),
         ]
         .into();
         let msg = describe(&stmts, errors, 1).to_string();
-        assert!(msg.contains("statement #2: index already contains 'dup'"), "{msg}");
-        assert!(msg.contains("DEFINE INDEX IF NOT EXISTS i ON TABLE t"), "{msg}");
-        assert!(msg.contains("rolled back") && msg.contains("1 errored"), "{msg}");
-        assert!(!msg.contains("not executed"), "cascade noise must be filtered: {msg}");
+        assert!(
+            msg.contains("statement #2: index already contains 'dup'"),
+            "{msg}"
+        );
+        assert!(
+            msg.contains("DEFINE INDEX IF NOT EXISTS i ON TABLE t"),
+            "{msg}"
+        );
+        assert!(
+            msg.contains("rolled back") && msg.contains("1 errored"),
+            "{msg}"
+        );
+        assert!(
+            !msg.contains("not executed"),
+            "cascade noise must be filtered: {msg}"
+        );
     }
 }

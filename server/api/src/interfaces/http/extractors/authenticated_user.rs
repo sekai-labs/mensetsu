@@ -24,7 +24,6 @@ impl FromRequestParts<AppState> for AuthenticatedUser {
     ) -> Result<Self, Self::Rejection> {
         let mut token: Option<String> = None;
 
-        
         if let Some(auth_header) = parts.headers.get(header::AUTHORIZATION) {
             if let Ok(auth_str) = auth_header.to_str() {
                 if let Some(bearer_token) = auth_str.strip_prefix("Bearer ") {
@@ -33,7 +32,6 @@ impl FromRequestParts<AppState> for AuthenticatedUser {
             }
         }
 
-        
         if token.is_none() {
             if let Some(cookie_header) = parts.headers.get(header::COOKIE) {
                 if let Ok(cookie_str) = cookie_header.to_str() {
@@ -52,12 +50,14 @@ impl FromRequestParts<AppState> for AuthenticatedUser {
             AppError::Unauthorized("Missing authentication token (header or cookie)".into())
         })?;
 
-        let claims = state.identity_service.token_service().verify_access_token(&token)?;
+        let claims = state
+            .identity_service
+            .token_service()
+            .verify_access_token(&token)?;
 
         let session_id = SessionId(claims.sid);
         let user_id = UserId(claims.sub);
 
-        
         let session = state
             .identity_service
             .session_repo()

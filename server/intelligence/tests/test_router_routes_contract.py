@@ -4,7 +4,6 @@ import pytest
 
 import grpc
 import src.orchestration.shared as shared_mod
-from src.agents.runtime import current_ledger_var
 from src.contracts.v1 import (
     AgentExecution,
     Artifact,
@@ -34,14 +33,20 @@ async def grpc_control_server(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_all_control_commands_and_contract_responses(grpc_control_server):
+async def test_all_control_commands_and_contract_responses(grpc_control_server, monkeypatch):
     port, token = grpc_control_server
     run_id = "run_route_test_123"
     ws_id = "ws_route_test_123"
 
     ledger = SurrealLedgerRepository()
-    shared_mod.default_ledger = ledger
-    current_ledger_var.set(ledger)
+    monkeypatch.setattr(shared_mod, "default_ledger", ledger)
+    import src.orchestration.service as service_mod
+
+    class TestJobQueue:
+        async def cancel_run(self, _run_id):
+            pass
+
+    monkeypatch.setattr(service_mod, "job_queue", TestJobQueue())
 
     run = WorkflowRun(
         id=run_id,
@@ -135,6 +140,13 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
         from src.contracts.v1 import EventsHistoryPageResponse
 
         return EventsHistoryPageResponse(events=[evt], next_after_seq=None, last_seq=1)
+    async def mock_transition(run_id, status, *, from_statuses, updates):
+        nonlocal run
+        if run_id != run.id or run.status not in from_statuses:
+            return None
+        run = run.model_copy(update={"status": status, **updates})
+        return run
+
 
     ledger.get_workflow_run = lambda r: mock_return(run if r == run_id else None)
     ledger.list_workflow_runs = mock_list_runs
@@ -149,6 +161,7 @@ async def test_all_control_commands_and_contract_responses(grpc_control_server):
     ledger.get_task_graph = mock_task_graph
     ledger.get_delegation_graph = mock_del_graph
     ledger.get_events_history = mock_evts_history
+    ledger.transition_workflow_run_status = mock_transition
     ledger.update_workflow_run = lambda *args, **kwargs: mock_return(None)
     ledger.sweep_run_to_terminal = lambda *args, **kwargs: mock_return(None)
     ledger.append_event_transactional = lambda *args, **kwargs: mock_return(None)

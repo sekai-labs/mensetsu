@@ -11,6 +11,8 @@ The web app and five native clients connect to a Rust API; a separate Python wor
 ## What you can do
 
 - Create a workspace from a PDF résumé, job description, company, and target role.
+- Keep reusable PDF résumés and candidate contact details, role targets, and location/keyword preferences in the candidate profile.
+- Prepare and track job application records from supported job pages; review captured details and application fields before the extension fills anything.
 - Review company research with source links and inspect how your experience matches role requirements.
 - Explore skills and knowledge relationships, follow a learning path, and practice with targeted questions.
 - Track background research runs and return to the workspace as results arrive.
@@ -41,7 +43,7 @@ AI-generated material can be wrong. Check important claims against their cited s
    ```
 
    
-4. Open [**http://localhost:3001**](http://localhost:3001) and create the first administrator through **POST `/api/v1/setup/initialize`**. The API health check is [**http://localhost:3000/health/live**](http://localhost:3000/health/live). If a service does not start, inspect it with `docker compose ps` and `docker compose logs <service>`.
+4. Open the public landing and documentation at [**http://localhost:3002**](http://localhost:3002) and the interactive candidate workspace at [**http://localhost:3001**](http://localhost:3001). Create the first administrator through **POST `/api/v1/setup/initialize`**. The API health check is [**http://localhost:3000/health/live**](http://localhost:3000/health/live). If a service does not start, inspect it with `docker compose ps` and `docker compose logs <service>`.
 
 Stop the stack with `docker compose down`. Do **not** add `-v` unless you intend to delete the database, Redis, and object-storage volumes.
 
@@ -52,6 +54,17 @@ The sample Compose file publishes the API, SurrealDB, and Redis ports and config
 PDF uploads use short-lived signed URLs to private S3-compatible storage. Set `S3_ENDPOINT_PUBLIC` to an HTTPS endpoint reachable by the **browser or native device** at the same hostname used in the signed URL; the default `localhost:9000` only works on the machine running the local stack. See the [system architecture](docs/architecture/system-overview.md) for service boundaries.
 
 **Existing deployments:** If your database contains legacy inline/base64 PDF résumés, run [`infra/verify_and_migrate.sh`](infra/verify_and_migrate.sh) with the matching database and object-store configuration **before starting the updated API**. It verifies each migrated object before dropping the old field and stops on a missing or corrupt record. Back up your data first.
+
+### Upgrading an existing database
+
+Two upgrade paths apply the same end state:
+
+- **Fresh database:** the API applies the consolidated schema in `server/api/src/schema.surql` once and records every known migration, through `016_application_dispatch_and_saved_job_index`, as its baseline. Do not pre-create tables or replay the numbered files first.
+- **Versioned database:** the API reads `schema_migration` and applies only missing versions in order. An installation recorded through `014_cv_library` receives `015_saved_jobs_application_flow` and `016_application_dispatch_and_saved_job_index`; an installation recorded through `013` also receives `014`, whose preflight refuses to continue when an attached résumé upload has no matching `resume.source_upload_id`. `015` adds the saved-job flow without replacing an existing `saved_job` table. `016` adds `application_dispatch`, backfills pending dispatches for submitted applications that have an owned workspace but no existing dispatch or workflow run, restores only those pre-run `failed` workspaces to `pending`, and adds the saved-job keyset index. Orphaned submitted applications are reported in the API migration logs and are not given invented workspaces or dispatch rows.
+
+Back up the database and object store before an upgrade, and verify the restored copy in a disposable environment. Never point `scripts/check-schema-parity.py` at a shared or production server: the checker creates and removes the `parity_schema` and `parity_migr` namespaces on the SurrealDB endpoint you pass it. Use a disposable instance for parity and upgrade rehearsal.
+
+`application_dispatch` is the durable record between a committed application result and the intelligence service. It is created in the same transaction as the submitted application and is delivered after restart. The API claims due rows with a lease token, creates at most one idempotent workflow run per workspace, marks the row delivered with the run ID, and retries failed deliveries with bounded exponential backoff. A closed gRPC control connection is recreated on a later attempt. An operator does not need to replay the submission; restarting the API drains pending work on startup and then every five seconds.
 
 ## Native clients
 
@@ -69,11 +82,38 @@ Native-client workflow runs upload GitHub Actions artifacts. Pushing a `v*` tag 
 
 Apple distribution builds require your own signing and provisioning. Native builds use generated API clients from [`contracts/native`](contracts/native).
 
+### Browser extension
+
+The Manifest V3 assistant in [`app/extension`](app/extension) scans visible LinkedIn and TopCV job listings on demand, scores them against your Mensetsu profile, and saves jobs for your review. Applications use a reviewed email draft when a usable employer address is present; otherwise, the employer page remains the fallback. You send or submit applications yourself, then confirm the outcome to queue interview preparation. The extension never sends email or clicks an employer’s final submit button. See Settings → Browser extension in Mensetsu for setup and workflow instructions.
+
+Build both browser distributions with:
+
+```bash
+cd app/extension
+npm run build
+```
+
+The build writes two complete, separately installable directories:
+
+| Browser | Output                                   | Minimum version | Install                                                                                                                        |
+| ------- | ---------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Chrome  | `app/extension/dist/chrome`              | Chrome 116      | Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select that directory.                     |
+| Firefox | `app/extension/dist/firefox`             | Firefox 128     | Open `about:debugging#/runtime/this-firefox`, choose **Load Temporary Add-on**, and select `app/extension/dist/firefox/manifest.json`. |
+
+Chrome 116 or newer and Firefox 128 or newer are required. Firefox runs the background code as a module event page (`background.scripts`); Chrome runs the same shared source as a module service worker (`background.service_worker`). Both builds request extension storage (`storage.session` is used for tokens; Firefox 128 supports it) and `activeTab`, not broad job-site host access.
+
+On first run the popup asks for the **API base URL**. Enter the Rust API origin only, for example `https://api.example.org`—not the web app URL and not an `/api/v1` path. The extension rejects credentials, paths, queries, and fragments, requires HTTPS, and allows plain HTTP only for loopback development (`localhost`, `*.localhost`, or `127.0.0.1`) when you explicitly enable it. Approve the host-permission prompt for that origin. The extension then requests the unauthenticated `GET /health` endpoint with a timeout and requires a healthy response before it saves the origin and shows its sign-in form. If the probe fails, the origin is not saved and the sign-in form is not shown. Sign-in supports TOTP two-factor challenge.
+
+Change the API base URL later from the popup's settings (gear) button. Changing to a different origin clears the extension's access, refresh, and temporary 2FA tokens before the new origin is saved, so an existing token is never sent to a new server.
+
+Saved jobs load in pages of 25. **Load more** appends the next page and disappears when no cursor remains; **Refresh** returns to the first page. A saved job can be awaiting approval, approved, dismissed, or linked to an application. For a linked application, the popup shows **Submitted/queued** while interview preparation is waiting to be delivered, **Processing** while the workspace runs, **Ready** when preparation is complete, **Failed** when the workspace failed, and **Continue** for other linked states. Interview preparation is queued only after you confirm that you submitted the employer application; the extension and API never send employer email or click the employer's final submit action. Re-scanning the same job with new details moves a nonterminal linked application to **Needs review**, so you can approve the revised facts before preparing again.
+
 ## Architecture
 
 
 | Component                                        | Responsibility                                                             |
 | ------------------------------------------------ | -------------------------------------------------------------------------- |
+| [`app/landing`](app/landing)                     | Astro public landing & documentation; candidate onboarding and guides      |
 | [`app/web`](app/web)                             | Nuxt web UI; proxies API requests and manages browser sessions             |
 | [`server/api`](server/api)                       | Rust API; identity, authorization, workspaces, storage access, and OpenAPI |
 | [`server/intelligence`](server/intelligence)     | Python intelligence service and worker; research and analysis              |
@@ -85,7 +125,9 @@ The [architecture overview](docs/architecture/system-overview.md) covers service
 
 ## Development and verification
 
-Local development requires Rust, Bun, Python 3.12+, `uv`, and Docker Compose for supporting services. Copy and configure `.env` as above. `make infra-up` starts SurrealDB and Redis; research and uploads additionally need SearXNG and MinIO (`docker compose up -d searxng minio minio-init`). Start the applications in separate terminals with `make dev-api`, `make dev-ai`, `make dev-worker`, and `make dev-web`.
+Local development requires Rust, Bun, Python 3.12+, `uv`, and Docker Compose for supporting services. Copy and configure `.env` as above. `make infra-up` starts SurrealDB and Redis; research and uploads additionally need SearXNG and MinIO (`docker compose up -d searxng minio minio-init`). Start the applications in separate terminals with `make dev-api`, `make dev-ai`, `make dev-worker`, `make dev-web`, and `make dev-landing`.
+
+The Rust API applies the ordered SQL files in `infra/migrations/` during startup and records completed versions in `schema_migration`. On first startup it applies the current consolidated schema once and records the existing migrations as its baseline; later-added migrations run once when their version is absent. Migration errors stop API startup. See the [schema inventory](docs/architecture/schema-inventory.md) for current table and optional-field evidence; it is advisory and does not authorize destructive cleanup.
 
 Run `make test` for the API, intelligence, and web suites. Run `make contracts` after changing the Rust REST contract or gRPC definitions; `make contracts-check` verifies generated output. `make check` also checks schema parity against a running SurrealDB instance and performs source checks. Contract generation requires Docker and OpenAPI Generator.
 

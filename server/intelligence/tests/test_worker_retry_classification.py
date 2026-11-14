@@ -9,15 +9,28 @@ from openai import APITimeoutError
 
 from src.agents.runtime import agent_runtime
 from src.contracts.v1 import WorkflowRun
+from src.db.client import SurrealQueryError
 from src.orchestration.ledger import SurrealLedgerRepository
 from src.orchestration.redis_queue import RedisStreamJobQueue
-from src.orchestration.runtime.worker import DurableJobWorker
+from src.orchestration.runtime.worker import DurableJobWorker, is_retryable_error
 from tests.resume_double import resume_extraction_response
 from tests.test_agent_runtime_tools import (
     ScriptedToolCallingFakeModel,
+    requested_question_batch,
     requested_question_count,
     shape_curriculum_payload,
 )
+
+
+def test_surrealdb_write_conflicts_are_retryable():
+    conflict = SurrealQueryError(
+        "SurrealDB statement 14 failed: Transaction conflict: Transaction write conflict. "
+        "This transaction can be retried"
+    )
+    permanent = SurrealQueryError("SurrealDB statement 2 failed: invalid query syntax")
+
+    assert is_retryable_error(conflict)
+    assert not is_retryable_error(permanent)
 
 
 class FaultyModel(ScriptedToolCallingFakeModel):
@@ -172,14 +185,17 @@ class FaultyModel(ScriptedToolCallingFakeModel):
                 ]:
                     if c in cnt:
                         target_cat = c
+            batch_category, batch_part = requested_question_batch(messages)
             output_payload = {
                 "questions": [
                     {
-                        "question": f"Question {i}?",
+                        "question": (
+                            f"Question for {batch_category} batch {batch_part} item {i}?"
+                        ),
                         "category": target_cat,
                         "difficulty": "medium",
                         "rationale": "Rationale",
-                        "skills_tested": ["Architecture"],
+                        "skills_tested": ["Skill 0"],
                         "interviewer_intent": "Intent",
                         "expected_signals": ["Signal 1", "Signal 2"],
                         "answer_outline": ["Outline 1", "Outline 2", "Outline 3"],
@@ -226,7 +242,7 @@ async def test_worker_retry_classification_transient_vs_terminal():
         status="running",
     )
     await ledger.create_workflow_run(run)
-    from src.contracts.v1 import Artifact
+    from src.contracts.v1 import Artifact, EvidenceProvenance
 
     for k in range(5):
         await ledger.save_artifact(
@@ -235,6 +251,12 @@ async def test_worker_retry_classification_transient_vs_terminal():
                 run_id=run_id,
                 type="evidence",
                 title=f"Evidence {k}",
+                evidence=EvidenceProvenance(
+                    source_url=f"https://example.com/evidence/{k}",
+                    title=f"Evidence {k}",
+                    snippet="Evidence snippet",
+                    confidence=0.9,
+                ),
                 content={"snippet": "Evidence snippet"},
             )
         )

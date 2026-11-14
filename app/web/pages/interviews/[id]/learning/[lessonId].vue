@@ -40,7 +40,7 @@ const handleToggle = async () => {
     <div class="border-b border-slate-200 dark:border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <NuxtLink
-          :to="`/interviews/${workspaceId}/learning`"
+          :to="`/interviews/${encodeURIComponent(workspaceId)}/learning`"
           class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium inline-block mb-1.5"
         >
           {{ $t('learning.backToSyllabus') }}

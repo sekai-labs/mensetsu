@@ -1,0 +1,166 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import DocsBreadcrumb from '../../../components/docs/DocsBreadcrumb.astro';
+import Callout from '../../../components/ui/Callout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const ports = [
+  { port: '3000', service: 'Rust Core API', exposure: 'Published 3000; reverse proxy in production', role: 'Identity, REST/SSE endpoints, workspaces, OpenAPI' },
+  { port: '3001', service: 'Nuxt Workspace Client', exposure: 'Published 3001; browser', role: 'Interactive workspace, BFF session, API/SSE proxy' },
+  { port: '3002', service: 'Astro Landing & Docs', exposure: 'Published 3002; public', role: 'Static landing page and documentation' },
+  { port: '50051', service: 'Intelligence gRPC', exposure: 'Internal network only', role: 'DataControl & WorkflowEventStream HTTP/2 gRPC' },
+  { port: '8000', service: 'SurrealDB 3.x', exposure: 'Published locally; development only', role: 'SurrealKV storage, relations, documents, vectors' },
+  { port: '6379', service: 'Redis Stack', exposure: 'Published locally; development only', role: 'Redis Streams job queue, Pub/Sub telemetry, web sessions' },
+  { port: '8080', service: 'SearXNG', exposure: 'Internal / worker only', role: 'SSRF-isolated metasearch queries' },
+  { port: '9000', service: 'MinIO S3 API', exposure: 'Bound to 127.0.0.1; browser presigned URLs', role: 'Private PDF résumé object storage' },
+];
+
+const secretsCmd = `cp .env.example .env
+
+# Generate independent secrets, then paste each value into .env:
+printf 'JWT_SECRET=%s\\n' "$(openssl rand -hex 32)"
+printf 'ENCRYPTION_KEY=%s\\n' "$(openssl rand -hex 32)"
+printf 'INTERNAL_SERVICE_TOKEN=%s\\n' "$(openssl rand -hex 32)"
+printf 'SEARXNG_SECRET=%s\\n' "$(openssl rand -hex 32)"
+printf 'PROMETHEUS_METRICS_TOKEN=%s\\n' "$(openssl rand -hex 32)"
+
+# Optional: OAuth browser handoff. The bundled web client uses /auth/callback.
+# OAUTH_WEB_CALLBACK_URL=http://localhost:3001/auth/callback`;
+
+const envLlmSnippet = `LLM_OPENAI_BASE_URL=https://api.openai.com/v1
+LLM_OPENAI_API_KEY=sk-...your-key...
+LLM_DEFAULT_MODEL=gpt-4o
+
+# Storage Configuration
+S3_ENDPOINT_INTERNAL=http://minio:9000
+S3_ENDPOINT_PUBLIC=http://localhost:9000
+S3_BUCKET=mensetsu-resumes`;
+
+const initAdminCmd = `curl -X POST http://localhost:3000/api/v1/setup/initialize \\
+  -H "Content-Type: application/json" \\
+  -d '{"admin_name":"Administrator","admin_email":"admin@example.org","admin_password":"ChangeMe123!@#"}'`;
+---
+
+<DocsLayout
+  title="Local Setup & Deployment | Mensetsu Documentation"
+  description="Step-by-step instructions to configure, run, and verify the self-hosted Mensetsu stack."
+>
+  <div class="space-y-8">
+    <DocsBreadcrumb crumbs={[{ label: 'Local Setup & Operations' }]} />
+
+    <header class="space-y-3 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div class="text-xs font-mono font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+        DevOps / Deployment
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Local Setup & Deployment Guide
+      </h1>
+      <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        Step-by-step instructions to configure, run, and verify the self-hosted Mensetsu stack.
+      </p>
+    </header>
+
+    <!-- Prerequisites -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        1. Prerequisites
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Ensure your local host or server meets the following requirements:
+      </p>
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <li>Docker Engine 24+ with Compose v2</li>
+        <li>At least 4 CPU cores and 8 GB of RAM allocated to Docker</li>
+        <li>Credentials for an OpenAI-compatible model endpoint (OpenAI, Anthropic proxy, or local Ollama)</li>
+        <li>OpenSSL (or similar cryptographic tool) for generating secrets</li>
+      </ul>
+    </section>
+
+    <!-- Environment Secrets -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        2. Environment Configuration & Secrets
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Copy the sample configuration file and generate independent secrets:
+      </p>
+
+      <CodeBlock code={secretsCmd} language="bash" filename="Terminal: Secrets Generation" />
+
+      <Callout type="caution" title="Never Reuse Secrets">
+        Do not reuse <code class="font-mono text-xs">JWT_SECRET</code>, <code class="font-mono text-xs">ENCRYPTION_KEY</code>, or <code class="font-mono text-xs">INTERNAL_SERVICE_TOKEN</code> across environments. The intelligence service refuses to start without an internal service token, and the worker refuses to start without a configured model endpoint and key.
+      </Callout>
+
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Open <code class="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">.env</code> and configure your model endpoint:
+      </p>
+
+      <CodeBlock code={envLlmSnippet} language="ini" filename=".env Configuration" />
+    </section>
+
+    <!-- Build and Launch -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        3. Starting the Services
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Start all services using Docker Compose:
+      </p>
+
+      <CodeBlock code="docker compose up -d --build" language="bash" filename="Start Stack" />
+
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Verify that all containers are healthy:
+      </p>
+
+      <CodeBlock code="docker compose ps" language="bash" filename="Verify Containers" />
+    </section>
+
+    <!-- Port Matrix -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        4. Port Matrix & Service Inventory
+      </h2>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 dark:bg-slate-900 font-mono text-[11px] text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800">
+            <tr>
+              <th class="p-3">Port</th>
+              <th class="p-3">Service</th>
+              <th class="p-3">Exposure</th>
+              <th class="p-3">Responsibility</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono">
+            {
+              ports.map((p) => (
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                  <td class="p-3 text-indigo-600 dark:text-indigo-400 font-bold">:{p.port}</td>
+                  <td class="p-3 text-slate-900 dark:text-white font-semibold">{p.service}</td>
+                  <td class="p-3 text-slate-500">{p.exposure}</td>
+                  <td class="p-3 font-sans text-slate-600 dark:text-slate-300">{p.role}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Setup Initial Admin -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        5. Initial Admin Initialization
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Navigate to the candidate workspace at <a href="http://localhost:3001" target="_blank" class="text-indigo-600 dark:text-indigo-400 underline">http://localhost:3001</a> or invoke the setup endpoint directly:
+      </p>
+
+      <CodeBlock code={initAdminCmd} language="bash" filename="Initialize Admin User" />
+
+      <Callout type="important" title="Production Hardening">
+        The default Compose configuration is intended for local single-user preparation. For internet-facing setups, place a reverse proxy (Caddy, NGINX, Cloudflare) with TLS in front of the ports, do not publish SurrealDB or Redis ports directly, and configure CORS origins.
+      </Callout>
+    </section>
+  </div>
+</DocsLayout>

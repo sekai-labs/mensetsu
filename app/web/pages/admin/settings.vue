@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useApiClient } from '~/services/api.client'
 import { useAuthService } from '~/features/auth/services/auth.service'
+import AdminOAuthProviders from '~/components/admin/AdminOAuthProviders.vue'
 
 definePageMeta({
   layout: 'default',
@@ -100,7 +101,7 @@ const handleAddProvider = async () => {
         provider_key: newProviderKey.value.trim().toLowerCase(),
         name: newProviderName.value.trim() || newProviderKey.value.trim(),
         base_url: newProviderBaseUrl.value.trim() || undefined,
-        api_key: newProviderApiKey.value.trim() || undefined,
+        api_key: newProviderApiKey.value.trim() ? newProviderApiKey.value : undefined,
         is_enabled: true,
       },
     })
@@ -119,7 +120,7 @@ const handleAddProvider = async () => {
 
 const toggleProvider = async (p: AdminProvider) => {
   try {
-    await request(`/api/v1/admin/providers/${p.provider_key}`, {
+    await request(`/api/v1/admin/providers/${encodeURIComponent(p.provider_key)}`, {
       method: 'PUT',
       body: {
         provider_key: p.provider_key,
@@ -145,10 +146,11 @@ const toggleProvider = async (p: AdminProvider) => {
       </div>
       <h1 class="text-2xl font-semibold tracking-tight text-text-primary">Platform settings</h1>
       <p class="mt-1 text-sm text-text-muted">
-        Worker capacity, search configuration, and shared model providers.
+        Worker capacity, search configuration, model providers, and enterprise OAuth/OIDC identity gateways.
       </p>
     </div>
 
+    <!-- Section 1: Worker Concurrency & Throttle Controls -->
     <section class="space-y-5 border-b border-surface-border pb-7">
       <div class="flex justify-between items-center">
         <div>
@@ -250,8 +252,12 @@ const toggleProvider = async (p: AdminProvider) => {
           </div>
         </div>
       </div>
-</section>
+    </section>
 
+    <!-- Section 2: OAuth & OIDC Authentication Gateways (Admin) -->
+    <AdminOAuthProviders />
+
+    <!-- Section 3: Platform Model Gateways & Shared Credentials -->
     <section class="space-y-5 border-b border-surface-border pb-7">
       <div class="flex justify-between items-center">
         <div>
@@ -299,8 +305,9 @@ const toggleProvider = async (p: AdminProvider) => {
           </div>
         </div>
       </div>
-</section>
+    </section>
 
+    <!-- Modal for adding custom LLM gateway -->
     <div v-if="showNewProviderModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
       <div class="w-full max-w-md bg-surface-base border border-surface-border rounded-xl shadow-xl p-5 space-y-4">
         <div class="flex items-center justify-between border-b border-surface-border pb-3">
@@ -370,5 +377,6 @@ const toggleProvider = async (p: AdminProvider) => {
         </div>
       </div>
     </div>
+
   </div>
 </template>

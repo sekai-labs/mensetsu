@@ -31,14 +31,32 @@ mod tests {
     #[test]
     fn test_workspace_creation_empty_company_fails() {
         let user_id = UserId("user_123".into());
-        let err = Workspace::new(user_id, "   ".into(), "Systems Engineer".into(), None, None, None, None, None);
+        let err = Workspace::new(
+            user_id,
+            "   ".into(),
+            "Systems Engineer".into(),
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
         assert!(err.is_err(), "Empty company should fail validation");
     }
 
     #[test]
     fn test_workspace_creation_empty_role_fails() {
         let user_id = UserId("user_123".into());
-        let err = Workspace::new(user_id, "Anthropic".into(), "   ".into(), None, None, None, None, None);
+        let err = Workspace::new(
+            user_id,
+            "Anthropic".into(),
+            "   ".into(),
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
         assert!(err.is_err(), "Empty role title should fail validation");
     }
 

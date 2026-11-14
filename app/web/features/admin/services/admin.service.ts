@@ -14,12 +14,12 @@ export const useAdminService = () => {
 
   const getPipelineDetail = async (id: string): Promise<AdminPipelineDetail> => {
     const cleanId = id.replace(/^workspace:/, '').replace(/`/g, '')
-    return await request<AdminPipelineDetail>(`/api/v1/admin/pipelines/${cleanId}`)
+    return await request<AdminPipelineDetail>(`/api/v1/admin/pipelines/${encodeURIComponent(cleanId)}`)
   }
 
   const getPipelineLogs = async (id: string): Promise<AdminPipelineLogsResponse> => {
     const cleanId = id.replace(/^workspace:/, '').replace(/`/g, '')
-    return await request<AdminPipelineLogsResponse>(`/api/v1/admin/pipelines/${cleanId}/logs`)
+    return await request<AdminPipelineLogsResponse>(`/api/v1/admin/pipelines/${encodeURIComponent(cleanId)}/logs`)
   }
 
   return {

@@ -139,7 +139,7 @@ const handleToggle = async (lessonId: string) => {
               {{ unit.is_completed || unit.completed ? 'Mark Incomplete' : 'Mark Completed' }}
             </button>
 
-            <NuxtLink :to="`/interviews/${workspaceId}/learning/${unit.id.replace(/^learning_unit:/, '').replace(/`/g, '')}`">
+            <NuxtLink :to="`/interviews/${encodeURIComponent(workspaceId)}/learning/${encodeURIComponent(unit.id.replace(/^learning_unit:/, '').replace(/`/g, ''))}`">
               <AppButton size="xs">
                 {{ unit.is_completed || unit.completed ? 'Review Module →' : 'Start Module →' }}
               </AppButton>

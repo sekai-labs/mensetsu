@@ -6,6 +6,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from src.contracts.v1 import WorkflowTask
+from src.evals import validate_run_outputs
 from src.generation.persistence import persist_record
 from src.orchestration.id_validator import validate_id
 from src.orchestration.static_support import (
@@ -37,6 +38,41 @@ def build_output_nodes(support: StaticNodeSupport, generate_questions_node):
         while len(state.questions) < TOTAL_MIN_QUESTIONS:
             q_res = await generate_questions_node(state)
             state.questions = q_res.get("questions", state.questions)
+
+        ws_id = state.workspace_id
+        comp_data = state.research_results.get("company")
+        if comp_data is not None and not isinstance(comp_data, dict):
+            raise ValueError(
+                f"Company research output for run {state.run_id} is not a structured dossier: {type(comp_data).__name__}"
+            )
+        all_run_artifacts = await ledger.list_artifacts_for_run(state.run_id)
+        all_evidence_artifacts = [a for a in all_run_artifacts if a.type == "evidence"]
+        evidence_arts = [a for a in all_evidence_artifacts if a.evidence]
+
+        curr_obj = state.curriculum or {}
+        if not curr_obj.get("skills"):
+            c_art = next(
+                (
+                    a
+                    for a in all_run_artifacts
+                    if a.task_id == f"task_curriculum_{state.run_id[:8]}"
+                    or (a.type == "research_report" and "curriculum" in a.title.lower())
+                ),
+                None,
+            )
+            if c_art and isinstance(c_art.content, dict):
+                curr_obj = c_art.content
+        skill_nodes = curr_obj.get("skills", [])
+        skill_edges = curr_obj.get("relations", [])
+        validate_run_outputs(
+            company=comp_data,
+            evidence_artifacts=all_evidence_artifacts,
+            questions=state.questions,
+            skills=skill_nodes,
+            relations=skill_edges,
+            missing_research=state.missing_research,
+        ).raise_if_invalid(context=f"static run {state.run_id}")
+
         start_t = time.perf_counter()
         task = WorkflowTask(
             id=persist_task_id,
@@ -60,8 +96,6 @@ def build_output_nodes(support: StaticNodeSupport, generate_questions_node):
                 "assigned_agent": task.assigned_agent,
             },
         )
-
-        ws_id = state.workspace_id
 
         cv_data = state.parsed_resume
         extracted_skills = cv_data["extracted_skills"]
@@ -102,13 +136,6 @@ def build_output_nodes(support: StaticNodeSupport, generate_questions_node):
             },
         )
 
-        comp_data = state.research_results.get("company")
-        if comp_data is not None and not isinstance(comp_data, dict):
-            raise ValueError(
-                f"Company research output for run {state.run_id} is not a structured dossier: {type(comp_data).__name__}"
-            )
-        all_run_artifacts = await ledger.list_artifacts_for_run(state.run_id)
-        evidence_arts = [a for a in all_run_artifacts if a.type == "evidence" and a.evidence]
         source_by_evidence: dict[str, tuple[str, str, str]] = {}
         dossier_sources: list[dict[str, Any]] = []
         for ea in evidence_arts:
@@ -211,22 +238,6 @@ def build_output_nodes(support: StaticNodeSupport, generate_questions_node):
             },
         )
 
-        curr_obj = state.curriculum or {}
-        if not curr_obj.get("skills"):
-            arts = await ledger.list_artifacts_for_run(state.run_id)
-            c_art = next(
-                (
-                    a
-                    for a in arts
-                    if a.task_id == f"task_curriculum_{state.run_id[:8]}"
-                    or (a.type == "research_report" and "curriculum" in a.title.lower())
-                ),
-                None,
-            )
-            if c_art and isinstance(c_art.content, dict):
-                curr_obj = c_art.content
-
-        skill_nodes = curr_obj.get("skills", [])
         if not skill_nodes:
             logger.error(
                 f"Persist outputs for {state.run_id}: curr_obj has no skills! curr_obj keys: {list(curr_obj.keys())}, state.curriculum: {bool(state.curriculum)}"
@@ -248,7 +259,6 @@ def build_output_nodes(support: StaticNodeSupport, generate_questions_node):
                     "importance": s_dict["importance"],
                 },
             )
-        skill_edges = curr_obj.get("relations", [])
         for e in skill_edges:
             e_dict = e if isinstance(e, dict) else e.model_dump()
             src = e_dict["source"].lower().replace(" ", "-")
@@ -373,8 +383,36 @@ def build_output_nodes(support: StaticNodeSupport, generate_questions_node):
             )
 
         clean_run_id = validate_id(state.run_id, "run_id")
-        progress = await ledger.refresh_run_progress(clean_run_id)
         run_record = await ledger.get_workflow_run(clean_run_id)
+        if run_record is not None and run_record.status == "cancelled":
+            logger.info(
+                f"Run {clean_run_id} was cancelled before finalization; skipping completion."
+            )
+            return
+        final_artifacts = await ledger.list_artifacts_for_run(state.run_id)
+        final_evidence_artifacts = [a for a in final_artifacts if a.type == "evidence"]
+        final_curriculum = state.curriculum or {}
+        if not final_curriculum.get("skills"):
+            c_art = next(
+                (
+                    a
+                    for a in final_artifacts
+                    if a.task_id == f"task_curriculum_{state.run_id[:8]}"
+                    or (a.type == "research_report" and "curriculum" in a.title.lower())
+                ),
+                None,
+            )
+            if c_art and isinstance(c_art.content, dict):
+                final_curriculum = c_art.content
+        validate_run_outputs(
+            company=state.research_results.get("company"),
+            evidence_artifacts=final_evidence_artifacts,
+            questions=state.questions,
+            skills=final_curriculum.get("skills", []),
+            relations=final_curriculum.get("relations", []),
+            missing_research=state.missing_research,
+        ).raise_if_invalid(context=f"static run {clean_run_id} finalization")
+        progress = await ledger.refresh_run_progress(clean_run_id)
         now_completed_at = datetime.now(timezone.utc)
         started_at = run_record.started_at if run_record else None
         calculated_duration_ms = (
@@ -385,10 +423,11 @@ def build_output_nodes(support: StaticNodeSupport, generate_questions_node):
             f"{area} research unavailable: {reason}" if reason else f"{area} research unavailable"
             for area, reason in sorted(state.missing_research.items())
         ]
-        await ledger.update_workflow_run(
+        completed = await ledger.transition_workflow_run_status(
             clean_run_id,
-            {
-                "status": "completed",
+            "completed",
+            from_statuses=("pending", "running"),
+            updates={
                 "current_phase": "completed",
                 "completed_at": now_completed_at,
                 "duration_ms": calculated_duration_ms,
@@ -397,6 +436,11 @@ def build_output_nodes(support: StaticNodeSupport, generate_questions_node):
                 "degraded_reasons": degraded_reasons,
             },
         )
+        if not completed:
+            logger.info(
+                f"Run {clean_run_id} is no longer active; skipping completion finalization."
+            )
+            return
         await ledger.sweep_run_to_terminal(clean_run_id, reason="run completed")
 
         from src.generation.progress import update_workspace_progress

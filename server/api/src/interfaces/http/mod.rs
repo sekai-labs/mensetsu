@@ -1,22 +1,27 @@
 pub mod admin;
+pub mod application_dispatch;
+pub mod applications;
 pub mod auth;
 pub mod extractors;
 pub mod health;
+pub mod metrics;
 pub mod middleware;
+pub mod oauth;
+pub mod resume_uploads;
+pub mod saved_jobs;
 pub mod settings;
 pub mod setup;
-pub mod resume_uploads;
 pub mod sse_parser;
+pub mod token_usage;
 pub mod workflow_dtos;
 pub mod workflows;
 pub mod workspaces;
-pub mod token_usage;
-use token_usage::{TokenUsageResponseDto, TokenUsageRowDto, TokenUsageTotalsDto};
 use axum::{
     http::{header, HeaderValue, Method},
     routing::get,
     Router,
 };
+use token_usage::{TokenUsageResponseDto, TokenUsageRowDto, TokenUsageTotalsDto};
 use tower_http::cors::CorsLayer;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnResponse, TraceLayer};
 use tower_http::LatencyUnit;
@@ -68,8 +73,35 @@ use crate::{
         auth::logout,
         auth::logout_all,
         auth::me,
+        oauth::list_providers,
+        oauth::authorize_login,
+        oauth::authorize_link,
+        oauth::oauth_callback,
+        oauth::exchange_handoff,
+        oauth::list_accounts,
+        oauth::unlink_account,
+        oauth::admin_list_providers,
+        oauth::admin_upsert_provider,
+        oauth::admin_delete_provider,
+        applications::list_applications,
+        applications::get_application,
+        applications::prepare_application,
+        applications::reprepare_application,
+        applications::approve_application,
+        applications::start_application,
+        applications::block_application,
+        applications::record_result,
+        applications::reconcile_application,
+        saved_jobs::list_saved_jobs,
+        saved_jobs::create_saved_job,
+        saved_jobs::approve_saved_job,
+        saved_jobs::dismiss_saved_job,
+        saved_jobs::prepare_saved_job,
         resume_uploads::create_resume_upload,
         resume_uploads::complete_resume_upload,
+        resume_uploads::list_resume_uploads,
+        resume_uploads::download_resume_upload,
+        resume_uploads::delete_resume_upload,
         workspaces::create_workspace,
         workspaces::list_workspaces,
         workspaces::get_workspace,
@@ -86,9 +118,21 @@ use crate::{
         workspaces::research_handlers::get_workspace_claims,
         workspaces::research_handlers::ask_workspace_knowledge_qa,
         settings::get_profile,
+        settings::get_candidate_profile,
+        settings::update_candidate_profile,
         settings::get_llm_settings,
         settings::upsert_llm_setting,
         settings::delete_llm_setting,
+        settings::get_combined_providers,
+        settings::upsert_user_provider,
+        settings::delete_user_provider,
+        settings::get_user_routing,
+        settings::update_user_routing,
+        settings::discover_models,
+        admin::list_admin_providers,
+        admin::upsert_admin_provider,
+        admin::get_admin_settings,
+        admin::update_admin_settings,
         workflows::list_workflows,
         workflows::list_workflow_runs,
         workflows::trigger_workflow_run,
@@ -105,8 +149,12 @@ use crate::{
         workflows::get_workflow_run_events_history,
         workflows::get_workflow_run_delegations,
         workflows::get_workflow_run_artifacts,
+        metrics::prometheus_metrics,
+        metrics::metrics_summary,
         token_usage::user_token_usage,
         token_usage::admin_token_usage,
+        token_usage::user_daily_token_usage,
+        token_usage::admin_daily_token_usage,
         workflows::cancel_workflow_run
     ),
     components(
@@ -127,6 +175,25 @@ use crate::{
             AuthResponseDto,
             TokenResponseDto,
             MessageResponseDto,
+            applications::PrepareApplicationRequestDto,
+            applications::ApproveApplicationRequestDto,
+            applications::BlockApplicationRequestDto,
+            applications::ResultApplicationRequestDto,
+            applications::ReconcileApplicationRequestDto,
+            applications::PreparedFieldsDto,
+            applications::JobApplicationResponseDto,
+            applications::ApplicationSite,
+            applications::ApplicationStatus,
+            applications::ApplicationOutcome,
+            applications::BlockReasonCode,
+            saved_jobs::CreateSavedJobRequestDto,
+            saved_jobs::PrepareSavedJobRequestDto,
+            saved_jobs::SavedJobResponseDto,
+            saved_jobs::SavedJobsPageResponseDto,
+            saved_jobs::SavedJobStatus,
+            applications::ApplicationMethod,
+            settings::CandidateProfileDto,
+            settings::UpdateCandidateProfileRequestDto,
             WorkspaceId,
             WorkspaceStatus,
             PipelinePhase,
@@ -149,6 +216,10 @@ use crate::{
             KnowledgeSkillNode,
             KnowledgeEdge,
             KnowledgeGraphResponse,
+            metrics::ServiceMetricsDto,
+            metrics::MetricsSummaryResponseDto,
+            token_usage::DailyTokenUsageDto,
+            token_usage::DailyTokenUsageResponseDto,
             TokenUsageResponseDto,
             TokenUsageRowDto,
             TokenUsageTotalsDto,
@@ -163,6 +234,22 @@ use crate::{
             settings::UserProfileResponseDto,
             settings::LlmConfigItemDto,
             settings::UpsertLlmConfigRequestDto,
+            settings::DiscoverModelsRequestDto,
+            settings::ProviderStatusItemDto,
+            settings::UpsertUserProviderRequestDto,
+            settings::ModelRoutingSlotDto,
+            settings::ModelRoutingConfigDto,
+            settings::UserRoutingResponseDto,
+            settings::UpdateUserRoutingRequestDto,
+            admin::AdminProviderDto,
+            admin::UpsertAdminProviderRequestDto,
+crate::contexts::identity::application::oauth_dtos::OAuthProviderSummaryDto,
+crate::contexts::identity::application::oauth_dtos::OAuthProviderAdminDto,
+crate::contexts::identity::application::oauth_dtos::OAuthProviderUpsertRequestDto,
+crate::contexts::identity::application::oauth_dtos::OAuthIdentityDto,
+crate::contexts::identity::application::oauth_dtos::OAuthLinkStartResponseDto,
+crate::contexts::identity::application::oauth_dtos::OAuthExchangeRequestDto,
+crate::contexts::identity::application::oauth_dtos::OAuthExchangeResponseDto,
             workflows::TriggerWorkflowRunRequestDto,
             workflow_dtos::WorkflowType,
             workflow_dtos::RunStatus,
@@ -211,7 +298,9 @@ use crate::{
     ),
     tags(
         (name = "workspaces", description = "Interview workspace endpoints"),
-        (name = "workflows", description = "Multi-agent workflow runs (authorized per run, proxied to intelligence)")
+        (name = "workflows", description = "Multi-agent workflow runs (authorized per run, proxied to intelligence)"),
+        (name = "applications", description = "Owner-bound job application preparation and tracking"),
+        (name = "saved-jobs", description = "Owner-bound saved jobs and email-first application flow")
     )
 )]
 pub struct ApiDoc;
@@ -274,25 +363,58 @@ pub fn create_router(state: AppState) -> Router {
         .route("/health/live", get(health::health_check))
         .route("/health/ready", get(health::ready_check))
         .route("/ready", get(health::ready_check))
+        .merge(metrics::metrics_routes(state.clone()))
         .merge(auth::auth_routes(state.clone()))
+        .merge(oauth::oauth_routes(state.clone()))
         .merge(setup::setup_routes(state.clone()))
         .merge(settings::settings_routes(state.clone()))
         .merge(admin::admin_routes(state.clone()))
         .merge(workspaces::workspace_routes(state.clone()))
+        .merge(applications::application_routes(state.clone()))
+        .merge(saved_jobs::saved_job_routes(state.clone()))
         .merge(token_usage::token_usage_routes(state.clone()))
         .merge(
             Router::new()
-                .route("/api/v1/resume-uploads", axum::routing::post(resume_uploads::create_resume_upload))
-                .route("/api/v1/resume-uploads/{upload_id}/complete", axum::routing::post(resume_uploads::complete_resume_upload))
+                .route(
+                    "/api/v1/resume-uploads",
+                    get(resume_uploads::list_resume_uploads)
+                        .post(resume_uploads::create_resume_upload),
+                )
+                .route(
+                    "/api/v1/resume-uploads/{upload_id}",
+                    axum::routing::delete(resume_uploads::delete_resume_upload),
+                )
+                .route(
+                    "/api/v1/resume-uploads/{upload_id}/download",
+                    get(resume_uploads::download_resume_upload),
+                )
+                .route(
+                    "/api/v1/resume-uploads/{upload_id}/complete",
+                    axum::routing::post(resume_uploads::complete_resume_upload),
+                )
                 .with_state(state.clone()),
         )
-        .merge(workflows::workflow_routes(state))
-        .layer(axum::middleware::from_fn(middleware::correlation_id_middleware))
+        .merge(workflows::workflow_routes(state.clone()))
+        .layer(axum::middleware::from_fn_with_state(
+            state.metrics.clone(),
+            metrics::metrics_middleware,
+        ))
+        .layer(axum::middleware::from_fn(
+            middleware::correlation_id_middleware,
+        ))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
-                .on_response(DefaultOnResponse::new().level(Level::INFO).latency_unit(LatencyUnit::Millis))
-                .on_failure(DefaultOnFailure::new().level(Level::WARN).latency_unit(LatencyUnit::Millis)),
+                .on_response(
+                    DefaultOnResponse::new()
+                        .level(Level::INFO)
+                        .latency_unit(LatencyUnit::Millis),
+                )
+                .on_failure(
+                    DefaultOnFailure::new()
+                        .level(Level::WARN)
+                        .latency_unit(LatencyUnit::Millis),
+                ),
         )
         .layer(cors)
 }

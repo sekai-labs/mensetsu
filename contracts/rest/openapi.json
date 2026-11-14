@@ -1,6 +1,48 @@
 {
   "components": {
     "schemas": {
+      "AdminProviderDto": {
+        "properties": {
+          "allowed_models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "base_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "encrypted_api_key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "has_key": {
+            "type": "boolean"
+          },
+          "is_enabled": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provider_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_key",
+          "name",
+          "is_enabled",
+          "allowed_models",
+          "has_key"
+        ],
+        "type": "object"
+      },
       "AgentExecution": {
         "additionalProperties": false,
         "properties": {
@@ -101,6 +143,52 @@
           "task_id",
           "agent_id",
           "started_at"
+        ],
+        "type": "object"
+      },
+      "ApplicationMethod": {
+        "enum": [
+          "email",
+          "web"
+        ],
+        "type": "string"
+      },
+      "ApplicationOutcome": {
+        "enum": [
+          "confirmed",
+          "uncertain",
+          "not_submitted"
+        ],
+        "type": "string"
+      },
+      "ApplicationSite": {
+        "enum": [
+          "greenhouse",
+          "topcv",
+          "linkedin"
+        ],
+        "type": "string"
+      },
+      "ApplicationStatus": {
+        "enum": [
+          "prepared",
+          "approved",
+          "submitting",
+          "submitted",
+          "needs_review",
+          "unknown"
+        ],
+        "type": "string"
+      },
+      "ApproveApplicationRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "revision": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision"
         ],
         "type": "object"
       },
@@ -217,6 +305,93 @@
           "user",
           "access_token",
           "refresh_token"
+        ],
+        "type": "object"
+      },
+      "BlockApplicationRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "reason_code": {
+            "$ref": "#/components/schemas/BlockReasonCode"
+          }
+        },
+        "required": [
+          "reason_code"
+        ],
+        "type": "object"
+      },
+      "BlockReasonCode": {
+        "enum": [
+          "missing_required_field",
+          "unsupported_form",
+          "login_required",
+          "captcha",
+          "form_changed"
+        ],
+        "type": "string"
+      },
+      "CandidateProfileDto": {
+        "additionalProperties": false,
+        "properties": {
+          "excluded_keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "github_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "linkedin_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "portfolio_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "required_keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "target_locations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "target_role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "required_keywords",
+          "excluded_keywords",
+          "target_locations"
         ],
         "type": "object"
       },
@@ -367,6 +542,54 @@
         ],
         "type": "object"
       },
+      "CreateSavedJobRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "application_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "company_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contact_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "job_description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role_title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_url"
+        ],
+        "type": "object"
+      },
       "CreateWorkspaceRequestDto": {
         "additionalProperties": false,
         "properties": {
@@ -450,6 +673,62 @@
             ]
           }
         },
+        "type": "object"
+      },
+      "DailyTokenUsageDto": {
+        "properties": {
+          "date": {
+            "description": "Date of recorded usage in YYYY-MM-DD format",
+            "type": "string"
+          },
+          "input_tokens": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "output_tokens": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "request_count": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "total_tokens": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "date",
+          "input_tokens",
+          "output_tokens",
+          "total_tokens",
+          "request_count"
+        ],
+        "type": "object"
+      },
+      "DailyTokenUsageResponseDto": {
+        "properties": {
+          "items": {
+            "description": "Daily token usage items sorted in ascending chronological order",
+            "items": {
+              "$ref": "#/components/schemas/DailyTokenUsageDto"
+            },
+            "type": "array"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/TokenUsageTotalsDto",
+            "description": "Aggregate totals over the 30-day analytics period"
+          }
+        },
+        "required": [
+          "items",
+          "totals"
+        ],
         "type": "object"
       },
       "Delegation": {
@@ -677,6 +956,30 @@
           "dependency"
         ],
         "type": "string"
+      },
+      "DiscoverModelsRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "api_key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "base_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_key"
+        ],
+        "type": "object"
       },
       "ErrorCategory": {
         "enum": [
@@ -1065,6 +1368,99 @@
           "common_weaknesses",
           "follow_up_questions",
           "created_at"
+        ],
+        "type": "object"
+      },
+      "JobApplicationResponseDto": {
+        "properties": {
+          "application_method": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApplicationMethod"
+              }
+            ]
+          },
+          "canonical_url": {
+            "type": "string"
+          },
+          "company_name": {
+            "type": "string"
+          },
+          "confirmation_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contact_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "job_description": {
+            "type": "string"
+          },
+          "prepared_fields": {
+            "$ref": "#/components/schemas/PreparedFieldsDto"
+          },
+          "resume_filename": {
+            "type": "string"
+          },
+          "resume_upload_id": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "role_title": {
+            "type": "string"
+          },
+          "site": {
+            "$ref": "#/components/schemas/ApplicationSite"
+          },
+          "source_url": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ApplicationStatus"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "workspace_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "site",
+          "canonical_url",
+          "source_url",
+          "company_name",
+          "role_title",
+          "job_description",
+          "resume_upload_id",
+          "resume_filename",
+          "prepared_fields",
+          "revision",
+          "status",
+          "created_at",
+          "updated_at"
         ],
         "type": "object"
       },
@@ -1560,6 +1956,454 @@
         ],
         "type": "object"
       },
+      "MetricsSummaryResponseDto": {
+        "properties": {
+          "platform_token_totals": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TokenUsageTotalsDto",
+                "description": "Platform-wide token usage totals (admin only)"
+              }
+            ]
+          },
+          "service_metrics": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ServiceMetricsDto",
+                "description": "Service health and traffic metrics (admin only)"
+              }
+            ]
+          },
+          "token_totals": {
+            "$ref": "#/components/schemas/TokenUsageTotalsDto",
+            "description": "Token usage totals for the authenticated user"
+          }
+        },
+        "required": [
+          "token_totals"
+        ],
+        "type": "object"
+      },
+      "ModelRoutingConfigDto": {
+        "properties": {
+          "fallback": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ModelRoutingSlotDto"
+              }
+            ]
+          },
+          "primary": {
+            "$ref": "#/components/schemas/ModelRoutingSlotDto"
+          }
+        },
+        "required": [
+          "primary"
+        ],
+        "type": "object"
+      },
+      "ModelRoutingSlotDto": {
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "provider_key": {
+            "type": "string"
+          },
+          "temperature": {
+            "format": "float",
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "provider_key",
+          "model"
+        ],
+        "type": "object"
+      },
+      "OAuthExchangeRequestDto": {
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "OAuthExchangeResponseDto": {
+        "properties": {
+          "access_token": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "linked_identity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OAuthIdentityDto"
+              }
+            ]
+          },
+          "refresh_token": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requires_2fa": {
+            "type": "boolean"
+          },
+          "temp_token": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "user": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UserResponseDto"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "OAuthIdentityDto": {
+        "properties": {
+          "display_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email_verified": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "last_login_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "linked_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "provider_key": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "provider_key",
+          "subject",
+          "email_verified",
+          "linked_at",
+          "last_login_at"
+        ],
+        "type": "object"
+      },
+      "OAuthLinkStartResponseDto": {
+        "properties": {
+          "authorization_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "authorization_url"
+        ],
+        "type": "object"
+      },
+      "OAuthProviderAdminDto": {
+        "properties": {
+          "authorization_endpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "email_claim": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email_endpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email_verified_claim": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "has_client_secret": {
+            "description": "Never contains the client secret; only whether one is configured.",
+            "type": "boolean"
+          },
+          "is_enabled": {
+            "type": "boolean"
+          },
+          "issuer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "jwks_uri": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "name_claim": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider_key": {
+            "type": "string"
+          },
+          "provider_type": {
+            "$ref": "#/components/schemas/OAuthProviderType"
+          },
+          "redirect_uri": {
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "subject_claim": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "token_endpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userinfo_endpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "provider_key",
+          "name",
+          "provider_type",
+          "client_id",
+          "has_client_secret",
+          "redirect_uri",
+          "scopes",
+          "is_enabled",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "OAuthProviderSummaryDto": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "provider_key": {
+            "type": "string"
+          },
+          "provider_type": {
+            "$ref": "#/components/schemas/OAuthProviderType"
+          }
+        },
+        "required": [
+          "provider_key",
+          "name",
+          "provider_type"
+        ],
+        "type": "object"
+      },
+      "OAuthProviderType": {
+        "enum": [
+          "google",
+          "github",
+          "facebook",
+          "oidc",
+          "oauth2"
+        ],
+        "type": "string"
+      },
+      "OAuthProviderUpsertRequestDto": {
+        "additionalProperties": false,
+        "description": "Admin provider update. Every field is optional: omitted fields preserve the\nstored value, while an explicit empty string clears an optional field.",
+        "properties": {
+          "authorization_endpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "client_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "client_secret": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email_claim": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email_endpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email_verified_claim": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "issuer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "jwks_uri": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name_claim": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider_type": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OAuthProviderType"
+              }
+            ]
+          },
+          "redirect_uri": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "subject_claim": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "token_endpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "userinfo_endpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "PipelinePhase": {
         "enum": [
           "preparing_input",
@@ -1578,6 +2422,166 @@
           "failed"
         ],
         "type": "string"
+      },
+      "PrepareApplicationRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "application_method": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApplicationMethod"
+              }
+            ]
+          },
+          "company_name": {
+            "type": "string"
+          },
+          "contact_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "job_description": {
+            "type": "string"
+          },
+          "resume_upload_id": {
+            "type": "string"
+          },
+          "role_title": {
+            "type": "string"
+          },
+          "site": {
+            "$ref": "#/components/schemas/ApplicationSite"
+          },
+          "source_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "site",
+          "source_url",
+          "company_name",
+          "role_title",
+          "job_description",
+          "resume_upload_id"
+        ],
+        "type": "object"
+      },
+      "PrepareSavedJobRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "application_method": {
+            "$ref": "#/components/schemas/ApplicationMethod"
+          },
+          "contact_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resume_upload_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "resume_upload_id",
+          "application_method"
+        ],
+        "type": "object"
+      },
+      "PreparedFieldsDto": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "github_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "linkedin_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "portfolio_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "first_name",
+          "last_name",
+          "email"
+        ],
+        "type": "object"
+      },
+      "ProviderStatusItemDto": {
+        "properties": {
+          "active_key_source": {
+            "type": "string"
+          },
+          "allowed_models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "base_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_enabled": {
+            "type": "boolean"
+          },
+          "is_user_override": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provider_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_key",
+          "name",
+          "active_key_source",
+          "is_user_override",
+          "is_enabled",
+          "allowed_models"
+        ],
+        "type": "object"
       },
       "QuestionCategory": {
         "enum": [
@@ -1598,6 +2602,18 @@
           "hard"
         ],
         "type": "string"
+      },
+      "ReconcileApplicationRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "submitted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "submitted"
+        ],
+        "type": "object"
       },
       "RefreshTokenRequestDto": {
         "additionalProperties": false,
@@ -1628,6 +2644,50 @@
           "email",
           "password",
           "name"
+        ],
+        "type": "object"
+      },
+      "ResultApplicationRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "confirmation_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/ApplicationOutcome"
+          }
+        },
+        "required": [
+          "outcome"
+        ],
+        "type": "object"
+      },
+      "ResumeUploadItemDto": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "size_bytes": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "upload_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_id",
+          "filename",
+          "size_bytes",
+          "created_at"
         ],
         "type": "object"
       },
@@ -1662,6 +2722,133 @@
         ],
         "type": "object"
       },
+      "SavedJobResponseDto": {
+        "properties": {
+          "application_status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApplicationStatus"
+              }
+            ]
+          },
+          "application_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "canonical_url": {
+            "type": "string"
+          },
+          "company_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contact_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "job_application_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "job_description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role_title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_site": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SavedJobStatus"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "workspace_status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WorkspaceStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "source_url",
+          "canonical_url",
+          "source_site",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "SavedJobStatus": {
+        "enum": [
+          "awaiting_approval",
+          "approved",
+          "dismissed"
+        ],
+        "type": "string"
+      },
+      "SavedJobsPageResponseDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SavedJobResponseDto"
+            },
+            "type": "array"
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
       "SeniorityLevel": {
         "enum": [
           "junior",
@@ -1672,6 +2859,25 @@
           "lead"
         ],
         "type": "string"
+      },
+      "ServiceMetricsDto": {
+        "properties": {
+          "requests_per_second": {
+            "description": "Average HTTP requests per second over the last 60 seconds",
+            "format": "double",
+            "type": "number"
+          },
+          "success_rate_percent": {
+            "description": "Percentage of successful HTTP requests (status < 500) over the last 5 minutes (0.0 to 100.0)",
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "required": [
+          "success_rate_percent",
+          "requests_per_second"
+        ],
+        "type": "object"
       },
       "SessionId": {
         "type": "string"
@@ -1930,7 +3136,8 @@
             ]
           },
           "totals": {
-            "$ref": "#/components/schemas/TokenUsageTotalsDto"
+            "$ref": "#/components/schemas/TokenUsageTotalsDto",
+            "description": "Scope-wide token totals across all requests in the user or platform scope (independent of page cursor or filters)"
           }
         },
         "required": [
@@ -2003,21 +3210,25 @@
       "TokenUsageTotalsDto": {
         "properties": {
           "input_tokens": {
+            "description": "Scope-wide total input tokens",
             "format": "int64",
             "minimum": 0,
             "type": "integer"
           },
           "output_tokens": {
+            "description": "Scope-wide total output tokens",
             "format": "int64",
             "minimum": 0,
             "type": "integer"
           },
           "request_count": {
+            "description": "Scope-wide total count of model usage requests",
             "format": "int64",
             "minimum": 0,
             "type": "integer"
           },
           "total_tokens": {
+            "description": "Scope-wide total tokens (input + output)",
             "format": "int64",
             "minimum": 0,
             "type": "integer"
@@ -2186,6 +3397,132 @@
         ],
         "type": "object"
       },
+      "UpdateCandidateProfileRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "excluded_keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "github_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "linkedin_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "portfolio_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "required_keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "target_locations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "target_role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "required_keywords",
+          "excluded_keywords",
+          "target_locations"
+        ],
+        "type": "object"
+      },
+      "UpdateUserRoutingRequestDto": {
+        "properties": {
+          "slots": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ModelRoutingConfigDto"
+            },
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "slots"
+        ],
+        "type": "object"
+      },
+      "UpsertAdminProviderRequestDto": {
+        "properties": {
+          "allowed_models": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "api_key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "base_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_key"
+        ],
+        "type": "object"
+      },
       "UpsertLlmConfigRequestDto": {
         "additionalProperties": false,
         "properties": {
@@ -2231,6 +3568,29 @@
         },
         "required": [
           "provider"
+        ],
+        "type": "object"
+      },
+      "UpsertUserProviderRequestDto": {
+        "properties": {
+          "api_key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "base_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_key"
         ],
         "type": "object"
       },
@@ -2348,6 +3708,23 @@
           "member"
         ],
         "type": "string"
+      },
+      "UserRoutingResponseDto": {
+        "properties": {
+          "slots": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ModelRoutingConfigDto"
+            },
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "slots"
+        ],
+        "type": "object"
       },
       "UserStatus": {
         "enum": [
@@ -2950,6 +4327,200 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/admin/oauth/providers": {
+      "get": {
+        "operationId": "admin_list_providers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OAuthProviderAdminDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Configured OAuth providers (secrets redacted)"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/api/v1/admin/oauth/providers/{provider_key}": {
+      "delete": {
+        "operationId": "admin_delete_provider",
+        "parameters": [
+          {
+            "description": "OAuth provider key",
+            "in": "path",
+            "name": "provider_key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "OAuth provider deleted"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Provider not found"
+          }
+        },
+        "tags": [
+          "oauth"
+        ]
+      },
+      "put": {
+        "operationId": "admin_upsert_provider",
+        "parameters": [
+          {
+            "description": "OAuth provider key",
+            "in": "path",
+            "name": "provider_key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthProviderUpsertRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthProviderAdminDto"
+                }
+              }
+            },
+            "description": "OAuth provider saved; omitted fields preserved"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/api/v1/admin/providers": {
+      "get": {
+        "operationId": "list_admin_providers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminProviderDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Admin platform providers list"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "upsert_admin_provider",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertAdminProviderRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Admin platform provider updated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/settings": {
+      "get": {
+        "operationId": "get_admin_settings",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Admin dynamic system settings"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "tags": [
+          "admin"
+        ]
+      },
+      "put": {
+        "operationId": "update_admin_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Admin settings updated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/admin/usage/tokens": {
       "get": {
         "operationId": "admin_token_usage",
@@ -2959,10 +4530,7 @@
             "name": "before_timestamp",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string"
             }
           },
           {
@@ -2970,10 +4538,120 @@
             "name": "before_event_id",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "provider",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "model_provider",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "agent",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "agent_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from_date",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "start_date",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to_date",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -2999,6 +4677,369 @@
         ],
         "tags": [
           "token_usage"
+        ]
+      }
+    },
+    "/api/v1/admin/usage/tokens/daily": {
+      "get": {
+        "operationId": "admin_daily_token_usage",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyTokenUsageResponseDto"
+                }
+              }
+            },
+            "description": "Daily token usage analytics for the last 30 days across all users"
+          },
+          "403": {
+            "description": "Administrator privileges required"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "token_usage"
+        ]
+      }
+    },
+    "/api/v1/applications": {
+      "get": {
+        "operationId": "list_applications",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/JobApplicationResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "applications"
+        ]
+      },
+      "post": {
+        "operationId": "prepare_application",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrepareApplicationRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplicationResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/{id}": {
+      "get": {
+        "operationId": "get_application",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplicationResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/{id}/approve": {
+      "post": {
+        "operationId": "approve_application",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveApplicationRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplicationResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/{id}/block": {
+      "post": {
+        "operationId": "block_application",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlockApplicationRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplicationResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/{id}/prepare": {
+      "put": {
+        "operationId": "reprepare_application",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrepareApplicationRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplicationResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/{id}/reconcile": {
+      "post": {
+        "operationId": "reconcile_application",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReconcileApplicationRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplicationResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/{id}/result": {
+      "post": {
+        "operationId": "record_result",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultApplicationRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplicationResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "applications"
+        ]
+      }
+    },
+    "/api/v1/applications/{id}/start": {
+      "post": {
+        "operationId": "start_application",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplicationResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "applications"
         ]
       }
     },
@@ -3226,6 +5267,236 @@
         ]
       }
     },
+    "/api/v1/auth/oauth/accounts": {
+      "get": {
+        "operationId": "list_accounts",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OAuthIdentityDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Linked external identities"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/api/v1/auth/oauth/accounts/{identity_id}": {
+      "delete": {
+        "operationId": "unlink_account",
+        "parameters": [
+          {
+            "description": "Linked identity id",
+            "in": "path",
+            "name": "identity_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Identity unlinked"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Identity not found"
+          },
+          "409": {
+            "description": "Cannot remove the last usable sign-in method"
+          }
+        },
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/api/v1/auth/oauth/authorize/{provider_key}": {
+      "get": {
+        "operationId": "authorize_login",
+        "parameters": [
+          {
+            "description": "OAuth provider key",
+            "in": "path",
+            "name": "provider_key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "303": {
+            "description": "Redirect to the identity provider"
+          },
+          "404": {
+            "description": "Unknown or disabled provider"
+          }
+        },
+        "security": [
+          {}
+        ],
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/api/v1/auth/oauth/callback": {
+      "get": {
+        "operationId": "oauth_callback",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "code",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "error",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "303": {
+            "description": "Redirect to the web BFF with a one-use exchange code or stable error code"
+          },
+          "400": {
+            "description": "Invalid callback state"
+          }
+        },
+        "security": [
+          {}
+        ],
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/api/v1/auth/oauth/exchange": {
+      "post": {
+        "operationId": "exchange_handoff",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthExchangeRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthExchangeResponseDto"
+                }
+              }
+            },
+            "description": "Exchanged one-use OAuth handoff"
+          },
+          "401": {
+            "description": "Invalid, expired, or reused exchange code"
+          }
+        },
+        "security": [
+          {}
+        ],
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/api/v1/auth/oauth/link/{provider_key}": {
+      "post": {
+        "operationId": "authorize_link",
+        "parameters": [
+          {
+            "description": "OAuth provider key",
+            "in": "path",
+            "name": "provider_key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthLinkStartResponseDto"
+                }
+              }
+            },
+            "description": "Provider authorization URL for explicit linking"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/api/v1/auth/oauth/providers": {
+      "get": {
+        "operationId": "list_providers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OAuthProviderSummaryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Enabled OAuth providers"
+          }
+        },
+        "security": [
+          {}
+        ],
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
     "/api/v1/auth/refresh": {
       "post": {
         "operationId": "refresh",
@@ -3307,7 +5578,121 @@
         ]
       }
     },
+    "/api/v1/candidate-profile": {
+      "get": {
+        "operationId": "get_candidate_profile",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateProfileDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "settings"
+        ]
+      },
+      "put": {
+        "operationId": "update_candidate_profile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCandidateProfileRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateProfileDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid profile"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/metrics/summary": {
+      "get": {
+        "operationId": "metrics_summary",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsSummaryResponseDto"
+                }
+              }
+            },
+            "description": "Aggregated token and service metrics summary"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "metrics"
+        ]
+      }
+    },
     "/api/v1/resume-uploads": {
+      "get": {
+        "operationId": "list_resume_uploads",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResumeUploadItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "List completed CV uploads"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "resume_uploads"
+        ]
+      },
       "post": {
         "operationId": "create_resume_upload",
         "requestBody": {
@@ -3339,6 +5724,43 @@
           },
           "502": {
             "description": "Storage failure"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "resume_uploads"
+        ]
+      }
+    },
+    "/api/v1/resume-uploads/{upload_id}": {
+      "delete": {
+        "operationId": "delete_resume_upload",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "upload_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "CV deleted"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Upload not found"
+          },
+          "409": {
+            "description": "CV is referenced by a workspace or application"
           }
         },
         "security": [
@@ -3402,6 +5824,251 @@
         ]
       }
     },
+    "/api/v1/resume-uploads/{upload_id}/download": {
+      "get": {
+        "operationId": "download_resume_upload",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "upload_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {}
+            },
+            "description": "Download PDF"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Upload not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "resume_uploads"
+        ]
+      }
+    },
+    "/api/v1/saved-jobs": {
+      "get": {
+        "operationId": "list_saved_jobs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedJobsPageResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "saved_jobs"
+        ]
+      },
+      "post": {
+        "operationId": "create_saved_job",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSavedJobRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedJobResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedJobResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "saved_jobs"
+        ]
+      }
+    },
+    "/api/v1/saved-jobs/{id}/approve": {
+      "post": {
+        "operationId": "approve_saved_job",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedJobResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "saved_jobs"
+        ]
+      }
+    },
+    "/api/v1/saved-jobs/{id}/dismiss": {
+      "post": {
+        "operationId": "dismiss_saved_job",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedJobResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "saved_jobs"
+        ]
+      }
+    },
+    "/api/v1/saved-jobs/{id}/prepare": {
+      "post": {
+        "operationId": "prepare_saved_job",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrepareSavedJobRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplicationResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "saved_jobs"
+        ]
+      }
+    },
     "/api/v1/settings/llm": {
       "get": {
         "operationId": "get_llm_settings",
@@ -3455,6 +6122,142 @@
           },
           "403": {
             "description": "Forbidden to share configuration"
+          }
+        },
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/settings/llm/models": {
+      "post": {
+        "operationId": "discover_models",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscoverModelsRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Discovered models list"
+          }
+        },
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/settings/llm/providers": {
+      "get": {
+        "operationId": "get_combined_providers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProviderStatusItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Combined LLM provider list with active key source"
+          }
+        },
+        "tags": [
+          "settings"
+        ]
+      },
+      "put": {
+        "operationId": "upsert_user_provider",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertUserProviderRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "User BYOK provider credentials updated"
+          }
+        },
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/settings/llm/providers/{provider_key}": {
+      "delete": {
+        "operationId": "delete_user_provider",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User provider override reverted to admin"
+          }
+        },
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/settings/llm/routing": {
+      "get": {
+        "operationId": "get_user_routing",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRoutingResponseDto"
+                }
+              }
+            },
+            "description": "User model routing matrix"
+          }
+        },
+        "tags": [
+          "settings"
+        ]
+      },
+      "put": {
+        "operationId": "update_user_routing",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRoutingRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Model routing matrix updated"
           }
         },
         "tags": [
@@ -3520,10 +6323,7 @@
             "name": "before_timestamp",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string"
             }
           },
           {
@@ -3531,10 +6331,120 @@
             "name": "before_event_id",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "provider",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "model_provider",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "agent",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "agent_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from_date",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "start_date",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to_date",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -3548,6 +6458,34 @@
               }
             },
             "description": "Token usage for the authenticated user"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "token_usage"
+        ]
+      }
+    },
+    "/api/v1/usage/tokens/daily": {
+      "get": {
+        "operationId": "user_daily_token_usage",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyTokenUsageResponseDto"
+                }
+              }
+            },
+            "description": "Daily token usage analytics for the last 30 days for authenticated user"
           },
           "401": {
             "description": "Unauthenticated"
@@ -4886,6 +7824,30 @@
           "workspaces::research_handlers"
         ]
       }
+    },
+    "/metrics": {
+      "get": {
+        "operationId": "prometheus_metrics",
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {}
+            },
+            "description": "Prometheus exposition metrics"
+          },
+          "401": {
+            "description": "Unauthorized or Prometheus metrics disabled"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "metrics"
+        ]
+      }
     }
   },
   "security": [
@@ -4901,6 +7863,14 @@
     {
       "description": "Multi-agent workflow runs (authorized per run, proxied to intelligence)",
       "name": "workflows"
+    },
+    {
+      "description": "Owner-bound job application preparation and tracking",
+      "name": "applications"
+    },
+    {
+      "description": "Owner-bound saved jobs and email-first application flow",
+      "name": "saved-jobs"
     }
   ]
 }

@@ -139,6 +139,16 @@ All API probes for both runs returned 200.
 
 - Evidence: Playwright pass 10 (desktop 9/9, mobile 1/1); live static and dynamic runs completed; 0 hydration errors; `test_subprocess_kill_recovery`.
 
+## Harness Hardening (2026-11-13)
+
+- Agent runtime now filters executable tools by each registry definition's `allowed_tools`. Resume, user prompt, job-description, search-result, and fetched-page text is labeled as untrusted input; this boundary labeling does not guarantee immunity to prompt injection.
+- Run cancellation and finalization use terminal-state compare-and-set transitions. The worker observes cancellation and lease loss; stale-claim idle time is at least lease TTL plus heartbeat interval. Retry scheduling and stream acknowledgement are atomic. Terminal sweeps map remaining tasks to `cancelled`, `failed`, or `skipped` according to the run outcome.
+- Static, hybrid, and dynamic output persistence uses deterministic acceptance checks: company claim evidence must resolve to run-owned artifacts with provenance; questions must be nonempty and unique after whitespace normalization and case-folding; curriculum relation endpoints must name known skills, and prerequisite edges must be acyclic. Missing company research, question-bank, or curriculum sections pass only when the corresponding degradation reason is recorded. These checks do not measure answer accuracy.
+- Curriculum graph outputs are schema-checked so relation endpoints must exactly name declared skills; question generation receives the graph's canonical skill names and rejects references outside that list before task completion.
+- Worker-level retries classify SurrealDB write conflicts as transient; ledger event appends retain their own bounded conflict retry.
+- Agent task retries now use bounded recovery replanning across static, hybrid, and dynamic workflows. Each existing retry path remains bounded to existing retry limits (max 2 attempts per task/batch/unit) and preserves the original assigned agent, task objective, and structured output schema. The prior failure exception is sanitized and supplied strictly as untrusted diagnostic context (`EXTERNAL_UNTRUSTED_CONTENT`) alongside an agent-specific alternate strategy for all plannable and synthesis agents. The first recovery context attempt ordinal is normalized to 1 across modes, while persisted task attempt numbers in the ledger remain absolute. Regression tests verify recovery replanning and output contract invariants across static, hybrid, and dynamic execution paths.
+- `quality_checks/test_output_quality.py` runs offline in the `intelligence-quality` pull-request workflow. Initial run creation across SurrealDB and Redis and token/cost budget enforcement remain separate gaps.
+
 ## Known Limitations
 
 - **Web search:** SearXNG relies on the bing and yahoo engines (qwant was removed after CAPTCHAs). Result quality and availability depend on how those engines treat this host's IP.

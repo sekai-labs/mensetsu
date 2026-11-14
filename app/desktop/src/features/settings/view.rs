@@ -1,10 +1,13 @@
+use crate::services::{
+    api::ApiService,
+    endpoint_config::{set_persisted_server_url, validate_and_normalize_url},
+};
+use crate::ui::test_ids::test_ids;
 use dioxus::prelude::*;
 use mensetsu_contracts::models::{
     LlmConfigItemDto, TokenUsageCursorDto, TokenUsageResponseDto, TokenUsageRowDto,
     UpsertLlmConfigRequestDto,
 };
-use crate::services::{api::ApiService, endpoint_config::{set_persisted_server_url, validate_and_normalize_url}};
-use crate::ui::test_ids::test_ids;
 
 fn format_token_count(value: i64) -> String {
     let digits = value.unsigned_abs().to_string();
@@ -23,7 +26,11 @@ fn format_token_count(value: i64) -> String {
 }
 
 fn format_usage_time(timestamp: &str) -> String {
-    let mut formatted = timestamp.chars().take(16).collect::<String>().replace('T', " ");
+    let mut formatted = timestamp
+        .chars()
+        .take(16)
+        .collect::<String>()
+        .replace('T', " ");
     formatted.push_str(" UTC");
     formatted
 }
@@ -69,7 +76,8 @@ pub fn SettingsView(props: SettingsProps) -> Element {
                 match api.get_token_usage(None).await {
                     Ok(response) => {
                         token_rows.set(response.items.clone());
-                        token_cursor.set(response.next_cursor.clone().flatten().map(|cursor| *cursor));
+                        token_cursor
+                            .set(response.next_cursor.clone().flatten().map(|cursor| *cursor));
                         token_usage.set(Some(response));
                     }
                     Err(error) => token_error.set(Some(error.to_string())),

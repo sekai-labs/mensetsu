@@ -82,13 +82,14 @@ const hasWorkspaceContext = computed(() => {
         >
           <span>{{ $t('navigation.workflows') }}</span>
         </NuxtLink>
+
       </div>
 
 
       <div class="flex items-center gap-2 sm:gap-3 shrink-0">
         <NuxtLink
           v-if="activeRunId"
-          :to="`/workflows/runs/${activeRunId}`"
+          :to="`/workflows/runs/${encodeURIComponent(activeRunId)}`"
           class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-medium rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors"
         >
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>

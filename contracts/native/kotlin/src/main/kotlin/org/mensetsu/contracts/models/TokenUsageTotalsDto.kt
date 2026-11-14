@@ -22,24 +22,28 @@ import com.squareup.moshi.JsonClass
 /**
  * 
  *
- * @param inputTokens 
- * @param outputTokens 
- * @param requestCount 
- * @param totalTokens 
+ * @param inputTokens Scope-wide total input tokens
+ * @param outputTokens Scope-wide total output tokens
+ * @param requestCount Scope-wide total count of model usage requests
+ * @param totalTokens Scope-wide total tokens (input + output)
  */
 
 
 data class TokenUsageTotalsDto (
 
+    /* Scope-wide total input tokens */
     @Json(name = "input_tokens")
     val inputTokens: kotlin.Long,
 
+    /* Scope-wide total output tokens */
     @Json(name = "output_tokens")
     val outputTokens: kotlin.Long,
 
+    /* Scope-wide total count of model usage requests */
     @Json(name = "request_count")
     val requestCount: kotlin.Long,
 
+    /* Scope-wide total tokens (input + output) */
     @Json(name = "total_tokens")
     val totalTokens: kotlin.Long
 

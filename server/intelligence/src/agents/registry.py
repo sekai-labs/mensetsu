@@ -42,7 +42,6 @@ class AgentRegistry:
             "save_finding",
             "update_notes",
             "delegate_task",
-            "evaluate_findings",
         }
 
         for subdir in self.agents_dir.iterdir():

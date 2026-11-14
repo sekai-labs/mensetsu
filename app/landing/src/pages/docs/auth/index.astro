@@ -1,0 +1,243 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import DocsBreadcrumb from '../../../components/docs/DocsBreadcrumb.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const providers = [
+  {
+    name: 'Google OAuth 2.0',
+    type: 'google',
+    scopes: 'openid email profile',
+    callback: '${PUBLIC_API_ORIGIN}/api/v1/auth/oauth/callback',
+    docUrl: 'https://console.cloud.google.com/apis/credentials',
+    notes: 'Google OpenID Connect with automatic user profile and email extraction.',
+  },
+  {
+    name: 'GitHub OAuth',
+    type: 'github',
+    scopes: 'read:user user:email',
+    callback: '${PUBLIC_API_ORIGIN}/api/v1/auth/oauth/callback',
+    docUrl: 'https://github.com/settings/developers',
+    notes: 'Requires verified primary email on the candidate GitHub profile.',
+  },
+  {
+    name: 'Facebook Login',
+    type: 'facebook',
+    scopes: 'email public_profile',
+    callback: '${PUBLIC_API_ORIGIN}/api/v1/auth/oauth/callback',
+    docUrl: 'https://developers.facebook.com/apps/',
+    notes: 'Standard Graph API v19+ OAuth flow with HTTPS callback enforcement.',
+  },
+  {
+    name: 'Custom OIDC / OAuth2',
+    type: 'custom oidc / custom oauth2',
+    scopes: 'Configurable (e.g. openid email profile)',
+    callback: '${PUBLIC_API_ORIGIN}/api/v1/auth/oauth/callback',
+    docUrl: '#custom-oidc',
+    notes: 'Self-hosted or enterprise IdPs: Keycloak, Authentik, Okta, Dex, Authelia.',
+  },
+];
+
+const adminPutSnippet = `PUT /api/v1/admin/oauth/providers/corp-keycloak
+Content-Type: application/json
+Authorization: Bearer <admin_jwt>
+
+{
+  "name": "Corporate Keycloak",
+  "provider_type": "oidc",
+  "issuer": "https://auth.internal.example/realms/mensetsu",
+  "client_id": "mensetsu-api",
+  "client_secret": "raw_client_secret_here",
+  "redirect_uri": "https://api.mensetsu.example/api/v1/auth/oauth/callback",
+  "scopes": ["openid", "email", "profile"],
+  "is_enabled": true
+}`;
+
+const adminGetSnippet = `GET /api/v1/admin/oauth/providers
+Authorization: Bearer <admin_jwt>
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+[
+  {
+    "provider_key": "corp-keycloak",
+    "name": "Corporate Keycloak",
+    "provider_type": "oidc",
+    "issuer": "https://auth.internal.example/realms/mensetsu",
+    "client_id": "mensetsu-api",
+    "has_client_secret": true,
+    "redirect_uri": "https://api.mensetsu.example/api/v1/auth/oauth/callback",
+    "scopes": ["openid", "email", "profile"],
+    "is_enabled": true
+  }
+]`;
+---
+
+<DocsLayout
+  title="Authentication & Shared OAuth Setup | Mensetsu Documentation"
+  description="Configuring Google, GitHub, Facebook, and custom OIDC/OAuth2 servers, admin secret handling, SSRF allowlisting, and troubleshooting."
+>
+  <div class="space-y-8">
+    <DocsBreadcrumb crumbs={[{ label: 'Authentication & OAuth Setup' }]} />
+
+    <header class="space-y-3 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div class="text-xs font-mono font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+        Identity / Single Sign-On
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Authentication & Shared OAuth Setup
+      </h1>
+      <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        Configuring Google, GitHub, Facebook, and custom OIDC providers, admin-only secrets encryption, SSRF allowlisting, and callback URLs.
+      </p>
+    </header>
+
+    <!-- Overview -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        1. Authentication Architecture & Flow Entry
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Mensetsu uses the Rust Core API as the authoritative identity provider. Local credentials use <strong>Argon2id</strong> password hashing. The API issues short-lived access JWTs (15 minutes by default) and rotating refresh tokens; the workspace BFF stores them server-side in Redis and gives the browser only an HttpOnly session-ID cookie.
+      </p>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        For enterprise and single-sign-on deployments, Mensetsu supports shared OAuth 2.0 and OpenID Connect (OIDC) identity federation.
+        In this guide, <code class="font-mono text-xs">&#36;&#123;PUBLIC_API_ORIGIN&#125;</code> denotes the public origin of the Rust API.
+      </p>
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <li><strong>Login Flow Entry Point</strong>: The user browser links to <code class="font-bold">&#36;&#123;PUBLIC_API_ORIGIN&#125;/api/v1/auth/oauth/authorize/&#123;provider_key&#125;</code> (initiated from the workspace login page).</li>
+        <li><strong>Link Flow Entry Point (Signed-in)</strong>: Authenticated users link additional accounts by sending <code class="font-bold">POST &#36;&#123;PUBLIC_API_ORIGIN&#125;/api/v1/auth/oauth/link/&#123;provider_key&#125;</code> with their bearer token, then navigating to the returned authorization URL.</li>
+        <li><strong>Central API Callback</strong>: Identity providers redirect to a single API-hosted callback: <code class="font-bold">&#36;&#123;PUBLIC_API_ORIGIN&#125;/api/v1/auth/oauth/callback</code>. Cryptographic state identifies the provider and PKCE verifier.</li>
+        <li><strong>BFF One-Use Handoff</strong>: After validating the provider callback, the API returns HTTP 303 See Other to <code class="font-bold">&#36;&#123;OAUTH_WEB_CALLBACK_URL&#125;?code=&#123;handoff_code&#125;</code> (or a stable <code class="font-bold">?error=</code> code). The workspace BFF consumes the code server-side via <code class="font-bold">POST &#36;&#123;PUBLIC_API_ORIGIN&#125;/api/v1/auth/oauth/exchange &#123; "code": "&lt;handoff_code&gt;" &#125;</code> and creates its HttpOnly session.</li>
+        <li><strong>Secret & Token Boundary</strong>: Client secrets, API JWTs, provider tokens, and exchange codes are NEVER exposed to frontend JavaScript or localStorage.</li>
+        <li><strong>Anti-Account Takeover</strong>: No automatic linking by email alone. Unverified provider emails are rejected. Unlinking the last usable sign-in method returns HTTP 409 Conflict.</li>
+        <li><strong>TOTP Preservation</strong>: If two-factor authentication is active on an account, OAuth exchange returns <code class="font-bold">requires_2fa: true</code> requiring TOTP challenge completion.</li>
+      </ul>
+    </section>
+
+    <!-- Provider Configuration Matrix -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        2. Supported Providers & Exact Callback URLs
+      </h2>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 dark:bg-slate-900 font-mono text-[11px] text-slate-500 uppercase border-b border-slate-200 dark:border-slate-800">
+            <tr>
+              <th class="p-3">Provider</th>
+              <th class="p-3">Required Scopes</th>
+              <th class="p-3">Console Callback Redirect URI</th>
+              <th class="p-3">Notes</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono">
+            {
+              providers.map((p) => (
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                  <td class="p-3 font-semibold text-slate-900 dark:text-white">{p.name}</td>
+                  <td class="p-3 text-slate-500">{p.scopes}</td>
+                  <td class="p-3 text-indigo-600 dark:text-indigo-400 font-bold">{p.callback}</td>
+                  <td class="p-3 font-sans text-slate-600 dark:text-slate-300">{p.notes}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        In each identity provider developer console, configure the single API-hosted redirect URI: <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">&#36;&#123;PUBLIC_API_ORIGIN&#125;/api/v1/auth/oauth/callback</code>.
+      </p>
+    </section>
+
+    <!-- Admin Secrets -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        3. Admin-Only Secret Storage & DTO Contracts
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        OAuth Client Secrets are strictly protected:
+      </p>
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <li><strong>Symmetric Encryption at Rest</strong>: Secrets are write-only. When configured, they are encrypted with AES-256-GCM using the master <code class="font-bold">ENCRYPTION_KEY</code> and stored in SurrealDB.</li>
+        <li><strong>Zero Secret Leakage</strong>: <code class="font-bold">GET /api/v1/admin/oauth/providers</code> NEVER returns the raw secret. It returns <code class="font-mono text-xs">has_client_secret: true/false</code>.</li>
+        <li><strong>Partial Update Preservation</strong>: When updating provider configuration via <code class="font-bold">PUT</code>, omitted fields preserve their existing values.</li>
+      </ul>
+
+      <CodeBlock code={adminPutSnippet} language="http" filename="Admin PUT Provider Configuration" />
+      <CodeBlock code={adminGetSnippet} language="http" filename="Admin GET Provider Response (Safe Read)" />
+    </section>
+
+    <!-- Custom OIDC and SSRF -->
+    <section id="custom-oidc" class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        4. Custom OIDC Discovery & SSRF Allowlisting
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        For self-hosted or corporate identity providers (Keycloak, Authentik, Dex, Authelia, Okta), OIDC requires an <code class="font-bold">issuer</code> plus explicit endpoints. The API does not fetch discovery documents automatically:
+      </p>
+
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <li><strong>OIDC</strong>: Set <code class="font-bold">issuer</code>, <code class="font-bold">authorization_endpoint</code>, <code class="font-bold">token_endpoint</code>, <code class="font-bold">userinfo_endpoint</code>, and <code class="font-bold">jwks_uri</code>. The ID token is verified against the configured JWKS, issuer, audience, nonce, and allowed algorithms.</li>
+        <li><strong>OAuth 2.0</strong>: Set <code class="font-bold">authorization_endpoint</code>, <code class="font-bold">token_endpoint</code>, and <code class="font-bold">userinfo_endpoint</code> directly; subscribe to the provider's userinfo contract.</li>
+      </ul>
+
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Because the server initiates HTTP requests to fetch discovery manifests and exchange authorization codes, strict SSRF guardrails apply:
+      </p>
+
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <li>Private IP destinations (RFC1918, link-local, loopback) and cloud metadata IPs (169.254.169.254) are blocked by default.</li>
+        <li>For local development or private VPC deployments where Keycloak/Dex runs on internal hostnames, configure the private host allowlist in <code class="font-bold">.env</code>:</li>
+      </ul>
+
+      <CodeBlock
+        code="OAUTH_WEB_CALLBACK_URL=https://app.mensetsu.example/auth/callback
+OAUTH_STATE_TTL_SECONDS=600
+OAUTH_HANDOFF_TTL_SECONDS=60
+ALLOWED_PRIVATE_HOSTS=keycloak,localhost,127.0.0.1,auth.local.internal"
+        language="ini"
+        filename=".env OAuth & SSRF Configuration"
+      />
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        <code class="font-mono">OAUTH_WEB_CALLBACK_URL</code> is required for browser sign-in; without it the API
+        cannot complete the handoff to the workspace. The state cookie is marked <code class="font-mono">Secure</code>,
+        so use HTTPS for OAuth outside localhost development.
+      </p>
+    </section>
+
+    <!-- Troubleshooting -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        5. Troubleshooting Common Issues
+      </h2>
+      <div class="space-y-3 text-xs">
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 space-y-1.5">
+          <div class="font-mono font-bold text-rose-600 dark:text-rose-400">Error: redirect_uri_mismatch</div>
+          <p class="text-slate-600 dark:text-slate-400">
+            The redirect URI sent by Mensetsu must exactly match the registered redirect URI in your identity provider console. Verify that <code class="font-mono text-[11px]">&#36;&#123;PUBLIC_API_ORIGIN&#125;/api/v1/auth/oauth/callback</code> is registered in the provider console.
+          </p>
+        </div>
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 space-y-1.5">
+          <div class="font-mono font-bold text-rose-600 dark:text-rose-400">Error: ssrf_blocked_destination</div>
+          <p class="text-slate-600 dark:text-slate-400">
+            The OIDC discovery or token endpoint resolved to an internal RFC1918 or loopback IP. Add the exact hostname to <code class="font-mono text-[11px]">ALLOWED_PRIVATE_HOSTS</code> in <code class="font-mono text-[11px]">.env</code>.
+          </p>
+        </div>
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 space-y-1.5">
+          <div class="font-mono font-bold text-rose-600 dark:text-rose-400">Error: invalid_client / unauthorized_client</div>
+          <p class="text-slate-600 dark:text-slate-400">
+            Client ID or Client Secret mismatch. Re-save the secret via the admin API or Settings panel and verify that the provider client type is set to "Confidential" with authorization code flow.
+          </p>
+        </div>
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 space-y-1.5">
+          <div class="font-mono font-bold text-rose-600 dark:text-rose-400">Error: state_expired / state_mismatch</div>
+          <p class="text-slate-600 dark:text-slate-400">
+            Single-use cryptographic states expire after <code class="font-mono text-[11px]">OAUTH_STATE_TTL_SECONDS</code> (default 600s). Check system clock synchronization between server and container hosts.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+</DocsLayout>

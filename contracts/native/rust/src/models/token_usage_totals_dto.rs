@@ -13,12 +13,16 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TokenUsageTotalsDto {
+    /// Scope-wide total input tokens
     #[serde(rename = "input_tokens")]
     pub input_tokens: i64,
+    /// Scope-wide total output tokens
     #[serde(rename = "output_tokens")]
     pub output_tokens: i64,
+    /// Scope-wide total count of model usage requests
     #[serde(rename = "request_count")]
     pub request_count: i64,
+    /// Scope-wide total tokens (input + output)
     #[serde(rename = "total_tokens")]
     pub total_tokens: i64,
 }

@@ -5,6 +5,10 @@ export function isEventsPath(pathname: string): boolean {
   )
 }
 
+export function isPdfDownloadPath(pathname: string): boolean {
+  return /^\/api\/v1\/resume-uploads\/[^/]+\/download$/.test(pathname)
+}
+
 export function buildProxyHeaders(options: {
   accessToken?: string | null
   contentType?: string

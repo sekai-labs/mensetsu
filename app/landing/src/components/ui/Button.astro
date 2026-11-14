@@ -1,0 +1,70 @@
+---
+interface Props {
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
+  href?: string;
+  type?: 'button' | 'submit' | 'reset';
+  class?: string;
+  target?: string;
+  rel?: string;
+}
+
+const {
+  variant = 'primary',
+  size = 'sm',
+  href,
+  type = 'button',
+  class: className = '',
+  target,
+  rel,
+} = Astro.props;
+
+let variantClasses = '';
+switch (variant) {
+  case 'primary':
+    variantClasses = 'bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-sm';
+    break;
+  case 'secondary':
+    variantClasses = 'bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200';
+    break;
+  case 'outline':
+    variantClasses = 'border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300';
+    break;
+  case 'ghost':
+    variantClasses = 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+    break;
+  case 'danger':
+    variantClasses = 'bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white shadow-sm';
+    break;
+}
+
+let sizeClasses = '';
+switch (size) {
+  case 'xs':
+    sizeClasses = 'px-2 py-1 text-xs gap-1';
+    break;
+  case 'sm':
+    sizeClasses = 'px-3 py-1.5 text-xs font-medium gap-1.5';
+    break;
+  case 'md':
+    sizeClasses = 'px-4 py-2 text-sm font-medium gap-2';
+    break;
+  case 'lg':
+    sizeClasses = 'px-5 py-2.5 text-base font-semibold gap-2.5';
+    break;
+}
+
+const baseClasses = 'inline-flex items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 select-none';
+---
+
+{
+  href ? (
+    <a href={href} target={target} rel={rel} class={`${baseClasses} ${variantClasses} ${sizeClasses} ${className}`}>
+      <slot />
+    </a>
+  ) : (
+    <button type={type} class={`${baseClasses} ${variantClasses} ${sizeClasses} ${className}`}>
+      <slot />
+    </button>
+  )
+}

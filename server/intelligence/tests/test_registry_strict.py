@@ -24,5 +24,5 @@ def test_registry_strict_validation():
                 "save_finding",
                 "update_notes",
                 "delegate_task",
-                "evaluate_findings",
             )
+        assert "evaluate_findings" not in a.allowed_tools

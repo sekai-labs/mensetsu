@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "declaration": false,
+    "sourceMap": false,
+    "removeComments": true,
+    "rootDir": "src",
+    "outDir": "build/tsc",
+    "types": [],
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "paths": {
+      "@mensetsu/contracts": ["contracts/rest/dist/index.d.ts"],
+      "@mensetsu/contracts/*": ["contracts/rest/dist/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts"]
+}

@@ -7,12 +7,17 @@ import type {
   TotpSetupResponse,
   TotpVerifyRequest,
   TotpDisableRequest,
+  OAuthProviderSummaryDto,
+  OAuthIdentityDto,
+  OAuthLinkStartResponseDto,
 } from '../models/auth.model'
+import { useApiClient } from '~/services/api.client'
 
 export const useAuthService = () => {
   const user = useState<User | null>('auth-user', () => null)
   const isInitialized = useState<boolean>('auth-initialized', () => false)
   const isAuthenticated = computed(() => !!user.value)
+  const { request } = useApiClient()
 
   const fetchCurrentUser = async (): Promise<User | null> => {
     try {
@@ -101,6 +106,35 @@ export const useAuthService = () => {
     return res
   }
 
+  const fetchPublicOAuthProviders = async (): Promise<OAuthProviderSummaryDto[]> => {
+    try {
+      return await $fetch<OAuthProviderSummaryDto[]>('/api/auth/oauth/providers')
+    } catch {
+      return []
+    }
+  }
+
+  const fetchLinkedOAuthAccounts = async (): Promise<OAuthIdentityDto[]> => {
+    try {
+      return await request<OAuthIdentityDto[]>('/api/v1/auth/oauth/accounts')
+    } catch {
+      return []
+    }
+  }
+
+  const initiateOAuthLink = async (providerKey: string): Promise<OAuthLinkStartResponseDto> => {
+    return await $fetch<OAuthLinkStartResponseDto>(
+      `/api/auth/oauth/link/${encodeURIComponent(providerKey)}`,
+      { method: 'POST' }
+    )
+  }
+
+  const unlinkOAuthAccount = async (identityId: string): Promise<void> => {
+    await request(`/api/v1/auth/oauth/accounts/${encodeURIComponent(identityId)}`, {
+      method: 'DELETE',
+    })
+  }
+
   return {
     user,
     isAuthenticated,
@@ -113,5 +147,9 @@ export const useAuthService = () => {
     setup2fa,
     verify2fa,
     disable2fa,
+    fetchPublicOAuthProviders,
+    fetchLinkedOAuthAccounts,
+    initiateOAuthLink,
+    unlinkOAuthAccount,
   }
 }

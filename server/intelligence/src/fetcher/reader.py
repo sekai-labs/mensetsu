@@ -23,14 +23,11 @@ logger = logging.getLogger("mensetsu.reader")
 @dataclass
 class FetchedDocument:
     url: str
-    canonical_url: str
     title: str
     markdown: str
-    raw_html: str = ""
-    domain: str = ""
     content_hash: str = ""
     retrieval_method: Literal["http_readability", "pdf", "unsupported"] = "http_readability"
-    status_code: int = 200
+    status_code: int | None = None
     access_status: Literal[
         "success", "blocked_or_captcha", "not_found", "ssrf_violation", "timeout", "error"
     ] = "success"
@@ -169,7 +166,7 @@ class SafeReaderFetcher:
             await asyncio.sleep(0.1)
 
             raw_html = ""
-            canonical_url = url
+            status_code: int | None = None
             retrieval_method: Literal["http_readability", "pdf", "unsupported"] = "http_readability"
             access_status: Literal[
                 "success", "blocked_or_captcha", "not_found", "ssrf_violation", "timeout", "error"
@@ -200,7 +197,7 @@ class SafeReaderFetcher:
                 if resp is None:
                     raise ValueError(f"Failed to fetch content from {url}")
 
-                canonical_url = current_url
+                status_code = resp.status_code
                 if resp.status_code in [401, 403, 429]:
                     access_status = "blocked_or_captcha"
                 elif resp.status_code == 404:
@@ -208,14 +205,13 @@ class SafeReaderFetcher:
                 elif resp.status_code >= 400:
                     access_status = "error"
 
-                raw_html = resp.content.decode("utf-8", errors="replace")
+                raw_html = resp.text
             except SSRFSecurityError:
                 return FetchedDocument(
                     url=url,
-                    canonical_url=url,
                     title="Blocked by Security Policy",
                     markdown="",
-                    domain=domain,
+                    status_code=status_code,
                     access_status="ssrf_violation",
                     retrieval_method="unsupported",
                 )
@@ -228,13 +224,11 @@ class SafeReaderFetcher:
 
             return FetchedDocument(
                 url=url,
-                canonical_url=canonical_url,
                 title=title,
                 markdown=markdown,
-                raw_html=raw_html,
-                domain=domain,
                 content_hash=content_hash,
                 retrieval_method=retrieval_method,
+                status_code=status_code,
                 access_status=access_status,
                 structured_data=structured_data,
             )

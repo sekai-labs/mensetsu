@@ -1,0 +1,211 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import DocsBreadcrumb from '../../../components/docs/DocsBreadcrumb.astro';
+import Callout from '../../../components/ui/Callout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const protoSnippet = `syntax = "proto3";
+
+// contracts/grpc/proto/v1/control.proto
+package mensetsu.control.v1;
+
+message ControlCommand { /* oneof: create_run, get_run, cancel_run, ... */ }
+message ControlDataEnvelope { /* run, task, agent, artifact, ... */ }
+
+service DataControlService {
+  rpc StreamControl(stream ControlCommand) returns (stream ControlDataEnvelope);
+}
+
+// contracts/grpc/proto/v1/streaming.proto
+package mensetsu.streaming.v1;
+
+message EventStreamClientMessage { /* oneof: subscribe, unsubscribe, ack, ping */ }
+message ExecutionEventFrame { /* seq, run_id, event_type, payload_json, is_terminal, ... */ }
+
+service WorkflowEventStreamService {
+  rpc StreamWorkflowEvents(stream EventStreamClientMessage) returns (stream ExecutionEventFrame);
+}`;
+
+const prometheusSnippet = `curl -H "Authorization: Bearer <PROMETHEUS_METRICS_TOKEN>" http://localhost:3000/metrics`;
+---
+
+<DocsLayout
+  title="API & Service Architecture | Mensetsu Documentation"
+  description="Deep technical design of the Rust API, Python intelligence engine, bi-directional gRPC, and multi-model data layer."
+>
+  <div class="space-y-8">
+    <DocsBreadcrumb crumbs={[{ label: 'API & Service Architecture' }]} />
+
+    <header class="space-y-3 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div class="text-xs font-mono font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+        Architecture / Topology
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+        API & Service Architecture
+      </h1>
+      <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        Deep technical design of the Rust API, Python intelligence engine, bi-directional gRPC, and multi-model data layer.
+      </p>
+    </header>
+
+    <!-- Topology -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        1. High-Level Service Topology
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Mensetsu separates durable workflow orchestration from core authentication and persistence boundaries. The architecture consists of four primary planes:
+      </p>
+
+      <div class="bg-slate-950 text-slate-200 p-4 rounded-lg font-mono text-xs overflow-x-auto leading-relaxed border border-slate-800">
+        <pre><code>+-------------------------------------------------------------+
+|                      Frontend Clients                       |
+|  - Web Client (Port 3001)        - Astro Landing (Port 3002)|
+|  - Extension (MV3 Chrome/FF)     - Native (Android, iOS, PC)|
++-------------------------------------------------------------+
+                              | HTTP REST / SSE
+                              v
++-------------------------------------------------------------+
+|                     Rust Axum Core API                      |
+|  - Identity & RBAC               - Workspace Management     |
+|  - OpenAPI 3.1 utoipa            - SSE Event Broadcaster    |
++-------------------------------------------------------------+
+               |                               |
+       WebSocket / SQL             HTTP/2 Bi-directional gRPC
+               |                               |
+               v                               v
++--------------------------+    +-----------------------------+
+|       SurrealDB 3.x      |    |  Python Intelligence Server |
+|  - Relational records    |    |  - DataControlService (RPC) |
+|  - Graph edges & nodes   |    |  - WorkflowEventStream (RPC)|
+|  - Documents & relations |    +-----------------------------+
++--------------------------+                   |
+                                       Redis Streams & PubSub
+                                               |
+                                               v
+                                +-----------------------------+
+                                |     Durable Job Worker      |
+                                |  - LangGraph workflows     |
+                                |  - SearXNG Web Research     |
+                                |  - S3 Resume Parsing        |
+                                +-----------------------------+</code></pre>
+      </div>
+    </section>
+
+    <!-- Rust Core API -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        2. Rust Core API Tier (`server/api`)
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        The Rust API is built with <strong>Axum</strong>, <strong>Tokio</strong>, and <strong>Tower</strong>. It follows Domain-Driven Design with six contexts under <code class="font-mono text-xs">server/api/src/contexts</code>:
+      </p>
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <li><strong>Identity</strong>: registration, Argon2id credentials, JWT access/refresh sessions, TOTP 2FA, roles, OAuth providers and linked identities.</li>
+        <li><strong>Workspace</strong>: workspace aggregate and progress phases, candidate profile, CV library, saved jobs, and applications.</li>
+        <li><strong>Workflow</strong>: run/task/artifact/event ledger, dispatch leases, gRPC command coordination, and SSE streaming.</li>
+        <li><strong>Knowledge</strong>: domain types for graph entities and relationships.</li>
+        <li><strong>Learning</strong>: domain types for prerequisite-ordered learning plans.</li>
+        <li><strong>Practice</strong>: domain types for the interview question book and rubrics.</li>
+      </ul>
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        Knowledge, learning, and practice are domain-only modules in the current tree; their data is persisted through
+        workflow artifacts and read through workspace responses.
+      </p>
+    </section>
+
+    <!-- gRPC Contracts -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        3. Bi-Directional gRPC Boundary (`contracts/grpc`)
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Communication between the Rust API and Python intelligence server occurs over HTTP/2 full-duplex bi-directional gRPC on port 50051. Two core services are implemented:
+      </p>
+
+      <CodeBlock code={protoSnippet} language="protobuf" filename="contracts/grpc/proto/v1/control.proto & streaming.proto" />
+
+      <Callout type="important" title="Fail-Closed Token Authentication">
+        All gRPC calls require the <code class="font-mono text-xs">INTERNAL_SERVICE_TOKEN</code> header. Calls without valid credentials receive <code class="font-mono text-xs">grpc.StatusCode.UNAUTHENTICATED</code> and terminate immediately.
+      </Callout>
+    </section>
+
+    <!-- Persistence Details -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        4. Persistence & State Storage
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 space-y-2">
+          <div class="font-mono font-bold text-slate-900 dark:text-white">SurrealDB Multi-Model</div>
+          <p class="text-slate-600 dark:text-slate-400">
+            Stores application tables, audit trails, and the interconnected knowledge graph. Graph relations (<code class="font-mono text-[11px]">-&gt;requires-&gt;</code>, <code class="font-mono text-[11px]">&lt;-evidenced_by&lt;-</code>) allow expressive queries without complex multi-join SQL.
+          </p>
+        </div>
+        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 space-y-2">
+          <div class="font-mono font-bold text-slate-900 dark:text-white">Redis Streams & Pub/Sub</div>
+          <p class="text-slate-600 dark:text-slate-400">
+            Acts as the durable job queue (<code class="font-mono text-[11px]">mensetsu:jobs</code>). When a workspace run is triggered, jobs are enqueued to Redis Streams. Worker nodes publish telemetry events to Redis channels (<code class="font-mono text-[11px]">events:&lt;run_id&gt;</code>).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Token Monitoring -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        5. Settings & Role-Scoped Token Monitoring
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Model token usage is metered at the execution level and tracked via <code class="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">agent.model_usage</code> events emitted by worker agents. Access to usage records is strictly role-scoped:
+      </p>
+
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <li><strong>Candidate Scope (<code class="font-bold">/api/v1/usage/tokens</code>, <code class="font-bold">/api/v1/usage/tokens/daily</code>)</strong>: Candidates see only their own input, output, and total token usage, plus a 30-day daily series.</li>
+        <li><strong>Platform Administrator Scope (<code class="font-bold">/api/v1/admin/usage/tokens</code>, <code class="font-bold">/api/v1/admin/usage/tokens/daily</code>)</strong>: Administrators inspect platform-wide request history and aggregate token consumption, filterable by provider, agent, date, and user.</li>
+        <li><strong>Summary Telemetry (<code class="font-bold">/api/v1/metrics/summary</code>)</strong>: Returns personal token totals for standard users, and includes platform totals plus service health metrics (traffic and success rate) for administrators.</li>
+      </ul>
+    </section>
+
+    <!-- Prometheus Observability -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        6. Bearer-Protected Prometheus Metrics
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        The Rust Core API exposes standard Prometheus exposition metrics at <code class="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">GET /metrics</code>. The endpoint is secured with bearer authentication:
+      </p>
+
+      <CodeBlock code={prometheusSnippet} language="bash" filename="Prometheus Scraping Request" />
+
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        The token is compared using constant-time cryptographic verification (<code class="font-mono text-xs">subtle::ConstantTimeEq</code>). If <code class="font-mono text-xs">PROMETHEUS_METRICS_TOKEN</code> is not set in <code class="font-mono text-xs">.env</code>, the endpoint disables itself and returns HTTP 401 Unauthorized. Key metrics include:
+      </p>
+
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <li><code class="font-bold">http_requests_total</code>: Counter partitioned by method, template path, and status code.</li>
+        <li><code class="font-bold">http_request_duration_seconds</code>: Histogram buckets measuring latency across API endpoints.</li>
+        <li><code class="font-bold">mensetsu_service_success_rate_percent</code>: Gauge measuring percentage of successful requests (status &lt; 500) over the last 5 minutes.</li>
+        <li><code class="font-bold">mensetsu_service_requests_per_second</code>: Gauge tracking average request rate over a 60-second sliding window.</li>
+      </ul>
+    </section>
+
+    <!-- Decoupled App Topology -->
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        7. Workspace Separation & Root Handoff
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        Mensetsu separates the public-facing landing and documentation application (<code class="font-mono text-xs">app/landing</code>, port 3002) from the interactive authenticated workspace (<code class="font-mono text-xs">app/web</code>, port 3001).
+      </p>
+      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        In the candidate workspace app (<code class="font-mono text-xs">app/web</code>), the root path <code class="font-mono text-xs">/</code> serves exclusively as an authentication handoff:
+      </p>
+      <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-400 font-mono">
+        <li>Authenticated visits are immediately routed to <code class="font-bold">/dashboard</code>.</li>
+        <li>Unauthenticated visits are redirected to <code class="font-bold">/login</code>.</li>
+        <li>All marketing materials and public documentation are centralized in <code class="font-bold">app/landing</code>.</li>
+      </ul>
+    </section>
+  </div>
+</DocsLayout>

@@ -12,6 +12,7 @@ import {
   ChevronUp,
   CheckCircle,
 } from 'lucide-vue-next'
+import { safeExternalHttpUrl } from '~/utils/safe-external-url'
 import type { Artifact, ArtifactType } from '~/models/generated/workflows.v1'
 
 const props = defineProps<{
@@ -194,7 +195,8 @@ const getTypeConfig = (type?: ArtifactType) => {
         <div v-if="art.type === 'evidence' && art.evidence" class="p-3 bg-emerald-50/20 dark:bg-emerald-950/10 border-b border-emerald-100 dark:border-emerald-900/40 text-xs space-y-2">
           <div class="flex items-center justify-between text-slate-500 font-mono text-[11px]">
             <a
-              :href="art.evidence.source_url"
+              v-if="safeExternalHttpUrl(art.evidence.source_url)"
+              :href="safeExternalHttpUrl(art.evidence.source_url)"
               target="_blank"
               rel="noopener noreferrer"
               class="text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold truncate max-w-md"

@@ -1,0 +1,91 @@
+---
+const tiers = [
+  {
+    name: 'Frontend Clients & Surfaces',
+    badge: 'Multi-Surface',
+    items: [
+      { name: 'Nuxt 3 Web Client', port: 'Port :3001', role: 'Full interactive candidate workspace, SSE streams, Vue Flow diagrams' },
+      { name: 'Astro Landing & Docs', port: 'Port :3002', role: 'Technical landing, candidate onboarding, full system documentation' },
+      { name: 'Browser Extension (MV3)', port: 'Chrome / Firefox', role: 'On-demand job scanning (LinkedIn, TopCV), application tracker' },
+      { name: 'Native Apps', port: 'Desktop & Mobile', role: 'Android, iOS simulator, and Linux/macOS/Windows desktop webviews' },
+    ],
+  },
+  {
+    name: 'Backend Core & Intelligence',
+    badge: 'Rust & Python',
+    items: [
+      { name: 'Rust Axum API', port: 'Port :3000', role: 'Identity, authorization, workspaces, storage access, OpenAPI 3.1 generator' },
+      { name: 'Python Intelligence Service', port: 'Port :50051', role: 'Full-duplex bi-directional gRPC DataControl & WorkflowEventStream' },
+      { name: 'Durable Worker Service', port: 'Scalable Worker', role: 'LangGraph workflow execution, research, graph assembly, and typed tool loops' },
+    ],
+  },
+  {
+    name: 'Persistence & Private Infra',
+    badge: 'Self-Hosted',
+    items: [
+      { name: 'SurrealDB 3.x', port: 'Port :8000', role: 'Relational, document, and knowledge-graph store' },
+      { name: 'Redis Stack Server', port: 'Port :6379', role: 'Job queue (Redis Streams) and real-time telemetry (Redis Pub/Sub)' },
+      { name: 'SearXNG', port: 'Port :8080', role: 'SSRF-guarded metasearch engine for verified company and culture research' },
+      { name: 'MinIO Object Storage', port: 'Port :9000', role: 'Private S3-compatible storage with short-lived presigned download URLs' },
+    ],
+  },
+];
+---
+
+<section id="architecture" class="py-16 sm:py-24 border-b border-slate-200 dark:border-slate-800">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <!-- Section Header -->
+    <div class="space-y-3 max-w-3xl">
+      <div class="text-xs font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+        System Architecture
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+        A decoupled, typed, and resilient system topology.
+      </h2>
+      <p class="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+        The Rust API maintains authorization, state boundaries, and canonical OpenAPI contracts. The Python intelligence tier runs durable research and analysis. Everything runs in isolated containers under your complete control.
+      </p>
+    </div>
+
+    <!-- Tiers Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {
+        tiers.map((tier) => (
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 flex flex-col justify-between space-y-6 shadow-xs">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+                  {tier.name}
+                </h3>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 text-slate-500">
+                  {tier.badge}
+                </span>
+              </div>
+
+              <ul class="space-y-3.5">
+                {tier.items.map((item) => (
+                  <li class="space-y-1 text-xs">
+                    <div class="flex items-center justify-between font-mono">
+                      <span class="font-semibold text-slate-800 dark:text-slate-200">{item.name}</span>
+                      <span class="text-[11px] text-indigo-600 dark:text-indigo-400">{item.port}</span>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
+                      {item.role}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-mono text-slate-400">
+              <span>Verified topology</span>
+              <a href="/docs/architecture" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                View full spec →
+              </a>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

@@ -49,6 +49,15 @@ def reject_placeholder_domain(url: str) -> None:
         )
 
 
+def _normalize_hostname(hostname: str) -> str:
+    try:
+        return ipaddress.ip_address(hostname).compressed.lower().rstrip(".")
+    except ValueError:
+        try:
+            return httpx.URL(f"https://{hostname}").raw_host.decode("ascii").lower().rstrip(".")
+        except (httpx.InvalidURL, UnicodeDecodeError) as error:
+            raise SSRFSecurityError("Invalid hostname") from error
+
 def resolve_public_addresses(url: str) -> tuple[str, ...]:
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https"):
@@ -56,6 +65,7 @@ def resolve_public_addresses(url: str) -> tuple[str, ...]:
     hostname = parsed.hostname
     if not hostname:
         raise SSRFSecurityError("Missing hostname in URL")
+    hostname = _normalize_hostname(hostname)
     try:
         answers = socket.getaddrinfo(
             hostname, parsed.port or (443 if parsed.scheme == "https" else 80), type=socket.SOCK_STREAM
@@ -87,12 +97,12 @@ def validate_url_for_ssrf(url: str) -> None:
 
 class _PinnedNetworkBackend:
     def __init__(self, hostname: str, addresses: tuple[str, ...]):
-        self.hostname = hostname.lower().rstrip(".")
+        self.hostname = _normalize_hostname(hostname)
         self.addresses = addresses
         self.backend = AutoBackend()
 
     async def connect_tcp(self, host: str, port: int, **kwargs) -> AsyncNetworkStream:
-        if host.lower().rstrip(".") != self.hostname:
+        if _normalize_hostname(host) != self.hostname:
             raise SSRFSecurityError(f"Unexpected connection host: {host}")
         last_error = None
         for address in self.addresses:

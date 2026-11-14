@@ -9,9 +9,7 @@ use axum::{
 use tokio_stream::Stream;
 
 use crate::{
-    interfaces::http::{
-        extractors::authenticated_user::AuthenticatedUser, workspaces::AppState,
-    },
+    interfaces::http::{extractors::authenticated_user::AuthenticatedUser, workspaces::AppState},
     shared::error::AppError,
 };
 
@@ -39,16 +37,34 @@ pub struct UpsertAdminProviderRequestDto {
 pub fn admin_routes(state: AppState) -> Router {
     Router::new()
         .route("/api/v1/admin/pipelines", get(list_pipelines))
-        .route("/api/v1/admin/pipelines/{workspace_id}", get(get_pipeline_detail))
-        .route("/api/v1/admin/pipelines/{workspace_id}/logs", get(get_pipeline_logs))
-        .route("/api/v1/admin/pipelines/{workspace_id}/events", get(stream_pipeline_events))
-        .route("/api/v1/admin/providers", get(list_admin_providers).post(upsert_admin_provider))
-        .route("/api/v1/admin/providers/{provider_key}", axum::routing::put(upsert_admin_provider))
-        .route("/api/v1/admin/settings", get(get_admin_settings).put(update_admin_settings))
+        .route(
+            "/api/v1/admin/pipelines/{workspace_id}",
+            get(get_pipeline_detail),
+        )
+        .route(
+            "/api/v1/admin/pipelines/{workspace_id}/logs",
+            get(get_pipeline_logs),
+        )
+        .route(
+            "/api/v1/admin/pipelines/{workspace_id}/events",
+            get(stream_pipeline_events),
+        )
+        .route(
+            "/api/v1/admin/providers",
+            get(list_admin_providers).post(upsert_admin_provider),
+        )
+        .route(
+            "/api/v1/admin/providers/{provider_key}",
+            axum::routing::put(upsert_admin_provider),
+        )
+        .route(
+            "/api/v1/admin/settings",
+            get(get_admin_settings).put(update_admin_settings),
+        )
         .with_state(state)
 }
 
-async fn verify_admin(state: &AppState, user_id: &str) -> Result<(), AppError> {
+pub(crate) async fn verify_admin(state: &AppState, user_id: &str) -> Result<(), AppError> {
     let db = &state.db.client;
     let mut res = db
         .query("SELECT role FROM type::record('user', $uid);")
@@ -64,7 +80,9 @@ async fn verify_admin(state: &AppState, user_id: &str) -> Result<(), AppError> {
         .unwrap_or("member");
 
     if role != "admin" {
-        return Err(AppError::Forbidden("Administrator privileges required".into()));
+        return Err(AppError::Forbidden(
+            "Administrator privileges required".into(),
+        ));
     }
     Ok(())
 }
@@ -99,7 +117,11 @@ pub async fn list_pipelines(
 
     let mut pipelines = Vec::new();
     for ws in workspaces {
-        let ws_id = ws["id"].as_str().unwrap_or_default().replace("workspace:", "").replace('`', "");
+        let ws_id = ws["id"]
+            .as_str()
+            .unwrap_or_default()
+            .replace("workspace:", "")
+            .replace('`', "");
         let mut exec_res = db
             .query("SELECT * FROM type::record('pipeline_execution', $eid);")
             .bind(("eid", format!("exec_{ws_id}")))
@@ -252,28 +274,35 @@ pub async fn list_admin_providers(
         .map_err(|e| AppError::Database(e.to_string()))?;
     let rows: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
 
-    let mut providers: Vec<AdminProviderDto> = rows.into_iter().map(|r| {
-        let pkey = r["provider_key"].as_str().unwrap_or_default().to_string();
-        let name = r["name"].as_str().unwrap_or(&pkey).to_string();
-        let base_url = r["base_url"].as_str().map(|s| s.to_string());
-        let enc_key = r["encrypted_api_key"].as_str();
-        let has_key = enc_key.map(|k| !k.is_empty()).unwrap_or(false);
-        let is_enabled = r["is_enabled"].as_bool().unwrap_or(true);
-        let allowed_models = r["allowed_models"]
-            .as_array()
-            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
-            .unwrap_or_default();
+    let mut providers: Vec<AdminProviderDto> = rows
+        .into_iter()
+        .map(|r| {
+            let pkey = r["provider_key"].as_str().unwrap_or_default().to_string();
+            let name = r["name"].as_str().unwrap_or(&pkey).to_string();
+            let base_url = r["base_url"].as_str().map(|s| s.to_string());
+            let enc_key = r["encrypted_api_key"].as_str();
+            let has_key = enc_key.map(|k| !k.is_empty()).unwrap_or(false);
+            let is_enabled = r["is_enabled"].as_bool().unwrap_or(true);
+            let allowed_models = r["allowed_models"]
+                .as_array()
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(String::from))
+                        .collect()
+                })
+                .unwrap_or_default();
 
-        AdminProviderDto {
-            provider_key: pkey,
-            name,
-            base_url,
-            encrypted_api_key: None,
-            is_enabled,
-            allowed_models,
-            has_key,
-        }
-    }).collect();
+            AdminProviderDto {
+                provider_key: pkey,
+                name,
+                base_url,
+                encrypted_api_key: None,
+                is_enabled,
+                allowed_models,
+                has_key,
+            }
+        })
+        .collect();
 
     if providers.is_empty() {
         let defaults = [
@@ -318,13 +347,59 @@ pub async fn upsert_admin_provider(
     let crypto = crate::shared::encryption::CryptoService::new(&state.config.encryption_key);
 
     let pkey = payload.provider_key.to_lowercase();
-    let name = payload.name.unwrap_or_else(|| pkey.clone());
-    let is_enabled = payload.is_enabled.unwrap_or(true);
-    let allowed_models = payload.allowed_models.unwrap_or_default();
+    let mut existing_res = db
+        .query("SELECT name, base_url, encrypted_api_key, is_enabled, allowed_models FROM type::record('system_llm_provider', $pkey);")
+        .bind(("pkey", pkey.clone()))
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+    let existing_rows: Vec<serde_json::Value> = existing_res.take(0).unwrap_or_default();
+    let existing_row = existing_rows.first();
+
+    let name = payload
+        .name
+        .or_else(|| existing_row.and_then(|r| r["name"].as_str().map(str::to_string)))
+        .unwrap_or_else(|| pkey.clone());
+    let is_enabled = payload
+        .is_enabled
+        .or_else(|| existing_row.and_then(|r| r["is_enabled"].as_bool()))
+        .unwrap_or(true);
+    let allowed_models = payload
+        .allowed_models
+        .or_else(|| {
+            existing_row
+                .and_then(|r| r["allowed_models"].as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(str::to_string))
+                        .collect::<Vec<_>>()
+                })
+        })
+        .unwrap_or_default();
+
+    let resolved_base_url = match payload.base_url {
+        Some(url) if !url.trim().is_empty() => {
+            let trimmed = url.trim();
+            crate::shared::ssrf::resolve_and_verify_url(
+                trimmed,
+                false,
+                &state.config.allowed_private_hosts,
+            )
+            .await?;
+            Some(trimmed.to_string())
+        }
+        Some(_) => None,
+        None => existing_row
+            .and_then(|r| r.get("base_url"))
+            .and_then(|v| v.as_str())
+            .map(str::to_string),
+    };
 
     let enc_key = match payload.api_key.as_deref() {
         Some(raw) if !raw.trim().is_empty() => Some(crypto.encrypt(raw.trim())?),
-        _ => None,
+        _ => existing_row
+            .and_then(|r| r.get("encrypted_api_key"))
+            .and_then(|v| v.as_str())
+            .map(str::to_string),
     };
 
     let query = if enc_key.is_some() {
@@ -350,10 +425,11 @@ pub async fn upsert_admin_provider(
         "
     };
 
-    let mut q = db.query(query)
+    let mut q = db
+        .query(query)
         .bind(("pkey", pkey.clone()))
         .bind(("name", name))
-        .bind(("base_url", payload.base_url))
+        .bind(("base_url", resolved_base_url))
         .bind(("is_enabled", is_enabled))
         .bind(("allowed_models", allowed_models));
 
@@ -426,7 +502,6 @@ pub async fn update_admin_settings(
                     updated_by = type::record('user', $uid),
                     updated_at = time::now();
             ";
-            let query = query.replace("system_config", "`system_config`");
             db.query(query)
                 .bind(("key", key.clone()))
                 .bind(("val", val.clone()))
@@ -439,4 +514,3 @@ pub async fn update_admin_settings(
 
     Ok(axum::http::StatusCode::OK)
 }
-

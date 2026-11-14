@@ -1,13 +1,12 @@
-use std::sync::Arc;
 use base64::prelude::*;
+use std::sync::Arc;
 use surrealdb::engine::remote::ws::Ws;
 use surrealdb::opt::auth::Root;
 use surrealdb::Surreal;
 use uuid::Uuid;
 
 use mensetsu_api::{
-    contexts::workspace::infrastructure::storage::ResumeObjectStore,
-    shared::config::AppConfig,
+    contexts::workspace::infrastructure::storage::ResumeObjectStore, shared::config::AppConfig,
 };
 
 #[derive(serde::Deserialize, Debug)]
@@ -25,11 +24,15 @@ struct WorkspaceOwner {
     user_id: String,
 }
 fn record_key<'a>(record: &'a str, table: &str) -> Result<&'a str, Box<dyn std::error::Error>> {
-    let key = record.strip_prefix(table).and_then(|value| value.strip_prefix(':'))
+    let key = record
+        .strip_prefix(table)
+        .and_then(|value| value.strip_prefix(':'))
         .ok_or_else(|| format!("Unexpected record ID {record}; expected table {table}"))?;
-    Ok(key.strip_prefix('`').and_then(|value| value.strip_suffix('`')).unwrap_or(key))
+    Ok(key
+        .strip_prefix('`')
+        .and_then(|value| value.strip_suffix('`'))
+        .unwrap_or(key))
 }
-
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -63,8 +66,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let query = "SELECT id, workspace_id, source_pdf_base64, source_filename, source_upload_id, source_object_key FROM resume WHERE source_pdf_base64 != NONE AND source_pdf_base64 != NULL;";
     let mut resp = client.query(query).await?;
     let rows: Vec<serde_json::Value> = resp.take(0)?;
-    let records: Vec<LegacyResumeRecord> = rows.into_iter()
-        .map(serde_json::from_value).collect::<Result<_, _>>()?;
+    let records: Vec<LegacyResumeRecord> = rows
+        .into_iter()
+        .map(serde_json::from_value)
+        .collect::<Result<_, _>>()?;
 
     println!("Found {} candidate record(s) to inspect.", records.len());
 
@@ -83,23 +88,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
 
-
-        if let (Some(upload_id), Some(object_key)) = (&record.source_upload_id, &record.source_object_key) {
+        if let (Some(upload_id), Some(object_key)) =
+            (&record.source_upload_id, &record.source_object_key)
+        {
             if base64_str.len() > 7_500_000 {
-                eprintln!("Record {} has oversized legacy base64; preserving it.", resume_id_str);
+                eprintln!(
+                    "Record {} has oversized legacy base64; preserving it.",
+                    resume_id_str
+                );
                 failed_ids.push(resume_id_str);
                 continue;
             }
             let original = match BASE64_STANDARD.decode(base64_str.as_bytes()) {
-                Ok(bytes) if (4..=5 * 1024 * 1024).contains(&bytes.len()) && bytes.starts_with(b"%PDF") => bytes,
+                Ok(bytes)
+                    if (4..=5 * 1024 * 1024).contains(&bytes.len())
+                        && bytes.starts_with(b"%PDF") =>
+                {
+                    bytes
+                }
                 _ => {
-                    eprintln!("Record {} has invalid legacy PDF; preserving it.", resume_id_str);
+                    eprintln!(
+                        "Record {} has invalid legacy PDF; preserving it.",
+                        resume_id_str
+                    );
                     failed_ids.push(resume_id_str);
                     continue;
                 }
             };
-            println!("Record {} has upload/object references ({}, {}); verifying before clearing...", resume_id_str, upload_id, object_key);
-
+            println!(
+                "Record {} has upload/object references ({}, {}); verifying before clearing...",
+                resume_id_str, upload_id, object_key
+            );
 
             let head_result = storage.head(object_key).await;
             let verified_size = match head_result {
@@ -110,12 +129,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     continue;
                 }
                 Err(e) => {
-                    eprintln!("Record {} linked object {} HEAD failed: {}. Preserving base64.", resume_id_str, object_key, e);
+                    eprintln!(
+                        "Record {} linked object {} HEAD failed: {}. Preserving base64.",
+                        resume_id_str, object_key, e
+                    );
                     failed_ids.push(resume_id_str);
                     continue;
                 }
             };
-
 
             let mut up_check_resp = client
                 .query("SELECT user_id, workspace_id, object_key, size_bytes, status FROM type::record('resume_upload', $id);")
@@ -132,12 +153,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             let rows: Vec<serde_json::Value> = up_check_resp.take(0)?;
-            let uploads: Vec<UploadCheck> = rows.into_iter()
-                .map(serde_json::from_value).collect::<Result<_, _>>()?;
+            let uploads: Vec<UploadCheck> = rows
+                .into_iter()
+                .map(serde_json::from_value)
+                .collect::<Result<_, _>>()?;
             let upload = match uploads.first() {
                 Some(u) => u,
                 None => {
-                    eprintln!("Record {} linked upload {} does not exist in DB. Preserving base64.", resume_id_str, upload_id);
+                    eprintln!(
+                        "Record {} linked upload {} does not exist in DB. Preserving base64.",
+                        resume_id_str, upload_id
+                    );
                     failed_ids.push(resume_id_str);
                     continue;
                 }
@@ -148,9 +174,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .bind(("id", record_key(&record.workspace_id, "workspace")?))
                 .await?;
             let rows: Vec<serde_json::Value> = owner_response.take(0)?;
-            let owners: Vec<WorkspaceOwner> = rows.into_iter()
-                .map(serde_json::from_value).collect::<Result<_, _>>()?;
-            let correct_owner = owners.first().is_some_and(|owner| owner.user_id == upload.user_id);
+            let owners: Vec<WorkspaceOwner> = rows
+                .into_iter()
+                .map(serde_json::from_value)
+                .collect::<Result<_, _>>()?;
+            let correct_owner = owners
+                .first()
+                .is_some_and(|owner| owner.user_id == upload.user_id);
             if !correct_owner
                 || upload.workspace_id.as_ref() != Some(&record.workspace_id)
                 || upload.object_key != *object_key
@@ -167,19 +197,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 continue;
             }
 
-
             let update_q = "UPDATE type::record('resume', $id) SET source_pdf_base64 = NONE;";
             let mut up_resp = client
                 .query(update_q)
                 .bind(("id", record_key(&record.id, "resume")?))
                 .await?;
             let _check: Option<serde_json::Value> = up_resp.take(0)?;
-            println!("Successfully verified and cleared base64 for already-migrated record {}", resume_id_str);
+            println!(
+                "Successfully verified and cleared base64 for already-migrated record {}",
+                resume_id_str
+            );
             total_migrated += 1;
             continue;
         }
-
-
 
         const MAX_BASE64_CHARS: usize = 7_500_000;
         if base64_str.len() > MAX_BASE64_CHARS {
@@ -193,17 +223,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             continue;
         }
 
-
-
         let bytes = match BASE64_STANDARD.decode(base64_str.as_bytes()) {
             Ok(b) => b,
             Err(e) => {
-                eprintln!("Failed to decode base64 for resume record {}: {}", resume_id_str, e);
+                eprintln!(
+                    "Failed to decode base64 for resume record {}: {}",
+                    resume_id_str, e
+                );
                 failed_ids.push(resume_id_str);
                 continue;
             }
         };
-
 
         const MAX_SIZE: usize = 5 * 1024 * 1024;
         if bytes.is_empty() || bytes.len() > MAX_SIZE {
@@ -217,23 +247,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             continue;
         }
 
-
         if bytes.len() < 4 || &bytes[0..4] != b"%PDF" {
-            eprintln!("Invalid magic bytes (not a PDF) for resume record {}", resume_id_str);
+            eprintln!(
+                "Invalid magic bytes (not a PDF) for resume record {}",
+                resume_id_str
+            );
             failed_ids.push(resume_id_str);
             continue;
         }
 
         let pdf_len = bytes.len() as u64;
 
-
         let mut ws_resp = client
             .query("SELECT user_id FROM type::record('workspace', $id);")
             .bind(("id", record_key(&record.workspace_id, "workspace")?))
             .await?;
         let rows: Vec<serde_json::Value> = ws_resp.take(0)?;
-        let owners: Vec<WorkspaceOwner> = rows.into_iter()
-            .map(serde_json::from_value).collect::<Result<_, _>>()?;
+        let owners: Vec<WorkspaceOwner> = rows
+            .into_iter()
+            .map(serde_json::from_value)
+            .collect::<Result<_, _>>()?;
         let owner = match owners.first() {
             Some(o) => o,
             None => {
@@ -246,23 +279,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
 
-
         let upload_uuid = Uuid::new_v4();
         let final_key = format!("resumes/final/{}.pdf", upload_uuid);
 
-
         if let Err(e) = storage.put_pdf_bytes(&final_key, bytes).await {
-            eprintln!("Failed to upload PDF to S3 for resume record {}: {}", resume_id_str, e);
+            eprintln!(
+                "Failed to upload PDF to S3 for resume record {}: {}",
+                resume_id_str, e
+            );
             failed_ids.push(resume_id_str);
             continue;
         }
 
-
         let head_result = storage.head(&final_key).await;
         match head_result {
-            Ok((head_size, _)) if head_size == pdf_len => {
-
-            }
+            Ok((head_size, _)) if head_size == pdf_len => {}
             Ok((head_size, _)) => {
                 eprintln!(
                     "HEAD size mismatch for resume record {}: expected {} bytes, got {}",
@@ -272,12 +303,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 continue;
             }
             Err(e) => {
-                eprintln!("HEAD verification failed for resume record {}: {}", resume_id_str, e);
+                eprintln!(
+                    "HEAD verification failed for resume record {}: {}",
+                    resume_id_str, e
+                );
                 failed_ids.push(resume_id_str);
                 continue;
             }
         }
-
 
         let filename = record
             .source_filename
@@ -300,13 +333,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .query(create_upload_q)
             .bind(("upload_id", upload_id.clone()))
             .bind(("user_id", record_key(&owner.user_id, "user")?))
-            .bind(("workspace_id", record_key(&record.workspace_id, "workspace")?))
+            .bind((
+                "workspace_id",
+                record_key(&record.workspace_id, "workspace")?,
+            ))
             .bind(("object_key", final_key.clone()))
             .bind(("filename", filename.to_string()))
             .bind(("size_bytes", pdf_len))
             .await?;
         let _check: Option<serde_json::Value> = create_resp.take(0)?;
-
 
         let update_resume_q = "UPDATE type::record('resume', $id) SET
             source_upload_id = type::record('resume_upload', $upload_id),
@@ -335,7 +370,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         for id in &failed_ids {
             eprintln!("  - {}", id);
         }
-        return Err(format!("Migration finished with {} failure(s). Review failed IDs above.", failed_ids.len()).into());
+        return Err(format!(
+            "Migration finished with {} failure(s). Review failed IDs above.",
+            failed_ids.len()
+        )
+        .into());
     }
 
     println!("All legacy resume records migrated successfully.");

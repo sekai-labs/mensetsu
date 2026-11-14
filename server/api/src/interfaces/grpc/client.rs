@@ -20,7 +20,7 @@ use axum::response::sse::Event;
 use dashmap::DashMap;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, Mutex, RwLock};
 use tokio_stream::wrappers::ReceiverStream;
 use tokio_stream::{Stream, StreamExt};
 use tonic::metadata::{Ascii, MetadataValue};
@@ -60,10 +60,11 @@ pub struct ResumePlanPayload {
 
 #[derive(Clone)]
 pub struct GrpcClient {
-    command_tx: mpsc::Sender<ControlCommand>,
+    command_tx: Arc<RwLock<mpsc::Sender<ControlCommand>>>,
     pending_requests: Arc<DashMap<String, mpsc::Sender<ControlDataEnvelope>>>,
     streaming_endpoint: Endpoint,
     auth_header_value: MetadataValue<Ascii>,
+    reconnect_lock: Arc<Mutex<()>>,
 }
 
 impl GrpcClient {
@@ -87,15 +88,31 @@ impl GrpcClient {
             .map_err(|e| AppError::Internal(format!("Invalid INTELLIGENCE_GRPC_ENDPOINT: {e}")))?
             .connect_timeout(Duration::from_secs(10));
 
-        let channel = endpoint
-            .connect()
-            .await
-            .map_err(|e| AppError::ExternalService(format!("Failed to connect to Intelligence gRPC service: {e}")))?;
-
-        let (command_tx, command_rx) = mpsc::channel::<ControlCommand>(256);
         let pending_requests: Arc<DashMap<String, mpsc::Sender<ControlDataEnvelope>>> =
             Arc::new(DashMap::new());
+        let command_tx =
+            Self::open_control_channel(&endpoint, &auth_header_value, &pending_requests).await?;
 
+        Ok(Self {
+            command_tx: Arc::new(RwLock::new(command_tx)),
+            pending_requests,
+            streaming_endpoint: endpoint,
+            auth_header_value,
+            reconnect_lock: Arc::new(Mutex::new(())),
+        })
+    }
+
+    async fn open_control_channel(
+        endpoint: &Endpoint,
+        auth_header_value: &MetadataValue<Ascii>,
+        pending_requests: &Arc<DashMap<String, mpsc::Sender<ControlDataEnvelope>>>,
+    ) -> Result<mpsc::Sender<ControlCommand>> {
+        let channel = endpoint.connect().await.map_err(|e| {
+            AppError::ExternalService(format!(
+                "Failed to connect to Intelligence gRPC service: {e}"
+            ))
+        })?;
+        let (command_tx, command_rx) = mpsc::channel::<ControlCommand>(256);
         let mut control_client =
             proto::control::data_control_service_client::DataControlServiceClient::with_interceptor(
                 channel,
@@ -107,15 +124,16 @@ impl GrpcClient {
                     }
                 },
             );
-
         let out_stream = ReceiverStream::new(command_rx);
         let response_stream = control_client
             .stream_control(tonic::Request::new(out_stream))
             .await
-            .map_err(|e| AppError::ExternalService(format!("Failed to establish DataControl gRPC stream: {e}")))?
+            .map_err(|e| {
+                AppError::ExternalService(format!(
+                    "Failed to establish DataControl gRPC stream: {e}"
+                ))
+            })?
             .into_inner();
-
-
         let pending_map = pending_requests.clone();
         tokio::spawn(async move {
             let mut stream = response_stream;
@@ -138,13 +156,19 @@ impl GrpcClient {
                 }
             }
         });
+        Ok(command_tx)
+    }
 
-        Ok(Self {
-            command_tx,
-            pending_requests,
-            streaming_endpoint: endpoint,
-            auth_header_value,
-        })
+    pub async fn reconnect(&self) -> Result<()> {
+        let _guard = self.reconnect_lock.lock().await;
+        let command_tx = Self::open_control_channel(
+            &self.streaming_endpoint,
+            &self.auth_header_value,
+            &self.pending_requests,
+        )
+        .await?;
+        *self.command_tx.write().await = command_tx;
+        Ok(())
     }
 
     async fn send_command(
@@ -157,14 +181,26 @@ impl GrpcClient {
 
         let cmd = ControlCommand {
             correlation_id: correlation_id.clone(),
-            command: Some(command_oneof),
+            command: Some(command_oneof.clone()),
         };
 
-        if let Err(e) = self.command_tx.send(cmd).await {
-            self.pending_requests.remove(&correlation_id);
-            return Err(AppError::ExternalService(format!(
-                "Failed to send command to DataControl stream: {e}"
-            )));
+        let sender = self.command_tx.read().await.clone();
+        if sender.send(cmd).await.is_err() {
+            if let Err(error) = self.reconnect().await {
+                self.pending_requests.remove(&correlation_id);
+                return Err(error);
+            }
+            let cmd = ControlCommand {
+                correlation_id: correlation_id.clone(),
+                command: Some(command_oneof),
+            };
+            let sender = self.command_tx.read().await.clone();
+            if let Err(e) = sender.send(cmd).await {
+                self.pending_requests.remove(&correlation_id);
+                return Err(AppError::ExternalService(format!(
+                    "Failed to send command to DataControl stream: {e}"
+                )));
+            }
         }
 
         let mut accumulated_payload = String::new();
@@ -191,8 +227,11 @@ impl GrpcClient {
                     });
                 }
             }
-            Err(AppError::ExternalService("Control stream closed without terminal envelope".into()))
-        }).await;
+            Err(AppError::ExternalService(
+                "Control stream closed without terminal envelope".into(),
+            ))
+        })
+        .await;
 
         self.pending_requests.remove(&correlation_id);
 
@@ -213,7 +252,9 @@ impl GrpcClient {
                 }
             }
             Ok(Err(e)) => Err(e),
-            Err(_) => Err(AppError::ExternalService("Timed out waiting for DataControl response".into())),
+            Err(_) => Err(AppError::ExternalService(
+                "Timed out waiting for DataControl response".into(),
+            )),
         }
     }
 
@@ -229,7 +270,10 @@ impl GrpcClient {
     }
 
     pub async fn list_workflows(&self) -> Result<Vec<WorkflowDefinition>> {
-        self.execute_json(control_command::Command::ListWorkflows(ListWorkflowsCommand {})).await
+        self.execute_json(control_command::Command::ListWorkflows(
+            ListWorkflowsCommand {},
+        ))
+        .await
     }
 
     pub async fn list_runs(
@@ -339,12 +383,14 @@ impl GrpcClient {
         cursor: Option<String>,
         limit: u32,
     ) -> Result<ToolInvocationsPageResponse> {
-        self.execute_json(control_command::Command::ListAgentTools(ListAgentToolsCommand {
-            run_id: run_id.to_string(),
-            execution_id: execution_id.to_string(),
-            cursor,
-            limit,
-        }))
+        self.execute_json(control_command::Command::ListAgentTools(
+            ListAgentToolsCommand {
+                run_id: run_id.to_string(),
+                execution_id: execution_id.to_string(),
+                cursor,
+                limit,
+            },
+        ))
         .await
     }
 
@@ -355,26 +401,32 @@ impl GrpcClient {
         offset: u32,
         limit: u32,
     ) -> Result<ToolOutputResponse> {
-        self.execute_json(control_command::Command::GetToolOutput(GetToolOutputCommand {
-            run_id: run_id.to_string(),
-            tool_invocation_id: tool_invocation_id.to_string(),
-            offset,
-            limit,
-        }))
+        self.execute_json(control_command::Command::GetToolOutput(
+            GetToolOutputCommand {
+                run_id: run_id.to_string(),
+                tool_invocation_id: tool_invocation_id.to_string(),
+                offset,
+                limit,
+            },
+        ))
         .await
     }
 
     pub async fn list_delegations(&self, run_id: &str) -> Result<Vec<Delegation>> {
-        self.execute_json(control_command::Command::ListDelegations(ListDelegationsCommand {
-            run_id: run_id.to_string(),
-        }))
+        self.execute_json(control_command::Command::ListDelegations(
+            ListDelegationsCommand {
+                run_id: run_id.to_string(),
+            },
+        ))
         .await
     }
 
     pub async fn list_artifacts(&self, run_id: &str) -> Result<Vec<Artifact>> {
-        self.execute_json(control_command::Command::ListArtifacts(ListArtifactsCommand {
-            run_id: run_id.to_string(),
-        }))
+        self.execute_json(control_command::Command::ListArtifacts(
+            ListArtifactsCommand {
+                run_id: run_id.to_string(),
+            },
+        ))
         .await
     }
 
@@ -399,16 +451,20 @@ impl GrpcClient {
     }
 
     pub async fn get_task_graph(&self, run_id: &str) -> Result<TaskGraphResponse> {
-        self.execute_json(control_command::Command::GetTaskGraph(GetTaskGraphCommand {
-            run_id: run_id.to_string(),
-        }))
+        self.execute_json(control_command::Command::GetTaskGraph(
+            GetTaskGraphCommand {
+                run_id: run_id.to_string(),
+            },
+        ))
         .await
     }
 
     pub async fn get_delegation_graph(&self, run_id: &str) -> Result<DelegationGraphResponse> {
-        self.execute_json(control_command::Command::GetDelegationGraph(GetDelegationGraphCommand {
-            run_id: run_id.to_string(),
-        }))
+        self.execute_json(control_command::Command::GetDelegationGraph(
+            GetDelegationGraphCommand {
+                run_id: run_id.to_string(),
+            },
+        ))
         .await
     }
 
@@ -418,11 +474,13 @@ impl GrpcClient {
         after_seq: i64,
         limit: u32,
     ) -> Result<EventsHistoryPageResponse> {
-        self.execute_json(control_command::Command::GetEventsHistory(GetEventsHistoryCommand {
-            run_id: run_id.to_string(),
-            after_seq,
-            limit,
-        }))
+        self.execute_json(control_command::Command::GetEventsHistory(
+            GetEventsHistoryCommand {
+                run_id: run_id.to_string(),
+                after_seq,
+                limit,
+            },
+        ))
         .await
     }
 
@@ -431,11 +489,9 @@ impl GrpcClient {
         run_id: String,
         after_seq: u64,
     ) -> Result<impl Stream<Item = std::result::Result<Event, std::convert::Infallible>>> {
-        let channel = self
-            .streaming_endpoint
-            .connect()
-            .await
-            .map_err(|e| AppError::ExternalService(format!("Failed to connect for streaming: {e}")))?;
+        let channel = self.streaming_endpoint.connect().await.map_err(|e| {
+            AppError::ExternalService(format!("Failed to connect for streaming: {e}"))
+        })?;
 
         let mut stream_client =
             proto::streaming::workflow_event_stream_service_client::WorkflowEventStreamServiceClient::with_interceptor(
@@ -451,7 +507,6 @@ impl GrpcClient {
 
         let (sub_tx, sub_rx) = mpsc::channel::<EventStreamClientMessage>(16);
 
-
         let sub_msg = EventStreamClientMessage {
             message: Some(event_stream_client_message::Message::Subscribe(
                 SubscribeRunMessage { run_id, after_seq },
@@ -463,7 +518,9 @@ impl GrpcClient {
         let incoming_stream = stream_client
             .stream_workflow_events(tonic::Request::new(request_stream))
             .await
-            .map_err(|e| AppError::ExternalService(format!("Failed to open WorkflowEventStream: {e}")))?
+            .map_err(|e| {
+                AppError::ExternalService(format!("Failed to open WorkflowEventStream: {e}"))
+            })?
             .into_inner();
 
         let sse_stream = async_stream::stream! {

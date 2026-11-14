@@ -54,7 +54,7 @@ export const useInterviewEventsService = (
     if (!id || isTerminalReached || typeof window === 'undefined') return
 
     const cleanId = id.replace(/^workspace:/, '').replace(/`/g, '')
-    const url = `/api/backend/workspaces/${cleanId}/events`
+    const url = `/api/backend/workspaces/${encodeURIComponent(cleanId)}/events`
 
     disconnect()
     eventSource = eventSourceFactory ? eventSourceFactory(url) : new EventSource(url)

@@ -19,9 +19,16 @@ import java.io.IOException
 import okhttp3.Call
 import okhttp3.HttpUrl
 
+import org.mensetsu.contracts.models.CandidateProfileDto
+import org.mensetsu.contracts.models.DiscoverModelsRequestDto
 import org.mensetsu.contracts.models.LlmConfigItemDto
+import org.mensetsu.contracts.models.ProviderStatusItemDto
+import org.mensetsu.contracts.models.UpdateCandidateProfileRequestDto
+import org.mensetsu.contracts.models.UpdateUserRoutingRequestDto
 import org.mensetsu.contracts.models.UpsertLlmConfigRequestDto
+import org.mensetsu.contracts.models.UpsertUserProviderRequestDto
 import org.mensetsu.contracts.models.UserProfileResponseDto
+import org.mensetsu.contracts.models.UserRoutingResponseDto
 
 import com.squareup.moshi.Json
 
@@ -110,6 +117,290 @@ class SettingsApi(basePath: kotlin.String = defaultBasePath, client: Call.Factor
         return RequestConfig(
             method = RequestMethod.DELETE,
             path = "/api/v1/settings/llm/{provider}".replace("{"+"provider"+"}", encodeURIComponent(provider.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * DELETE /api/v1/settings/llm/providers/{provider_key}
+     * 
+     * 
+     * @param providerKey 
+     * @return void
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun deleteUserProvider(providerKey: kotlin.String) : Unit {
+        val localVarResponse = deleteUserProviderWithHttpInfo(providerKey = providerKey)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> Unit
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * DELETE /api/v1/settings/llm/providers/{provider_key}
+     * 
+     * 
+     * @param providerKey 
+     * @return ApiResponse<Unit?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Throws(IllegalStateException::class, IOException::class)
+    fun deleteUserProviderWithHttpInfo(providerKey: kotlin.String) : ApiResponse<Unit?> {
+        val localVariableConfig = deleteUserProviderRequestConfig(providerKey = providerKey)
+
+        return request<Unit, Unit>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation deleteUserProvider
+     *
+     * @param providerKey 
+     * @return RequestConfig
+     */
+    fun deleteUserProviderRequestConfig(providerKey: kotlin.String) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        
+        return RequestConfig(
+            method = RequestMethod.DELETE,
+            path = "/api/v1/settings/llm/providers/{provider_key}".replace("{"+"provider_key"+"}", encodeURIComponent(providerKey.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /api/v1/settings/llm/models
+     * 
+     * 
+     * @param discoverModelsRequestDto 
+     * @return kotlin.Any
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun discoverModels(discoverModelsRequestDto: DiscoverModelsRequestDto) : kotlin.Any {
+        val localVarResponse = discoverModelsWithHttpInfo(discoverModelsRequestDto = discoverModelsRequestDto)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as kotlin.Any
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /api/v1/settings/llm/models
+     * 
+     * 
+     * @param discoverModelsRequestDto 
+     * @return ApiResponse<kotlin.Any?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun discoverModelsWithHttpInfo(discoverModelsRequestDto: DiscoverModelsRequestDto) : ApiResponse<kotlin.Any?> {
+        val localVariableConfig = discoverModelsRequestConfig(discoverModelsRequestDto = discoverModelsRequestDto)
+
+        return request<DiscoverModelsRequestDto, kotlin.Any>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation discoverModels
+     *
+     * @param discoverModelsRequestDto 
+     * @return RequestConfig
+     */
+    fun discoverModelsRequestConfig(discoverModelsRequestDto: DiscoverModelsRequestDto) : RequestConfig<DiscoverModelsRequestDto> {
+        val localVariableBody = discoverModelsRequestDto
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/api/v1/settings/llm/models",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * GET /api/v1/candidate-profile
+     * 
+     * 
+     * @return CandidateProfileDto
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getCandidateProfile() : CandidateProfileDto {
+        val localVarResponse = getCandidateProfileWithHttpInfo()
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as CandidateProfileDto
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /api/v1/candidate-profile
+     * 
+     * 
+     * @return ApiResponse<CandidateProfileDto?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getCandidateProfileWithHttpInfo() : ApiResponse<CandidateProfileDto?> {
+        val localVariableConfig = getCandidateProfileRequestConfig()
+
+        return request<Unit, CandidateProfileDto>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation getCandidateProfile
+     *
+     * @return RequestConfig
+     */
+    fun getCandidateProfileRequestConfig() : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/api/v1/candidate-profile",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * GET /api/v1/settings/llm/providers
+     * 
+     * 
+     * @return kotlin.collections.List<ProviderStatusItemDto>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getCombinedProviders() : kotlin.collections.List<ProviderStatusItemDto> {
+        val localVarResponse = getCombinedProvidersWithHttpInfo()
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as kotlin.collections.List<ProviderStatusItemDto>
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /api/v1/settings/llm/providers
+     * 
+     * 
+     * @return ApiResponse<kotlin.collections.List<ProviderStatusItemDto>?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getCombinedProvidersWithHttpInfo() : ApiResponse<kotlin.collections.List<ProviderStatusItemDto>?> {
+        val localVariableConfig = getCombinedProvidersRequestConfig()
+
+        return request<Unit, kotlin.collections.List<ProviderStatusItemDto>>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation getCombinedProviders
+     *
+     * @return RequestConfig
+     */
+    fun getCombinedProvidersRequestConfig() : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/api/v1/settings/llm/providers",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = true,
@@ -258,6 +549,221 @@ class SettingsApi(basePath: kotlin.String = defaultBasePath, client: Call.Factor
     }
 
     /**
+     * GET /api/v1/settings/llm/routing
+     * 
+     * 
+     * @return UserRoutingResponseDto
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getUserRouting() : UserRoutingResponseDto {
+        val localVarResponse = getUserRoutingWithHttpInfo()
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as UserRoutingResponseDto
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /api/v1/settings/llm/routing
+     * 
+     * 
+     * @return ApiResponse<UserRoutingResponseDto?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getUserRoutingWithHttpInfo() : ApiResponse<UserRoutingResponseDto?> {
+        val localVariableConfig = getUserRoutingRequestConfig()
+
+        return request<Unit, UserRoutingResponseDto>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation getUserRouting
+     *
+     * @return RequestConfig
+     */
+    fun getUserRoutingRequestConfig() : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/api/v1/settings/llm/routing",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * PUT /api/v1/candidate-profile
+     * 
+     * 
+     * @param updateCandidateProfileRequestDto 
+     * @return CandidateProfileDto
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun updateCandidateProfile(updateCandidateProfileRequestDto: UpdateCandidateProfileRequestDto) : CandidateProfileDto {
+        val localVarResponse = updateCandidateProfileWithHttpInfo(updateCandidateProfileRequestDto = updateCandidateProfileRequestDto)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as CandidateProfileDto
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * PUT /api/v1/candidate-profile
+     * 
+     * 
+     * @param updateCandidateProfileRequestDto 
+     * @return ApiResponse<CandidateProfileDto?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun updateCandidateProfileWithHttpInfo(updateCandidateProfileRequestDto: UpdateCandidateProfileRequestDto) : ApiResponse<CandidateProfileDto?> {
+        val localVariableConfig = updateCandidateProfileRequestConfig(updateCandidateProfileRequestDto = updateCandidateProfileRequestDto)
+
+        return request<UpdateCandidateProfileRequestDto, CandidateProfileDto>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation updateCandidateProfile
+     *
+     * @param updateCandidateProfileRequestDto 
+     * @return RequestConfig
+     */
+    fun updateCandidateProfileRequestConfig(updateCandidateProfileRequestDto: UpdateCandidateProfileRequestDto) : RequestConfig<UpdateCandidateProfileRequestDto> {
+        val localVariableBody = updateCandidateProfileRequestDto
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.PUT,
+            path = "/api/v1/candidate-profile",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * PUT /api/v1/settings/llm/routing
+     * 
+     * 
+     * @param updateUserRoutingRequestDto 
+     * @return void
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun updateUserRouting(updateUserRoutingRequestDto: UpdateUserRoutingRequestDto) : Unit {
+        val localVarResponse = updateUserRoutingWithHttpInfo(updateUserRoutingRequestDto = updateUserRoutingRequestDto)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> Unit
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * PUT /api/v1/settings/llm/routing
+     * 
+     * 
+     * @param updateUserRoutingRequestDto 
+     * @return ApiResponse<Unit?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Throws(IllegalStateException::class, IOException::class)
+    fun updateUserRoutingWithHttpInfo(updateUserRoutingRequestDto: UpdateUserRoutingRequestDto) : ApiResponse<Unit?> {
+        val localVariableConfig = updateUserRoutingRequestConfig(updateUserRoutingRequestDto = updateUserRoutingRequestDto)
+
+        return request<UpdateUserRoutingRequestDto, Unit>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation updateUserRouting
+     *
+     * @param updateUserRoutingRequestDto 
+     * @return RequestConfig
+     */
+    fun updateUserRoutingRequestConfig(updateUserRoutingRequestDto: UpdateUserRoutingRequestDto) : RequestConfig<UpdateUserRoutingRequestDto> {
+        val localVariableBody = updateUserRoutingRequestDto
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        
+        return RequestConfig(
+            method = RequestMethod.PUT,
+            path = "/api/v1/settings/llm/routing",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
      * PUT /api/v1/settings/llm
      * 
      * 
@@ -324,6 +830,77 @@ class SettingsApi(basePath: kotlin.String = defaultBasePath, client: Call.Factor
         return RequestConfig(
             method = RequestMethod.PUT,
             path = "/api/v1/settings/llm",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * PUT /api/v1/settings/llm/providers
+     * 
+     * 
+     * @param upsertUserProviderRequestDto 
+     * @return void
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun upsertUserProvider(upsertUserProviderRequestDto: UpsertUserProviderRequestDto) : Unit {
+        val localVarResponse = upsertUserProviderWithHttpInfo(upsertUserProviderRequestDto = upsertUserProviderRequestDto)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> Unit
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * PUT /api/v1/settings/llm/providers
+     * 
+     * 
+     * @param upsertUserProviderRequestDto 
+     * @return ApiResponse<Unit?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Throws(IllegalStateException::class, IOException::class)
+    fun upsertUserProviderWithHttpInfo(upsertUserProviderRequestDto: UpsertUserProviderRequestDto) : ApiResponse<Unit?> {
+        val localVariableConfig = upsertUserProviderRequestConfig(upsertUserProviderRequestDto = upsertUserProviderRequestDto)
+
+        return request<UpsertUserProviderRequestDto, Unit>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation upsertUserProvider
+     *
+     * @param upsertUserProviderRequestDto 
+     * @return RequestConfig
+     */
+    fun upsertUserProviderRequestConfig(upsertUserProviderRequestDto: UpsertUserProviderRequestDto) : RequestConfig<UpsertUserProviderRequestDto> {
+        val localVariableBody = upsertUserProviderRequestDto
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        
+        return RequestConfig(
+            method = RequestMethod.PUT,
+            path = "/api/v1/settings/llm/providers",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = true,

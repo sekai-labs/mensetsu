@@ -1,8 +1,11 @@
 use mensetsu_api::{
     contexts,
     interfaces::{
-        grpc::{proto::resume::resume_storage_service_server::ResumeStorageServiceServer, resume_storage::ResumeStorageGrpcService},
-        http::{create_router, workspaces::AppState},
+        grpc::{
+            proto::resume::resume_storage_service_server::ResumeStorageServiceServer,
+            resume_storage::ResumeStorageGrpcService,
+        },
+        http::{application_dispatch, create_router, workspaces::AppState},
     },
     shared::config::AppConfig,
 };
@@ -11,7 +14,9 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
+        )
         .with(tracing_subscriber::fmt::layer().with_ansi(false))
         .init();
 
@@ -21,44 +26,105 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let db = contexts::workspace::infrastructure::db::DatabasePool::connect(&config).await?;
     let storage = std::sync::Arc::new(
-        contexts::workspace::infrastructure::storage::ResumeObjectStore::from_config(&config).await?,
+        contexts::workspace::infrastructure::storage::ResumeObjectStore::from_config(&config)
+            .await?,
     );
-    let user_repo = std::sync::Arc::new(contexts::identity::infrastructure::SurrealUserRepository::new(db.client.clone()));
-    let session_repo = std::sync::Arc::new(contexts::identity::infrastructure::SurrealAuthSessionRepository::new(db.client.clone()));
-    let hasher = std::sync::Arc::new(contexts::identity::domain::hasher::Argon2PasswordHasher::new());
+    let user_repo = std::sync::Arc::new(
+        contexts::identity::infrastructure::SurrealUserRepository::new(db.client.clone()),
+    );
+    let session_repo = std::sync::Arc::new(
+        contexts::identity::infrastructure::SurrealAuthSessionRepository::new(db.client.clone()),
+    );
+    let hasher =
+        std::sync::Arc::new(contexts::identity::domain::hasher::Argon2PasswordHasher::new());
     let token_service = contexts::identity::domain::token::TokenService::new(
         &config.jwt_secret,
         config.access_token_ttl_seconds,
         config.refresh_token_ttl_seconds,
     );
-    let identity_service = std::sync::Arc::new(contexts::identity::application::IdentityService::new(
-        user_repo,
-        session_repo,
-        hasher,
-        token_service,
-    ));
-    let ws_repo = std::sync::Arc::new(contexts::workspace::infrastructure::SurrealWorkspaceRepository::new((*db.client).clone()));
-    let workspace_service = std::sync::Arc::new(contexts::workspace::application::WorkspaceService::new(ws_repo.clone()));
-
-    let wf_repo = std::sync::Arc::new(contexts::workflow::infrastructure::SurrealWorkflowRunRepository::new((*db.client).clone()));
-    let workflow_service = std::sync::Arc::new(contexts::workflow::application::WorkflowService::new(wf_repo, ws_repo));
-    tracing::info!("Connecting to Intelligence gRPC at {}", config.intelligence_grpc_url);
-    let grpc_client = std::sync::Arc::new(mensetsu_api::interfaces::grpc::GrpcClient::connect(&config).await?);
-    tracing::info!("Successfully connected to Intelligence gRPC service");
-    let grpc_service = ResumeStorageGrpcService::new(
-        db.clone(),
-        storage.clone(),
-        &config.internal_service_token,
+    let identity_service =
+        std::sync::Arc::new(contexts::identity::application::IdentityService::new(
+            user_repo.clone(),
+            session_repo.clone(),
+            hasher,
+            token_service.clone(),
+        ));
+    let oauth_provider_repo = std::sync::Arc::new(
+        contexts::identity::infrastructure::oauth_repository::SurrealOAuthProviderRepository::new(
+            db.client.clone(),
+        ),
     );
+    let oauth_identity_repo = std::sync::Arc::new(
+        contexts::identity::infrastructure::oauth_repository::SurrealUserOAuthIdentityRepository::new(
+            db.client.clone(),
+        ),
+    );
+    let oauth_flow_repo = std::sync::Arc::new(
+        contexts::identity::infrastructure::oauth_repository::SurrealOAuthFlowRepository::new(
+            db.client.clone(),
+        ),
+    );
+    let auth_handoff_repo = std::sync::Arc::new(
+        contexts::identity::infrastructure::oauth_repository::SurrealAuthHandoffRepository::new(
+            db.client.clone(),
+        ),
+    );
+    let oauth_service = std::sync::Arc::new(
+        contexts::identity::application::oauth_service::OAuthService::new(
+            oauth_provider_repo,
+            oauth_identity_repo,
+            oauth_flow_repo,
+            auth_handoff_repo,
+            user_repo,
+            session_repo,
+            token_service,
+            mensetsu_api::shared::encryption::CryptoService::new(&config.encryption_key),
+            std::sync::Arc::new(
+                contexts::identity::infrastructure::oauth_http::OAuthHttpClient::new(
+                    config.allowed_private_hosts.clone(),
+                ),
+            ),
+            config.oauth_state_ttl_seconds,
+            config.oauth_handoff_ttl_seconds,
+            config.oauth_web_callback_url.clone(),
+        ),
+    );
+    let ws_repo = std::sync::Arc::new(
+        contexts::workspace::infrastructure::SurrealWorkspaceRepository::new((*db.client).clone()),
+    );
+    let workspace_service = std::sync::Arc::new(
+        contexts::workspace::application::WorkspaceService::new(ws_repo.clone()),
+    );
+
+    let wf_repo = std::sync::Arc::new(
+        contexts::workflow::infrastructure::SurrealWorkflowRunRepository::new((*db.client).clone()),
+    );
+    let workflow_service = std::sync::Arc::new(
+        contexts::workflow::application::WorkflowService::new(wf_repo, ws_repo),
+    );
+    tracing::info!(
+        "Connecting to Intelligence gRPC at {}",
+        config.intelligence_grpc_url
+    );
+    let grpc_client =
+        std::sync::Arc::new(mensetsu_api::interfaces::grpc::GrpcClient::connect(&config).await?);
+    tracing::info!("Successfully connected to Intelligence gRPC service");
+    let grpc_service =
+        ResumeStorageGrpcService::new(db.clone(), storage.clone(), &config.internal_service_token);
     let state = AppState {
         db,
         config: config.clone(),
+        oauth_service: Some(oauth_service),
         identity_service,
         workspace_service,
         workflow_service,
         grpc_client,
         storage,
+        metrics: std::sync::Arc::new(
+            mensetsu_api::interfaces::http::metrics::MetricsCollector::new(),
+        ),
     };
+    application_dispatch::spawn_dispatcher(state.clone());
     let app = create_router(state);
     let addr = format!("{}:{}", config.host, config.port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;

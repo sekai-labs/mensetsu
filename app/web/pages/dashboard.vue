@@ -4,8 +4,15 @@ import { calculateWorkspaceStatistics } from '~/features/interviews/utils/interv
 import { useAuthService } from '~/features/auth/services/auth.service'
 import StatusBadge from '~/components/ui/StatusBadge.vue'
 import AppButton from '~/components/ui/AppButton.vue'
-import TokenUsagePanel from '~/components/usage/TokenUsagePanel.vue'
+import MetricsSummaryCard from '~/components/usage/MetricsSummaryCard.vue'
 import { formatDisplayDate } from '~/utils/date'
+import {
+  PlusCircle,
+  Layers,
+  FileText,
+  Briefcase,
+  Workflow,
+} from 'lucide-vue-next'
 
 definePageMeta({
   layout: 'default',
@@ -26,7 +33,7 @@ const recentWorkspaces = computed(() => {
 
 <template>
   <div class="space-y-7">
-
+    <!-- Welcome Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -44,7 +51,105 @@ const recentWorkspaces = computed(() => {
       </NuxtLink>
     </div>
 
+    <!-- Quick Shortcuts Grid: New Interview, Workspaces, CV Library, Applications, Workflow Runs -->
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" aria-label="Quick Navigation Shortcuts">
+      <NuxtLink
+        to="/interviews/new"
+        class="group flex flex-col justify-between rounded-lg border border-slate-200 bg-white p-3.5 shadow-sm transition-all hover:border-indigo-400 hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-600 dark:hover:bg-slate-800/60"
+      >
+        <div class="flex items-center justify-between">
+          <span class="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+            <PlusCircle class="h-4 w-4" aria-hidden="true" />
+          </span>
+        </div>
+        <div class="mt-3">
+          <div class="text-xs font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            {{ $t('dashboard.shortcuts.newInterview') }}
+          </div>
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+            {{ $t('dashboard.shortcuts.newInterviewDesc') }}
+          </p>
+        </div>
+      </NuxtLink>
 
+      <NuxtLink
+        to="/interviews"
+        class="group flex flex-col justify-between rounded-lg border border-slate-200 bg-white p-3.5 shadow-sm transition-all hover:border-indigo-400 hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-600 dark:hover:bg-slate-800/60"
+      >
+        <div class="flex items-center justify-between">
+          <span class="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+            <Layers class="h-4 w-4" aria-hidden="true" />
+          </span>
+        </div>
+        <div class="mt-3">
+          <div class="text-xs font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            {{ $t('dashboard.shortcuts.workspaces') }}
+          </div>
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+            {{ $t('dashboard.shortcuts.workspacesDesc') }}
+          </p>
+        </div>
+      </NuxtLink>
+
+      <NuxtLink
+        to="/cvs"
+        class="group flex flex-col justify-between rounded-lg border border-slate-200 bg-white p-3.5 shadow-sm transition-all hover:border-indigo-400 hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-600 dark:hover:bg-slate-800/60"
+      >
+        <div class="flex items-center justify-between">
+          <span class="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+            <FileText class="h-4 w-4" aria-hidden="true" />
+          </span>
+        </div>
+        <div class="mt-3">
+          <div class="text-xs font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            {{ $t('dashboard.shortcuts.cvLibrary') }}
+          </div>
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+            {{ $t('dashboard.shortcuts.cvLibraryDesc') }}
+          </p>
+        </div>
+      </NuxtLink>
+
+      <NuxtLink
+        to="/applications"
+        class="group flex flex-col justify-between rounded-lg border border-slate-200 bg-white p-3.5 shadow-sm transition-all hover:border-indigo-400 hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-600 dark:hover:bg-slate-800/60"
+      >
+        <div class="flex items-center justify-between">
+          <span class="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+            <Briefcase class="h-4 w-4" aria-hidden="true" />
+          </span>
+        </div>
+        <div class="mt-3">
+          <div class="text-xs font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            {{ $t('dashboard.shortcuts.applications') }}
+          </div>
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+            {{ $t('dashboard.shortcuts.applicationsDesc') }}
+          </p>
+        </div>
+      </NuxtLink>
+
+      <NuxtLink
+        to="/workflows"
+        class="group flex flex-col justify-between rounded-lg border border-slate-200 bg-white p-3.5 shadow-sm transition-all hover:border-indigo-400 hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-600 dark:hover:bg-slate-800/60"
+      >
+        <div class="flex items-center justify-between">
+          <span class="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+            <Workflow class="h-4 w-4" aria-hidden="true" />
+          </span>
+        </div>
+        <div class="mt-3">
+          <div class="text-xs font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            {{ $t('dashboard.shortcuts.workflowRuns') }}
+          </div>
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+            {{ $t('dashboard.shortcuts.workflowRunsDesc') }}
+          </p>
+        </div>
+      </NuxtLink>
+    </section>
+
+    <!-- Workspace Statistics Overview -->
     <section class="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Workspace summary">
       <div class="min-h-28 rounded-lg border border-slate-200 border-l-2 border-l-slate-400 bg-white px-4 py-3.5 shadow-sm dark:border-slate-800 dark:border-l-slate-600 dark:bg-slate-900">
         <div class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">{{ $t('dashboard.activeWorkspaces') }}</div>
@@ -64,9 +169,10 @@ const recentWorkspaces = computed(() => {
       </div>
     </section>
 
-    <TokenUsagePanel scope="user" />
+    <!-- Compact account / platform metrics summary -->
+    <MetricsSummaryCard />
 
-
+    <!-- Active Preparations Section -->
     <section class="space-y-3.5">
       <div class="flex items-center justify-between">
         <h2 class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 dark:text-slate-300">
@@ -105,7 +211,7 @@ const recentWorkspaces = computed(() => {
           <div class="space-y-1 min-w-0">
             <div class="flex items-center gap-2.5">
               <NuxtLink
-                :to="`/interviews/${ws.id}/overview`"
+                :to="`/interviews/${encodeURIComponent(ws.id)}/overview`"
                 class="text-sm font-semibold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors truncate"
               >
                 {{ ws.company_name }}
@@ -122,7 +228,7 @@ const recentWorkspaces = computed(() => {
           </div>
 
           <div class="flex items-center gap-3 shrink-0">
-            <NuxtLink :to="`/interviews/${ws.id}/overview`">
+            <NuxtLink :to="`/interviews/${encodeURIComponent(ws.id)}/overview`">
               <AppButton variant="secondary" size="xs">
                 {{ $t('dashboard.openWorkspace') }}
               </AppButton>

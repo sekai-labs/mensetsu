@@ -102,4 +102,140 @@ open class ResumeUploadsAPI {
 
         return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
     }
+
+    /**
+
+     - parameter uploadId: (path)  
+     - parameter apiResponseQueue: The queue on which api response is dispatched.
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    @discardableResult
+    open class func deleteResumeUpload(uploadId: String, apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: Void?, _ error: Error?) -> Void)) -> RequestTask {
+        return deleteResumeUploadWithRequestBuilder(uploadId: uploadId).execute(apiResponseQueue) { result in
+            switch result {
+            case .success:
+                completion((), nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+        }
+    }
+
+    /**
+     - DELETE /api/v1/resume-uploads/{upload_id}
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter uploadId: (path)  
+     - returns: RequestBuilder<Void> 
+     */
+    open class func deleteResumeUploadWithRequestBuilder(uploadId: String) -> RequestBuilder<Void> {
+        var localVariablePath = "/api/v1/resume-uploads/{upload_id}"
+        let uploadIdPreEscape = "\(APIHelper.mapValueToPathItem(uploadId))"
+        let uploadIdPostEscape = uploadIdPreEscape.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+        localVariablePath = localVariablePath.replacingOccurrences(of: "{upload_id}", with: uploadIdPostEscape, options: .literal, range: nil)
+        let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<Void>.Type = MensetsuContractsAPI.requestBuilderFactory.getNonDecodableBuilder()
+
+        return localVariableRequestBuilder.init(method: "DELETE", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+
+     - parameter uploadId: (path)  
+     - parameter apiResponseQueue: The queue on which api response is dispatched.
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    @discardableResult
+    open class func downloadResumeUpload(uploadId: String, apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: Void?, _ error: Error?) -> Void)) -> RequestTask {
+        return downloadResumeUploadWithRequestBuilder(uploadId: uploadId).execute(apiResponseQueue) { result in
+            switch result {
+            case .success:
+                completion((), nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+        }
+    }
+
+    /**
+     - GET /api/v1/resume-uploads/{upload_id}/download
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter uploadId: (path)  
+     - returns: RequestBuilder<Void> 
+     */
+    open class func downloadResumeUploadWithRequestBuilder(uploadId: String) -> RequestBuilder<Void> {
+        var localVariablePath = "/api/v1/resume-uploads/{upload_id}/download"
+        let uploadIdPreEscape = "\(APIHelper.mapValueToPathItem(uploadId))"
+        let uploadIdPostEscape = uploadIdPreEscape.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+        localVariablePath = localVariablePath.replacingOccurrences(of: "{upload_id}", with: uploadIdPostEscape, options: .literal, range: nil)
+        let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<Void>.Type = MensetsuContractsAPI.requestBuilderFactory.getNonDecodableBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+
+     - parameter apiResponseQueue: The queue on which api response is dispatched.
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    @discardableResult
+    open class func listResumeUploads(apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: [ResumeUploadItemDto]?, _ error: Error?) -> Void)) -> RequestTask {
+        return listResumeUploadsWithRequestBuilder().execute(apiResponseQueue) { result in
+            switch result {
+            case let .success(response):
+                completion(response.body, nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+        }
+    }
+
+    /**
+     - GET /api/v1/resume-uploads
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - returns: RequestBuilder<[ResumeUploadItemDto]> 
+     */
+    open class func listResumeUploadsWithRequestBuilder() -> RequestBuilder<[ResumeUploadItemDto]> {
+        let localVariablePath = "/api/v1/resume-uploads"
+        let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<[ResumeUploadItemDto]>.Type = MensetsuContractsAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
 }

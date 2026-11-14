@@ -8,7 +8,7 @@ definePageMeta({
 const route = useRoute()
 const workspaceId = computed(() => String(route.params.id))
 
-await navigateTo(`/interviews/${workspaceId.value}/overview`, { replace: true })
+await navigateTo(`/interviews/${encodeURIComponent(workspaceId.value)}/overview`, { replace: true })
 </script>
 
 <template>

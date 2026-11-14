@@ -266,6 +266,31 @@ services:
     mem_limit: 512m
     cpus: 1.0
 
+  landing:
+    build:
+      context: .
+      dockerfile: app/landing/Dockerfile
+      args:
+        PUBLIC_WORKSPACE_URL: ${PUBLIC_WORKSPACE_URL:-http://localhost:3001}
+        PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost:3002}
+    container_name: mensetsu-landing
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    ports:
+      - "3002:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 1.0
+
 volumes:
   surreal_data:
   redis_data:

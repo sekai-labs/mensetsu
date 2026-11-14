@@ -771,7 +771,8 @@ mod tests {
 
     #[test]
     fn every_fixture_deserializes_into_its_dto() {
-        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../contracts/rest/fixtures/workflows.v1");
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../contracts/rest/fixtures/workflows.v1");
         let mut seen: Vec<String> = std::fs::read_dir(&dir)
             .unwrap()
             .map(|e| e.unwrap().file_name().into_string().unwrap())
@@ -779,7 +780,11 @@ mod tests {
         seen.sort();
 
         let run: WorkflowRun = strict("run.json");
-        assert!(run.bare_id().starts_with("run_"), "unexpected run id {}", run.id);
+        assert!(
+            run.bare_id().starts_with("run_"),
+            "unexpected run id {}",
+            run.id
+        );
         let _: Vec<AgentExecution> = strict("agents.json");
         let artifacts: Vec<Artifact> = strict("artifacts.json");
         assert!(!artifacts.is_empty());
@@ -792,12 +797,19 @@ mod tests {
             .filter(|l| !l.trim().is_empty())
             .enumerate()
             .map(|(i, l)| {
-                serde_json::from_str(l).unwrap_or_else(|e| panic!("events.ndjson line {}: {e}", i + 1))
+                serde_json::from_str(l)
+                    .unwrap_or_else(|e| panic!("events.ndjson line {}: {e}", i + 1))
             })
             .collect();
         assert!(!events.is_empty());
-        assert!(events.windows(2).all(|w| w[0].seq < w[1].seq), "seq must be monotonic");
-        assert!(events.iter().all(|e| e.run_id == run.bare_id()), "events from another run");
+        assert!(
+            events.windows(2).all(|w| w[0].seq < w[1].seq),
+            "seq must be monotonic"
+        );
+        assert!(
+            events.iter().all(|e| e.run_id == run.bare_id()),
+            "events from another run"
+        );
         assert_eq!(events.last().unwrap().seq, run.last_seq);
 
         let mut parser = crate::interfaces::http::sse_parser::SseParser::new();
@@ -808,7 +820,8 @@ mod tests {
             assert_eq!(&parsed, event);
             assert_eq!(frame.id.as_deref(), Some(event.seq.to_string().as_str()));
             let framed: ExecutionEventType =
-                serde_json::from_value(serde_json::Value::String(frame.event.clone().unwrap())).unwrap();
+                serde_json::from_value(serde_json::Value::String(frame.event.clone().unwrap()))
+                    .unwrap();
             assert_eq!(framed, event.event_type);
         }
 
@@ -844,30 +857,53 @@ mod tests {
 
     #[test]
     fn event_types_match_schema() {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../contracts/rest/schema/workflows.v1.json");
-        let schema: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../contracts/rest/schema/workflows.v1.json");
+        let schema: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
         let mut from_schema: Vec<String> = schema["$defs"]
             .as_object()
             .unwrap()
             .iter()
             .filter(|(name, _)| name.ends_with("Event"))
-            .map(|(_, def)| def["properties"]["type"]["const"].as_str().unwrap().to_string())
+            .map(|(_, def)| {
+                def["properties"]["type"]["const"]
+                    .as_str()
+                    .unwrap()
+                    .to_string()
+            })
             .collect();
         from_schema.sort();
 
         let mut accepted: Vec<String> = from_schema
             .iter()
-            .filter(|t| serde_json::from_value::<ExecutionEventType>(serde_json::Value::String((*t).clone())).is_ok())
+            .filter(|t| {
+                serde_json::from_value::<ExecutionEventType>(serde_json::Value::String(
+                    (*t).clone(),
+                ))
+                .is_ok()
+            })
             .cloned()
             .collect();
         accepted.sort();
-        assert_eq!(accepted, from_schema, "schema event types missing from ExecutionEventType");
+        assert_eq!(
+            accepted, from_schema,
+            "schema event types missing from ExecutionEventType"
+        );
 
-        let openapi = serde_json::to_value(<ExecutionEventType as utoipa::PartialSchema>::schema()).unwrap();
-        let mut from_rust: Vec<String> =
-            openapi["enum"].as_array().unwrap().iter().map(|v| v.as_str().unwrap().to_string()).collect();
+        let openapi =
+            serde_json::to_value(<ExecutionEventType as utoipa::PartialSchema>::schema()).unwrap();
+        let mut from_rust: Vec<String> = openapi["enum"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|v| v.as_str().unwrap().to_string())
+            .collect();
         from_rust.sort();
-        assert_eq!(from_rust, from_schema, "ExecutionEventType has variants the contract lacks");
+        assert_eq!(
+            from_rust, from_schema,
+            "ExecutionEventType has variants the contract lacks"
+        );
     }
 
     #[test]
@@ -883,7 +919,10 @@ mod tests {
         assert_eq!(ev.event_type, ExecutionEventType::WorkflowRetrying);
         let payload: WorkflowRetryingPayload =
             serde_json::from_value(serde_json::Value::Object(ev.payload.clone())).unwrap();
-        assert_eq!((payload.attempt, payload.next_attempt, payload.delay_ms), (1, 2, 5000));
+        assert_eq!(
+            (payload.attempt, payload.next_attempt, payload.delay_ms),
+            (1, 2, 5000)
+        );
         assert_eq!(serde_json::to_value(&ev).unwrap(), raw);
 
         let mut bad = raw["payload"].clone();

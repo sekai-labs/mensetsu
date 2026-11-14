@@ -8,7 +8,6 @@ allowed_tools:
   - save_finding
   - update_notes
   - delegate_task
-  - evaluate_findings
 delegation_permissions:
   - systems-deep-dive
   - evidence-evaluator

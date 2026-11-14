@@ -7,6 +7,7 @@ from src.orchestration.static_workflow import StaticWorkflowState, build_static_
 from tests.resume_double import resume_extraction_response
 from tests.test_agent_runtime_tools import (
     ScriptedToolCallingFakeModel,
+    requested_question_batch,
     requested_question_count,
     shape_curriculum_payload,
 )
@@ -161,14 +162,17 @@ class MarkerCheckingModel(ScriptedToolCallingFakeModel):
                 ]:
                     if c in cnt:
                         target_cat = c
+            batch_category, batch_part = requested_question_batch(messages)
             payload = {
                 "questions": [
                     {
-                        "question": f"MARKER_QUESTION_{i}?",
+                        "question": (
+                            f"MARKER_QUESTION_{batch_category}_{batch_part}_{i}?"
+                        ),
                         "category": target_cat,
                         "difficulty": "medium",
                         "rationale": "Test candidate",
-                        "skills_tested": ["MARKER_SKILL"],
+                        "skills_tested": ["MARKER_SKILL_0"],
                         "interviewer_intent": "MARKER_INTENT",
                         "expected_signals": ["Signals 1", "Signals 2"],
                         "answer_outline": ["Outline 1", "Outline 2", "Outline 3"],
@@ -235,7 +239,7 @@ async def test_static_workflow_no_fabricated_literals():
             status="running",
         )
     )
-    from src.contracts.v1 import Artifact
+    from src.contracts.v1 import Artifact, EvidenceProvenance
 
     for k in range(5):
         await ledger.save_artifact(
@@ -244,6 +248,12 @@ async def test_static_workflow_no_fabricated_literals():
                 run_id=run_id,
                 type="evidence",
                 title=f"Evidence {k}",
+                evidence=EvidenceProvenance(
+                    source_url=f"https://example.com/evidence/{k}",
+                    title=f"Evidence {k}",
+                    snippet="Evidence snippet",
+                    confidence=0.9,
+                ),
                 content={"snippet": "Evidence snippet"},
             )
         )
@@ -337,7 +347,7 @@ async def test_optional_research_failure_marks_run_degraded():
 
     from langgraph.checkpoint.redis.aio import AsyncRedisSaver
 
-    from src.contracts.v1 import Artifact
+    from src.contracts.v1 import Artifact, EvidenceProvenance
 
     ledger = SurrealLedgerRepository()
     run_id = "run_test_degraded"
@@ -360,6 +370,12 @@ async def test_optional_research_failure_marks_run_degraded():
                 run_id=run_id,
                 type="evidence",
                 title=f"Evidence {k}",
+                evidence=EvidenceProvenance(
+                    source_url=f"https://example.com/evidence/{k}",
+                    title=f"Evidence {k}",
+                    snippet="Evidence snippet",
+                    confidence=0.9,
+                ),
                 content={"snippet": "s"},
             )
         )

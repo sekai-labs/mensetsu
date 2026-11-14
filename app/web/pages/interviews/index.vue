@@ -88,7 +88,7 @@ const filteredWorkspaces = computed(() => {
         <div class="space-y-1 min-w-0">
           <div class="flex items-center gap-2.5">
             <NuxtLink
-              :to="`/interviews/${ws.id}/overview`"
+              :to="`/interviews/${encodeURIComponent(ws.id)}/overview`"
               class="text-sm font-semibold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors truncate"
             >
               {{ ws.company_name }}
@@ -112,7 +112,7 @@ const filteredWorkspaces = computed(() => {
             </div>
           </div>
 
-          <NuxtLink :to="`/interviews/${ws.id}/overview`">
+          <NuxtLink :to="`/interviews/${encodeURIComponent(ws.id)}/overview`">
             <AppButton variant="secondary" size="xs">
               {{ $t('workspaces.openWorkspace') }}
             </AppButton>

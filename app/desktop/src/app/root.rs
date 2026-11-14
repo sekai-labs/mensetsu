@@ -1,4 +1,3 @@
-use dioxus::prelude::*;
 use crate::features::{
     auth::view::AuthView,
     server_setup::view::ServerSetupView,
@@ -7,13 +6,20 @@ use crate::features::{
 };
 use crate::services::{api::ApiService, endpoint_config::resolve_initial_url};
 use crate::ui::styles::APP_CSS;
+use dioxus::prelude::*;
 
 #[derive(Clone, PartialEq)]
 pub enum CurrentScreen {
-    Setup { current_url: Option<String>, on_cancel_allowed: bool },
+    Setup {
+        current_url: Option<String>,
+        on_cancel_allowed: bool,
+    },
     Auth,
     WorkspaceList,
-    WorkspaceDetail { id: String, title: String },
+    WorkspaceDetail {
+        id: String,
+        title: String,
+    },
     Settings,
 }
 
@@ -28,10 +34,12 @@ pub fn App() -> Element {
         if has_endpoint {
             CurrentScreen::Auth
         } else {
-            CurrentScreen::Setup { current_url: None, on_cancel_allowed: false }
+            CurrentScreen::Setup {
+                current_url: None,
+                on_cancel_allowed: false,
+            }
         }
     });
-
 
     use_effect({
         let api_sig = api.clone();
@@ -50,7 +58,10 @@ pub fn App() -> Element {
     });
 
     let screen = match current_screen.read().clone() {
-        CurrentScreen::Setup { current_url, on_cancel_allowed } => rsx! {
+        CurrentScreen::Setup {
+            current_url,
+            on_cancel_allowed,
+        } => rsx! {
             ServerSetupView {
                 api: api.read().clone(),
                 current_url: current_url,

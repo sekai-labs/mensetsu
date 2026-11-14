@@ -16,7 +16,9 @@ impl CryptoService {
     pub fn new(raw_key_hex_or_secret: &str) -> Self {
         let mut key = [0u8; 32];
         let bytes = raw_key_hex_or_secret.as_bytes();
-        if raw_key_hex_or_secret.len() == 64 && raw_key_hex_or_secret.chars().all(|c| c.is_ascii_hexdigit()) {
+        if raw_key_hex_or_secret.len() == 64
+            && raw_key_hex_or_secret.chars().all(|c| c.is_ascii_hexdigit())
+        {
             if let Ok(decoded) = hex::decode(raw_key_hex_or_secret) {
                 if decoded.len() == 32 {
                     key.copy_from_slice(&decoded);
@@ -25,7 +27,6 @@ impl CryptoService {
             }
         }
 
-        
         use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(bytes);
@@ -35,8 +36,6 @@ impl CryptoService {
         Self { key }
     }
 
-    
-    
     pub fn encrypt(&self, plaintext: &str) -> Result<String> {
         let cipher = Aes256Gcm::new_from_slice(&self.key)
             .map_err(|e| AppError::Internal(format!("Crypto key init error: {e}")))?;
@@ -56,14 +55,15 @@ impl CryptoService {
         Ok(BASE64.encode(combined))
     }
 
-    
     pub fn decrypt(&self, payload_b64: &str) -> Result<String> {
         let combined = BASE64
             .decode(payload_b64)
             .map_err(|e| AppError::Internal(format!("Base64 decode failure: {e}")))?;
 
         if combined.len() < 12 {
-            return Err(AppError::Internal("Invalid encrypted payload: too short".into()));
+            return Err(AppError::Internal(
+                "Invalid encrypted payload: too short".into(),
+            ));
         }
 
         let (nonce_bytes, ciphertext) = combined.split_at(12);
@@ -72,9 +72,9 @@ impl CryptoService {
         let cipher = Aes256Gcm::new_from_slice(&self.key)
             .map_err(|e| AppError::Internal(format!("Crypto key init error: {e}")))?;
 
-        let decrypted_bytes = cipher
-            .decrypt(nonce, ciphertext)
-            .map_err(|e| AppError::Internal(format!("Decryption failure or auth tag mismatch: {e}")))?;
+        let decrypted_bytes = cipher.decrypt(nonce, ciphertext).map_err(|e| {
+            AppError::Internal(format!("Decryption failure or auth tag mismatch: {e}"))
+        })?;
 
         String::from_utf8(decrypted_bytes)
             .map_err(|e| AppError::Internal(format!("Invalid UTF-8 plaintext: {e}")))
@@ -102,7 +102,7 @@ mod tests {
         let crypto = CryptoService::new("key123");
         let secret = "openai-api-key-abc";
         let mut encrypted = crypto.encrypt(secret).unwrap();
-        
+
         encrypted.push('A');
         assert!(crypto.decrypt(&encrypted).is_err());
     }

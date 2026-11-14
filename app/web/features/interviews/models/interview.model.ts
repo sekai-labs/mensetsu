@@ -14,6 +14,16 @@ export type CreateResumeUploadRequestDto = Schemas['CreateResumeUploadRequestDto
 export type CreateResumeUploadResponseDto = Schemas['CreateResumeUploadResponseDto']
 export type CompleteResumeUploadResponseDto = Schemas['CompleteResumeUploadResponseDto']
 
+export type ResumeUploadItemDto = Schemas['ResumeUploadItemDto']
+export type UserProfileResponseDto = Schemas['UserProfileResponseDto']
+export type UpdateCandidateProfileRequestDto = Schemas['UpdateCandidateProfileRequestDto']
+export type CandidateProfileDto = Schemas['CandidateProfileDto']
+export type ApplicationSite = Schemas['ApplicationSite']
+export type ApplicationStatus = Schemas['ApplicationStatus']
+export type PreparedFieldsDto = Schemas['PreparedFieldsDto']
+export type JobApplicationResponseDto = Schemas['JobApplicationResponseDto']
+export type ReconcileApplicationRequestDto = Schemas['ReconcileApplicationRequestDto']
+
 export interface WorkspaceResponse {
   id: string
   user_id: string

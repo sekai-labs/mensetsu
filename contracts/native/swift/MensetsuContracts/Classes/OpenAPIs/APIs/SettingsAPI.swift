@@ -61,6 +61,181 @@ open class SettingsAPI {
 
     /**
 
+     - parameter providerKey: (path)  
+     - parameter apiResponseQueue: The queue on which api response is dispatched.
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    @discardableResult
+    open class func deleteUserProvider(providerKey: String, apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: Void?, _ error: Error?) -> Void)) -> RequestTask {
+        return deleteUserProviderWithRequestBuilder(providerKey: providerKey).execute(apiResponseQueue) { result in
+            switch result {
+            case .success:
+                completion((), nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+        }
+    }
+
+    /**
+     - DELETE /api/v1/settings/llm/providers/{provider_key}
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter providerKey: (path)  
+     - returns: RequestBuilder<Void> 
+     */
+    open class func deleteUserProviderWithRequestBuilder(providerKey: String) -> RequestBuilder<Void> {
+        var localVariablePath = "/api/v1/settings/llm/providers/{provider_key}"
+        let providerKeyPreEscape = "\(APIHelper.mapValueToPathItem(providerKey))"
+        let providerKeyPostEscape = providerKeyPreEscape.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+        localVariablePath = localVariablePath.replacingOccurrences(of: "{provider_key}", with: providerKeyPostEscape, options: .literal, range: nil)
+        let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<Void>.Type = MensetsuContractsAPI.requestBuilderFactory.getNonDecodableBuilder()
+
+        return localVariableRequestBuilder.init(method: "DELETE", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+
+     - parameter discoverModelsRequestDto: (body)  
+     - parameter apiResponseQueue: The queue on which api response is dispatched.
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    @discardableResult
+    open class func discoverModels(discoverModelsRequestDto: DiscoverModelsRequestDto, apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: AnyCodable?, _ error: Error?) -> Void)) -> RequestTask {
+        return discoverModelsWithRequestBuilder(discoverModelsRequestDto: discoverModelsRequestDto).execute(apiResponseQueue) { result in
+            switch result {
+            case let .success(response):
+                completion(response.body, nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+        }
+    }
+
+    /**
+     - POST /api/v1/settings/llm/models
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter discoverModelsRequestDto: (body)  
+     - returns: RequestBuilder<AnyCodable> 
+     */
+    open class func discoverModelsWithRequestBuilder(discoverModelsRequestDto: DiscoverModelsRequestDto) -> RequestBuilder<AnyCodable> {
+        let localVariablePath = "/api/v1/settings/llm/models"
+        let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: discoverModelsRequestDto)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<AnyCodable>.Type = MensetsuContractsAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+
+     - parameter apiResponseQueue: The queue on which api response is dispatched.
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    @discardableResult
+    open class func getCandidateProfile(apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: CandidateProfileDto?, _ error: Error?) -> Void)) -> RequestTask {
+        return getCandidateProfileWithRequestBuilder().execute(apiResponseQueue) { result in
+            switch result {
+            case let .success(response):
+                completion(response.body, nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+        }
+    }
+
+    /**
+     - GET /api/v1/candidate-profile
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - returns: RequestBuilder<CandidateProfileDto> 
+     */
+    open class func getCandidateProfileWithRequestBuilder() -> RequestBuilder<CandidateProfileDto> {
+        let localVariablePath = "/api/v1/candidate-profile"
+        let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<CandidateProfileDto>.Type = MensetsuContractsAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+
+     - parameter apiResponseQueue: The queue on which api response is dispatched.
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    @discardableResult
+    open class func getCombinedProviders(apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: [ProviderStatusItemDto]?, _ error: Error?) -> Void)) -> RequestTask {
+        return getCombinedProvidersWithRequestBuilder().execute(apiResponseQueue) { result in
+            switch result {
+            case let .success(response):
+                completion(response.body, nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+        }
+    }
+
+    /**
+     - GET /api/v1/settings/llm/providers
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - returns: RequestBuilder<[ProviderStatusItemDto]> 
+     */
+    open class func getCombinedProvidersWithRequestBuilder() -> RequestBuilder<[ProviderStatusItemDto]> {
+        let localVariablePath = "/api/v1/settings/llm/providers"
+        let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<[ProviderStatusItemDto]>.Type = MensetsuContractsAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+
      - parameter apiResponseQueue: The queue on which api response is dispatched.
      - parameter completion: completion handler to receive the data and the error objects
      */
@@ -145,6 +320,136 @@ open class SettingsAPI {
 
     /**
 
+     - parameter apiResponseQueue: The queue on which api response is dispatched.
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    @discardableResult
+    open class func getUserRouting(apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: UserRoutingResponseDto?, _ error: Error?) -> Void)) -> RequestTask {
+        return getUserRoutingWithRequestBuilder().execute(apiResponseQueue) { result in
+            switch result {
+            case let .success(response):
+                completion(response.body, nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+        }
+    }
+
+    /**
+     - GET /api/v1/settings/llm/routing
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - returns: RequestBuilder<UserRoutingResponseDto> 
+     */
+    open class func getUserRoutingWithRequestBuilder() -> RequestBuilder<UserRoutingResponseDto> {
+        let localVariablePath = "/api/v1/settings/llm/routing"
+        let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
+        let localVariableParameters: [String: Any]? = nil
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<UserRoutingResponseDto>.Type = MensetsuContractsAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+
+     - parameter updateCandidateProfileRequestDto: (body)  
+     - parameter apiResponseQueue: The queue on which api response is dispatched.
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    @discardableResult
+    open class func updateCandidateProfile(updateCandidateProfileRequestDto: UpdateCandidateProfileRequestDto, apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: CandidateProfileDto?, _ error: Error?) -> Void)) -> RequestTask {
+        return updateCandidateProfileWithRequestBuilder(updateCandidateProfileRequestDto: updateCandidateProfileRequestDto).execute(apiResponseQueue) { result in
+            switch result {
+            case let .success(response):
+                completion(response.body, nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+        }
+    }
+
+    /**
+     - PUT /api/v1/candidate-profile
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter updateCandidateProfileRequestDto: (body)  
+     - returns: RequestBuilder<CandidateProfileDto> 
+     */
+    open class func updateCandidateProfileWithRequestBuilder(updateCandidateProfileRequestDto: UpdateCandidateProfileRequestDto) -> RequestBuilder<CandidateProfileDto> {
+        let localVariablePath = "/api/v1/candidate-profile"
+        let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: updateCandidateProfileRequestDto)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<CandidateProfileDto>.Type = MensetsuContractsAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "PUT", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+
+     - parameter updateUserRoutingRequestDto: (body)  
+     - parameter apiResponseQueue: The queue on which api response is dispatched.
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    @discardableResult
+    open class func updateUserRouting(updateUserRoutingRequestDto: UpdateUserRoutingRequestDto, apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: Void?, _ error: Error?) -> Void)) -> RequestTask {
+        return updateUserRoutingWithRequestBuilder(updateUserRoutingRequestDto: updateUserRoutingRequestDto).execute(apiResponseQueue) { result in
+            switch result {
+            case .success:
+                completion((), nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+        }
+    }
+
+    /**
+     - PUT /api/v1/settings/llm/routing
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter updateUserRoutingRequestDto: (body)  
+     - returns: RequestBuilder<Void> 
+     */
+    open class func updateUserRoutingWithRequestBuilder(updateUserRoutingRequestDto: UpdateUserRoutingRequestDto) -> RequestBuilder<Void> {
+        let localVariablePath = "/api/v1/settings/llm/routing"
+        let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: updateUserRoutingRequestDto)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<Void>.Type = MensetsuContractsAPI.requestBuilderFactory.getNonDecodableBuilder()
+
+        return localVariableRequestBuilder.init(method: "PUT", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+
      - parameter upsertLlmConfigRequestDto: (body)  
      - parameter apiResponseQueue: The queue on which api response is dispatched.
      - parameter completion: completion handler to receive the data and the error objects
@@ -183,6 +488,50 @@ open class SettingsAPI {
         let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
 
         let localVariableRequestBuilder: RequestBuilder<LlmConfigItemDto>.Type = MensetsuContractsAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "PUT", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+
+     - parameter upsertUserProviderRequestDto: (body)  
+     - parameter apiResponseQueue: The queue on which api response is dispatched.
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    @discardableResult
+    open class func upsertUserProvider(upsertUserProviderRequestDto: UpsertUserProviderRequestDto, apiResponseQueue: DispatchQueue = MensetsuContractsAPI.apiResponseQueue, completion: @escaping ((_ data: Void?, _ error: Error?) -> Void)) -> RequestTask {
+        return upsertUserProviderWithRequestBuilder(upsertUserProviderRequestDto: upsertUserProviderRequestDto).execute(apiResponseQueue) { result in
+            switch result {
+            case .success:
+                completion((), nil)
+            case let .failure(error):
+                completion(nil, error)
+            }
+        }
+    }
+
+    /**
+     - PUT /api/v1/settings/llm/providers
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter upsertUserProviderRequestDto: (body)  
+     - returns: RequestBuilder<Void> 
+     */
+    open class func upsertUserProviderWithRequestBuilder(upsertUserProviderRequestDto: UpsertUserProviderRequestDto) -> RequestBuilder<Void> {
+        let localVariablePath = "/api/v1/settings/llm/providers"
+        let localVariableURLString = MensetsuContractsAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: upsertUserProviderRequestDto)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<Void>.Type = MensetsuContractsAPI.requestBuilderFactory.getNonDecodableBuilder()
 
         return localVariableRequestBuilder.init(method: "PUT", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
     }

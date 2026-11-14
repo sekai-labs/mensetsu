@@ -143,50 +143,27 @@ class AgentSearchEngine:
         self._cache[cache_key] = deduped
         return deduped
 
-    async def search_domain(self, domain: str, query: str, limit: int = 5) -> list[SearchResult]:
-        clean_domain = domain.replace("https://", "").replace("http://", "").split("/")[0]
-        structured_query = f"site:{clean_domain} {query}".strip()
-        return await self.search_web(structured_query, limit=limit)
-
-    async def search_recent(
-        self, query: str, date_range: str = "y", limit: int = 5
+    def _deduplicate_results(
+        self, results: list[SearchResult], query: str
     ) -> list[SearchResult]:
-        structured_query = f"{query} recent developments updates".strip()
-        return await self.search_web(structured_query, limit=limit)
-
-    async def search_documents(
-        self, query: str, file_types: list[str], limit: int = 5
-    ) -> list[SearchResult]:
-        ft_clause = " OR ".join([f"filetype:{ft}" for ft in file_types])
-        structured_query = f"{query} ({ft_clause})".strip()
-        return await self.search_web(structured_query, limit=limit)
-
-    async def search_repositories(self, query: str, limit: int = 5) -> list[SearchResult]:
-        structured_query = f"site:github.com {query}".strip()
-        return await self.search_web(structured_query, limit=limit)
-
-    def _deduplicate_results(self, results: list[SearchResult], query: str) -> list[SearchResult]:
         seen_urls = set()
-        seen_titles = set()
         cleaned: list[SearchResult] = []
 
-        for r in results:
-            if not r.url:
+        for result in results:
+            if not isinstance(result.url, str) or not result.url:
                 continue
-            normalized_url = r.url.split("#")[0].rstrip("/")
-            title_norm = r.title.strip().lower()
+            normalized_url = result.url.split("#", 1)[0].rstrip("/")
+            if not normalized_url or normalized_url in seen_urls:
+                continue
 
-            if normalized_url in seen_urls:
-                continue
-            if title_norm and title_norm in seen_titles:
-                continue
+            if not isinstance(result.title, str):
+                result.title = ""
+            if not isinstance(result.snippet, str):
+                result.snippet = ""
 
             seen_urls.add(normalized_url)
-            if title_norm:
-                seen_titles.add(title_norm)
-
-            r.query = query
-            cleaned.append(r)
+            result.query = query
+            cleaned.append(result)
 
         return cleaned
 

@@ -10,7 +10,6 @@ pub mod test_ids {
     pub const AUTH_2FA_INPUT: &str = "auth_2fa_input";
     pub const AUTH_2FA_SUBMIT: &str = "auth_2fa_submit";
 
-
     pub const MAIN_VIEW: &str = "main_view";
     pub const LOGOUT_BUTTON: &str = "logout_button";
     pub const SETTINGS_BUTTON: &str = "settings_button";
@@ -22,7 +21,6 @@ pub mod test_ids {
     pub const FILTER_PROCESSING_BUTTON: &str = "filter_processing_button";
     pub const WORKSPACE_ITEM_PREFIX: &str = "workspace_item_";
 
-
     pub const CREATE_COMPANY_INPUT: &str = "create_company_input";
     pub const CREATE_ROLE_INPUT: &str = "create_role_input";
     pub const CREATE_RESUME_INPUT: &str = "create_resume_input";
@@ -33,7 +31,6 @@ pub mod test_ids {
     pub const CREATE_CANCEL_BUTTON: &str = "create_cancel_button";
     pub const CREATE_ERROR_LABEL: &str = "create_error_label";
 
-
     pub const DETAIL_VIEW: &str = "detail_view";
     pub const DETAIL_BACK_BUTTON: &str = "detail_back_button";
     pub const DETAIL_TITLE_LABEL: &str = "detail_title_label";
@@ -43,7 +40,6 @@ pub mod test_ids {
     pub const DETAIL_TAB_LEARNING: &str = "detail_tab_learning";
     pub const DETAIL_TAB_QUESTIONS: &str = "detail_tab_questions";
     pub const DETAIL_ERROR_LABEL: &str = "detail_error_label";
-
 
     pub const MATCH_RATIO_LABEL: &str = "match_ratio_label";
     pub const MATCH_STRENGTHS_LIST: &str = "match_strengths_list";
@@ -60,14 +56,12 @@ pub mod test_ids {
     pub const QUESTIONS_FILTER_COMBO: &str = "questions_filter_combo";
     pub const QUESTIONS_LIST: &str = "questions_list";
 
-
     pub const SETTINGS_VIEW: &str = "settings_view";
     pub const SETTINGS_BACK_BUTTON: &str = "settings_back_button";
     pub const SETTINGS_PROVIDER_INPUT: &str = "settings_provider_input";
     pub const SETTINGS_KEY_INPUT: &str = "settings_key_input";
     pub const SETTINGS_SAVE_BUTTON: &str = "settings_save_button";
     pub const SETTINGS_LIST: &str = "settings_list";
-
 
     pub const SERVER_SETUP_SCREEN: &str = "server_setup_screen";
     pub const INPUT_SERVER_URL: &str = "input_server_url";

@@ -6,11 +6,16 @@ import {
   ChevronDown,
   LayoutDashboard,
   Workflow,
+  FileText,
+  User,
+  Briefcase,
+  Coins,
   LogOut,
   Settings,
   Shield,
 } from 'lucide-vue-next'
 import { useAuthService } from '~/features/auth/services/auth.service'
+import { getUserInitials } from '~/utils/user-initials'
 
 const router = useRouter()
 const { user, logout, isAuthenticated } = useAuthService()
@@ -42,20 +47,9 @@ useEventListener('keydown', (e: KeyboardEvent) => {
   }
 })
 
-const userInitials = computed(() => {
-  if (!user.value) return '?'
-  if (user.value.name) {
-    const parts = user.value.name.trim().split(/\s+/)
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase()
-    }
-    return parts[0].slice(0, 2).toUpperCase()
-  }
-  if (user.value.email) {
-    return user.value.email.slice(0, 2).toUpperCase()
-  }
-  return 'U'
-})
+const userInitials = computed(() =>
+  getUserInitials(user.value?.name, user.value?.email)
+)
 
 const handleLogout = async () => {
   isOpen.value = false
@@ -133,6 +127,42 @@ const handleLogout = async () => {
       >
         <Workflow class="w-4 h-4 text-slate-400" />
         <span>{{ $t('navigation.workflows') }}</span>
+      </NuxtLink>
+      <NuxtLink
+        to="/cvs"
+        class="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white transition-colors"
+        role="menuitem"
+        @click="isOpen = false"
+      >
+        <FileText class="w-4 h-4 text-slate-400" />
+        <span>{{ $t('navigation.items.cvLibrary') }}</span>
+      </NuxtLink>
+      <NuxtLink
+        to="/profile"
+        class="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white transition-colors"
+        role="menuitem"
+        @click="isOpen = false"
+      >
+        <User class="w-4 h-4 text-slate-400" />
+        <span>{{ $t('navigation.items.profile') }}</span>
+      </NuxtLink>
+      <NuxtLink
+        to="/applications"
+        class="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white transition-colors"
+        role="menuitem"
+        @click="isOpen = false"
+      >
+        <Briefcase class="w-4 h-4 text-slate-400" />
+        <span>{{ $t('navigation.items.applications') }}</span>
+      </NuxtLink>
+      <NuxtLink
+        to="/settings?tab=usage"
+        class="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white transition-colors"
+        role="menuitem"
+        @click="isOpen = false"
+      >
+        <Coins class="w-4 h-4 text-slate-400" />
+        <span>{{ $t('navigation.items.tokenUsage') }}</span>
       </NuxtLink>
 
       <NuxtLink

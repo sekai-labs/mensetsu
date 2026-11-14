@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Mensetsu Application Assistant",
+  "short_name": "Mensetsu",
+  "version": "0.1.0",
+  "description": "Review and fill one job application at a time. No automatic submission and no background scraping.",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "storage",
+    "scripting",
+    "activeTab"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://*.localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Mensetsu",
+    "default_popup": "popup.html"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+  }
+}

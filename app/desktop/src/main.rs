@@ -1,4 +1,7 @@
-#![cfg_attr(all(not(debug_assertions), target_os = "windows"), windows_subsystem = "windows")]
+#![cfg_attr(
+    all(not(debug_assertions), target_os = "windows"),
+    windows_subsystem = "windows"
+)]
 
 use dioxus::desktop::{Config, WindowBuilder};
 use mensetsu_desktop::App;
@@ -11,7 +14,5 @@ fn main() {
 
     let cfg = Config::new().with_window(window);
 
-    dioxus::LaunchBuilder::desktop()
-        .with_cfg(cfg)
-        .launch(App);
+    dioxus::LaunchBuilder::desktop().with_cfg(cfg).launch(App);
 }

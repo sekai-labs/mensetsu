@@ -113,7 +113,7 @@ onClickOutside(containerRef, () => {
 const selectWorkspace = (ws: WorkspaceResponse) => {
   const cleanId = cleanWorkspaceId(ws.id)
   isOpen.value = false
-  router.push(`/interviews/${cleanId}/overview`)
+  router.push(`/interviews/${encodeURIComponent(cleanId)}/overview`)
 }
 
 const handleKeydown = (e: KeyboardEvent) => {

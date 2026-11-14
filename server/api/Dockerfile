@@ -14,6 +14,7 @@ WORKDIR /app/server/api
 COPY server/api/Cargo.toml server/api/Cargo.lock server/api/build.rs ./
 COPY server/api/src ./src
 COPY contracts/grpc/proto /app/contracts/grpc/proto
+COPY infra/migrations /app/infra/migrations
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \

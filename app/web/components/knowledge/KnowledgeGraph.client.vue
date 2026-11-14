@@ -213,7 +213,7 @@ const onNodeClick = (event: { node: { data: KnowledgeSkillNode } }) => {
       </div>
 
       <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
-        <NuxtLink :to="`/interviews/${workspaceId}/learning`" class="text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1 font-sans text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded">
+        <NuxtLink :to="`/interviews/${encodeURIComponent(workspaceId)}/learning`" class="text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1 font-sans text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded">
           <span>View Learning Units for this Skill →</span>
         </NuxtLink>
       </div>

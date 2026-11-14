@@ -33,7 +33,11 @@ pub async fn get_workspace_company(
     if let Some(c) = cached {
         if let Some(mut dossier) = c.get("dossier").cloned() {
             if let Some(obj) = dossier.as_object_mut() {
-                if obj.get("tech_stack").and_then(|v| v.as_array()).is_none_or(|a| a.is_empty()) {
+                if obj
+                    .get("tech_stack")
+                    .and_then(|v| v.as_array())
+                    .is_none_or(|a| a.is_empty())
+                {
                     if let Some(arr) = obj.get("technology_stack").and_then(|v| v.as_array()) {
                         let harmonized_tech: Vec<serde_json::Value> = arr.iter().map(|item| {
                             if let Some(s) = item.as_str() {
@@ -47,13 +51,26 @@ pub async fn get_workspace_company(
                                 item.clone()
                             }
                         }).collect();
-                        obj.insert("tech_stack".into(), serde_json::Value::Array(harmonized_tech));
+                        obj.insert(
+                            "tech_stack".into(),
+                            serde_json::Value::Array(harmonized_tech),
+                        );
                     }
                 }
 
-                if obj.get("interview_process_notes").and_then(|v| v.as_array()).is_none_or(|a| a.is_empty()) {
-                    if let Some(arr) = obj.get("interview_process_insights").and_then(|v| v.as_array()) {
-                        obj.insert("interview_process_notes".into(), serde_json::Value::Array(arr.clone()));
+                if obj
+                    .get("interview_process_notes")
+                    .and_then(|v| v.as_array())
+                    .is_none_or(|a| a.is_empty())
+                {
+                    if let Some(arr) = obj
+                        .get("interview_process_insights")
+                        .and_then(|v| v.as_array())
+                    {
+                        obj.insert(
+                            "interview_process_notes".into(),
+                            serde_json::Value::Array(arr.clone()),
+                        );
                     }
                 }
 
@@ -180,7 +197,10 @@ pub async fn get_workspace_claims(
         .map_err(|e| AppError::Database(e.to_string()))?;
     let mut claims: Vec<serde_json::Value> = res.take(0).unwrap_or_default();
     for c in &mut claims {
-        normalize_record_fields(c, &["id", "workspace_id", "source_id", "conflicting_claim_id"]);
+        normalize_record_fields(
+            c,
+            &["id", "workspace_id", "source_id", "conflicting_claim_id"],
+        );
     }
     Ok(Json(serde_json::json!({
         "workspace_id": clean_id,
@@ -192,6 +212,45 @@ pub async fn get_workspace_claims(
 #[serde(deny_unknown_fields)]
 pub struct KnowledgeQaRequestDto {
     pub query: String,
+}
+fn is_research_query_term(term: &str) -> bool {
+    !matches!(
+        term,
+        "a" | "an"
+            | "and"
+            | "as"
+            | "at"
+            | "be"
+            | "by"
+            | "for"
+            | "from"
+            | "in"
+            | "is"
+            | "of"
+            | "on"
+            | "or"
+            | "the"
+            | "to"
+            | "with"
+    )
+}
+
+fn contains_research_query_term(haystack: &str, term: &str) -> bool {
+    if !term.is_ascii() {
+        return haystack.contains(term);
+    }
+
+    let Some(first) = term.chars().next() else {
+        return false;
+    };
+    let last = term.chars().next_back().unwrap_or(first);
+
+    haystack.match_indices(term).any(|(start, matched)| {
+        let before = haystack[..start].chars().next_back();
+        let after = haystack[start + matched.len()..].chars().next();
+        (!first.is_alphanumeric() || before.map_or(true, |c| !c.is_alphanumeric()))
+            && (!last.is_alphanumeric() || after.map_or(true, |c| !c.is_alphanumeric()))
+    })
 }
 
 #[utoipa::path(
@@ -217,7 +276,10 @@ pub async fn ask_workspace_knowledge_qa(
         .map_err(|e| AppError::Database(e.to_string()))?;
     let mut claims: Vec<serde_json::Value> = res_claims.take(0).unwrap_or_default();
     for c in &mut claims {
-        normalize_record_fields(c, &["id", "workspace_id", "source_id", "conflicting_claim_id"]);
+        normalize_record_fields(
+            c,
+            &["id", "workspace_id", "source_id", "conflicting_claim_id"],
+        );
     }
 
     let mut res_sources = db
@@ -231,12 +293,18 @@ pub async fn ask_workspace_knowledge_qa(
     }
 
     let q_lower = payload.query.to_lowercase();
+    let query_terms: Vec<&str> = q_lower
+        .split_whitespace()
+        .filter(|term| is_research_query_term(term))
+        .collect();
     let matching_claims: Vec<serde_json::Value> = claims
         .into_iter()
         .filter(|c| {
             let stmt = c["statement"].as_str().unwrap_or("").to_lowercase();
             let snip = c["evidence_snippet"].as_str().unwrap_or("").to_lowercase();
-            q_lower.split_whitespace().any(|term| term.len() > 3 && (stmt.contains(term) || snip.contains(term)))
+            query_terms
+                .iter()
+                .any(|term| contains_research_query_term(&stmt, term))
         })
         .take(5)
         .collect();
@@ -246,7 +314,10 @@ pub async fn ask_workspace_knowledge_qa(
         .filter(|s| {
             let title = s["title"].as_str().unwrap_or("").to_lowercase();
             let snip = s["snippet"].as_str().unwrap_or("").to_lowercase();
-            q_lower.split_whitespace().any(|term| term.len() > 3 && (title.contains(term) || snip.contains(term)))
+            query_terms.iter().any(|term| {
+                contains_research_query_term(&title, term)
+                    || contains_research_query_term(&snip, term)
+            })
         })
         .take(3)
         .collect();
@@ -269,7 +340,11 @@ pub async fn ask_workspace_knowledge_qa(
     let answer = format!(
         "Based on verified research evidence:\n\n{}\n\nCited verified sources: {}.",
         claim_bullets.join("\n"),
-        matching_sources.iter().filter_map(|s| s["title"].as_str()).collect::<Vec<_>>().join(", ")
+        matching_sources
+            .iter()
+            .filter_map(|s| s["title"].as_str())
+            .collect::<Vec<_>>()
+            .join(", ")
     );
 
     Ok(Json(serde_json::json!({
@@ -279,4 +354,27 @@ pub async fn ask_workspace_knowledge_qa(
         "cited_claims": matching_claims,
         "has_sufficient_evidence": true
     })))
+}
+#[cfg(test)]
+mod research_query_term_tests {
+    use super::{contains_research_query_term, is_research_query_term};
+
+    #[test]
+    fn retains_short_technical_terms_and_single_cjk_characters() {
+        for term in ["go", "ai", "qa", "c#", "c++", "架"] {
+            assert!(is_research_query_term(term), "{term} should be searchable");
+        }
+        assert!(!is_research_query_term("the"));
+    }
+
+    #[test]
+    fn matches_short_terms_as_words_not_inside_longer_words() {
+        assert!(contains_research_query_term("build with go and rust", "go"));
+        assert!(!contains_research_query_term(
+            "build mongodb services",
+            "go"
+        ));
+        assert!(contains_research_query_term("c++ and c# experience", "c++"));
+        assert!(contains_research_query_term("架构设计", "架"));
+    }
 }

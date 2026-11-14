@@ -17,6 +17,7 @@ pub struct TokenUsageResponseDto {
     pub items: Vec<models::TokenUsageRowDto>,
     #[serde(rename = "next_cursor", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub next_cursor: Option<Option<Box<models::TokenUsageCursorDto>>>,
+    /// Scope-wide token totals across all requests in the user or platform scope (independent of page cursor or filters)
     #[serde(rename = "totals")]
     pub totals: Box<models::TokenUsageTotalsDto>,
 }

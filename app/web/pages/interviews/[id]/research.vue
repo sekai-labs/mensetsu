@@ -104,7 +104,7 @@ const openSourceById = (sourceId?: string) => {
         </div>
         <NuxtLink
           v-if="activeRunId"
-          :to="`/workflows/runs/${activeRunId}`"
+          :to="`/workflows/runs/${encodeURIComponent(activeRunId)}`"
           class="text-xs font-mono text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
         >
           <span>Open in Studio Inspector</span>

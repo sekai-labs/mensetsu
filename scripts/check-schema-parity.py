@@ -31,14 +31,17 @@ def retarget(text: str, ns: str) -> str:
     return f"DEFINE NAMESPACE IF NOT EXISTS {ns}; USE NS {ns}; DEFINE DATABASE IF NOT EXISTS p; USE NS {ns} DB p;\n" + text
 
 
-def apply(label: str, ns: str, files: list[Path]) -> None:
+def apply(label: str, ns: str, files: list[Path]) -> int:
     sql(f"REMOVE NAMESPACE IF EXISTS {ns};")
+    total_errors = 0
     for f in files:
         res = sql(retarget(f.read_text(), ns))
         errs = [(i, r["result"]) for i, r in enumerate(res) if r["status"] == "ERR"]
+        total_errors += len(errs)
         print(f"  [{label}] {f.name}: {len(res)} statements, {len(errs)} errors")
         for i, e in errs:
             print(f"      #{i}: {e}")
+    return total_errors
 
 
 def snapshot(ns: str) -> dict:
@@ -57,8 +60,12 @@ def snapshot(ns: str) -> dict:
 def main() -> int:
     migrations = sorted((REPO / "infra/migrations").glob("[0-9][0-9][0-9]_*.surql"))
     print("migrations:", [m.name for m in migrations])
-    apply("schema", "parity_schema", [REPO / "server/api/src/schema.surql"])
-    apply("migrations", "parity_migr", migrations)
+    errors = apply("schema", "parity_schema", [REPO / "server/api/src/schema.surql"])
+    errors += apply("migrations", "parity_migr", migrations)
+    if errors:
+        sql("REMOVE NAMESPACE IF EXISTS parity_schema; REMOVE NAMESPACE IF EXISTS parity_migr;")
+        print(f"FAILED: {errors} statement error(s)")
+        return 1
     a, b = snapshot("parity_schema"), snapshot("parity_migr")
     sql("REMOVE NAMESPACE IF EXISTS parity_schema; REMOVE NAMESPACE IF EXISTS parity_migr;")
 

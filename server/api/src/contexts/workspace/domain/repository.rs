@@ -1,7 +1,7 @@
-use async_trait::async_trait;
 use crate::contexts::identity::domain::UserId;
 use crate::contexts::workspace::domain::{Workspace, WorkspaceId};
 use crate::shared::error::Result;
+use async_trait::async_trait;
 
 #[async_trait]
 pub trait WorkspaceRepository: Send + Sync {
